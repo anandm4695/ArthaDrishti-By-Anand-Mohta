@@ -33,6 +33,7 @@ import {
   camelToSnake,
   snakeToCamel as snakeToCamelUtil,
 } from "./utils/appConstants";
+import { fetchAllRowsFromTable } from "./utils/supabaseHelpers";
 
 // Extracted hooks
 import { useMetrics } from "./hooks/useMetrics";
@@ -743,12 +744,12 @@ function FinanceDashboard() {
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("bank_accounts").select("*").eq("user_id", userId),
-        supabase
-          .from("transactions")
-          .select("*")
-          .eq("user_id", userId)
-          .order("date", { ascending: false })
-          .limit(50000),
+        fetchAllRowsFromTable(supabase, "transactions", userId, {
+          orderColumn: "date",
+          ascending: false,
+          secondaryOrderColumn: "id",
+          secondaryAscending: true,
+        }),
         supabase.from("mutual_funds").select("*").eq("user_id", userId),
         supabase.from("stocks").select("*").eq("user_id", userId),
         supabase.from("demat_accounts").select("*").eq("user_id", userId),
@@ -769,12 +770,12 @@ function FinanceDashboard() {
         supabase.from("informal_loans").select("*").eq("user_id", userId),
         supabase.from("rental_properties").select("*").eq("user_id", userId),
         supabase.from("sips").select("*").eq("user_id", userId),
-        supabase.from("stock_sells").select("*").eq("user_id", userId),
-        supabase.from("mf_sells").select("*").eq("user_id", userId),
+        fetchAllRowsFromTable(supabase, "stock_sells", userId),
+        fetchAllRowsFromTable(supabase, "mf_sells", userId),
         supabase.from("net_worth_history").select("*").eq("user_id", userId),
         supabase.from("corporate_actions").select("*").eq("user_id", userId),
-        supabase.from("tax_payments").select("*").eq("user_id", userId),
-        supabase.from("income_entries").select("*").eq("user_id", userId),
+        fetchAllRowsFromTable(supabase, "tax_payments", userId),
+        fetchAllRowsFromTable(supabase, "income_entries", userId),
         supabase.from("recurring_expenses").select("*").eq("user_id", userId),
         supabase.from("watchlists").select("*").eq("user_id", userId),
         supabase.from("watchlist_items").select("*").eq("user_id", userId),
@@ -782,14 +783,14 @@ function FinanceDashboard() {
         supabase.from("real_estate_demands").select("*").eq("user_id", userId),
         supabase.from("real_estate_payments").select("*").eq("user_id", userId),
         supabase.from("vehicles").select("*").eq("user_id", userId),
-        supabase.from("dividends").select("*").eq("user_id", userId),
+        fetchAllRowsFromTable(supabase, "dividends", userId),
         supabase.from("documents").select("*").eq("user_id", userId),
         supabase.from("gold_holdings").select("*").eq("user_id", userId),
         supabase.from("life_events").select("*").eq("user_id", userId),
         supabase.from("health_insurance").select("*").eq("user_id", userId),
         supabase.from("credit_scores").select("*").eq("user_id", userId),
         supabase.from("bill_payments").select("*").eq("user_id", userId),
-        supabase.from("bill_payment_history").select("*").eq("user_id", userId),
+        fetchAllRowsFromTable(supabase, "bill_payment_history", userId),
         supabase.from("govt_schemes").select("*").eq("user_id", userId),
         supabase.from("salary_slips").select("*").eq("user_id", userId),
         supabase.from("form_26as").select("*").eq("user_id", userId),
@@ -956,7 +957,18 @@ function FinanceDashboard() {
                 })),
               }
             : {}),
-          ...(!txns.error && txns.data != null ? { transactions: snakeToCamel(txns.data) } : {}),
+          ...(!txns.error && txns.data != null
+            ? {
+                transactions: (() => {
+                  const cloudTxns = snakeToCamel(txns.data);
+                  const cloudIdSet = new Set(cloudTxns.map((t: any) => t.id));
+                  const localOnly = (currentState.transactions || []).filter(
+                    (t: any) => t.id && !cloudIdSet.has(t.id)
+                  );
+                  return localOnly.length > 0 ? [...cloudTxns, ...localOnly] : cloudTxns;
+                })(),
+              }
+            : {}),
           ...(!mfs.error && mfs.data != null
             ? {
                 // Normalize: DB uses `scheme`/`type` but UI form saves with `name`/`category`.
@@ -2883,11 +2895,13 @@ function FinanceDashboard() {
 
     setIsResyncingTxns(true);
     try {
-      // 1. Fetch all transaction IDs already in Supabase
-      const { data: dbTxns, error: fetchErr } = await supabase
-        .from("transactions")
-        .select("id")
-        .eq("user_id", userId);
+      // 1. Fetch all transaction IDs already in Supabase using pagination
+      const { data: dbTxns, error: fetchErr } = await fetchAllRowsFromTable(
+        supabase,
+        "transactions",
+        userId,
+        { select: "id" }
+      );
 
       if (fetchErr) {
         console.error("[Resync Transactions Fetch]", fetchErr.message);
@@ -2901,8 +2915,14 @@ function FinanceDashboard() {
 
       if (missingTxns.length === 0) {
         setSyncedTxnIds(new Set([...existingIds, ...localTxns.map((t: any) => t.id)]));
-        showToast(`All ${localTxns.length} transactions are fully synced with cloud.`, "success");
-        return { success: true, syncedCount: 0, total: localTxns.length };
+        if (existingIds.size > localTxns.length) {
+          // Cloud has more transactions than local state — pull down the full dataset!
+          await fetchAllData();
+          showToast(`Synced ${existingIds.size} transactions from cloud.`, "success");
+        } else {
+          showToast(`All ${localTxns.length} transactions are fully synced with cloud.`, "success");
+        }
+        return { success: true, syncedCount: 0, total: Math.max(localTxns.length, existingIds.size) };
       }
 
       // 2. Batch-sync missing transactions
@@ -2936,11 +2956,13 @@ function FinanceDashboard() {
       }
 
       setSyncedTxnIds(new Set([...existingIds, ...cleanItems.map((ci: any) => ci.id)]));
+      // Re-fetch all data to ensure local state has full parity with cloud
+      await fetchAllData();
       showToast(
         `Successfully synced ${totalSynced} transaction${totalSynced === 1 ? "" : "s"} to cloud!`,
         "success"
       );
-      return { success: true, syncedCount: totalSynced, total: localTxns.length };
+      return { success: true, syncedCount: totalSynced, total: (state.transactions || []).length };
     } catch (err: any) {
       console.error("[Resync Transactions]", err);
       showToast(`Sync failed: ${err?.message || "Unknown error"}`, "error");
@@ -2948,7 +2970,7 @@ function FinanceDashboard() {
     } finally {
       setIsResyncingTxns(false);
     }
-  }, [session, state.transactions, activeProfile, showToast]);
+  }, [session, state.transactions, activeProfile, showToast, fetchAllData]);
 
   // Automatic background reconnect sync when online
   useEffect(() => {
