@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RecurringDepositsSection } from "../components/investments/RecurringDepositsSection";
+import { InvestmentsTab } from "../components/tabs/InvestmentsTab";
 import { MasterDataContext, DEFAULT_MASTER_DATA } from "../utils/masterData";
 import { PrivacyProvider } from "../context/PrivacyContext";
 
@@ -406,6 +407,96 @@ describe("RecurringDepositsSection Component", () => {
     expect(screen.getAllByText("2018-07-19").length).toBeGreaterThan(0);
     // 2019-07-19 should NOT be listed
     expect(screen.queryByText("2019-07-19")).toBeNull();
+  });
+
+  it("supports fast RD creation with presets and instant optimistic save", async () => {
+    const addItem = vi.fn().mockImplementation(() => Promise.resolve({ id: "mock-res-id" }));
+    const showToast = vi.fn();
+    const mockState = {
+      recurringDeposits: [],
+      fixedDeposits: [],
+      bonds: [],
+      ppf: [],
+      nps: [],
+      epf: [],
+      mutualFunds: [],
+      bankAccounts: [
+        { id: "b-hdfc", bankName: "HDFC Bank", balance: 50000, accountNumber: "1234" },
+      ],
+      transactions: [],
+    };
+
+    render(
+      <PrivacyProvider>
+        <MasterDataContext.Provider
+          value={{
+            masterData: DEFAULT_MASTER_DATA,
+            updateMasterData: vi.fn(),
+            resetMasterData: vi.fn(),
+            refreshMasterData: vi.fn(),
+            lastRefreshed: null,
+            isLoaded: true,
+          }}
+        >
+          <InvestmentsTab
+            state={mockState}
+            addItem={addItem}
+            removeItem={vi.fn()}
+            updateItem={vi.fn()}
+            subTab="rd"
+            showToast={showToast}
+          />
+        </MasterDataContext.Provider>
+      </PrivacyProvider>
+    );
+
+    // Click "Add Recurring Deposits"
+    const addBtn = screen.getByRole("button", { name: /Add Recurring Deposits/i });
+    fireEvent.click(addBtn);
+
+    // Modal is opened
+    expect(screen.getByText(/QUICK BANK SELECTION/i)).toBeDefined();
+
+    // Click "HDFC Bank" popular bank chip
+    const hdfcBankChip = screen.getByRole("button", { name: /^HDFC Bank$/i });
+    fireEvent.click(hdfcBankChip);
+
+    // Click quick amount preset "₹10,000"
+    const tenKChip = screen.getByRole("button", { name: /^₹10,000$/i });
+    fireEvent.click(tenKChip);
+
+    // Click quick tenure preset "24M (2Y)"
+    const tenureChip = screen.getByRole("button", { name: /24M \(2Y\)/i });
+    fireEvent.click(tenureChip);
+
+    // Click save button in modal
+    const saveBtns = screen.getAllByRole("button", { name: /Add Recurring Deposits/i });
+    fireEvent.click(saveBtns[saveBtns.length - 1]);
+
+    await waitFor(() => {
+      // Confirmed optimistic notification and call to addItem
+      expect(showToast).toHaveBeenCalledWith("Recurring Deposit added successfully!", "success");
+      expect(addItem).toHaveBeenCalledWith(
+        "recurringDeposits",
+        expect.objectContaining({
+          bank: "HDFC Bank",
+          monthly: 10000,
+          rate: 7.1,
+          tenureMonths: 24,
+          bankAccountId: "b-hdfc",
+        })
+      );
+      // Confirmed concurrent transaction debit for 1st installment
+      expect(addItem).toHaveBeenCalledWith(
+        "transactions",
+        expect.objectContaining({
+          type: "debit",
+          amount: 10000,
+          accountId: "b-hdfc",
+          linked_type: "recurring_deposit",
+        })
+      );
+    });
   });
 });
 

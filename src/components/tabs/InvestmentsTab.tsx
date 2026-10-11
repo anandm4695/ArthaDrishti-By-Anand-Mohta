@@ -340,9 +340,9 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
   const [rd, setRd] = useState({
     bank: "",
     rdNumber: "",
-    monthly: "",
-    rate: "",
-    tenureMonths: "",
+    monthly: "5000",
+    rate: "7.10",
+    tenureMonths: "12",
     startDate: today(),
     debitDay: "5",
     owner: defaultOwner,
@@ -350,7 +350,7 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
     nominee: "",
     bankAccountId: bankAccounts?.[0]?.id || "",
     paidInstallments: "0",
-    debitFirstInstallment: false,
+    debitFirstInstallment: Boolean(bankAccounts?.[0]?.id),
     notes: "",
   });
   // ── Bond State ──
@@ -417,10 +417,15 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
         break;
       case "rd": {
         if (!rd.bank || !rd.monthly || !rd.rate) return;
-        const tenureM = Number(rd.tenureMonths) || 0;
+        const tenureM = Number(rd.tenureMonths) || 12;
         const paidInstNum = Number(rd.paidInstallments) || 0;
         const finalPaidInst = rd.debitFirstInstallment && paidInstNum === 0 ? 1 : paidInstNum;
+        const rdId =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `rd-${Date.now()}`;
         const rdData = {
+          id: rdId,
           bank: rd.bank,
           rdNumber: rd.rdNumber || "",
           accountNumber: rd.rdNumber || "",
@@ -442,6 +447,7 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
         onSave("recurringDeposits", rdData, {
           debitFirstInstallment: rd.debitFirstInstallment,
           bankAccountId: rd.bankAccountId,
+          rdId,
         });
         break;
       }
@@ -645,16 +651,17 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
             Number(rd.rate) || 0,
             Number(rd.tenureMonths) || 0
           );
-          const popularBanks = [
-            "State Bank of India",
-            "HDFC Bank",
-            "ICICI Bank",
-            "Axis Bank",
-            "Kotak Mahindra Bank",
-            "Punjab National Bank",
-            "Bank of Baroda",
-            "India Post",
-          ];
+          const popularBankMeta: Record<string, { rate: string; keywords: string[] }> = {
+            "State Bank of India": { rate: "6.80", keywords: ["sbi", "state bank"] },
+            "HDFC Bank": { rate: "7.10", keywords: ["hdfc"] },
+            "ICICI Bank": { rate: "7.10", keywords: ["icici"] },
+            "Axis Bank": { rate: "7.10", keywords: ["axis"] },
+            "Kotak Mahindra Bank": { rate: "7.10", keywords: ["kotak"] },
+            "Punjab National Bank": { rate: "6.85", keywords: ["pnb", "punjab"] },
+            "Bank of Baroda": { rate: "6.85", keywords: ["bob", "baroda"] },
+            "India Post": { rate: "6.70", keywords: ["post", "ippb"] },
+          };
+          const popularBanks = Object.keys(popularBankMeta);
           const goalTags = [
             "Emergency Fund",
             "Vacation & Travel",
@@ -670,27 +677,44 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
             <>
               <div>
                 <label style={{ fontSize: 11, color: THEME.muted, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                  QUICK BANK SELECTION
+                  QUICK BANK SELECTION (AUTO-FILLS RATE & LINKED ACCOUNT)
                 </label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {popularBanks.map((b) => (
-                    <button
-                      key={b}
-                      type="button"
-                      onClick={() => setRd({ ...rd, bank: b })}
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: 16,
-                        border: `1px solid ${rd.bank === b ? THEME.cyan : THEME.line}`,
-                        background: rd.bank === b ? "rgba(14, 165, 233, 0.15)" : "rgba(255,255,255,0.03)",
-                        color: rd.bank === b ? THEME.cyan : THEME.ink,
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {b}
-                    </button>
-                  ))}
+                  {popularBanks.map((b) => {
+                    const isSelected = rd.bank === b;
+                    return (
+                      <button
+                        key={b}
+                        type="button"
+                        onClick={() => {
+                          const meta = popularBankMeta[b];
+                          const matchedAcc = bankAccounts.find((acc: any) => {
+                            const name = (acc.bankName || "").toLowerCase();
+                            return meta?.keywords.some((k) => name.includes(k));
+                          });
+                          setRd((prev) => ({
+                            ...prev,
+                            bank: b,
+                            rate: meta?.rate || prev.rate,
+                            ...(matchedAcc ? { bankAccountId: matchedAcc.id, debitFirstInstallment: true } : {}),
+                          }));
+                        }}
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: 16,
+                          border: `1px solid ${isSelected ? THEME.cyan : THEME.line}`,
+                          background: isSelected ? "rgba(14, 165, 233, 0.15)" : "rgba(255,255,255,0.03)",
+                          color: isSelected ? THEME.cyan : THEME.ink,
+                          fontSize: 11,
+                          cursor: "pointer",
+                          fontWeight: isSelected ? 600 : 400,
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {b}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -737,6 +761,30 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
                     onChange={(e) => setRd({ ...rd, monthly: e.target.value })}
                     placeholder="5000"
                   />
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+                    {["1000", "2000", "5000", "10000", "25000"].map((amt) => {
+                      const isAct = rd.monthly === amt;
+                      return (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setRd({ ...rd, monthly: amt })}
+                          style={{
+                            padding: "2px 7px",
+                            borderRadius: 10,
+                            fontSize: 10,
+                            fontWeight: isAct ? 700 : 500,
+                            border: `1px solid ${isAct ? THEME.cyan : THEME.line}`,
+                            background: isAct ? "rgba(14, 165, 233, 0.2)" : "rgba(255,255,255,0.02)",
+                            color: isAct ? THEME.cyan : THEME.muted,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ₹{Number(amt).toLocaleString("en-IN")}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </Field>
                 <Field label="Interest Rate (% p.a.)">
                   <input
@@ -747,6 +795,30 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
                     onChange={(e) => setRd({ ...rd, rate: e.target.value })}
                     placeholder="6.75"
                   />
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+                    {["6.70", "6.80", "7.00", "7.10", "7.25", "7.50"].map((r) => {
+                      const isAct = rd.rate === r;
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setRd({ ...rd, rate: r })}
+                          style={{
+                            padding: "2px 7px",
+                            borderRadius: 10,
+                            fontSize: 10,
+                            fontWeight: isAct ? 700 : 500,
+                            border: `1px solid ${isAct ? THEME.cyan : THEME.line}`,
+                            background: isAct ? "rgba(14, 165, 233, 0.2)" : "rgba(255,255,255,0.02)",
+                            color: isAct ? THEME.cyan : THEME.muted,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {r}%
+                        </button>
+                      );
+                    })}
+                  </div>
                 </Field>
               </div>
 
@@ -759,6 +831,36 @@ const AddInvestmentModal = ({ sub, onClose, onSave, activeProfile = "all", savin
                     onChange={(e) => setRd({ ...rd, tenureMonths: e.target.value })}
                     placeholder="12"
                   />
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+                    {[
+                      { label: "6M", val: "6" },
+                      { label: "12M (1Y)", val: "12" },
+                      { label: "24M (2Y)", val: "24" },
+                      { label: "36M (3Y)", val: "36" },
+                      { label: "60M (5Y)", val: "60" },
+                    ].map((t) => {
+                      const isAct = rd.tenureMonths === t.val;
+                      return (
+                        <button
+                          key={t.val}
+                          type="button"
+                          onClick={() => setRd({ ...rd, tenureMonths: t.val })}
+                          style={{
+                            padding: "2px 7px",
+                            borderRadius: 10,
+                            fontSize: 10,
+                            fontWeight: isAct ? 700 : 500,
+                            border: `1px solid ${isAct ? THEME.cyan : THEME.line}`,
+                            background: isAct ? "rgba(14, 165, 233, 0.2)" : "rgba(255,255,255,0.02)",
+                            color: isAct ? THEME.cyan : THEME.muted,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </Field>
                 <Field label="Start Date">
                   <input
@@ -1620,29 +1722,41 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
   const { run: handleSave, loading: savingInvestment } = useAsyncAction(
     async (key: string, data: any, extra?: any) => {
-      const res = await addItem(key, data);
-      const createdId = (res as any)?.id || data?.id;
+      // Optimistically dismiss modal immediately for zero-wait UX
+      setShowModal(false);
+      showToast?.(
+        `${key === "recurringDeposits" ? "Recurring Deposit" : "Investment"} added successfully!`,
+        "success"
+      );
+
+      const createdId = data?.id;
+      const addPromise = Promise.resolve(addItem(key, data));
+
+      let txnPromise: Promise<any> = Promise.resolve();
       if (extra?.debitFirstInstallment && extra?.bankAccountId && Number(data.monthly) > 0) {
         const bank = (state.bankAccounts || []).find((b: any) => b.id === extra.bankAccountId);
         if (bank) {
           const noteText = `RD 1st Installment - ${data.bank}${data.rdNumber ? ` (A/C: ${data.rdNumber})` : ""}`;
-          await addItem("transactions", {
-            type: "debit",
-            category: "Investments",
-            note: noteText,
-            narration: noteText,
-            linked_type: "recurring_deposit",
-            linked_id: createdId || data.rdNumber || "",
-            amount: Number(data.monthly),
-            date: data.startDate || today(),
-            accountId: bank.id,
-            owner: data.owner || "self",
-          });
+          txnPromise = Promise.resolve(
+            addItem("transactions", {
+              type: "debit",
+              category: "Investments",
+              note: noteText,
+              narration: noteText,
+              linked_type: "recurring_deposit",
+              linked_id: createdId || data.rdNumber || "",
+              amount: Number(data.monthly),
+              date: data.startDate || today(),
+              accountId: bank.id,
+              owner: data.owner || "self",
+            })
+          );
         }
       }
+
+      await Promise.all([addPromise, txnPromise]);
     },
     {
-      onSuccess: () => setShowModal(false),
       onError: (e: any) =>
         showToast?.(`Failed to save: ${e?.message || "Unknown error"}`, "error"),
     }
