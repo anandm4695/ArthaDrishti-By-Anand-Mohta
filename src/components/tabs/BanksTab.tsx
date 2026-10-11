@@ -4577,10 +4577,10 @@ function TxnModal({
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           background: "var(--surface-1)",
-          padding: 4,
-          borderRadius: 10,
+          padding: 5,
+          borderRadius: 12,
           border: `1.5px solid ${THEME.line}`,
-          gap: 4,
+          gap: 6,
           marginBottom: 12,
         }}
       >
@@ -4588,8 +4588,8 @@ function TxnModal({
           type="button"
           onClick={() => setF({ ...f, type: "debit", linkedKey: "" })}
           style={{
-            padding: "7px 12px",
-            borderRadius: 8,
+            padding: "8px 12px",
+            borderRadius: 9,
             border:
               f.type === "debit"
                 ? `1.5px solid color-mix(in srgb, ${THEME.rust} 40%, transparent)`
@@ -4598,26 +4598,46 @@ function TxnModal({
               f.type === "debit"
                 ? `color-mix(in srgb, ${THEME.rust} 14%, var(--surface-0))`
                 : "transparent",
-            color: f.type === "debit" ? THEME.rust : THEME.muted,
-            fontWeight: 800,
-            fontSize: 12,
             cursor: "pointer",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
+            gap: 2,
             transition: "all 0.15s ease",
           }}
         >
-          <TrendingDown size={14} /> <span>Expense (Debit)</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              color: f.type === "debit" ? THEME.rust : "var(--ink-secondary)",
+              fontWeight: 800,
+              fontSize: 12.5,
+            }}
+          >
+            <TrendingDown size={14} />
+            <span>Expense (Debit)</span>
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              fontWeight: 600,
+              color: f.type === "debit" ? THEME.rust : THEME.muted,
+              opacity: f.type === "debit" ? 0.9 : 0.75,
+            }}
+          >
+            Money Out • Spending
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setF({ ...f, type: "credit", linkedKey: "" })}
           style={{
-            padding: "7px 12px",
-            borderRadius: 8,
+            padding: "8px 12px",
+            borderRadius: 9,
             border:
               f.type === "credit"
                 ? `1.5px solid color-mix(in srgb, ${THEME.sage} 40%, transparent)`
@@ -4626,26 +4646,46 @@ function TxnModal({
               f.type === "credit"
                 ? `color-mix(in srgb, ${THEME.sage} 14%, var(--surface-0))`
                 : "transparent",
-            color: f.type === "credit" ? THEME.sage : THEME.muted,
-            fontWeight: 800,
-            fontSize: 12,
             cursor: "pointer",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
+            gap: 2,
             transition: "all 0.15s ease",
           }}
         >
-          <TrendingUp size={14} /> <span>Income (Credit)</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              color: f.type === "credit" ? THEME.sage : "var(--ink-secondary)",
+              fontWeight: 800,
+              fontSize: 12.5,
+            }}
+          >
+            <TrendingUp size={14} />
+            <span>Income (Credit)</span>
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              fontWeight: 600,
+              color: f.type === "credit" ? THEME.sage : THEME.muted,
+              opacity: f.type === "credit" ? 0.9 : 0.75,
+            }}
+          >
+            Money In • Earnings
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setF({ ...f, type: "transfer", category: "Transfer", linkedKey: "" })}
           style={{
-            padding: "7px 12px",
-            borderRadius: 8,
+            padding: "8px 12px",
+            borderRadius: 9,
             border:
               f.type === "transfer"
                 ? `1.5px solid color-mix(in srgb, ${THEME.violet} 40%, transparent)`
@@ -4654,18 +4694,38 @@ function TxnModal({
               f.type === "transfer"
                 ? `color-mix(in srgb, ${THEME.violet} 14%, var(--surface-0))`
                 : "transparent",
-            color: f.type === "transfer" ? THEME.violet : THEME.muted,
-            fontWeight: 800,
-            fontSize: 12,
             cursor: "pointer",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
+            gap: 2,
             transition: "all 0.15s ease",
           }}
         >
-          <ArrowLeftRight size={14} /> <span>Transfer</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              color: f.type === "transfer" ? THEME.violet : "var(--ink-secondary)",
+              fontWeight: 800,
+              fontSize: 12.5,
+            }}
+          >
+            <ArrowLeftRight size={14} />
+            <span>Transfer</span>
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              fontWeight: 600,
+              color: f.type === "transfer" ? THEME.violet : THEME.muted,
+              opacity: f.type === "transfer" ? 0.9 : 0.75,
+            }}
+          >
+            Between Accounts
+          </div>
         </button>
       </div>
 
