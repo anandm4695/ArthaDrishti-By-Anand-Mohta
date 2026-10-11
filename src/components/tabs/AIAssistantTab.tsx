@@ -2066,7 +2066,7 @@ You have access to local tools/functions to retrieve real-time and detailed tran
                 }}
               >
                 <ShieldCheck size={11} />
-                API key stored locally · multi-turn conversation
+                Client-side API call · Read-only queries · Key stored locally
               </div>
             </div>
             <button

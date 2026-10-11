@@ -4,7 +4,8 @@ import fs from "fs";
 import path from "path";
 import url from "url";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  esbuild: mode === "production" ? { drop: ["console", "debugger"] } : {},
   plugins: [
     react(),
     {
@@ -143,4 +144,4 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: [],
   },
-});
+}));

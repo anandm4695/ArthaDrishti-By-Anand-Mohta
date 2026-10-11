@@ -5,7 +5,7 @@
 // 4. Yahoo Finance website → Google favicon (sz=256 for crispness)
 
 const { default: YahooFinance } = require("yahoo-finance2");
-const { rateLimit } = require("./_lib/rateLimit");
+const { rateLimit, handleCors } = require("./_lib/rateLimit");
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 // Neither yahoo-finance2 nor a raw fetch() has a timeout by default — a hung
@@ -607,9 +607,7 @@ async function resolveWithYahoo(symbol) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res)) return;
   if (!rateLimit(req, res, { max: 30, windowMs: 60_000 })) return;
 
   const { symbol } = req.query;
@@ -660,6 +658,6 @@ module.exports = async function handler(req, res) {
     faviconUrl = (await resolveWithYahoo(canonicalYfSym)) || (await resolveWithYahoo(sym));
   }
 
-  res.setHeader("Cache-Control", "s-maxage=86400, stale-while-revalidate=604800");
+  res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
   return res.status(200).json({ logoUrl, faviconUrl });
 };

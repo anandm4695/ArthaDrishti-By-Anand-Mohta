@@ -773,7 +773,8 @@ export function useMetrics(
       realEstateAsset +
       vehicleAsset +
       govtSchemesValue;
-    const savingsRate = monthIncome > 0 ? ((monthIncome - monthExpense) / monthIncome) * 100 : 0;
+    const netSavings = monthIncome - monthExpense;
+    const savingsRate = monthIncome > 0 ? (Math.max(0, netSavings) / monthIncome) * 100 : 0;
     const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
 
     // FOIR: total monthly EMI / monthly income -- safe lending threshold is <40%
@@ -929,6 +930,7 @@ export function useMetrics(
       informalBorrowedValue,
       rentalPropertiesAsset,
       goldValue,
+      netSavings,
       savingsRate,
       debtToAssetRatio,
       taxDue,

@@ -3,6 +3,7 @@
 const { Resend } = require("resend");
 const { createClient } = require("@supabase/supabase-js");
 const { default: YahooFinance } = require("yahoo-finance2");
+const { handleCors, rateLimit } = require("./_lib/rateLimit");
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -85,6 +86,9 @@ async function verifyManualAuth(req) {
     const supabase = getSupabase();
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user) return { ok: false, reason: "Invalid or expired session" };
+    if (!data.user.email_confirmed_at && process.env.NODE_ENV !== "test") {
+      return { ok: false, reason: "Email address not verified. Please verify your email before sending." };
+    }
     return { ok: true, user: data.user };
   } catch (err) {
     return { ok: false, reason: err.message || "Auth check failed" };
@@ -3304,10 +3308,7 @@ function buildSubject(frequency, netWorth, refDate = new Date()) {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res, { allowedMethods: "GET, POST, OPTIONS" })) return;
 
   // ── Health check — called by Settings UI to diagnose config ───────────────
   if (req.method === "GET" && req.query?.action === "healthcheck") {
@@ -3401,26 +3402,26 @@ async function handler(req, res) {
             "Resend API key not configured. Add Resend_Email_API to Vercel environment variables.",
         });
 
-      const supabase = getSupabase();
-      const { data: settingsRow } = await supabase
-        .from("user_settings")
-        .select("email_address")
-        .eq("user_id", auth.user.id)
-        .maybeSingle();
-      const emailTo = (settingsRow?.email_address || "").trim() || auth.user.email;
+      // Security hardening (Finding S3): Rate limit manual sends per user (5 per day)
+      if (!rateLimit(req, res, { max: 5, windowMs: 24 * 60 * 60 * 1000, keyPrefix: "manual_send_", customKey: auth.user.id })) {
+        return;
+      }
+
+      // Send strictly to the authenticated user's confirmed account email
+      const emailTo = auth.user.email;
       if (!emailTo) {
         return res.status(400).json({
-          error: "No email address on file. Set one in Settings before sending a test email.",
+          error: "No verified email address on file for this user account.",
         });
       }
       if (requestedEmailTo && requestedEmailTo !== emailTo) {
         console.warn(
-          `[send-summary] Manual send: ignoring client-supplied emailTo (${requestedEmailTo}); using account email instead`
+          `[send-summary] Security: ignoring client-supplied emailTo (${requestedEmailTo}); strictly using authenticated email (${emailTo})`
         );
       }
 
-      const effectiveFromEmail = getEffectiveFromEmail(fromEmail);
-      const effectiveFromAddr = `ArthaDrishti <${effectiveFromEmail}>`;
+      // Strictly enforce verified system sender — reject any client-supplied fromEmail spoofing
+      const effectiveFromAddr = FROM_ADDR;
 
       const state = await fetchStateFromSupabase(supabase, auth.user.id);
       const { data: profData } = await supabase
@@ -3446,12 +3447,12 @@ async function handler(req, res) {
       if (error) {
         console.error("[send-summary] Resend error:", error);
         await recordSendResult(supabase, auth.user.id, "failed", error.message);
-        const isTest = effectiveFromEmail === "onboarding@resend.dev";
+        const isTest = FROM_EMAIL === "onboarding@resend.dev";
         return res.status(500).json({
           error: error.message,
           hint: isTest
             ? `Test sender restriction: onboarding@resend.dev can only deliver to the email you registered with Resend (not ${emailTo}). Enter your Resend account email in the 'Sender Email' field in Settings.`
-            : `Send failed from ${effectiveFromEmail}. Make sure this email or its domain is verified in your Resend account.`,
+            : `Send failed from ${FROM_EMAIL}. Make sure this email or its domain is verified in your Resend account.`,
         });
       }
       await recordSendResult(supabase, auth.user.id, "sent", null);

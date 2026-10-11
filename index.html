@@ -10,11 +10,15 @@
   <meta name="keywords" content="arthadrishti, personal finance, net worth tracker, investment tracker, SIP, mutual funds, tax calculator, budget, India" />
   <meta name="author" content="Anand Mohta" />
 
+  <!-- Canonical & URL -->
+  <link rel="canonical" href="https://arthadrishti-app.vercel.app/" />
+  <meta property="og:url" content="https://arthadrishti-app.vercel.app/" />
+
   <!-- Open Graph -->
   <meta property="og:title" content="ArthaDrishti by Anand Mohta" />
   <meta property="og:description" content="Track your net worth, investments, expenses and financial goals — all in one secure place." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:image" content="https://arthadrishti-app.vercel.app/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
 
@@ -22,7 +26,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="ArthaDrishti by Anand Mohta" />
   <meta name="twitter:description" content="Track your net worth, investments, expenses and financial goals — all in one secure place." />
-  <meta name="twitter:image" content="/og-image.png" />
+  <meta name="twitter:image" content="https://arthadrishti-app.vercel.app/og-image.png" />
 
   <!-- Apple PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -137,7 +141,7 @@
 <body>
   <!-- Splash screen — hidden once React mounts -->
   <div id="app-loading">
-    <img src="/logo.png?v=2" alt="ArthaDrishti by Anand Mohta" class="loading-logo" />
+    <img src="/logo.png" alt="ArthaDrishti by Anand Mohta" class="loading-logo" />
     <div class="loading-tagline">Plan &bull; Grow &bull; Secure &bull; Prosper</div>
     <div class="loading-bar"><div class="loading-bar-fill"></div></div>
   </div>
@@ -156,20 +160,6 @@
       }
     });
     observer.observe(document.getElementById('root'), { childList: true });
-
-    // Lazy-load the remaining font-picker families (Settings > Appearance) after the app
-    // is idle, so anonymous/login-screen visitors never pay for fonts they can't use yet.
-    const loadDeferredFonts = () => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Lato:wght@400;700;900&display=swap';
-      document.head.appendChild(link);
-    };
-    if ('requestIdleCallback' in window) {
-      window.addEventListener('load', () => requestIdleCallback(loadDeferredFonts, { timeout: 4000 }));
-    } else {
-      window.addEventListener('load', () => setTimeout(loadDeferredFonts, 2000));
-    }
   </script>
 
   <script type="module" src="/src/index.tsx"></script>

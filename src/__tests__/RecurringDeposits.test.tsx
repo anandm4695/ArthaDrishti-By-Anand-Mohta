@@ -428,16 +428,7 @@ describe("RecurringDepositsSection Component", () => {
 
     render(
       <PrivacyProvider>
-        <MasterDataContext.Provider
-          value={{
-            masterData: DEFAULT_MASTER_DATA,
-            updateMasterData: vi.fn(),
-            resetMasterData: vi.fn(),
-            refreshMasterData: vi.fn(),
-            lastRefreshed: null,
-            isLoaded: true,
-          }}
-        >
+        <MasterDataContext.Provider value={DEFAULT_MASTER_DATA}>
           <InvestmentsTab
             state={mockState}
             addItem={addItem}

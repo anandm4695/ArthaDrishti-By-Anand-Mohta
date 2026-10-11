@@ -1,5 +1,5 @@
 const { default: YahooFinance } = require("yahoo-finance2");
-const { rateLimit } = require("./_lib/rateLimit");
+const { rateLimit, handleCors } = require("./_lib/rateLimit");
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -23,10 +23,7 @@ const RANGE_CONFIG = {
 };
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res)) return;
   if (!rateLimit(req, res, { max: 120, windowMs: 60_000 })) return;
 
   const { symbol, range: rangeParam } = req.query;
@@ -81,7 +78,7 @@ module.exports = async function handler(req, res) {
         }))
         .filter((pt) => pt.p > 0);
 
-      res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
+      res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120");
       return res.status(200).json({ date: lastDateTag, points, range });
     }
 
@@ -124,7 +121,7 @@ module.exports = async function handler(req, res) {
       .filter((pt) => pt.p > 0);
 
     const cacheTtl = ["1d", "5d"].includes(range) ? 60 : 3600;
-    res.setHeader("Cache-Control", `s-maxage=${cacheTtl}, stale-while-revalidate=${cacheTtl * 2}`);
+    res.setHeader("Cache-Control", `public, s-maxage=${cacheTtl}, stale-while-revalidate=${cacheTtl * 2}`);
     return res.status(200).json({ date: null, points, range });
   } catch (e) {
     console.error(`[stock-chart] ${symbol}:`, e?.message || e);

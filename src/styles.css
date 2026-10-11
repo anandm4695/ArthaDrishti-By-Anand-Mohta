@@ -3,6 +3,27 @@
    Premium · Refined · Fortune 500 Grade
    ═══════════════════════════════════════════════════════════════════ */
 
+/* Accessible Skip Link (Finding A4) */
+.skip-to-content {
+  position: absolute;
+  top: -120px;
+  left: 20px;
+  z-index: 999999;
+  padding: 10px 18px;
+  background: var(--surface-1, #1e293b);
+  color: var(--t-accent, #38bdf8);
+  border: 1px solid var(--t-line, #334155);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: top 0.2s ease;
+}
+.skip-to-content:focus {
+  top: 16px;
+}
+
 /* ── Design Tokens ─────────────────────────────────────────────── */
 :root {
   /* Core palette — light: sophisticated slate + indigo enterprise palette */

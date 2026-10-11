@@ -4349,6 +4349,8 @@ function FinanceDashboard() {
   const handleSignOut = async () => {
     try {
       localStorage.removeItem("pf_demo_mode");
+      localStorage.removeItem("finance_dashboard_v1");
+      localStorage.removeItem("finance_credit_scores");
     } catch {}
     await supabase.auth.signOut().catch(() => {});
     setSession(null);
@@ -4361,9 +4363,6 @@ function FinanceDashboard() {
     // the user had set before they'd even logged back in.
     setState((s: any) => ({ ...DEFAULT_STATE, settings: s.settings }));
     setActiveProfile("all");
-    try {
-      localStorage.removeItem("finance_credit_scores");
-    } catch {}
   };
   const pushBackupToSupabase = async (data: any) => {
     const userId = session?.user?.id;
@@ -4814,6 +4813,11 @@ function FinanceDashboard() {
           overflow: "hidden",
         }}
       >
+        {/* Accessible skip link */}
+        <a href="#main" className="skip-to-content">
+          Skip to main content
+        </a>
+
         {/* ── SIDEBAR NAVIGATION ── */}
         <WorkspaceSidebar
           tab={tab}
@@ -4875,6 +4879,7 @@ function FinanceDashboard() {
           {/* Sync status pill in header area handled by header logic */}
 
           <main
+            id="main"
             className="app-main-content"
             style={{
               flex: 1,
@@ -4889,6 +4894,62 @@ function FinanceDashboard() {
               transition: "filter 0.3s ease",
             }}
           >
+            {/* Demo Mode persistent banner (Finding D6) */}
+            {isDemoSession(session) && (
+              <div
+                role="status"
+                style={{
+                  marginBottom: 20,
+                  padding: "10px 16px",
+                  background: "color-mix(in srgb, var(--t-accent, #38bdf8) 10%, var(--surface-0, #131b2e))",
+                  border: "1px solid color-mix(in srgb, var(--t-accent, #38bdf8) 35%, transparent)",
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 12,
+                  fontSize: 13,
+                  color: "var(--t-ink, #e2e8f0)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      background: "var(--t-accent, #38bdf8)",
+                      color: "#0b0f1a",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Demo Data
+                  </span>
+                  <span>
+                    You are exploring sample portfolio data. Sign up or sign in to track your personal finances securely.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  style={{
+                    background: "var(--t-accent, #38bdf8)",
+                    color: "#0b0f1a",
+                    border: "none",
+                    padding: "6px 14px",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Sign In / Register
+                </button>
+              </div>
+            )}
             {/* Missing DB tables warning — shown globally so user knows what to fix */}
             {missingTables.length > 0 && (
               <div

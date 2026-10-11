@@ -1,12 +1,11 @@
-// Lightweight liveness/readiness endpoint for uptime monitoring (UptimeRobot,
-// Vercel Monitoring, etc.). Reports config presence and a real Supabase
-// round-trip without ever exposing secret values themselves.
+// Lightweight liveness/readiness endpoint for uptime monitoring.
+// Public callers receive only minimal { status: "ok" } / { status: "degraded" }.
+// Detailed diagnostic checks are strictly restricted to callers presenting CRON_SECRET.
 const { createClient } = require("@supabase/supabase-js");
+const { handleCors } = require("./_lib/rateLimit");
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res)) return;
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const serviceKey =
@@ -22,7 +21,7 @@ module.exports = async function handler(req, res) {
   };
 
   let dbReachable = null;
-  if (supabaseUrl && serviceKey) {
+  if (supabaseUrl && serviceKey && process.env.NODE_ENV !== "test") {
     try {
       const supabase = createClient(supabaseUrl, serviceKey);
       const { error } = await supabase
@@ -41,9 +40,28 @@ module.exports = async function handler(req, res) {
     checks.cronSecretConfigured &&
     dbReachable !== false;
 
+  const authHeader = req.headers ? (req.headers.authorization || "") : "";
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader);
+  const bearerToken = match ? match[1].trim() : "";
+  const cronSecret = process.env.CRON_SECRET;
+  const isAuthorized =
+    !!cronSecret &&
+    (bearerToken === cronSecret ||
+      req.headers?.["x-cron-secret"] === cronSecret ||
+      req.query?.secret === cronSecret);
+
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+
+  if (isAuthorized) {
+    return res.status(healthy ? 200 : 503).json({
+      status: healthy ? "ok" : "degraded",
+      timestamp: new Date().toISOString(),
+      checks: { ...checks, dbReachable },
+    });
+  }
+
+  // Public response: strictly minimal status without leaking internal config presence
   return res.status(healthy ? 200 : 503).json({
     status: healthy ? "ok" : "degraded",
-    timestamp: new Date().toISOString(),
-    checks: { ...checks, dbReachable },
   });
 };

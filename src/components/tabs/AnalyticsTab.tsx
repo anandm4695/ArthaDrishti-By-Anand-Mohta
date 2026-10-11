@@ -1688,15 +1688,19 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
     if (state.fixedDeposits.length > 0) divScore += 6;
     if (state.ppf.length > 0 || state.nps.length > 0) divScore += 7;
 
-    const totalScore = savingsScore + debtScore + emergencyScore + divScore;
+    const rawScore = savingsScore + debtScore + emergencyScore + divScore;
+    const hasCriticalRedFlag = (metrics.debtToAssetRatio || 0) >= 50 || (metrics.foir || 0) >= 50;
+    const totalScore = hasCriticalRedFlag ? Math.min(rawScore, 58) : rawScore;
     const hasData = metrics.totalAssets > 0 || metrics.monthIncome > 0;
     const scoreColor = !hasData
       ? THEME.muted
-      : totalScore >= 75
-        ? THEME.sage
-        : totalScore >= 50
-          ? THEME.gold
-          : THEME.rust;
+      : hasCriticalRedFlag
+        ? THEME.gold
+        : totalScore >= 75
+          ? THEME.sage
+          : totalScore >= 50
+            ? THEME.gold
+            : THEME.rust;
 
     const investTypes = [
       state.mutualFunds.length > 0 ? "MF" : null,
@@ -1922,7 +1926,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
       metrics.monthIncome > 0 ? (metrics.monthExpense / metrics.monthIncome) * 100 : 0;
     const savedPct = metrics.monthIncome > 0 ? Math.max(0, (saved / metrics.monthIncome) * 100) : 0;
 
-    let streak = 0;
+    let streak = saved > 0 ? 1 : 0;
     const now = new Date();
     for (let i = 1; i <= 24; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -1978,6 +1982,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
 
     return {
       totalScore,
+      hasCriticalRedFlag,
       scoreColor,
       subScores,
       dues,
@@ -3777,7 +3782,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
       {/* ── Executive Header & Global Controls ── */}
       <div className="exec-header-bar">
         <div>
-          <SectionTitle sub="Consolidated wealth overview, financial vitals, and strategic intelligence">
+          <SectionTitle as="h1" sub="Consolidated wealth overview, financial vitals, and strategic intelligence">
             Executive Dashboard
           </SectionTitle>
         </div>
@@ -4634,12 +4639,15 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                     const retirement = (metrics.ppfValue || 0) + (metrics.npsValue || 0) + (metrics.epfValue || 0);
                     const physical = (metrics.realEstateAsset || 0) + (metrics.goldValue || 0);
                     const total = metrics.totalAssets || 1;
+                    const accounted = liquid + equity + retirement + physical;
+                    const others = Math.max(0, total - accounted);
 
                     const segments = [
                       { label: "Liquid (Cash & FD)", value: liquid, color: THEME.sage, pct: (liquid / total) * 100 },
                       { label: "Equities & MFs", value: equity, color: THEME.accent, pct: (equity / total) * 100 },
                       { label: "Retirement (EPF/PPF/NPS)", value: retirement, color: THEME.gold, pct: (retirement / total) * 100 },
                       { label: "Real Estate & Gold", value: physical, color: THEME.violet, pct: (physical / total) * 100 },
+                      ...(others > 0 ? [{ label: "Other Assets (Govt, Vehicles, Bonds)", value: others, color: THEME.cyan || "#0891b2", pct: (others / total) * 100 }] : []),
                     ].filter((s) => s.value > 0);
 
                     return (
@@ -4647,7 +4655,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, fontWeight: 800, color: THEME.muted, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                           <span>Asset Allocation Balance</span>
                           <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: "var(--radius-xs)", background: "var(--surface-1)", border: `1px solid ${THEME.line}` }}>
-                            {segments.length} Core Asset Classes
+                            {segments.length} Asset Classes · 100% Consolidated
                           </span>
                         </div>
 
@@ -5101,7 +5109,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                             letterSpacing: "0.08em",
                           }}
                         >
-                          Liquidity Ratio
+                          Market Liquidity Ratio
                         </span>
                       </div>
                       <ArrowUpRight size={14} style={{ color: THEME.muted, opacity: 0.7 }} />
@@ -5159,7 +5167,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                               />
                             </div>
                             <div style={{ fontSize: 12, color: THEME.muted, fontWeight: 600 }}>
-                              Liquid reserves: <Money value={liquid} variant="full" />
+                              Total Liquid Assets (Cash, MFs, Stocks, Gold): <Money value={liquid} variant="full" />
                             </div>
                           </>
                         );
@@ -5270,11 +5278,13 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                     scoreColor: dashboardData.scoreColor,
                     statusText: !dashboardData.hasData
                       ? "No Data Yet"
-                      : dashboardData.totalScore >= 75
-                        ? "Excellent"
-                        : dashboardData.totalScore >= 50
-                          ? "Good"
-                          : "Needs Work",
+                      : dashboardData.hasCriticalRedFlag
+                        ? "Fair (Debt Alert)"
+                        : dashboardData.totalScore >= 75
+                          ? "Excellent"
+                          : dashboardData.totalScore >= 50
+                            ? "Good"
+                            : "Needs Work",
                     subScores: dashboardData.subScores,
                   }
                 : {

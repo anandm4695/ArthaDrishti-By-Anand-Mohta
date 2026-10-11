@@ -46,8 +46,8 @@ function fetchJson(url) {
 
 module.exports = async function handler(req, res) {
   // Allow manual execution or cron trigger
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
   if (req.method === "OPTIONS") return res.status(200).end();
 
   // Basic security check: Vercel CRON key or authorization header

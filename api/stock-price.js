@@ -1,7 +1,7 @@
 // Vercel serverless function — uses yahoo-finance2 which handles
 // Yahoo Finance cookie/crumb auth automatically (no CORS issues server-side)
 const { default: YahooFinance } = require("yahoo-finance2");
-const { rateLimit } = require("./_lib/rateLimit");
+const { rateLimit, handleCors } = require("./_lib/rateLimit");
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -13,10 +13,7 @@ const YF_TIMEOUT_MS = 8000;
 const yfFetchOptions = () => ({ fetchOptions: { signal: AbortSignal.timeout(YF_TIMEOUT_MS) } });
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res)) return;
   if (!rateLimit(req, res, { max: 30, windowMs: 60_000 })) return;
 
   const { symbols } = req.query;
@@ -91,6 +88,6 @@ module.exports = async function handler(req, res) {
     })
   );
 
-  res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
+  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   return res.status(200).json(results);
 };

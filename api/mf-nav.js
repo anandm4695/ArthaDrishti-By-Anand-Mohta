@@ -1,6 +1,5 @@
-// Vercel serverless function — fetches latest NAV + historical chart + 52W H/L from mfapi.in
 const https = require("https");
-const { rateLimit } = require("./_lib/rateLimit");
+const { rateLimit, handleCors } = require("./_lib/rateLimit");
 
 // In-memory cache for mfapi responses (5 min TTL) to minimize external requests & avoid throttling
 const cache = new Map();
@@ -67,9 +66,7 @@ function fetchJson(url) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res)) return;
 
   // Allow up to 180 requests per minute per IP for mutual fund batch/portfolio loads
   if (!rateLimit(req, res, { max: 180, windowMs: 60_000 })) return;
@@ -86,7 +83,7 @@ module.exports = async function handler(req, res) {
 
   const cached = cache.get(cacheKey);
   if (cached && now < cached.expiresAt) {
-    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=7200");
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
     return res.status(200).json(cached.payload);
   }
 
@@ -152,7 +149,7 @@ module.exports = async function handler(req, res) {
 
     cache.set(cacheKey, { payload, expiresAt: now + CACHE_TTL_MS });
 
-    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=7200");
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
     return res.status(200).json(payload);
   } catch (e) {
     console.error(`[mf-nav] ${cleanCode}:`, e?.message || e);

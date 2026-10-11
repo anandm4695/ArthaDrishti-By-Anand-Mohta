@@ -5,9 +5,16 @@ interface SectionTitleProps {
   children: React.ReactNode;
   sub?: string;
   rightElement?: React.ReactNode;
+  as?: "h1" | "h2" | "h3";
 }
 
-export const SectionTitle: React.FC<SectionTitleProps> = ({ children, sub, rightElement }) => {
+export const SectionTitle: React.FC<SectionTitleProps> = ({
+  children,
+  sub,
+  rightElement,
+  as = "h2",
+}) => {
+  const HeadingTag = as;
   return (
     <div style={{ marginBottom: 32 }}>
       <div
@@ -20,7 +27,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({ children, sub, right
         }}
       >
         <div>
-          <h2
+          <HeadingTag
             style={{
               fontFamily: "var(--font-display)",
               fontSize: "clamp(23px, 4vw, 30px)",
@@ -31,7 +38,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({ children, sub, right
             }}
           >
             {children}
-          </h2>
+          </HeadingTag>
           {sub && (
             <p
               style={{

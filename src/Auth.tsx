@@ -208,7 +208,7 @@ export default function Auth({
       ? "Please enter a valid email address"
       : "";
   const passErr =
-    passTouched && password && password.length < 8 ? "Minimum 8 characters required" : "";
+    passTouched && password && password.length < 10 ? "Minimum 10 characters required" : "";
   const confirmPassErr =
     confirmPassTouched && isSignUp && confirmPassword && confirmPassword !== password
       ? "Passwords do not match"
@@ -258,7 +258,7 @@ export default function Auth({
     const cleanEmail = email.trim();
     setEmail(cleanEmail);
     const hasEmailErr = !cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
-    const hasPassErr = !isForgot && (!password || password.length < 8);
+    const hasPassErr = !isForgot && (!password || password.length < 10);
     const hasConfirmErr = isSignUp && password !== confirmPassword;
 
     if (hasEmailErr || hasPassErr || hasConfirmErr) return;
@@ -638,7 +638,7 @@ export default function Auth({
                           onKeyDown={onCapsLockKey}
                           onKeyUp={onCapsLockKey}
                           className="af-inp af-inp-padded"
-                          placeholder="Create strong password (8+ chars)"
+                          placeholder="Create strong password (10+ chars)"
                           autoComplete="new-password"
                           autoFocus={!isMobileViewport}
                           aria-invalid={!!newPassErr}
@@ -869,7 +869,7 @@ export default function Auth({
                             onKeyUp={onCapsLockKey}
                             className="af-inp af-inp-padded"
                             placeholder={
-                              isSignUp ? "Create strong password (8+ chars)" : "Enter your password"
+                              isSignUp ? "Create strong password (10+ chars)" : "Enter your password"
                             }
                             autoComplete={isSignUp ? "new-password" : "current-password"}
                             aria-describedby={passErr ? "af-pass-err" : undefined}

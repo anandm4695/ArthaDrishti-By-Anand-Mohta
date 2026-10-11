@@ -1,7 +1,7 @@
 // Vercel serverless — fetches ex-dividend date & yield from Yahoo Finance
 // Uses the same yahoo-finance2 package as stock-price.js
 const { default: YahooFinance } = require("yahoo-finance2");
-const { rateLimit } = require("./_lib/rateLimit");
+const { rateLimit, handleCors } = require("./_lib/rateLimit");
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -13,10 +13,7 @@ const YF_TIMEOUT_MS = 8000;
 const yfFetchOptions = () => ({ fetchOptions: { signal: AbortSignal.timeout(YF_TIMEOUT_MS) } });
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res)) return;
   if (!rateLimit(req, res, { max: 30, windowMs: 60_000 })) return;
 
   const { symbol } = req.query;
@@ -45,7 +42,7 @@ module.exports = async function handler(req, res) {
     const exDividendDate = toUnix(cal?.exDividendDate ?? det?.exDividendDate ?? null);
     const dividendDate = toUnix(cal?.dividendDate ?? null);
 
-    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=7200");
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
     return res.status(200).json({
       symbol,
       exDividendDate,

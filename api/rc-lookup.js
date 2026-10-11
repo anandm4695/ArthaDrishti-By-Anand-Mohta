@@ -9,12 +9,10 @@
 //
 // Set any ONE of these in Vercel → Settings → Environment Variables → Redeploy.
 
-const { rateLimit } = require("./_lib/rateLimit");
+const { rateLimit, handleCors } = require("./_lib/rateLimit");
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!handleCors(req, res)) return;
   // Tighter than the other proxies — every live-provider call here costs real
   // money (Surepass is ~₹2-4/lookup once the free tier is exhausted).
   if (!rateLimit(req, res, { max: 10, windowMs: 60_000, keyPrefix: "rc:" })) return;
