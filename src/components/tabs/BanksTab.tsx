@@ -4449,7 +4449,6 @@ function BankModal({ onClose, onSave, saving }: any) {
     </Modal>
   );
 }
-
 function TxnModal({
   accounts,
   state,
@@ -4464,9 +4463,10 @@ function TxnModal({
   const { transactionCategories: cats, familyProfiles } = useMasterData();
   const { privacyMode } = usePrivacy();
   const defaultAccId = initialAccountId || accounts[0]?.id || "";
-  const defaultToId = accounts.length > 1
-    ? (accounts.find((a: any) => a.id !== defaultAccId)?.id || accounts[1]?.id || "")
-    : accounts[0]?.id || "";
+  const defaultToId =
+    accounts.length > 1
+      ? accounts.find((a: any) => a.id !== defaultAccId)?.id || accounts[1]?.id || ""
+      : accounts[0]?.id || "";
   const [f, setF] = useState({
     owner: initialOwner || (activeProfile && activeProfile !== "all" ? activeProfile : "self"),
     date: today(),
@@ -4498,256 +4498,805 @@ function TxnModal({
   }, [accounts, initialAccountId]);
 
   const isTransfer = f.type === "transfer";
+  const numAmount = Number(f.amount) || 0;
+
+  const currentAcc = accounts.find((a: any) => a.id === f.accountId) || accounts[0];
+  const toAcc = isTransfer ? accounts.find((a: any) => a.id === f.toAccountId) : null;
+
+  const currentBalance = currentAcc
+    ? (typeof getDisplayBalance === "function" ? getDisplayBalance(currentAcc) : Number(currentAcc.balance || 0))
+    : 0;
+
+  const toBalance = toAcc
+    ? (typeof getDisplayBalance === "function" ? getDisplayBalance(toAcc) : Number(toAcc.balance || 0))
+    : 0;
+
+  const projectedBalance =
+    f.type === "debit"
+      ? currentBalance - numAmount
+      : f.type === "credit"
+      ? currentBalance + numAmount
+      : currentBalance - numAmount;
+
+  const projectedToBalance = isTransfer ? toBalance + numAmount : 0;
+
+  const addAmount = (delta: number) => {
+    const cur = Number(f.amount) || 0;
+    const next = Math.max(0, cur + delta);
+    setF({ ...f, amount: String(next) });
+  };
+
+  const setDateToday = () => setF({ ...f, date: today() });
+  const setDateYesterday = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const yStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    setF({ ...f, date: yStr });
+  };
+
+  const autoDetectedCat = useMemo(() => {
+    if (isTransfer || !f.note) return null;
+    return autoCateg(f.note);
+  }, [f.note, isTransfer]);
 
   return (
-    <Modal title="Record Bank Transaction" onClose={onClose}>
+    <Modal title="Record Bank Transaction" onClose={onClose} maxWidth={880}>
       {/* 3-Mode segmented selector */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           background: "var(--surface-1)",
-          padding: 4,
-          borderRadius: 10,
+          padding: 5,
+          borderRadius: 12,
           border: `1.5px solid ${THEME.line}`,
-          gap: 4,
-          marginBottom: 16,
+          gap: 6,
+          marginBottom: 20,
         }}
       >
         <button
           type="button"
           onClick={() => setF({ ...f, type: "debit", linkedKey: "" })}
           style={{
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "none",
+            padding: "10px 14px",
+            borderRadius: 9,
+            border:
+              f.type === "debit"
+                ? `1.5px solid color-mix(in srgb, ${THEME.rust} 40%, transparent)`
+                : "1.5px solid transparent",
             background:
               f.type === "debit"
-                ? `color-mix(in srgb, ${THEME.rust} 15%, transparent)`
+                ? `color-mix(in srgb, ${THEME.rust} 14%, var(--surface-0))`
                 : "transparent",
             color: f.type === "debit" ? THEME.rust : THEME.muted,
             fontWeight: 800,
-            fontSize: 12,
+            fontSize: 13,
             cursor: "pointer",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
+            gap: 3,
+            boxShadow: f.type === "debit" ? "0 2px 6px rgba(220, 38, 38, 0.12)" : "none",
+            transition: "all 0.15s ease",
           }}
         >
-          <TrendingDown size={14} /> Expense (Debit)
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <TrendingDown size={15} /> <span>Expense (Debit)</span>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Money Out • Spending</span>
         </button>
 
         <button
           type="button"
           onClick={() => setF({ ...f, type: "credit", linkedKey: "" })}
           style={{
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "none",
+            padding: "10px 14px",
+            borderRadius: 9,
+            border:
+              f.type === "credit"
+                ? `1.5px solid color-mix(in srgb, ${THEME.sage} 40%, transparent)`
+                : "1.5px solid transparent",
             background:
               f.type === "credit"
-                ? `color-mix(in srgb, ${THEME.sage} 15%, transparent)`
+                ? `color-mix(in srgb, ${THEME.sage} 14%, var(--surface-0))`
                 : "transparent",
             color: f.type === "credit" ? THEME.sage : THEME.muted,
             fontWeight: 800,
-            fontSize: 12,
+            fontSize: 13,
             cursor: "pointer",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
+            gap: 3,
+            boxShadow: f.type === "credit" ? "0 2px 6px rgba(4, 130, 91, 0.12)" : "none",
+            transition: "all 0.15s ease",
           }}
         >
-          <TrendingUp size={14} /> Income (Credit)
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <TrendingUp size={15} /> <span>Income (Credit)</span>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Money In • Earnings</span>
         </button>
 
         <button
           type="button"
           onClick={() => setF({ ...f, type: "transfer", category: "Transfer", linkedKey: "" })}
           style={{
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "none",
+            padding: "10px 14px",
+            borderRadius: 9,
+            border:
+              f.type === "transfer"
+                ? `1.5px solid color-mix(in srgb, ${THEME.violet} 40%, transparent)`
+                : "1.5px solid transparent",
             background:
               f.type === "transfer"
-                ? `color-mix(in srgb, ${THEME.violet} 15%, transparent)`
+                ? `color-mix(in srgb, ${THEME.violet} 14%, var(--surface-0))`
                 : "transparent",
             color: f.type === "transfer" ? THEME.violet : THEME.muted,
             fontWeight: 800,
-            fontSize: 12,
+            fontSize: 13,
             cursor: "pointer",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
+            gap: 3,
+            boxShadow: f.type === "transfer" ? "0 2px 6px rgba(139, 92, 246, 0.12)" : "none",
+            transition: "all 0.15s ease",
           }}
         >
-          <ArrowLeftRight size={14} /> Transfer
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <ArrowLeftRight size={15} /> <span>Transfer</span>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Between Accounts</span>
         </button>
       </div>
 
-      <Field label="Owner / Family Profile">
-        <select
-          style={inputStyle}
-          value={f.owner || "self"}
-          onChange={(e) => setF({ ...f, owner: e.target.value })}
-        >
-          {familyProfiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {formatProfileOption(p)}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Date">
-          <input
-            style={inputStyle}
-            type="date"
-            value={f.date}
-            onChange={(e) => setF({ ...f, date: e.target.value })}
-          />
-        </Field>
-
-        <Field label={isTransfer ? "Source Bank Account" : "Bank Account"}>
-          <select
-            style={inputStyle}
-            value={f.accountId}
-            onChange={(e) => setF({ ...f, accountId: e.target.value })}
+      {/* 2-Column Responsive Workspace to take full advantage of wide screen */}
+      <div className="txn-modal-grid">
+        {/* Left Column: Transaction Core Inputs */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Hero Amount Input Card */}
+          <div
+            style={{
+              background: "var(--surface-1)",
+              border: `1.5px solid ${THEME.line}`,
+              borderRadius: "var(--radius-lg)",
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
           >
-            {accounts.length === 0 && <option value="">Add account first</option>}
-            {accounts.map((a: any) => (
-              <option key={a.id} value={a.id}>
-                {accountLabel(a)}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  color: THEME.muted,
+                }}
+              >
+                Amount (₹)
+              </label>
+              {numAmount > 0 && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color:
+                      f.type === "debit"
+                        ? THEME.rust
+                        : f.type === "credit"
+                        ? THEME.sage
+                        : THEME.violet,
+                  }}
+                >
+                  {f.type === "debit" ? "− " : f.type === "credit" ? "+ " : ""}
+                  {privacyMode ? "••••••" : fmtINR(numAmount)}
+                </span>
+              )}
+            </div>
 
-      {/* Amount Input */}
-      <Field label="Amount (₹)">
-        <input
-          style={{ ...inputStyle, fontSize: 16, fontWeight: 700 }}
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="0.00"
-          value={f.amount}
-          onChange={(e) => setF({ ...f, amount: e.target.value })}
-          autoFocus
-        />
-      </Field>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: 14,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color:
+                    f.type === "debit"
+                      ? THEME.rust
+                      : f.type === "credit"
+                      ? THEME.sage
+                      : THEME.violet,
+                  pointerEvents: "none",
+                }}
+              >
+                ₹
+              </span>
+              <input
+                style={{
+                  ...inputStyle,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  paddingLeft: 36,
+                  paddingRight: 14,
+                  height: 48,
+                  background: "var(--surface-0)",
+                  color: THEME.ink,
+                }}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={f.amount}
+                onChange={(e) => setF({ ...f, amount: e.target.value })}
+                autoFocus
+              />
+            </div>
 
-      {/* Transfer destination */}
-      {isTransfer && (
-        <Field label="Destination Bank Account">
-          <select
-            style={inputStyle}
-            value={f.toAccountId}
-            onChange={(e) => setF({ ...f, toAccountId: e.target.value })}
-          >
-            {accounts
-              .filter((a: any) => a.id !== f.accountId)
-              .map((a: any) => (
+            {/* Quick Amount Suggestion Chips */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: THEME.muted, marginRight: 2 }}>
+                Quick:
+              </span>
+              {[500, 1000, 2000, 5000, 10000].map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => addAmount(amt)}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    border: `1px solid ${THEME.line}`,
+                    background: "var(--surface-0)",
+                    color: THEME.ink,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                  title={`Add ₹${amt.toLocaleString("en-IN")} to amount`}
+                >
+                  +₹{amt >= 1000 ? `${amt / 1000}k` : amt}
+                </button>
+              ))}
+              {f.amount && (
+                <button
+                  type="button"
+                  onClick={() => setF({ ...f, amount: "" })}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    border: "none",
+                    background: "transparent",
+                    color: THEME.muted,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    marginLeft: "auto",
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Date with Quick Today / Yesterday */}
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 6,
+              }}
+            >
+              <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>Date</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={setDateToday}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: f.date === today() ? THEME.accent : THEME.muted,
+                    fontSize: 11,
+                    fontWeight: f.date === today() ? 800 : 600,
+                    cursor: "pointer",
+                    padding: "2px 4px",
+                  }}
+                >
+                  Today
+                </button>
+                <span style={{ color: THEME.line }}>•</span>
+                <button
+                  type="button"
+                  onClick={setDateYesterday}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: THEME.muted,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: "2px 4px",
+                  }}
+                >
+                  Yesterday
+                </button>
+              </div>
+            </div>
+            <input
+              style={inputStyle}
+              type="date"
+              value={f.date}
+              onChange={(e) => setF({ ...f, date: e.target.value })}
+            />
+          </div>
+
+          {/* Bank Account Selection (Full Width so name doesn't truncate!) */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 700,
+                color: THEME.ink,
+                marginBottom: 6,
+              }}
+            >
+              {isTransfer ? "Source Bank Account" : "Bank Account"}
+            </label>
+            <select
+              style={inputStyle}
+              value={f.accountId}
+              onChange={(e) => setF({ ...f, accountId: e.target.value })}
+            >
+              {accounts.length === 0 && <option value="">Add account first</option>}
+              {accounts.map((a: any) => (
                 <option key={a.id} value={a.id}>
                   {accountLabel(a)}
                 </option>
               ))}
-          </select>
-        </Field>
-      )}
-
-      {/* Category selector */}
-      {!isTransfer && (
-        <Field label="Category">
-          <select
-            style={inputStyle}
-            value={f.category}
-            onChange={(e) => setF({ ...f, category: e.target.value, linkedKey: "" })}
-          >
-            {cats.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
-      )}
-
-      {/* Auto link preview */}
-      {!isTransfer &&
-        (() => {
-          const cfg = getLinkConfig(f.category, f.type, state, privacyMode);
-          if (!cfg) return null;
-          return (
-            <Field label={`Link to ${cfg.label} (optional)`}>
-              <select
-                style={inputStyle}
-                value={f.linkedKey}
-                onChange={(e) => setF({ ...f, linkedKey: e.target.value })}
+            </select>
+            {currentAcc && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 5,
+                  fontSize: 11,
+                  color: THEME.muted,
+                }}
               >
-                <option value="">— Bank ledger only —</option>
-                {cfg.options.map((o: any) => (
-                  <option key={o.key} value={o.key}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              {f.linkedKey && (
-                <div
+                <span>Current Available Balance</span>
+                <span
                   style={{
-                    fontSize: 11,
-                    color: THEME.sage,
-                    marginTop: 6,
                     fontWeight: 700,
-                    padding: "6px 10px",
-                    background: `color-mix(in srgb, ${THEME.sage} 10%, transparent)`,
-                    borderRadius: 8,
+                    color: currentBalance < 0 ? THEME.rust : THEME.ink,
                   }}
                 >
-                  ✓ Will auto-post and update {cfg.label} record
+                  {privacyMode ? "••••••" : fmtINR(currentBalance)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Transfer Destination Bank Account */}
+          {isTransfer && (
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: THEME.ink,
+                  marginBottom: 6,
+                }}
+              >
+                Destination Bank Account
+              </label>
+              <select
+                style={inputStyle}
+                value={f.toAccountId}
+                onChange={(e) => setF({ ...f, toAccountId: e.target.value })}
+              >
+                {accounts
+                  .filter((a: any) => a.id !== f.accountId)
+                  .map((a: any) => (
+                    <option key={a.id} value={a.id}>
+                      {accountLabel(a)}
+                    </option>
+                  ))}
+              </select>
+              {toAcc && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: 5,
+                    fontSize: 11,
+                    color: THEME.muted,
+                  }}
+                >
+                  <span>Destination Current Balance</span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: toBalance < 0 ? THEME.rust : THEME.ink,
+                    }}
+                  >
+                    {privacyMode ? "••••••" : fmtINR(toBalance)}
+                  </span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Owner / Family Profile */}
+          <Field label="Owner / Family Profile">
+            <select
+              style={inputStyle}
+              value={f.owner || "self"}
+              onChange={(e) => setF({ ...f, owner: e.target.value })}
+            >
+              {familyProfiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {formatProfileOption(p)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {/* Right Column: Context, Live Simulation & Categorization */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Live Balance Impact Card */}
+          <div
+            style={{
+              background: "var(--surface-1)",
+              border: `1.5px solid ${THEME.line}`,
+              borderRadius: "var(--radius-lg)",
+              padding: "16px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Landmark size={15} style={{ color: THEME.accent }} />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: THEME.muted,
+                  }}
+                >
+                  Live Balance Impact
+                </span>
+              </div>
+              {currentAcc?.type && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: 99,
+                    background: `color-mix(in srgb, ${THEME.accent} 12%, transparent)`,
+                    color: THEME.accent,
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {currentAcc.type}
+                </span>
+              )}
+            </div>
+
+            {!isTransfer ? (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    fontSize: 13,
+                  }}
+                >
+                  <span style={{ color: THEME.muted }}>
+                    {currentAcc?.bankName || "Selected Bank"}
+                  </span>
+                  <span style={{ fontWeight: 600 }}>
+                    {privacyMode ? "••••••" : fmtINR(currentBalance)}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    fontSize: 13,
+                  }}
+                >
+                  <span
+                    style={{
+                      color: f.type === "debit" ? THEME.rust : THEME.sage,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {f.type === "debit" ? "− Transaction Debit" : "+ Transaction Credit"}
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: f.type === "debit" ? THEME.rust : THEME.sage,
+                    }}
+                  >
+                    {f.type === "debit" ? "− " : "+ "}
+                    {privacyMode ? "••••••" : fmtINR(numAmount)}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    borderTop: `1px dashed ${THEME.line}`,
+                    paddingTop: 10,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span style={{ fontWeight: 800, fontSize: 13, color: THEME.ink }}>
+                    Projected Balance
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 800,
+                      fontSize: 16,
+                      color: projectedBalance < 0 ? THEME.rust : THEME.ink,
+                    }}
+                  >
+                    {privacyMode ? "••••••" : fmtINR(projectedBalance)}
+                  </span>
+                </div>
+
+                {projectedBalance < 0 && numAmount > 0 && (
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: THEME.rust,
+                      fontWeight: 700,
+                      padding: "6px 10px",
+                      background: `color-mix(in srgb, ${THEME.rust} 12%, transparent)`,
+                      borderRadius: 8,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    ⚠️ Caution: This will cause an overdraft / negative balance.
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 12, color: THEME.muted, marginBottom: 2 }}>
+                  Source: <strong>{currentAcc?.bankName}</strong>
+                </div>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}
+                >
+                  <span style={{ color: THEME.muted }}>
+                    Current: {privacyMode ? "••••••" : fmtINR(currentBalance)}
+                  </span>
+                  <span style={{ fontWeight: 700, color: THEME.rust }}>
+                    − {privacyMode ? "••••••" : fmtINR(numAmount)}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>Projected Source:</span>
+                  <span style={{ color: projectedBalance < 0 ? THEME.rust : THEME.ink }}>
+                    {privacyMode ? "••••••" : fmtINR(projectedBalance)}
+                  </span>
+                </div>
+
+                <div style={{ borderTop: `1px solid ${THEME.line}`, margin: "4px 0" }} />
+
+                <div style={{ fontSize: 12, color: THEME.muted, marginBottom: 2 }}>
+                  Destination: <strong>{toAcc?.bankName || "Select Destination"}</strong>
+                </div>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}
+                >
+                  <span style={{ color: THEME.muted }}>
+                    Current: {privacyMode ? "••••••" : fmtINR(toBalance)}
+                  </span>
+                  <span style={{ fontWeight: 700, color: THEME.sage }}>
+                    + {privacyMode ? "••••••" : fmtINR(numAmount)}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>Projected Destination:</span>
+                  <span style={{ color: THEME.sage }}>
+                    {privacyMode ? "••••••" : fmtINR(projectedToBalance)}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Category & Auto Link (Expense/Income only) */}
+          {!isTransfer && (
+            <div>
+              <Field label="Category">
+                <select
+                  style={inputStyle}
+                  value={f.category}
+                  onChange={(e) => setF({ ...f, category: e.target.value, linkedKey: "" })}
+                >
+                  {cats.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </Field>
+
+              {(() => {
+                const cfg = getLinkConfig(f.category, f.type, state, privacyMode);
+                if (!cfg) return null;
+                return (
+                  <div style={{ marginTop: 10 }}>
+                    <Field label={`Link to ${cfg.label} (optional)`}>
+                      <select
+                        style={inputStyle}
+                        value={f.linkedKey}
+                        onChange={(e) => setF({ ...f, linkedKey: e.target.value })}
+                      >
+                        <option value="">— Bank ledger only —</option>
+                        {cfg.options.map((o: any) => (
+                          <option key={o.key} value={o.key}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                      {f.linkedKey && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: THEME.sage,
+                            marginTop: 6,
+                            fontWeight: 700,
+                            padding: "6px 10px",
+                            background: `color-mix(in srgb, ${THEME.sage} 10%, transparent)`,
+                            borderRadius: 8,
+                          }}
+                        >
+                          ✓ Will auto-post and update {cfg.label} record
+                        </div>
+                      )}
+                    </Field>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Particulars / Note */}
+          <div>
+            <Field label="Particulars / Note">
+              <input
+                style={inputStyle}
+                value={f.note}
+                onChange={(e) => {
+                  const note = e.target.value;
+                  const cat = !isTransfer ? autoCateg(note) : null;
+                  setF({ ...f, note, ...(cat ? { category: cat, linkedKey: "" } : {}) });
+                }}
+                placeholder={
+                  isTransfer
+                    ? "e.g. Monthly transfer to salary savings"
+                    : "e.g. Swiggy order, Electricity Bill — category auto-detects"
+                }
+              />
             </Field>
-          );
-        })()}
+            {autoDetectedCat && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: THEME.accent,
+                  fontWeight: 700,
+                  marginTop: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <Sparkles size={12} /> Auto-detected: <strong>{autoDetectedCat}</strong>
+              </div>
+            )}
+          </div>
 
-      <Field label="Particulars / Note">
-        <input
-          style={inputStyle}
-          value={f.note}
-          onChange={(e) => {
-            const note = e.target.value;
-            const cat = !isTransfer ? autoCateg(note) : null;
-            setF({ ...f, note, ...(cat ? { category: cat, linkedKey: "" } : {}) });
+          {/* Reference / Cheque No. */}
+          <Field label="Reference / Cheque No.">
+            <input
+              style={inputStyle}
+              value={f.referenceNumber || ""}
+              onChange={(e) => setF({ ...f, referenceNumber: e.target.value })}
+              placeholder="Optional cheque or transaction ref #"
+            />
+          </Field>
+        </div>
+      </div>
+
+      {/* Dedicated Full-Width Narration / Description Section with Proper Space */}
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: `1px solid ${THEME.line}`,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 6,
           }}
-          placeholder={
-            isTransfer
-              ? "e.g. Monthly transfer to salary savings"
-              : "e.g. Swiggy order, Electricity Bill — category auto-detects"
-          }
+        >
+          <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>
+            Narration / Description
+          </label>
+          <span style={{ fontSize: 11, color: THEME.muted }}>
+            Raw bank statement narration • UPI / IMPS details • Memo
+          </span>
+        </div>
+        <textarea
+          style={{
+            ...inputStyle,
+            minHeight: 64,
+            resize: "vertical",
+            fontFamily: "inherit",
+            fontSize: 13,
+            lineHeight: 1.45,
+          }}
+          rows={2}
+          value={f.narration}
+          onChange={(e) => setF({ ...f, narration: e.target.value })}
+          placeholder="e.g. UPI/428472918234/SWIGGY BANGALORE/HDFC0001234 or paste raw statement memo..."
         />
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Narration / Description">
-          <input
-            style={inputStyle}
-            value={f.narration}
-            onChange={(e) => setF({ ...f, narration: e.target.value })}
-            placeholder="UPI / IMPS / Bank description"
-          />
-        </Field>
-
-        <Field label="Reference / Cheque No.">
-          <input
-            style={inputStyle}
-            value={f.referenceNumber || ""}
-            onChange={(e) => setF({ ...f, referenceNumber: e.target.value })}
-            placeholder="Optional ref / cheque number"
-          />
-        </Field>
+        {f.narration && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: THEME.muted, fontWeight: 600 }}>
+              {f.narration.length} characters
+            </span>
+          </div>
+        )}
       </div>
 
       <ModalActions
@@ -4779,6 +5328,7 @@ function TxnModal({
 
 function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, saving }: any) {
   const { transactionCategories: cats, familyProfiles } = useMasterData();
+  const { privacyMode } = usePrivacy();
   const [f, setF] = useState({
     owner: txn?.owner || "self",
     date: txn?.date || today(),
@@ -4795,14 +5345,43 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
         : String(txn.statementBalance),
   });
 
+  const numAmount = Number(f.amount) || 0;
+  const originalAmt = Number(txn?.amount) || 0;
+  const currentAcc = accounts.find((a: any) => a.id === f.accountId) || accounts[0];
+  const currentBalance = currentAcc
+    ? (typeof getDisplayBalance === "function" ? getDisplayBalance(currentAcc) : Number(currentAcc.balance || 0))
+    : 0;
+
+  const isDebit = f.type === "debit";
+  const wasDebit = (txn?.type || "debit") === "debit";
+
+  // Calculate projected balance after edit
+  // Revert old effect, then apply new effect
+  const balanceWithoutTxn = currentBalance + (wasDebit ? originalAmt : -originalAmt);
+  const projectedBalance = balanceWithoutTxn + (isDebit ? -numAmount : numAmount);
+
+  const addAmount = (delta: number) => {
+    const cur = Number(f.amount) || 0;
+    const next = Math.max(0, cur + delta);
+    setF({ ...f, amount: String(next) });
+  };
+
+  const setDateToday = () => setF({ ...f, date: today() });
+  const setDateYesterday = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const yStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    setF({ ...f, date: yStr });
+  };
+
   return (
-    <Modal title="Edit Transaction Details" onClose={onClose}>
+    <Modal title="Edit Transaction Details" onClose={onClose} maxWidth={880}>
       {(txn?.linkedType || txn?.linked_type) && (
         <div
           style={{
             fontSize: 11,
             color: THEME.gold,
-            marginBottom: 12,
+            marginBottom: 14,
             fontWeight: 700,
             padding: "8px 12px",
             background: `color-mix(in srgb, ${THEME.gold} 10%, transparent)`,
@@ -4814,12 +5393,13 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
           linked to a {txn.linkedType || txn.linked_type} record.
         </div>
       )}
-      {(txn?.subCategory === "RD Maturity" || (txn?.note && txn.note.toLowerCase().includes("rd maturity"))) && (
+      {(txn?.subCategory === "RD Maturity" ||
+        (txn?.note && txn.note.toLowerCase().includes("rd maturity"))) && (
         <div
           style={{
             fontSize: 11,
             color: THEME.sage,
-            marginBottom: 12,
+            marginBottom: 14,
             fontWeight: 700,
             padding: "8px 12px",
             background: `rgba(16, 185, 129, 0.1)`,
@@ -4834,105 +5414,444 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
         </div>
       )}
 
-      <Field label="Owner / Family Profile">
-        <select
-          style={inputStyle}
-          value={f.owner || "self"}
-          onChange={(e) => setF({ ...f, owner: e.target.value })}
-        >
-          {familyProfiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {formatProfileOption(p)}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {/* 2-Column Responsive Workspace */}
+      <div className="txn-modal-grid">
+        {/* Left Column: Transaction Core Inputs */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Type Selector */}
+          <Field label="Transaction Type">
+            <select
+              style={inputStyle}
+              value={f.type}
+              onChange={(e) => setF({ ...f, type: e.target.value })}
+            >
+              <option value="debit">Debit (Expense / Money Out)</option>
+              <option value="credit">Credit (Income / Money In)</option>
+            </select>
+          </Field>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Date">
-          <input
-            style={inputStyle}
-            type="date"
-            value={f.date}
-            onChange={(e) => setF({ ...f, date: e.target.value })}
-          />
-        </Field>
-
-        <Field label="Bank Account">
-          <select
-            style={inputStyle}
-            value={f.accountId}
-            onChange={(e) => setF({ ...f, accountId: e.target.value })}
+          {/* Hero Amount Input Card */}
+          <div
+            style={{
+              background: "var(--surface-1)",
+              border: `1.5px solid ${THEME.line}`,
+              borderRadius: "var(--radius-lg)",
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
           >
-            {accounts.map((a: any) => (
-              <option key={a.id} value={a.id}>
-                {accountLabel(a)}
-              </option>
-            ))}
-          </select>
-        </Field>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  color: THEME.muted,
+                }}
+              >
+                Amount (₹)
+              </label>
+              {numAmount > 0 && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: isDebit ? THEME.rust : THEME.sage,
+                  }}
+                >
+                  {isDebit ? "− " : "+ "}
+                  {privacyMode ? "••••••" : fmtINR(numAmount)}
+                </span>
+              )}
+            </div>
+
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: 14,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: isDebit ? THEME.rust : THEME.sage,
+                  pointerEvents: "none",
+                }}
+              >
+                ₹
+              </span>
+              <input
+                style={{
+                  ...inputStyle,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  paddingLeft: 36,
+                  paddingRight: 14,
+                  height: 48,
+                  background: "var(--surface-0)",
+                  color: THEME.ink,
+                }}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={f.amount}
+                onChange={(e) => setF({ ...f, amount: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: THEME.muted, marginRight: 2 }}>
+                Quick:
+              </span>
+              {[500, 1000, 2000, 5000].map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => addAmount(amt)}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    border: `1px solid ${THEME.line}`,
+                    background: "var(--surface-0)",
+                    color: THEME.ink,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  +₹{amt >= 1000 ? `${amt / 1000}k` : amt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date */}
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 6,
+              }}
+            >
+              <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>Date</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={setDateToday}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: f.date === today() ? THEME.accent : THEME.muted,
+                    fontSize: 11,
+                    fontWeight: f.date === today() ? 800 : 600,
+                    cursor: "pointer",
+                    padding: "2px 4px",
+                  }}
+                >
+                  Today
+                </button>
+                <span style={{ color: THEME.line }}>•</span>
+                <button
+                  type="button"
+                  onClick={setDateYesterday}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: THEME.muted,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: "2px 4px",
+                  }}
+                >
+                  Yesterday
+                </button>
+              </div>
+            </div>
+            <input
+              style={inputStyle}
+              type="date"
+              value={f.date}
+              onChange={(e) => setF({ ...f, date: e.target.value })}
+            />
+          </div>
+
+          {/* Bank Account */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 700,
+                color: THEME.ink,
+                marginBottom: 6,
+              }}
+            >
+              Bank Account
+            </label>
+            <select
+              style={inputStyle}
+              value={f.accountId}
+              onChange={(e) => setF({ ...f, accountId: e.target.value })}
+            >
+              {accounts.map((a: any) => (
+                <option key={a.id} value={a.id}>
+                  {accountLabel(a)}
+                </option>
+              ))}
+            </select>
+            {currentAcc && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 5,
+                  fontSize: 11,
+                  color: THEME.muted,
+                }}
+              >
+                <span>Current Recorded Balance</span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: currentBalance < 0 ? THEME.rust : THEME.ink,
+                  }}
+                >
+                  {privacyMode ? "••••••" : fmtINR(currentBalance)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Owner / Family Profile */}
+          <Field label="Owner / Family Profile">
+            <select
+              style={inputStyle}
+              value={f.owner || "self"}
+              onChange={(e) => setF({ ...f, owner: e.target.value })}
+            >
+              {familyProfiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {formatProfileOption(p)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {/* Right Column: Context, Live Simulation & Details */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Live Balance Impact Card */}
+          <div
+            style={{
+              background: "var(--surface-1)",
+              border: `1.5px solid ${THEME.line}`,
+              borderRadius: "var(--radius-lg)",
+              padding: "16px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Landmark size={15} style={{ color: THEME.accent }} />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: THEME.muted,
+                  }}
+                >
+                  Adjusted Balance Impact
+                </span>
+              </div>
+              {currentAcc?.type && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: 99,
+                    background: `color-mix(in srgb, ${THEME.accent} 12%, transparent)`,
+                    color: THEME.accent,
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {currentAcc.type}
+                </span>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                fontSize: 13,
+              }}
+            >
+              <span style={{ color: THEME.muted }}>Current Recorded Balance</span>
+              <span style={{ fontWeight: 600 }}>
+                {privacyMode ? "••••••" : fmtINR(currentBalance)}
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                fontSize: 12,
+                color: THEME.muted,
+              }}
+            >
+              <span>Original Txn ({wasDebit ? "Debit" : "Credit"})</span>
+              <span>{privacyMode ? "••••••" : fmtINR(originalAmt)}</span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                fontSize: 13,
+              }}
+            >
+              <span style={{ color: isDebit ? THEME.rust : THEME.sage, fontWeight: 600 }}>
+                {isDebit ? "− New Debit Amount" : "+ New Credit Amount"}
+              </span>
+              <span style={{ fontWeight: 700, color: isDebit ? THEME.rust : THEME.sage }}>
+                {isDebit ? "− " : "+ "}
+                {privacyMode ? "••••••" : fmtINR(numAmount)}
+              </span>
+            </div>
+
+            <div
+              style={{
+                borderTop: `1px dashed ${THEME.line}`,
+                paddingTop: 10,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+              }}
+            >
+              <span style={{ fontWeight: 800, fontSize: 13, color: THEME.ink }}>
+                Projected New Balance
+              </span>
+              <span
+                style={{
+                  fontWeight: 800,
+                  fontSize: 16,
+                  color: projectedBalance < 0 ? THEME.rust : THEME.ink,
+                }}
+              >
+                {privacyMode ? "••••••" : fmtINR(projectedBalance)}
+              </span>
+            </div>
+          </div>
+
+          {/* Category */}
+          <Field label="Category">
+            <select
+              style={inputStyle}
+              value={f.category}
+              onChange={(e) => setF({ ...f, category: e.target.value })}
+            >
+              {cats.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </Field>
+
+          {/* Particulars / Note */}
+          <Field label="Particulars / Note">
+            <input
+              style={inputStyle}
+              value={f.note}
+              onChange={(e) => setF({ ...f, note: e.target.value })}
+            />
+          </Field>
+
+          <div style={{ display: "grid", gridTemplateColumns: f.statementBalance !== "" ? "1fr 1fr" : "1fr", gap: 10 }}>
+            {/* Reference / Cheque No. */}
+            <Field label="Reference / Cheque No.">
+              <input
+                style={inputStyle}
+                value={f.referenceNumber || ""}
+                onChange={(e) => setF({ ...f, referenceNumber: e.target.value })}
+                placeholder="Optional ref #"
+              />
+            </Field>
+
+            {/* Statement Balance */}
+            {f.statementBalance !== "" && (
+              <Field label="Anchored Statement Balance (₹)">
+                <input
+                  style={inputStyle}
+                  type="number"
+                  step="0.01"
+                  value={f.statementBalance}
+                  onChange={(e) => setF({ ...f, statementBalance: e.target.value })}
+                  placeholder="Bank statement balance"
+                />
+              </Field>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Transaction Type">
-          <select
-            style={inputStyle}
-            value={f.type}
-            onChange={(e) => setF({ ...f, type: e.target.value })}
-          >
-            <option value="debit">Debit (Expense / Money Out)</option>
-            <option value="credit">Credit (Income / Money In)</option>
-          </select>
-        </Field>
-
-        <Field label="Amount (₹)">
-          <input
-            style={inputStyle}
-            type="number"
-            min="0"
-            step="0.01"
-            value={f.amount}
-            onChange={(e) => setF({ ...f, amount: e.target.value })}
-          />
-        </Field>
-      </div>
-
-      <Field label="Category">
-        <select
-          style={inputStyle}
-          value={f.category}
-          onChange={(e) => setF({ ...f, category: e.target.value })}
+      {/* Dedicated Full-Width Narration / Description Section with Proper Space */}
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: `1px solid ${THEME.line}`,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 6,
+          }}
         >
-          {cats.map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Particulars / Note">
-        <input
-          style={inputStyle}
-          value={f.note}
-          onChange={(e) => setF({ ...f, note: e.target.value })}
+          <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>
+            Narration / Description
+          </label>
+          <span style={{ fontSize: 11, color: THEME.muted }}>
+            Raw bank statement narration • UPI / IMPS details • Memo
+          </span>
+        </div>
+        <textarea
+          style={{
+            ...inputStyle,
+            minHeight: 64,
+            resize: "vertical",
+            fontFamily: "inherit",
+            fontSize: 13,
+            lineHeight: 1.45,
+          }}
+          rows={2}
+          value={f.narration}
+          onChange={(e) => setF({ ...f, narration: e.target.value })}
+          placeholder="e.g. UPI/428472918234/SWIGGY BANGALORE/HDFC0001234 or paste raw statement memo..."
         />
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Narration">
-          <input
-            style={inputStyle}
-            value={f.narration}
-            onChange={(e) => setF({ ...f, narration: e.target.value })}
-          />
-        </Field>
-
-        <Field label="Reference / Cheque No.">
-          <input
-            style={inputStyle}
-            value={f.referenceNumber || ""}
-            onChange={(e) => setF({ ...f, referenceNumber: e.target.value })}
-          />
-        </Field>
+        {f.narration && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: THEME.muted, fontWeight: 600 }}>
+              {f.narration.length} characters
+            </span>
+          </div>
+        )}
       </div>
 
       <ModalActions
@@ -4945,3 +5864,4 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
     </Modal>
   );
 }
+
