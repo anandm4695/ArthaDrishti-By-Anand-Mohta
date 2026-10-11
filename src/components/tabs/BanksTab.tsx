@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Plus,
   FileUp,
@@ -77,6 +77,7 @@ import { Field } from "../ui/Form";
 import { Badge } from "../ui/Badge";
 import { ConfirmDialog } from "../ui/Feedback";
 import { Button } from "../ui/Button";
+import { PaginationBar } from "../ui/PaginationBar";
 import { BankEditModal } from "../modals/BankEditModal";
 import { CsvImportModal } from "../modals/CsvImportModal";
 import { SectionTitle } from "../ui/SectionTitle";
@@ -350,6 +351,7 @@ export function BanksTab({
   // Pagination
   const TXN_PAGE_SIZE = 40;
   const [txnPage, setTxnPage] = useState(1);
+  const ledgerTableRef = useRef<HTMLDivElement>(null);
 
   const { transactionCategories: txnCats } = useMasterData();
 
@@ -1097,7 +1099,15 @@ export function BanksTab({
   }, [filterAcc, filterType, filterCat, search, dateFrom, dateTo, sortField, sortDirection]);
 
   const totalTxnPages = Math.max(1, Math.ceil(sortedTxns.length / TXN_PAGE_SIZE));
-  const currentTxnPage = Math.min(txnPage, totalTxnPages);
+  const currentTxnPage = Math.max(1, Math.min(txnPage, totalTxnPages));
+
+  // Automatically adjust page if filtered records reduce total pages
+  useEffect(() => {
+    if (txnPage > totalTxnPages) {
+      setTxnPage(Math.max(1, totalTxnPages));
+    }
+  }, [totalTxnPages, txnPage]);
+
   const pagedTxns = useMemo(() => {
     return sortedTxns.slice((currentTxnPage - 1) * TXN_PAGE_SIZE, currentTxnPage * TXN_PAGE_SIZE);
   }, [sortedTxns, currentTxnPage]);
@@ -2430,7 +2440,26 @@ export function BanksTab({
               </div>
             )
           ) : (
-            <div className="desktop-only">
+            <>
+              {sortedTxns.length > TXN_PAGE_SIZE && (
+                <PaginationBar
+                  currentPage={currentTxnPage}
+                  totalPages={totalTxnPages}
+                  totalRecords={sortedTxns.length}
+                  pageSize={TXN_PAGE_SIZE}
+                  onPageChange={setTxnPage}
+                  scrollTargetRef={ledgerTableRef}
+                  compact
+                  recordLabel="transactions"
+                  style={{
+                    padding: "4px 0 10px 0",
+                    borderBottom: `1px solid ${THEME.line}`,
+                    marginBottom: 8,
+                  }}
+                />
+              )}
+              <div ref={ledgerTableRef} style={{ minHeight: "420px", display: "flex", flexDirection: "column" }}>
+                <div className="desktop-only">
               <DataTable
                 columns={[
                   {
@@ -3027,10 +3056,8 @@ export function BanksTab({
                 })()}
               />
             </div>
-          )}
 
-          {/* Mobile Card List View */}
-          {sortedTxns.length > 0 && (
+            {/* Mobile Card List View */}
             <div className="mobile-only" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {pagedTxns.map((t: any) => {
                 const bank = (state.bankAccounts || []).find((b: any) => b.id === t.accountId);
@@ -3190,67 +3217,23 @@ export function BanksTab({
                 );
               })}
             </div>
-          )}
-
-          {/* Pagination Deck */}
-          {sortedTxns.length > TXN_PAGE_SIZE && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 10,
-                paddingTop: 8,
-                borderTop: `1px solid ${THEME.line}`,
-              }}
-            >
-              <span style={{ fontSize: 12, color: THEME.muted, fontWeight: 600 }}>
-                Showing {(currentTxnPage - 1) * TXN_PAGE_SIZE + 1}–
-                {Math.min(currentTxnPage * TXN_PAGE_SIZE, sortedTxns.length)} of {sortedTxns.length}{" "}
-                records
-              </span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button
-                  onClick={() => setTxnPage((p) => Math.max(1, p - 1))}
-                  disabled={currentTxnPage <= 1}
-                  className="icon-btn"
-                  style={{
-                    ...iconBtn,
-                    padding: "6px 12px",
-                    borderRadius: 8,
-                    border: `1.5px solid ${THEME.line}`,
-                    background: "var(--surface-1)",
-                    opacity: currentTxnPage <= 1 ? 0.4 : 1,
-                    cursor: currentTxnPage <= 1 ? "not-allowed" : "pointer",
-                  }}
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={14} /> Prev
-                </button>
-                <span style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>
-                  Page {currentTxnPage} of {totalTxnPages}
-                </span>
-                <button
-                  onClick={() => setTxnPage((p) => Math.min(totalTxnPages, p + 1))}
-                  disabled={currentTxnPage >= totalTxnPages}
-                  className="icon-btn"
-                  style={{
-                    ...iconBtn,
-                    padding: "6px 12px",
-                    borderRadius: 8,
-                    border: `1.5px solid ${THEME.line}`,
-                    background: "var(--surface-1)",
-                    opacity: currentTxnPage >= totalTxnPages ? 0.4 : 1,
-                    cursor: currentTxnPage >= totalTxnPages ? "not-allowed" : "pointer",
-                  }}
-                  aria-label="Next page"
-                >
-                  Next <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
+          <PaginationBar
+            currentPage={currentTxnPage}
+            totalPages={totalTxnPages}
+            totalRecords={sortedTxns.length}
+            pageSize={TXN_PAGE_SIZE}
+            onPageChange={setTxnPage}
+            scrollTargetRef={ledgerTableRef}
+            recordLabel="transactions"
+            style={{
+              paddingTop: 12,
+              borderTop: `1px solid ${THEME.line}`,
+              marginTop: 8,
+            }}
+          />
+        </>
+      )}
         </Card>
       )}
 

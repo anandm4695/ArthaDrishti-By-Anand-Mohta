@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Clock,
   Search,
@@ -9,6 +9,7 @@ import {
   RefreshCw,
   FileText,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Calendar,
   AlertTriangle,
@@ -394,6 +395,8 @@ export const AuditLogTab: React.FC<AuditLogTabProps> = ({
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState("30");
   const [page, setPage] = useState(0);
+  const [goToPageInput, setGoToPageInput] = useState("");
+  const auditLogContainerRef = useRef<HTMLDivElement>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<Record<string, "structured" | "raw">>({});
@@ -1563,7 +1566,7 @@ export const AuditLogTab: React.FC<AuditLogTabProps> = ({
             <SkeletonTableRows rows={7} columns={4} rowHeight={20} />
           </div>
         ) : groupedLogs.length > 0 ? (
-          <div style={{ maxHeight: 680, overflowY: "auto" }}>
+          <div ref={auditLogContainerRef} style={{ maxHeight: 680, minHeight: 320, overflowY: "auto" }}>
             {groupedLogs.map(({ date, label, fullDate, items }) => (
               <div key={date}>
                 {/* Date Grouping Sticky Header */}
@@ -1855,30 +1858,88 @@ export const AuditLogTab: React.FC<AuditLogTabProps> = ({
                 gap: 8,
               }}
             >
-              <span style={{ fontSize: 12, color: THEME.textSecondary }}>
-                Showing page {page + 1} ({filteredLogs.length} events loaded)
+              <span style={{ fontSize: 12, color: THEME.textSecondary, fontWeight: 600 }}>
+                Page <strong style={{ color: THEME.text }}>{page + 1}</strong> ({filteredLogs.length} events loaded on this page)
               </span>
 
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setPage(Math.max(0, page - 1))}
+                  onClick={() => {
+                    setPage((p) => Math.max(0, p - 1));
+                    if (auditLogContainerRef.current) auditLogContainerRef.current.scrollTop = 0;
+                  }}
                   disabled={page === 0}
                 >
-                  Previous
+                  <ChevronLeft size={14} /> Previous
                 </Button>
-                <span style={{ padding: "4px 8px", fontSize: 12.5, fontWeight: 600, color: THEME.text }}>
+                <span style={{ padding: "4px 8px", fontSize: 12.5, fontWeight: 700, color: THEME.text }}>
                   Page {page + 1}
                 </span>
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setPage(page + 1)}
+                  onClick={() => {
+                    setPage((p) => p + 1);
+                    if (auditLogContainerRef.current) auditLogContainerRef.current.scrollTop = 0;
+                  }}
                   disabled={logs.length < PAGE_SIZE}
                 >
-                  Next
+                  Next <ChevronRight size={14} />
                 </Button>
+
+                {/* Direct Go To Page Form */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const inputVal = parseInt(goToPageInput.trim(), 10);
+                    if (!isNaN(inputVal) && inputVal >= 1) {
+                      setPage(inputVal - 1);
+                      setGoToPageInput("");
+                      if (auditLogContainerRef.current) auditLogContainerRef.current.scrollTop = 0;
+                    }
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    marginLeft: 8,
+                    paddingLeft: 8,
+                    borderLeft: `1px solid ${THEME.border}`,
+                  }}
+                >
+                  <span style={{ fontSize: 11.5, color: THEME.textSecondary, fontWeight: 600 }}>Go to:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={goToPageInput}
+                    onChange={(e) => setGoToPageInput(e.target.value)}
+                    placeholder={String(page + 1)}
+                    style={{
+                      width: "44px",
+                      height: "28px",
+                      padding: "2px 4px",
+                      borderRadius: "6px",
+                      border: `1px solid ${THEME.border}`,
+                      background: "var(--surface-1)",
+                      color: THEME.text,
+                      fontSize: "11.5px",
+                      fontWeight: 700,
+                      textAlign: "center",
+                      outline: "none",
+                    }}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    type="submit"
+                    disabled={!goToPageInput}
+                    style={{ height: 28, padding: "0 8px" }}
+                  >
+                    Go
+                  </Button>
+                </form>
               </div>
             </div>
           </div>

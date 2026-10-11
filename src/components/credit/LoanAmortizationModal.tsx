@@ -1,5 +1,6 @@
 /* eslint-disable */
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
+import { PaginationBar } from "../ui/PaginationBar";
 import {
   Calculator,
   Download,
@@ -42,6 +43,7 @@ export function LoanAmortizationModal({ loan, onClose }: LoanAmortizationModalPr
   const [currentPage, setCurrentPage] = useState(1);
   const [extraMonthly, setExtraMonthly] = useState(0);
   const pageSize = 12;
+  const scheduleTableRef = useRef<HTMLDivElement>(null);
 
   const principal = Number(loan.principal) || 0;
   const outstanding = Number(loan.outstanding ?? loan.principal) || 0;
@@ -124,10 +126,11 @@ export function LoanAmortizationModal({ loan, onClose }: LoanAmortizationModalPr
       }));
   }, [activeAmortization.schedule]);
 
-  const totalPages = Math.ceil(activeAmortization.schedule.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(activeAmortization.schedule.length / pageSize));
+  const safeCurrentPage = Math.max(1, Math.min(currentPage, totalPages));
   const pagedItems = activeAmortization.schedule.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    (safeCurrentPage - 1) * pageSize,
+    safeCurrentPage * pageSize
   );
 
   const interestSaved = extraAmortization
@@ -548,8 +551,10 @@ export function LoanAmortizationModal({ loan, onClose }: LoanAmortizationModalPr
 
         {/* Schedule Table */}
         <div
+          ref={scheduleTableRef}
           style={{
             maxHeight: 280,
+            minHeight: 240,
             overflowY: "auto",
             border: `1px solid var(--t-line)`,
             borderRadius: 12,
@@ -735,57 +740,24 @@ export function LoanAmortizationModal({ loan, onClose }: LoanAmortizationModalPr
 
         {/* Pagination if in monthly view */}
         {!viewYearly && totalPages > 1 && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontSize: 11,
-              color: "var(--t-muted)",
+          <PaginationBar
+            currentPage={safeCurrentPage}
+            totalPages={totalPages}
+            totalRecords={activeAmortization.schedule.length}
+            pageSize={pageSize}
+            onPageChange={(p) => {
+              setCurrentPage(p);
+              if (scheduleTableRef.current) {
+                scheduleTableRef.current.scrollTop = 0;
+              }
             }}
-          >
-            <span>
-              Showing {(currentPage - 1) * pageSize + 1}–
-              {Math.min(currentPage * pageSize, activeAmortization.schedule.length)} of{" "}
-              {activeAmortization.schedule.length} months
-            </span>
-            <div style={{ display: "flex", gap: 6 }}>
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                style={{
-                  padding: "3px 10px",
-                  borderRadius: 6,
-                  border: `1px solid var(--t-line)`,
-                  background: "var(--surface-0)",
-                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                  opacity: currentPage === 1 ? 0.5 : 1,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--t-ink)",
-                }}
-              >
-                Previous
-              </button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                style={{
-                  padding: "3px 10px",
-                  borderRadius: 6,
-                  border: `1px solid var(--t-line)`,
-                  background: "var(--surface-0)",
-                  cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                  opacity: currentPage === totalPages ? 0.5 : 1,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--t-ink)",
-                }}
-              >
-                Next
-              </button>
-            </div>
-          </div>
+            recordLabel="months"
+            compact
+            style={{
+              paddingTop: 8,
+              borderTop: `1px solid var(--t-line)`,
+            }}
+          />
         )}
       </div>
     </Modal>
