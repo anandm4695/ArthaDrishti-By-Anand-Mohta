@@ -8190,6 +8190,278 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
   );
 }
 
+const POPULAR_PREPAID_PRESETS = [
+  { label: "Sodexo Meal Card", cardName: "Sodexo Meal Card", cardType: "Meal Card" },
+  { label: "Zeta Meal Pass", cardName: "Zeta Meal Card", cardType: "Meal Card" },
+  { label: "ICICI Forex Card", cardName: "ICICI Forex Card", cardType: "Forex Card" },
+  { label: "Amazon Pay Wallet", cardName: "Amazon Pay Wallet", cardType: "Digital Wallet" },
+  { label: "NCMC Metro Transit", cardName: "NCMC Metro Transit Card", cardType: "Transit Card" },
+  { label: "IndianOil Fuel Card", cardName: "IndianOil Fuel Card", cardType: "Fuel Card" },
+];
+
+function PrepaidCardPreview({
+  card,
+  ownerName,
+  openingBal,
+  isClosed,
+}: {
+  card: any;
+  ownerName: string;
+  openingBal: string;
+  isClosed: boolean;
+}) {
+  const cardName = card.cardName || card.name || "Prepaid Card / Wallet";
+  const gradient = isClosed
+    ? "linear-gradient(135deg, #383842 0%, #202028 100%)"
+    : getCardGradient(cardName);
+  const formattedLast4 = card.last4 ? card.last4.padStart(4, "•") : "••••";
+  const numBal = Number(openingBal) || 0;
+
+  return (
+    <div
+      className="cc-preview-card"
+      style={{
+        background: gradient,
+        opacity: isClosed ? 0.8 : 1,
+        filter: isClosed ? "grayscale(40%)" : "none",
+        minHeight: 195,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
+      <div className="cc-preview-sheen" />
+
+      {/* Top Bar: Brand/Bank Logo + Card Name + Card Type Badge + Status */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <BankLogo bankName={cardName} size={30} />
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 13.5,
+                fontWeight: 800,
+                color: "#ffffff",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: 180,
+                letterSpacing: "-0.01em",
+                textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+              }}
+            >
+              {cardName}
+            </div>
+            <span
+              style={{
+                fontSize: 9.5,
+                padding: "1px 6px",
+                borderRadius: 6,
+                background: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(4px)",
+                color: "#fff",
+                fontWeight: 700,
+                display: "inline-block",
+                marginTop: 2,
+              }}
+            >
+              {card.cardType || "Prepaid"}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          {isClosed ? (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                padding: "2px 7px",
+                borderRadius: 99,
+                background: "rgba(239, 68, 68, 0.25)",
+                border: "1px solid rgba(239, 68, 68, 0.45)",
+                color: "#fca5a5",
+                textTransform: "uppercase",
+              }}
+            >
+              Closed
+            </span>
+          ) : (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "2px 7px",
+                borderRadius: 99,
+                background: "rgba(34, 197, 94, 0.22)",
+                border: "1px solid rgba(34, 197, 94, 0.4)",
+                color: "#86efac",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <Check size={10} strokeWidth={3} /> Active
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Middle Row: Chip + Contactless Wave */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: "10px 0 6px",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <ChipSVG />
+          <Wifi
+            size={16}
+            style={{
+              transform: "rotate(90deg)",
+              color: "rgba(255, 255, 255, 0.7)",
+            }}
+          />
+        </div>
+
+        {card.lowBalanceThreshold && (
+          <span
+            style={{
+              fontSize: 9.5,
+              fontWeight: 700,
+              padding: "2px 7px",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.18)",
+              backdropFilter: "blur(6px)",
+              color: "#fff",
+            }}
+          >
+            Alert: &lt; ₹{card.lowBalanceThreshold}
+          </span>
+        )}
+      </div>
+
+      {/* Card Number Row */}
+      <div
+        style={{
+          fontSize: 16,
+          fontWeight: 700,
+          letterSpacing: "0.22em",
+          color: "#ffffff",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          textShadow: "0 2px 4px rgba(0, 0, 0, 0.55)",
+          position: "relative",
+          zIndex: 2,
+          margin: "2px 0 8px",
+        }}
+      >
+        •••• &nbsp;•••• &nbsp;•••• &nbsp;{formattedLast4}
+      </div>
+
+      {/* Bottom Bar: Cardholder, Expiry, Loaded Balance */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          position: "relative",
+          zIndex: 2,
+          borderTop: "1px solid rgba(255, 255, 255, 0.15)",
+          paddingTop: 7,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 8.5,
+              letterSpacing: "0.08em",
+              color: "rgba(255, 255, 255, 0.65)",
+              textTransform: "uppercase",
+              fontWeight: 700,
+            }}
+          >
+            Cardholder
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: "#ffffff",
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
+              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+            }}
+          >
+            {ownerName}
+          </div>
+        </div>
+
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 8.5,
+              letterSpacing: "0.08em",
+              color: "rgba(255, 255, 255, 0.65)",
+              textTransform: "uppercase",
+              fontWeight: 700,
+            }}
+          >
+            Valid Thru
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              color: "#ffffff",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {card.expiryDate || "—"}
+          </div>
+        </div>
+
+        <div style={{ textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: 8.5,
+              letterSpacing: "0.08em",
+              color: "rgba(255, 255, 255, 0.65)",
+              textTransform: "uppercase",
+              fontWeight: 700,
+            }}
+          >
+            Initial Load
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: "#ffffff",
+              letterSpacing: "-0.01em",
+              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+            }}
+          >
+            {numBal > 0 ? `₹${numBal.toLocaleString("en-IN")}` : "₹0"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PrepaidModal({ onClose, onSave, initial = null, saving }: any) {
   const { prepaidCardTypes, familyProfiles } = useMasterData();
   const [f, setF] = useState(() => {
@@ -8223,6 +8495,11 @@ function PrepaidModal({ onClose, onSave, initial = null, saving }: any) {
   const [openingBal, setOpeningBal] = useState("");
   const [error, setError] = useState("");
 
+  const isClosed = (f.status || "active").toLowerCase() === "closed";
+  const ownerProfile = familyProfiles.find((p) => p.id === f.owner);
+  const ownerDisplayName =
+    (ownerProfile ? ownerProfile.name : f.owner === "self" ? "Self" : f.owner) || "Cardholder";
+
   const popularTypes = [
     "Meal Card",
     "Gift Card",
@@ -8232,213 +8509,366 @@ function PrepaidModal({ onClose, onSave, initial = null, saving }: any) {
     "Fuel Card",
   ];
 
+  const handleSave = () => {
+    const name = (f.cardName || f.name || "").trim();
+    if (!name) {
+      setError("Card Name is required");
+      return;
+    }
+    const initTxns: any[] = f.transactions || [];
+    const txns =
+      !initial && openingBal && Number(openingBal) > 0
+        ? [
+            ...initTxns,
+            {
+              id: `ptx-${Date.now()}`,
+              date: today(),
+              type: "load",
+              amount: Number(openingBal),
+              note: "Opening balance",
+            },
+          ]
+        : initTxns;
+    onSave({
+      ...f,
+      cardName: name,
+      transactions: txns,
+      lowBalanceThreshold: f.lowBalanceThreshold ? Number(f.lowBalanceThreshold) : 100,
+    });
+  };
+
   return (
-    <Modal title={initial ? "Edit Prepaid Card" : "Add Prepaid Card / Wallet"} onClose={onClose} maxWidth={520}>
-      <Field label="Owner / Profile">
-        <select
-          style={input}
-          value={f.owner || "self"}
-          onChange={(e) => setF({ ...f, owner: e.target.value })}
-        >
-          {familyProfiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {formatProfileOption(p)}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Card Name *" error={error}>
-        <input
-          style={{
-            ...input,
-            borderColor: error ? "var(--t-rust, #ef4444)" : undefined,
-          }}
-          value={f.cardName || f.name || ""}
-          onChange={(e) => {
-            setF({ ...f, cardName: e.target.value });
-            if (error) setError("");
-          }}
-          placeholder="e.g. Sodexo Meal Card, Zeta, ICICI Forex"
-        />
-      </Field>
-
-      {/* Card Type with Quick Chips */}
-      <div>
-        <Field label="Card Type">
-          <select
-            style={input}
-            value={f.cardType || prepaidCardTypes[0] || "Prepaid Card"}
-            onChange={(e) => setF({ ...f, cardType: e.target.value })}
+    <Modal
+      title={
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 10,
+              background: "color-mix(in srgb, var(--t-accent) 15%, transparent)",
+              color: "var(--t-accent)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
           >
-            {Array.from(new Set([...popularTypes, ...prepaidCardTypes])).map((t: string) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-        </Field>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: -4, marginBottom: 12 }}>
-          {popularTypes.slice(0, 4).map((t) => (
-            <button
-              type="button"
-              key={t}
-              onClick={() => setF({ ...f, cardType: t })}
+            <Wallet size={18} />
+          </div>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800 }}>
+              {initial ? "Edit Prepaid Card" : "Add Prepaid Card / Wallet"}
+            </div>
+            <div style={{ fontSize: 11.5, color: THEME.muted, fontWeight: 500 }}>
+              Manage meal passes, forex cards, wallets & transit cards
+            </div>
+          </div>
+        </div>
+      }
+      onClose={onClose}
+      maxWidth={880}
+      footer={
+        <ModalActions
+          onSave={handleSave}
+          onClose={onClose}
+          saveLabel={initial ? "Save Changes" : "Add Prepaid Card / Wallet"}
+          disabled={saving}
+          loading={saving}
+          style={{ marginTop: 0 }}
+        />
+      }
+    >
+      <div className="cc-modal-grid">
+        {/* ── Left Column: Live Visualizer & Card Snapshot ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <div
               style={{
                 fontSize: 10.5,
-                padding: "2px 8px",
-                borderRadius: 12,
-                border: f.cardType === t ? "1px solid var(--t-accent)" : "1px solid var(--t-line)",
-                background: f.cardType === t ? "color-mix(in srgb, var(--t-accent) 15%, transparent)" : "transparent",
-                color: f.cardType === t ? "var(--t-accent)" : "var(--t-muted)",
-                cursor: "pointer",
-                fontWeight: f.cardType === t ? 700 : 500,
+                fontWeight: 800,
+                color: THEME.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 6,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              {t}
-            </button>
-          ))}
+              <span>Live Card Preview</span>
+              <span style={{ fontSize: 10, color: THEME.muted, fontWeight: 600 }}>Real-time</span>
+            </div>
+            <PrepaidCardPreview
+              card={f}
+              ownerName={ownerDisplayName}
+              openingBal={openingBal}
+              isClosed={isClosed}
+            />
+          </div>
+
+          {/* Quick Snapshot Overview */}
+          <div className="cc-summary-box">
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Cardholder</span>
+              <span className="cc-summary-val" title={ownerDisplayName}>{ownerDisplayName}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Card Type</span>
+              <span className="cc-summary-val">{f.cardType || "Prepaid"}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Low Bal Alert</span>
+              <span className="cc-summary-val">Below ₹{f.lowBalanceThreshold || "100"}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Initial Load</span>
+              <span className="cc-summary-val">
+                {openingBal && Number(openingBal) > 0 ? fmtINRFull(Number(openingBal)) : "₹0"}
+              </span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Valid Thru</span>
+              <span className="cc-summary-val">{f.expiryDate || "Not set"}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Status</span>
+              <span className="cc-summary-val" style={{ color: isClosed ? THEME.rust : THEME.sage }}>
+                {isClosed ? "✕ Closed" : "✓ Active"}
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Last 4 Digits (optional)">
-          <input
-            style={input}
-            maxLength={4}
-            value={f.last4 || ""}
-            onChange={(e) => setF({ ...f, last4: e.target.value.replace(/\D/g, "") })}
-            placeholder="1234"
-          />
-        </Field>
-        <Field label="Expiry Date (optional)">
-          <input
-            type="date"
-            style={input}
-            value={f.expiryDate || ""}
-            onChange={(e) => setF({ ...f, expiryDate: e.target.value })}
-          />
-        </Field>
-      </div>
+        {/* ── Right Column: Form Panel (Zero-Scroll Workspace) ── */}
+        <div className="cc-form-panel">
+          {/* Quick Popular Presets */}
+          {!initial && (
+            <div>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: THEME.muted,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  marginBottom: 5,
+                }}
+              >
+                Quick Presets
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                {POPULAR_PREPAID_PRESETS.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => {
+                      setF({
+                        ...f,
+                        cardName: p.cardName,
+                        cardType: p.cardType,
+                      });
+                      if (error) setError("");
+                    }}
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: 6,
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      border:
+                        f.cardName === p.cardName
+                          ? `1px solid ${THEME.accent}`
+                          : `1px solid ${THEME.line}`,
+                      background:
+                        f.cardName === p.cardName
+                          ? "color-mix(in srgb, var(--t-accent) 12%, transparent)"
+                          : "var(--surface-1)",
+                      color: f.cardName === p.cardName ? THEME.accent : THEME.ink,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-      <Field label="Low Balance Alert Below (₹)">
-        <input
-          style={input}
-          type="number"
-          min="0"
-          value={f.lowBalanceThreshold || ""}
-          onChange={(e) => setF({ ...f, lowBalanceThreshold: e.target.value })}
-          placeholder="e.g. 500 (Alerts you when available balance drops below this)"
-        />
-      </Field>
+          <Field label="Owner / Profile">
+            <select
+              style={input}
+              value={f.owner || "self"}
+              onChange={(e) => setF({ ...f, owner: e.target.value })}
+            >
+              {familyProfiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {formatProfileOption(p)}
+                </option>
+              ))}
+            </select>
+          </Field>
 
-      {/* Status Toggle when editing */}
-      {initial && (
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 8,
-            background: "var(--surface-0)",
-            border: "1px solid var(--t-line)",
-            marginBottom: 14,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, fontWeight: 600 }}>Card Status:</span>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(["active", "closed"] as const).map((st) => (
+          <Field label="Card Name *" error={error}>
+            <input
+              style={{
+                ...input,
+                borderColor: error ? "var(--t-rust, #ef4444)" : undefined,
+              }}
+              value={f.cardName || f.name || ""}
+              onChange={(e) => {
+                setF({ ...f, cardName: e.target.value });
+                if (error) setError("");
+              }}
+              placeholder="e.g. Sodexo Meal Card, Zeta, ICICI Forex"
+              autoFocus
+            />
+          </Field>
+
+          {/* Card Type with Quick Chips */}
+          <div>
+            <Field label="Card Type">
+              <select
+                style={input}
+                value={f.cardType || prepaidCardTypes[0] || "Prepaid Card"}
+                onChange={(e) => setF({ ...f, cardType: e.target.value })}
+              >
+                {Array.from(new Set([...popularTypes, ...prepaidCardTypes])).map((t: string) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </Field>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: -3 }}>
+              {popularTypes.map((t) => (
                 <button
                   type="button"
-                  key={st}
-                  onClick={() =>
-                    setF({
-                      ...f,
-                      status: st,
-                      closedDate: st === "closed" ? f.closedDate || today() : "",
-                    })
-                  }
+                  key={t}
+                  onClick={() => setF({ ...f, cardType: t })}
                   style={{
-                    padding: "4px 14px",
-                    borderRadius: 14,
-                    border: (f.status || "active") === st ? "none" : "1px solid var(--t-line)",
+                    fontSize: 10,
+                    padding: "2px 7px",
+                    borderRadius: 10,
+                    border:
+                      f.cardType === t
+                        ? "1px solid var(--t-accent)"
+                        : "1px solid var(--t-line)",
                     background:
-                      (f.status || "active") === st
-                        ? st === "active"
-                          ? "var(--t-sage, #10b981)"
-                          : "var(--t-rust, #ef4444)"
+                      f.cardType === t
+                        ? "color-mix(in srgb, var(--t-accent) 15%, transparent)"
                         : "transparent",
-                    color: (f.status || "active") === st ? "#fff" : "var(--t-muted)",
-                    fontSize: 11,
-                    fontWeight: 700,
+                    color: f.cardType === t ? "var(--t-accent)" : "var(--t-muted)",
                     cursor: "pointer",
-                    textTransform: "uppercase",
+                    fontWeight: f.cardType === t ? 700 : 500,
                   }}
                 >
-                  {st}
+                  {t}
                 </button>
               ))}
             </div>
           </div>
-          {(f.status || "active") === "closed" && (
-            <div style={{ marginTop: 10 }}>
-              <Field label="Closed Date">
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <Field label="Last 4 Digits (Optional)">
+              <input
+                style={input}
+                maxLength={4}
+                value={f.last4 || ""}
+                onChange={(e) => setF({ ...f, last4: e.target.value.replace(/\D/g, "") })}
+                placeholder="1234"
+              />
+            </Field>
+            <Field label="Expiry Date (Optional)">
+              <input
+                type="date"
+                style={input}
+                value={f.expiryDate || ""}
+                onChange={(e) => setF({ ...f, expiryDate: e.target.value })}
+              />
+            </Field>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <Field label="Low Balance Alert Below (₹)">
+              <input
+                style={input}
+                type="number"
+                min="0"
+                value={f.lowBalanceThreshold || ""}
+                onChange={(e) => setF({ ...f, lowBalanceThreshold: e.target.value })}
+                placeholder="100"
+              />
+            </Field>
+            {!initial ? (
+              <Field label="Initial Loaded Balance (₹)">
                 <input
-                  type="date"
                   style={input}
-                  value={f.closedDate || today()}
-                  onChange={(e) => setF({ ...f, closedDate: e.target.value })}
+                  type="number"
+                  min="0"
+                  value={openingBal}
+                  onChange={(e) => setOpeningBal(e.target.value)}
+                  placeholder="e.g. 5000"
                 />
               </Field>
-            </div>
+            ) : (
+              <Field label="Card Status">
+                <div style={{ display: "flex", gap: 6 }}>
+                  {(["active", "closed"] as const).map((st) => (
+                    <button
+                      type="button"
+                      key={st}
+                      onClick={() =>
+                        setF({
+                          ...f,
+                          status: st,
+                          closedDate: st === "closed" ? f.closedDate || today() : "",
+                        })
+                      }
+                      style={{
+                        flex: 1,
+                        padding: "7px 0",
+                        borderRadius: 8,
+                        border:
+                          (f.status || "active") === st
+                            ? `2px solid ${st === "active" ? THEME.sage : THEME.rust}`
+                            : `1.5px solid ${THEME.line}`,
+                        background:
+                          (f.status || "active") === st
+                            ? st === "active"
+                              ? "rgba(34,197,94,0.08)"
+                              : "rgba(239,68,68,0.08)"
+                            : "transparent",
+                        color:
+                          (f.status || "active") === st
+                            ? st === "active"
+                              ? THEME.sage
+                              : THEME.rust
+                            : THEME.muted,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {st === "active" ? "✓ Active" : "✕ Closed"}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            )}
+          </div>
+
+          {initial && (f.status || "active") === "closed" && (
+            <Field label="Closed Date">
+              <input
+                type="date"
+                style={input}
+                value={f.closedDate || today()}
+                onChange={(e) => setF({ ...f, closedDate: e.target.value })}
+              />
+            </Field>
           )}
         </div>
-      )}
-
-      {!initial && (
-        <Field label="Initial Loaded Balance (optional)">
-          <input
-            style={input}
-            type="number"
-            min="0"
-            value={openingBal}
-            onChange={(e) => setOpeningBal(e.target.value)}
-            placeholder="e.g. 5000 (Creates an initial top-up transaction)"
-          />
-        </Field>
-      )}
-
-      <ModalActions
-        onSave={() => {
-          const name = (f.cardName || f.name || "").trim();
-          if (!name) {
-            setError("Card Name is required");
-            return;
-          }
-          const initTxns: any[] = f.transactions || [];
-          const txns =
-            !initial && openingBal && Number(openingBal) > 0
-              ? [
-                  ...initTxns,
-                  {
-                    id: `ptx-${Date.now()}`,
-                    date: today(),
-                    type: "load",
-                    amount: Number(openingBal),
-                    note: "Opening balance",
-                  },
-                ]
-              : initTxns;
-          onSave({
-            ...f,
-            cardName: name,
-            transactions: txns,
-            lowBalanceThreshold: f.lowBalanceThreshold ? Number(f.lowBalanceThreshold) : 100,
-          });
-        }}
-        onClose={onClose}
-        saveLabel={initial ? "Save Changes" : "Add Prepaid Card / Wallet"}
-        disabled={saving}
-        loading={saving}
-      />
+      </div>
     </Modal>
   );
 }
-
