@@ -2103,8 +2103,11 @@ export function RecurringDepositsSection({
       {viewHistoryRD && (
         <RDHistoryModal
           rd={viewHistoryRD}
+          allRDs={items}
           bankAccounts={bankAccounts}
           transactions={transactions}
+          removeItem={removeItem}
+          showToast={showToast}
           onClose={() => setViewHistoryRD(null)}
           onPayNext={() => {
             const targetRD = viewHistoryRD;
@@ -2908,20 +2911,42 @@ function InteractiveRDCalculator({
 /* ══════════════════════════════════════════════════════════════════════════════
    MODAL: RD Installment History & Payment Ledger
    ══════════════════════════════════════════════════════════════════════════════ */
+// Helper: Parse installment sequence number from transaction note or narration
+function extractInstallmentNumber(note: string): number | null {
+  if (!note) return null;
+  const n = note.toLowerCase();
+  if (n.includes("1st installment") || n.includes("first installment")) return 1;
+  if (n.includes("2nd installment") || n.includes("second installment")) return 2;
+  if (n.includes("3rd installment") || n.includes("third installment")) return 3;
+  const match = n.match(/installment\s*#?\s*(\d+)/i);
+  if (match && match[1]) {
+    const num = parseInt(match[1], 10);
+    return isNaN(num) ? null : num;
+  }
+  return null;
+}
+
 function RDHistoryModal({
   rd,
+  allRDs = [],
   bankAccounts = [],
   transactions = [],
   onClose,
   onPayNext,
+  removeItem,
+  showToast,
 }: {
   rd: any;
+  allRDs?: any[];
   bankAccounts?: any[];
   transactions?: any[];
   onClose: () => void;
   onPayNext: () => void;
+  removeItem?: (table: string, id: string) => void;
+  showToast?: (msg: string, type: string) => void;
 }) {
   const [txnSortOrder, setTxnSortOrder] = useState<"asc" | "desc">("asc");
+  const [deleteConfirmTxn, setDeleteConfirmTxn] = useState<any>(null);
   const tenure = Number(rd.tenureMonths) || 12;
   const paid = Number(rd.paidInstallments) || rdElapsed(rd);
   const monthly = Number(rd.monthly) || 0;
@@ -2935,7 +2960,16 @@ function RDHistoryModal({
 
   // Filter relevant transactions strictly for THIS recurring deposit
   const rdTxns = useMemo(() => {
+    const rdStartDate = rd.startDate || today();
+    const rdMaturityDate = rd.maturityDate || (tenure > 0 ? addMonthsToDateStr(rdStartDate, tenure) : "");
+    const otherRDs = (allRDs || []).filter((r: any) => r.id && r.id !== rd.id);
+    const otherRDIds = new Set(otherRDs.map((r: any) => String(r.id)));
+
     return transactions.filter((t: any) => {
+      // 0. If explicitly linked to a DIFFERENT RD, it definitely does NOT belong to this RD
+      if (t.linked_id && otherRDIds.has(String(t.linked_id))) return false;
+      if (t.linkedId && otherRDIds.has(String(t.linkedId))) return false;
+
       // 1. Direct explicit link via linked_type / linkedType
       const isLinkedRD =
         t.linked_type === "recurring_deposit" ||
@@ -2943,24 +2977,74 @@ function RDHistoryModal({
         t.linked_type === "recurringDeposits" ||
         t.linkedType === "recurringDeposits";
 
-      if (isLinkedRD) {
-        const idMatches =
-          t.linked_id === rd.id ||
-          t.linkedId === rd.id ||
-          (rd.rdNumber && (t.linked_id === rd.rdNumber || t.linkedId === rd.rdNumber)) ||
-          (rd.accountNumber && (t.linked_id === rd.accountNumber || t.linkedId === rd.accountNumber));
-        if (idMatches) return true;
+      const isExplicitMatch = isLinkedRD && (t.linked_id === rd.id || t.linkedId === rd.id);
+
+      const note = (t.note || t.description || t.narration || "").toLowerCase();
+      const hasNoteMatch = Boolean(
+        (rd.id && note.includes(String(rd.id).toLowerCase())) ||
+        (rd.rdNumber && note.includes(String(rd.rdNumber).toLowerCase())) ||
+        (rd.accountNumber && note.includes(String(rd.accountNumber).toLowerCase()))
+      );
+
+      const hasLinkedIdMatch = Boolean(
+        isLinkedRD &&
+        ((rd.rdNumber && (t.linked_id === rd.rdNumber || t.linkedId === rd.rdNumber)) ||
+         (rd.accountNumber && (t.linked_id === rd.accountNumber || t.linkedId === rd.accountNumber)))
+      );
+
+      if (!isExplicitMatch && !hasNoteMatch && !hasLinkedIdMatch) {
+        return false;
       }
 
-      // 2. Match specifically by RD Account number or RD record ID in note/narration
-      const note = (t.note || t.description || t.narration || "").toLowerCase();
-      if (rd.rdNumber && note.includes(String(rd.rdNumber).toLowerCase())) return true;
-      if (rd.accountNumber && note.includes(String(rd.accountNumber).toLowerCase())) return true;
-      if (rd.id && note.includes(String(rd.id).toLowerCase())) return true;
+      const isCredit =
+        t.type === "credit" ||
+        t.subCategory === "RD Maturity" ||
+        note.includes("maturity");
 
-      return false;
+      if (isCredit) {
+        return true;
+      }
+
+      // Check if another RD in otherRDs has a better match by start date
+      const thisDiff = Math.abs(new Date(t.date || rdStartDate).getTime() - new Date(rdStartDate).getTime());
+      for (const other of otherRDs) {
+        const otherStart = other.startDate;
+        if (otherStart) {
+          const otherDiff = Math.abs(new Date(t.date || otherStart).getTime() - new Date(otherStart).getTime());
+          if (
+            (note.includes("1st installment") || note.includes("first installment")) &&
+            otherDiff < thisDiff &&
+            otherDiff <= 31 * 24 * 60 * 60 * 1000
+          ) {
+            return false;
+          }
+        }
+      }
+
+      // Check installment number in note
+      const instNum = extractInstallmentNumber(t.note || t.description || t.narration || "");
+      if (instNum !== null) {
+        const scheduledDate = addMonthsToDateStr(rdStartDate, instNum - 1);
+        const tDate = t.date || rdStartDate;
+        const daysDiff = Math.abs(
+          (new Date(tDate).getTime() - new Date(scheduledDate).getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        // An installment payment is scheduled for a specific date (instNum - 1 months after start).
+        // It cannot be > 60 days away from its scheduled installment date (e.g. 1st installment paid 1 year later).
+        if (daysDiff > 60) {
+          return false;
+        }
+      } else {
+        // If no installment number is parsed, ensure debit date is not after maturity date
+        if (rdMaturityDate && t.date && t.date > rdMaturityDate) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [transactions, rd]);
+  }, [transactions, rd, allRDs, tenure]);
 
   // Sort transactions by date (asc / desc)
   const sortedTxns = useMemo(() => {
@@ -3299,7 +3383,7 @@ function RDHistoryModal({
                           <span>{txnBank ? `${txnBank.bankName} (••${txnBank.accountNumber?.slice(-4) || "NA"})` : t.category || "Investments"}</span>
                         </div>
                       </div>
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
                         <div
                           style={{
                             fontWeight: 800,
@@ -3310,7 +3394,7 @@ function RDHistoryModal({
                         >
                           {isCredit ? "+" : "-"}₹{Math.abs(Number(t.amount || 0)).toLocaleString("en-IN")}
                         </div>
-                        <div style={{ marginTop: 2 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           {isCredit ? (
                             <span
                               style={{
@@ -3341,6 +3425,29 @@ function RDHistoryModal({
                               Verified Outflow
                             </span>
                           )}
+                          {removeItem && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteConfirmTxn(t)}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                cursor: "pointer",
+                                color: THEME.muted,
+                                padding: "2px 4px",
+                                borderRadius: 4,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "color 0.15s ease",
+                              }}
+                              title="Delete transaction voucher"
+                              onMouseEnter={(e) => (e.currentTarget.style.color = THEME.rust)}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = THEME.muted)}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -3352,6 +3459,20 @@ function RDHistoryModal({
         </div>
 
         <ModalActions onClose={onClose} />
+
+        {deleteConfirmTxn && (
+          <ConfirmDialog
+            message={`Delete transaction voucher "${deleteConfirmTxn.note || "RD Installment"}" (-₹${Math.abs(Number(deleteConfirmTxn.amount || 0)).toLocaleString("en-IN")}) dated ${deleteConfirmTxn.date}? This will remove it from recorded transactions.`}
+            onConfirm={() => {
+              if (removeItem) {
+                removeItem("transactions", deleteConfirmTxn.id);
+                showToast?.("Transaction voucher deleted", "info");
+              }
+              setDeleteConfirmTxn(null);
+            }}
+            onCancel={() => setDeleteConfirmTxn(null)}
+          />
+        )}
       </div>
     </Modal>
   );

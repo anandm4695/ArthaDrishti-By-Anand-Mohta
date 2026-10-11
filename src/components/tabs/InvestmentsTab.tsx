@@ -1620,14 +1620,11 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
   const { run: handleSave, loading: savingInvestment } = useAsyncAction(
     async (key: string, data: any, extra?: any) => {
-      await addItem(key, data);
+      const res = await addItem(key, data);
+      const createdId = (res as any)?.id || data?.id;
       if (extra?.debitFirstInstallment && extra?.bankAccountId && Number(data.monthly) > 0) {
         const bank = (state.bankAccounts || []).find((b: any) => b.id === extra.bankAccountId);
         if (bank) {
-          await updateItem("bankAccounts", bank.id, {
-            ...bank,
-            balance: Math.max(0, Number(bank.balance || 0) - Number(data.monthly)),
-          });
           const noteText = `RD 1st Installment - ${data.bank}${data.rdNumber ? ` (A/C: ${data.rdNumber})` : ""}`;
           await addItem("transactions", {
             type: "debit",
@@ -1635,7 +1632,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             note: noteText,
             narration: noteText,
             linked_type: "recurring_deposit",
-            linked_id: data.id || data.rdNumber || "",
+            linked_id: createdId || data.rdNumber || "",
             amount: Number(data.monthly),
             date: data.startDate || today(),
             accountId: bank.id,

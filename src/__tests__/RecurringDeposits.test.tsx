@@ -354,5 +354,58 @@ describe("RecurringDepositsSection Component", () => {
     // Verify both buttons are interactive and work seamlessly
     expect(newestBtn).toBeDefined();
   });
+
+  it("strictly isolates 1st installment vouchers to the active RD tenure and ignores duplicate/subsequent RD vouchers", () => {
+    const mockBanks = [{ id: "b-1", bankName: "Kotak Mahindra Bank", balance: 100000, accountNumber: "2118" }];
+    const rds = [
+      {
+        id: "rd-2018",
+        bank: "Kotak Mahindra Bank",
+        monthly: 10000,
+        rate: 7.25,
+        tenureMonths: 12,
+        startDate: "2018-07-19",
+        paidInstallments: 1,
+        rdNumber: "6311840335",
+        bankAccountId: "b-1",
+        owner: "self",
+      },
+    ];
+
+    const mockTxns = [
+      {
+        id: "txn-1st-inst-2018",
+        note: "RD 1st Installment - Kotak Mahindra Bank (A/C: 6311840335)",
+        amount: 10000,
+        date: "2018-07-19",
+        category: "Investments",
+        linked_type: "recurring_deposit",
+        linked_id: "6311840335",
+        accountId: "b-1",
+      },
+      {
+        // Out-of-cycle or next RD's 1st installment 1 year later sharing account number
+        id: "txn-1st-inst-2019",
+        note: "RD 1st Installment - Kotak Mahindra Bank (A/C: 6311840335)",
+        amount: 10000,
+        date: "2019-07-19",
+        category: "Investments",
+        linked_type: "recurring_deposit",
+        linked_id: "6311840335",
+        accountId: "b-1",
+      },
+    ];
+
+    renderRDSection(rds, { bankAccounts: mockBanks, transactions: mockTxns });
+
+    // Open Installments modal
+    fireEvent.click(screen.getByText("Installments"));
+
+    // Exactly 1 voucher should be linked to this RD, not 2
+    expect(screen.getByText("Bank Outflow Receipts & Vouchers (1)")).toBeDefined();
+    expect(screen.getAllByText("2018-07-19").length).toBeGreaterThan(0);
+    // 2019-07-19 should NOT be listed
+    expect(screen.queryByText("2019-07-19")).toBeNull();
+  });
 });
 
