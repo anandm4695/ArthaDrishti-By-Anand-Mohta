@@ -1031,6 +1031,120 @@ tbody tr:hover td {
   }
 }
 
+.cc-modal-grid {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .cc-modal-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+}
+
+.cc-preview-card {
+  position: relative;
+  border-radius: 18px;
+  padding: 20px 18px;
+  color: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 14px 32px -8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.14) inset;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.cc-preview-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 40%, transparent 70%);
+  pointer-events: none;
+}
+
+.cc-form-panel {
+  background: var(--surface-0);
+  border: 1px solid var(--t-line);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cc-stepper-nav {
+  display: flex;
+  background: var(--surface-1);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--t-line);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.cc-stepper-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--t-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cc-stepper-btn:hover {
+  color: var(--t-ink);
+  background: color-mix(in srgb, var(--surface-0) 50%, transparent);
+}
+
+.cc-stepper-btn.active {
+  background: var(--surface-0);
+  color: var(--t-accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.cc-summary-box {
+  background: var(--surface-0);
+  border: 1px solid var(--t-line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 12px;
+}
+
+.cc-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cc-summary-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--t-muted);
+}
+
+.cc-summary-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 
 /* ── Right-side detail drawer ─────────────────────────────────────
    Shares the modal's backdrop/header/close-button visual language but

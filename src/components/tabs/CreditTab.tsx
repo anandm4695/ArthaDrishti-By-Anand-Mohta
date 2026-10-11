@@ -43,6 +43,7 @@ import {
   HelpCircle,
   Phone,
   Layers,
+  Wifi,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { getCardGradient } from "../../utils/cardColors";
@@ -6917,8 +6918,325 @@ function PrepaidTransactionLedger({ prepaid, onClose, onUpdate }: any) {
   );
 }
 
+const ChipSVG = () => (
+  <svg
+    width="34"
+    height="26"
+    viewBox="0 0 34 26"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ borderRadius: 4, overflow: "hidden", flexShrink: 0 }}
+  >
+    <rect width="34" height="26" rx="4" fill="url(#chipGrad)" />
+    <defs>
+      <linearGradient id="chipGrad" x1="0" y1="0" x2="34" y2="26" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#F5D77F" />
+        <stop offset="0.5" stopColor="#C9A354" />
+        <stop offset="1" stopColor="#8C6A28" />
+      </linearGradient>
+    </defs>
+    <rect x="0.5" y="0.5" width="33" height="25" rx="3.5" stroke="#7A5B1E" strokeOpacity="0.45" />
+    <line x1="0" y1="8" x2="11" y2="8" stroke="#5C4314" strokeWidth="0.8" />
+    <line x1="0" y1="18" x2="11" y2="18" stroke="#5C4314" strokeWidth="0.8" />
+    <line x1="23" y1="8" x2="34" y2="8" stroke="#5C4314" strokeWidth="0.8" />
+    <line x1="23" y1="18" x2="34" y2="18" stroke="#5C4314" strokeWidth="0.8" />
+    <line x1="11" y1="0" x2="11" y2="26" stroke="#5C4314" strokeWidth="0.8" />
+    <line x1="23" y1="0" x2="23" y2="26" stroke="#5C4314" strokeWidth="0.8" />
+    <rect x="11" y="8" width="12" height="10" rx="2" fill="#DFB748" stroke="#5C4314" strokeWidth="0.8" />
+  </svg>
+);
+
+function CCCardPreview({
+  card,
+  ownerName,
+  isClosed,
+}: {
+  card: any;
+  ownerName: string;
+  isClosed: boolean;
+}) {
+  const gradient = isClosed
+    ? "linear-gradient(135deg, #383842 0%, #202028 100%)"
+    : getCardGradient(card.issuer || "");
+  const formattedLast4 = card.last4 ? card.last4.padStart(4, "•") : "••••";
+  const numLimit = Number(card.limit) || 0;
+  const numOut = Number(card.outstanding) || 0;
+
+  return (
+    <div
+      className="cc-preview-card"
+      style={{
+        background: gradient,
+        opacity: isClosed ? 0.8 : 1,
+        filter: isClosed ? "grayscale(40%)" : "none",
+        minHeight: 205,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
+      <div className="cc-preview-sheen" />
+
+      {/* Top Bar: Bank Logo + Title + Network Logo + Status */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <BankLogo
+            bankName={card.issuer || "Credit Card"}
+            size={32}
+          />
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: "#ffffff",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: 210,
+                letterSpacing: "-0.01em",
+                textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+              }}
+            >
+              {card.issuer || "Card Issuer"}
+            </div>
+            {card.sharedGroup && (
+              <span
+                style={{
+                  fontSize: 9.5,
+                  padding: "1px 6px",
+                  borderRadius: 6,
+                  background: "rgba(255,255,255,0.18)",
+                  backdropFilter: "blur(4px)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  display: "inline-block",
+                  marginTop: 2,
+                }}
+              >
+                Pool: {card.sharedGroup}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <CardNetworkLogo network={card.network} />
+          {isClosed ? (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                padding: "2px 7px",
+                borderRadius: 99,
+                background: "rgba(239, 68, 68, 0.25)",
+                border: "1px solid rgba(239, 68, 68, 0.45)",
+                color: "#fca5a5",
+                textTransform: "uppercase",
+              }}
+            >
+              Closed
+            </span>
+          ) : card.autoPay ? (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "2px 7px",
+                borderRadius: 99,
+                background: "rgba(34, 197, 94, 0.22)",
+                border: "1px solid rgba(34, 197, 94, 0.4)",
+                color: "#86efac",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <Check size={10} strokeWidth={3} /> Autopay
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Middle Row: Chip + Contactless wave + Variants Pills */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: "12px 0 8px",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <ChipSVG />
+          <Wifi
+            size={18}
+            style={{
+              transform: "rotate(90deg)",
+              color: "rgba(255, 255, 255, 0.7)",
+            }}
+          />
+        </div>
+
+        {Array.isArray(card.variants) && card.variants.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {card.variants.map((v: any, idx: number) => (
+              <span
+                key={v.id || idx}
+                style={{
+                  fontSize: 10,
+                  padding: "2px 7px",
+                  borderRadius: 6,
+                  background: "rgba(255,255,255,0.18)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 3,
+                }}
+              >
+                + {v.name || v.network || "Variant"} {v.last4 ? `(•${v.last4})` : ""}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Card Number Row */}
+      <div
+        style={{
+          fontSize: 16.5,
+          fontWeight: 700,
+          letterSpacing: "0.22em",
+          color: "#ffffff",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          textShadow: "0 2px 4px rgba(0, 0, 0, 0.55)",
+          position: "relative",
+          zIndex: 2,
+          margin: "2px 0 10px",
+        }}
+      >
+        •••• &nbsp;•••• &nbsp;•••• &nbsp;{formattedLast4}
+      </div>
+
+      {/* Bottom Bar: Cardholder, Cycle, Limits */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          position: "relative",
+          zIndex: 2,
+          borderTop: "1px solid rgba(255, 255, 255, 0.15)",
+          paddingTop: 8,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.08em",
+              color: "rgba(255, 255, 255, 0.65)",
+              textTransform: "uppercase",
+              fontWeight: 700,
+            }}
+          >
+            Cardholder
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              fontWeight: 800,
+              color: "#ffffff",
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
+              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+            }}
+          >
+            {ownerName}
+          </div>
+        </div>
+
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.08em",
+              color: "rgba(255, 255, 255, 0.65)",
+              textTransform: "uppercase",
+              fontWeight: 700,
+            }}
+          >
+            Billing Cycle
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#ffffff",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {card.billDate ? `${card.billDate}th` : "—"} / {card.dueDay ? `${card.dueDay}th` : "—"}
+          </div>
+        </div>
+
+        <div style={{ textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.08em",
+              color: "rgba(255, 255, 255, 0.65)",
+              textTransform: "uppercase",
+              fontWeight: 700,
+            }}
+          >
+            Credit Limit
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              fontWeight: 800,
+              color: "#ffffff",
+              letterSpacing: "-0.01em",
+              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+            }}
+          >
+            {numLimit > 0 ? `₹${numLimit.toLocaleString("en-IN")}` : "—"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const POPULAR_CARDS = [
+  { label: "HDFC Regalia Gold", issuer: "HDFC Regalia Gold", network: "Visa" },
+  { label: "HDFC Infinia", issuer: "HDFC Infinia", network: "Visa" },
+  { label: "ICICI Amazon Pay", issuer: "ICICI Amazon Pay", network: "Visa" },
+  { label: "ICICI Sapphiro", issuer: "ICICI Sapphiro", network: "Mastercard" },
+  { label: "SBI Cashback", issuer: "SBI Cashback", network: "Visa" },
+  { label: "Axis Atlas", issuer: "Axis Atlas", network: "Visa" },
+  { label: "Federal Scapia", issuer: "Federal Scapia", network: "Visa" },
+  { label: "OneCard", issuer: "OneCard", network: "Visa" },
+  { label: "Amex Platinum", issuer: "Amex Platinum", network: "Amex" },
+];
+
 function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving }: any) {
   const { ccNetworks, familyProfiles } = useMasterData();
+  const [activeStep, setActiveStep] = useState(0);
   const [f, setF] = useState(() => {
     if (!initial) {
       return {
@@ -6982,587 +7300,892 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
       variants: Array.isArray(initial.variants) ? initial.variants : [],
     };
   });
-  const isClosed = (f.status || "active").toLowerCase() === "closed";
-  return (
-    <Modal title={initial ? "Edit Credit Card" : "Add Credit Card"} onClose={onClose}>
-      <Field label="Owner / Profile">
-        <select
-          style={input}
-          value={f.owner || "self"}
-          onChange={(e) => setF({ ...f, owner: e.target.value })}
-        >
-          {familyProfiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {formatProfileOption(p)}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
-        <Field label="Issuer / Account Name">
-          <input
-            style={input}
-            value={f.issuer}
-            onChange={(e) => setF({ ...f, issuer: e.target.value })}
-            placeholder="e.g. Standard Chartered Ultimate, HDFC Regalia, ICICI Amazon Pay"
-            list="cc-issuers-datalist"
-          />
-          <datalist id="cc-issuers-datalist">
-            <option value="Standard Chartered Ultimate" />
-            <option value="Standard Chartered Smart" />
-            <option value="Standard Chartered DigiSmart" />
-            <option value="Standard Chartered EaseMyTrip" />
-            <option value="Standard Chartered Platinum Rewards" />
-            <option value="Standard Chartered Bank" />
-            <option value="HDFC Regalia Gold" />
-            <option value="HDFC Infinia" />
-            <option value="HDFC Millennia" />
-            <option value="ICICI Amazon Pay" />
-            <option value="ICICI Sapphiro" />
-            <option value="ICICI Emeralde" />
-            <option value="SBI Cashback" />
-            <option value="SBI SimplyClick" />
-            <option value="SBI Card PRIME" />
-            <option value="Axis Atlas" />
-            <option value="Axis Magnus" />
-            <option value="Axis Airtel" />
-            <option value="Federal Scapia" />
-            <option value="Kotak League" />
-            <option value="IndusInd Legend" />
-            <option value="AU Zenith+" />
-            <option value="OneCard" />
-            <option value="Amex Platinum" />
-            <option value="Amex MRCC" />
-            <option value="Amex SmartEarn" />
-            <option value="HSBC Live+" />
-            <option value="RBL ShopRite" />
-          </datalist>
-        </Field>
-        <Field label="Primary Network">
-          <select
-            style={input}
-            value={f.network}
-            onChange={(e) => setF({ ...f, network: e.target.value })}
-          >
-            {ccNetworks.map((n: string) => (
-              <option key={n}>{n}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-          gap: 12,
-        }}
-      >
-        <Field label="Primary Last 4">
-          <input
-            style={input}
-            maxLength={4}
-            value={f.last4}
-            onChange={(e) => setF({ ...f, last4: e.target.value })}
-            placeholder="4589"
-          />
-        </Field>
-        <Field label={f.sharedGroup ? "Card Sub-Limit (₹)" : "Account Credit Limit (₹)"}>
-          <input
-            style={input}
-            type="number"
-            value={f.limit}
-            onChange={(e) => setF({ ...f, limit: e.target.value })}
-            placeholder={f.sharedGroup ? "Individual sub-limit" : "e.g. 500000"}
-          />
-        </Field>
-        <Field label="Outstanding (₹)">
-          <input
-            style={input}
-            type="number"
-            value={f.outstanding}
-            onChange={(e) => setF({ ...f, outstanding: e.target.value })}
-            placeholder="0"
-          />
-        </Field>
-      </div>
 
-      {/* Linked Card Variants (e.g. Scapia RuPay UPI, Sapphiro Amex Companion) */}
-      <div style={{ borderTop: `1px solid ${THEME.line}`, paddingTop: 14, marginTop: 4 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 6,
-          }}
-        >
+  const isClosed = (f.status || "active").toLowerCase() === "closed";
+  const ownerProfile = familyProfiles.find((p) => p.id === f.owner);
+  const ownerDisplayName =
+    (ownerProfile ? ownerProfile.name : f.owner === "self" ? "Self" : f.owner) || "Cardholder";
+
+  // Calculate estimated grace period if billDate and dueDay are present
+  const bDay = Number(f.billDate);
+  const dDay = Number(f.dueDay);
+  let gracePeriodDays: number | null = null;
+  if (bDay >= 1 && bDay <= 31 && dDay >= 1 && dDay <= 31) {
+    gracePeriodDays = dDay > bDay ? dDay - bDay : 30 - bDay + dDay;
+  }
+
+  // Calculate reward rupees equivalent
+  const ptsNum = Number(f.rewardPointsBalance) || 0;
+  const ptVal = Number(f.rewardPointValue) || 0;
+  const totalRewardValue = ptsNum > 0 && ptVal > 0 ? ptsNum * ptVal : null;
+  const numLimit = Number(f.limit) || 0;
+  const numOut = Number(f.outstanding) || 0;
+
+  const STEPS = [
+    { id: 0, label: "1. Card Identity", short: "Identity", icon: CreditCard },
+    { id: 1, label: "2. Billing & Fees", short: "Billing", icon: Calendar },
+    { id: 2, label: "3. Variants & Perks", short: "Perks & Pool", icon: Sparkles },
+  ];
+
+  return (
+    <Modal
+      title={
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: THEME.accent,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
+              width: 34,
+              height: 34,
+              borderRadius: 10,
+              background: "color-mix(in srgb, var(--t-accent) 15%, transparent)",
+              color: "var(--t-accent)",
               display: "flex",
               alignItems: "center",
-              gap: 6,
+              justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            <Sparkles size={13} /> Linked Card Variants (Dual-Card Account)
+            <CreditCard size={18} />
           </div>
-          <span
-            style={{
-              fontSize: 11,
-              padding: "2px 8px",
-              borderRadius: 10,
-              background: (f.variants || []).length > 0 ? "rgba(34,197,94,0.12)" : "rgba(128,128,128,0.1)",
-              color: (f.variants || []).length > 0 ? THEME.sage : THEME.muted,
-              fontWeight: 700,
-            }}
-          >
-            {(f.variants || []).length === 0 ? "1 Card (Single)" : `${(f.variants || []).length + 1} Cards · 1 Bill & Limit`}
-          </span>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800 }}>
+              {initial ? "Edit Credit Card" : "Add Credit Card"}
+            </div>
+            <div style={{ fontSize: 11.5, color: THEME.muted, fontWeight: 500 }}>
+              {STEPS[activeStep].label} · Step {activeStep + 1} of 3
+            </div>
+          </div>
         </div>
-        <div style={{ fontSize: 12, color: THEME.muted, marginBottom: 12, lineHeight: 1.55 }}>
-          For accounts with multiple cards sharing <strong>1 single statement, 1 due date, and 1 credit limit</strong> (e.g. <em>Federal Scapia Visa + RuPay UPI</em>, or <em>ICICI Sapphiro Mastercard + Amex companion</em>). Primary card is defined above.
+      }
+      onClose={onClose}
+      maxWidth={920}
+      footer={
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {activeStep > 0 && (
+              <Button
+                variant="secondary"
+                onClick={() => setActiveStep(activeStep - 1)}
+                type="button"
+              >
+                ← Back
+              </Button>
+            )}
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: THEME.muted }}>
+              Step {activeStep + 1} of 3
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Button variant="secondary" onClick={onClose} disabled={saving} type="button">
+              Cancel
+            </Button>
+            {activeStep < 2 && (
+              <>
+                {f.issuer.trim() && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => onSave(f)}
+                    disabled={saving}
+                    type="button"
+                    title="Save card immediately with current settings"
+                  >
+                    Quick Save
+                  </Button>
+                )}
+                <Button
+                  variant="accent"
+                  onClick={() => setActiveStep(activeStep + 1)}
+                  type="button"
+                >
+                  Next: {STEPS[activeStep + 1].short} →
+                </Button>
+              </>
+            )}
+            {activeStep === 2 && (
+              <Button
+                variant="accent"
+                onClick={() => f.issuer.trim() && onSave(f)}
+                disabled={saving || !f.issuer.trim()}
+                loading={saving}
+                type="button"
+              >
+                {initial ? "Save Changes" : "Add Credit Card"}
+              </Button>
+            )}
+          </div>
+        </div>
+      }
+    >
+      <div className="cc-modal-grid">
+        {/* ── Left Column: Live Visualizer & Card Snapshot ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                fontWeight: 800,
+                color: THEME.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 6,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>Live Card Preview</span>
+              <span style={{ fontSize: 10, color: THEME.muted, fontWeight: 600 }}>Real-time</span>
+            </div>
+            <CCCardPreview card={f} ownerName={ownerDisplayName} isClosed={isClosed} />
+          </div>
+
+          {/* Quick Snapshot Overview */}
+          <div className="cc-summary-box">
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Cardholder</span>
+              <span className="cc-summary-val" title={ownerDisplayName}>{ownerDisplayName}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Network</span>
+              <span className="cc-summary-val">{f.network}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Credit Limit</span>
+              <span className="cc-summary-val">{numLimit > 0 ? fmtINRFull(numLimit) : "—"}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Billing Cycle</span>
+              <span className="cc-summary-val">
+                {f.billDate && f.dueDay ? `${f.billDate}th / ${f.dueDay}th` : "Not set"}
+              </span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Autopay</span>
+              <span className="cc-summary-val" style={{ color: f.autoPay ? THEME.sage : THEME.muted }}>
+                {f.autoPay ? "✓ Active" : "Disabled"}
+              </span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">Status</span>
+              <span className="cc-summary-val" style={{ color: isClosed ? THEME.rust : THEME.sage }}>
+                {isClosed ? "✕ Closed" : "✓ Active"}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Existing variants list */}
-        {(f.variants || []).map((v: any, vIdx: number) => (
-          <div
-            key={v.id || vIdx}
-            style={{
-              padding: 12,
-              background: "var(--surface-0)",
-              border: `1px solid ${THEME.line}`,
-              borderRadius: 10,
-              marginBottom: 10,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: THEME.ink, display: "flex", alignItems: "center", gap: 6 }}>
-                <CreditCard size={14} color={THEME.accent} />
-                Variant #{vIdx + 1}: {v.name || v.network || "Linked Card"}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const updated = (f.variants || []).filter((_: any, i: number) => i !== vIdx);
-                  setF({ ...f, variants: updated });
-                }}
-                className="icon-btn danger"
-                style={{ ...iconBtn, color: THEME.rust, padding: 4 }}
-                title="Remove variant"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 10 }}>
-              <Field label="Variant Label">
-                <input
-                  style={input}
-                  value={v.name || ""}
-                  onChange={(e) => {
-                    const updated = [...(f.variants || [])];
-                    updated[vIdx] = { ...updated[vIdx], name: e.target.value };
-                    setF({ ...f, variants: updated });
-                  }}
-                  placeholder="e.g. RuPay UPI, Companion Amex"
-                />
-              </Field>
-              <Field label="Network">
+        {/* ── Right Column: Step-by-Step Sections (Zero-Scroll) ── */}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {/* Stepper Tabs Bar */}
+          <div className="cc-stepper-nav">
+            {STEPS.map((s) => {
+              const Icon = s.icon;
+              const isActive = activeStep === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`cc-stepper-btn ${isActive ? "active" : ""}`}
+                  onClick={() => setActiveStep(s.id)}
+                >
+                  <Icon size={13} />
+                  <span>{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── STEP 1: Card Identity & Limits ── */}
+          {activeStep === 0 && (
+            <div className="cc-form-panel">
+              {/* Popular Cards Quick Shortcuts */}
+              {!initial && (
+                <div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: THEME.muted,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: 5,
+                    }}
+                  >
+                    Quick Presets
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                    {POPULAR_CARDS.map((c) => (
+                      <button
+                        key={c.label}
+                        type="button"
+                        onClick={() => {
+                          setF({
+                            ...f,
+                            issuer: c.issuer,
+                            network: c.network,
+                          });
+                        }}
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 6,
+                          fontSize: 10.5,
+                          fontWeight: 600,
+                          border:
+                            f.issuer === c.issuer
+                              ? `1px solid ${THEME.accent}`
+                              : `1px solid ${THEME.line}`,
+                          background:
+                            f.issuer === c.issuer
+                              ? "color-mix(in srgb, var(--t-accent) 12%, transparent)"
+                              : "var(--surface-1)",
+                          color: f.issuer === c.issuer ? THEME.accent : THEME.ink,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Field label="Owner / Profile">
                 <select
                   style={input}
-                  value={v.network || "RuPay"}
-                  onChange={(e) => {
-                    const updated = [...(f.variants || [])];
-                    updated[vIdx] = { ...updated[vIdx], network: e.target.value };
-                    setF({ ...f, variants: updated });
-                  }}
+                  value={f.owner || "self"}
+                  onChange={(e) => setF({ ...f, owner: e.target.value })}
                 >
-                  {ccNetworks.map((n: string) => (
-                    <option key={n}>{n}</option>
+                  {familyProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {formatProfileOption(p)}
+                    </option>
                   ))}
                 </select>
               </Field>
-              <Field label="Last 4 digits">
+
+              <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1.2fr", gap: 10 }}>
+                <Field label="Issuer / Account Name">
+                  <input
+                    style={input}
+                    value={f.issuer}
+                    onChange={(e) => setF({ ...f, issuer: e.target.value })}
+                    placeholder="e.g. HDFC Regalia, ICICI Amazon Pay"
+                    list="cc-issuers-datalist"
+                    autoFocus
+                  />
+                  <datalist id="cc-issuers-datalist">
+                    <option value="Standard Chartered Ultimate" />
+                    <option value="Standard Chartered Smart" />
+                    <option value="Standard Chartered DigiSmart" />
+                    <option value="Standard Chartered EaseMyTrip" />
+                    <option value="Standard Chartered Platinum Rewards" />
+                    <option value="Standard Chartered Bank" />
+                    <option value="HDFC Regalia Gold" />
+                    <option value="HDFC Infinia" />
+                    <option value="HDFC Millennia" />
+                    <option value="ICICI Amazon Pay" />
+                    <option value="ICICI Sapphiro" />
+                    <option value="ICICI Emeralde" />
+                    <option value="SBI Cashback" />
+                    <option value="SBI SimplyClick" />
+                    <option value="SBI Card PRIME" />
+                    <option value="Axis Atlas" />
+                    <option value="Axis Magnus" />
+                    <option value="Axis Airtel" />
+                    <option value="Federal Scapia" />
+                    <option value="Kotak League" />
+                    <option value="IndusInd Legend" />
+                    <option value="AU Zenith+" />
+                    <option value="OneCard" />
+                    <option value="Amex Platinum" />
+                    <option value="Amex MRCC" />
+                    <option value="Amex SmartEarn" />
+                    <option value="HSBC Live+" />
+                    <option value="RBL ShopRite" />
+                  </datalist>
+                </Field>
+
+                <Field label="Primary Network">
+                  <select
+                    style={input}
+                    value={f.network}
+                    onChange={(e) => setF({ ...f, network: e.target.value })}
+                  >
+                    {ccNetworks.map((n: string) => (
+                      <option key={n}>{n}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                  gap: 10,
+                }}
+              >
+                <Field label="Primary Last 4">
+                  <input
+                    style={input}
+                    maxLength={4}
+                    value={f.last4}
+                    onChange={(e) => setF({ ...f, last4: e.target.value })}
+                    placeholder="4589"
+                  />
+                </Field>
+                <Field label={f.sharedGroup ? "Sub-Limit (₹)" : "Account Limit (₹)"}>
+                  <input
+                    style={input}
+                    type="number"
+                    value={f.limit}
+                    onChange={(e) => setF({ ...f, limit: e.target.value })}
+                    placeholder="e.g. 500000"
+                  />
+                </Field>
+                <Field label="Outstanding (₹)">
+                  <input
+                    style={input}
+                    type="number"
+                    value={f.outstanding}
+                    onChange={(e) => setF({ ...f, outstanding: e.target.value })}
+                    placeholder="0"
+                  />
+                </Field>
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 2: Billing & Fees ── */}
+          {activeStep === 1 && (
+            <div className="cc-form-panel">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <Field label="Statement Day (1–31)">
+                  <input
+                    style={input}
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="e.g. 20"
+                    value={f.billDate}
+                    onChange={(e) => setF({ ...f, billDate: e.target.value })}
+                  />
+                </Field>
+                <Field label="Payment Due Day (1–31)">
+                  <input
+                    style={input}
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="e.g. 10"
+                    value={f.dueDay}
+                    onChange={(e) => setF({ ...f, dueDay: e.target.value })}
+                  />
+                </Field>
+              </div>
+
+              {gracePeriodDays !== null && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: THEME.sage,
+                    background: "rgba(34,197,94,0.1)",
+                    border: "1px solid rgba(34,197,94,0.22)",
+                    padding: "5px 10px",
+                    borderRadius: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <Check size={12} strokeWidth={3} />
+                  Calculated grace period: ~{gracePeriodDays} days between statement and due date
+                </div>
+              )}
+
+              {/* Compact Autopay Toggle */}
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 12px",
+                  borderRadius: 9,
+                  background: f.autoPay ? "rgba(34,197,94,0.08)" : "var(--surface-1)",
+                  border: f.autoPay
+                    ? `1px solid color-mix(in srgb, ${THEME.sage} 40%, transparent)`
+                    : `1px solid ${THEME.line}`,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!f.autoPay}
+                  onChange={(e) => setF({ ...f, autoPay: e.target.checked })}
+                  style={{ width: 16, height: 16, cursor: "pointer", accentColor: THEME.sage }}
+                />
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: THEME.ink }}>
+                    Autopay enabled
+                  </span>
+                  <span style={{ fontSize: 11, color: THEME.muted, marginLeft: 8 }}>
+                    (mutes due-date urgency reminders)
+                  </span>
+                </div>
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: 10 }}>
+                <Field label="Annual Fee (₹)">
+                  <input
+                    style={input}
+                    type="number"
+                    value={f.annualFee}
+                    onChange={(e) => setF({ ...f, annualFee: e.target.value })}
+                  />
+                </Field>
+                <Field label="Interest Rate (% APR)">
+                  <input
+                    style={input}
+                    type="number"
+                    min="0"
+                    max="60"
+                    step="0.1"
+                    value={f.interestRate ?? "36"}
+                    onChange={(e) => setF({ ...f, interestRate: e.target.value })}
+                    placeholder="36"
+                  />
+                </Field>
+                <Field label="Helpline Number">
+                  <input
+                    style={input}
+                    value={f.helpline}
+                    onChange={(e) => setF({ ...f, helpline: e.target.value })}
+                    placeholder="1800-xxx-xxxx"
+                  />
+                </Field>
+              </div>
+
+              {Number(f.annualFee) > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <Field label="Fee Month">
+                    <select
+                      style={input}
+                      value={f.feeMonth || ""}
+                      onChange={(e) => setF({ ...f, feeMonth: e.target.value })}
+                    >
+                      <option value="">— Month —</option>
+                      {MONTH_NAMES.map((m, i) => (
+                        <option key={i + 1} value={String(i + 1)}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Fee Day (1–31)">
+                    <input
+                      style={input}
+                      type="number"
+                      min="1"
+                      max="31"
+                      placeholder="e.g. 15"
+                      value={f.feeDay || ""}
+                      onChange={(e) => setF({ ...f, feeDay: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              )}
+
+              {/* Single-line input for waiver details — fixes "to much text area" */}
+              <Field label="Fee Waiver Condition (Optional)">
                 <input
                   style={input}
-                  maxLength={4}
-                  value={v.last4 || ""}
-                  onChange={(e) => {
-                    const updated = [...(f.variants || [])];
-                    updated[vIdx] = { ...updated[vIdx], last4: e.target.value };
-                    setF({ ...f, variants: updated });
-                  }}
-                  placeholder="e.g. 5678"
+                  value={f.waiverInfo}
+                  onChange={(e) => setF({ ...f, waiverInfo: e.target.value })}
+                  placeholder="e.g. Spend ₹1,00,000/yr to waive off renewal fee"
                 />
               </Field>
             </div>
-          </div>
-        ))}
+          )}
 
-        {/* Quick Add Buttons */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4, marginBottom: 12 }}>
-          <button
-            type="button"
-            className="card-interactive"
-            onClick={() => {
-              const newV = {
-                id: uid(),
-                name: "RuPay UPI (Virtual)",
-                network: "RuPay",
-                last4: "",
-                cardType: "virtual",
-                status: "active",
-              };
-              setF({ ...f, variants: [...(f.variants || []), newV] });
-            }}
-            style={{
-              padding: "6px 12px",
-              borderRadius: 8,
-              border: `1px dashed color-mix(in srgb, ${THEME.accent} 40%, transparent)`,
-              background: "transparent",
-              color: THEME.accent,
-              fontSize: 11.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <Plus size={13} /> + Add RuPay UPI (Virtual)
-          </button>
-          <button
-            type="button"
-            className="card-interactive"
-            onClick={() => {
-              const newV = {
-                id: uid(),
-                name: "Companion Amex",
-                network: "Amex",
-                last4: "",
-                cardType: "physical",
-                status: "active",
-              };
-              setF({ ...f, variants: [...(f.variants || []), newV] });
-            }}
-            style={{
-              padding: "6px 12px",
-              borderRadius: 8,
-              border: `1px dashed ${THEME.line}`,
-              background: "transparent",
-              color: THEME.ink,
-              fontSize: 11.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <Plus size={13} /> + Add Companion Card (Amex/MC/Visa)
-          </button>
-          <button
-            type="button"
-            className="card-interactive"
-            onClick={() => {
-              const newV = {
-                id: uid(),
-                name: "Add-on / Variant Card",
-                network: "Visa",
-                last4: "",
-                cardType: "addon",
-                status: "active",
-              };
-              setF({ ...f, variants: [...(f.variants || []), newV] });
-            }}
-            style={{
-              padding: "6px 12px",
-              borderRadius: 8,
-              border: `1px dashed ${THEME.line}`,
-              background: "transparent",
-              color: THEME.muted,
-              fontSize: 11.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <Plus size={13} /> + Custom Variant
-          </button>
-        </div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Statement Date (Day of Month)">
-          <input
-            style={input}
-            type="number"
-            min="1"
-            max="31"
-            placeholder="e.g. 20"
-            value={f.billDate}
-            onChange={(e) => setF({ ...f, billDate: e.target.value })}
-          />
-        </Field>
-        <Field label="Due Day (Day of Month)">
-          <input
-            style={input}
-            type="number"
-            min="1"
-            max="31"
-            placeholder="e.g. 10"
-            value={f.dueDay}
-            onChange={(e) => setF({ ...f, dueDay: e.target.value })}
-          />
-        </Field>
-      </div>
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          fontSize: 12.5,
-          fontWeight: 600,
-          color: THEME.ink,
-          cursor: "pointer",
-          margin: "-4px 0 4px",
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={!!f.autoPay}
-          onChange={(e) => setF({ ...f, autoPay: e.target.checked })}
-          style={{ width: 16, height: 16, cursor: "pointer" }}
-        />
-        Autopay enabled — mutes due-date urgency reminders for this card
-      </label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-        <Field label="Annual Fee (₹)">
-          <input
-            style={input}
-            type="number"
-            value={f.annualFee}
-            onChange={(e) => setF({ ...f, annualFee: e.target.value })}
-          />
-        </Field>
-        <Field label="Interest Rate (% APR)">
-          <input
-            style={input}
-            type="number"
-            min="0"
-            max="60"
-            step="0.1"
-            value={f.interestRate ?? "36"}
-            onChange={(e) => setF({ ...f, interestRate: e.target.value })}
-            placeholder="36"
-          />
-        </Field>
-        <Field label="Helpline Number">
-          <input
-            style={input}
-            value={f.helpline}
-            onChange={(e) => setF({ ...f, helpline: e.target.value })}
-            placeholder="1800-xxx-xxxx"
-          />
-        </Field>
-      </div>
-      {Number(f.annualFee) > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <Field label="Annual Fee Month">
-            <select
-              style={input}
-              value={f.feeMonth || ""}
-              onChange={(e) => setF({ ...f, feeMonth: e.target.value })}
-            >
-              <option value="">— Select month —</option>
-              {MONTH_NAMES.map((m, i) => (
-                <option key={i + 1} value={String(i + 1)}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Annual Fee Day">
-            <input
-              style={input}
-              type="number"
-              min="1"
-              max="31"
-              placeholder="e.g. 15"
-              value={f.feeDay || ""}
-              onChange={(e) => setF({ ...f, feeDay: e.target.value })}
-            />
-          </Field>
-        </div>
-      )}
-      <Field label="Waiver Details">
-        <textarea
-          style={{ ...input, height: 60, resize: "none" }}
-          value={f.waiverInfo}
-          onChange={(e) => setF({ ...f, waiverInfo: e.target.value })}
-          placeholder="e.g. Spend 1L in a year to waive off annual fee"
-        />
-      </Field>
+          {/* ── STEP 3: Linked Variants, Rewards & Pool ── */}
+          {activeStep === 2 && (
+            <div className="cc-form-panel">
+              {/* Linked Card Variants (Dual-Card Account) */}
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: THEME.accent,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Sparkles size={13} /> Linked Variants (Dual-Card)
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      padding: "2px 7px",
+                      borderRadius: 10,
+                      background:
+                        (f.variants || []).length > 0
+                          ? "rgba(34,197,94,0.12)"
+                          : "rgba(128,128,128,0.1)",
+                      color: (f.variants || []).length > 0 ? THEME.sage : THEME.muted,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {(f.variants || []).length === 0
+                      ? "1 Card"
+                      : `${(f.variants || []).length + 1} Cards · 1 Limit`}
+                  </span>
+                </div>
 
-      {/* Reward Points */}
-      <div style={{ borderTop: `1px solid ${THEME.line}`, paddingTop: 16, marginTop: 4 }}>
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: THEME.muted,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            marginBottom: 12,
-          }}
-        >
-          Reward Points (Optional)
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <Field label="Points Balance">
-            <input
-              style={input}
-              type="number"
-              min="0"
-              value={f.rewardPointsBalance || ""}
-              onChange={(e) => setF({ ...f, rewardPointsBalance: e.target.value })}
-              placeholder="e.g. 12500"
-            />
-          </Field>
-          <Field label="Value per Point (₹)">
-            <input
-              style={input}
-              type="number"
-              min="0"
-              step="0.01"
-              value={f.rewardPointValue || ""}
-              onChange={(e) => setF({ ...f, rewardPointValue: e.target.value })}
-              placeholder="e.g. 0.25"
-            />
-          </Field>
+                {/* Existing variants list */}
+                {(f.variants || []).map((v: any, vIdx: number) => (
+                  <div
+                    key={v.id || vIdx}
+                    style={{
+                      padding: "8px 10px",
+                      background: "var(--surface-1)",
+                      border: `1px solid ${THEME.line}`,
+                      borderRadius: 8,
+                      marginBottom: 6,
+                      display: "grid",
+                      gridTemplateColumns: "1.2fr 1fr 0.9fr auto",
+                      gap: 8,
+                      alignItems: "center",
+                    }}
+                  >
+                    <input
+                      style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
+                      value={v.name || ""}
+                      onChange={(e) => {
+                        const updated = [...(f.variants || [])];
+                        updated[vIdx] = { ...updated[vIdx], name: e.target.value };
+                        setF({ ...f, variants: updated });
+                      }}
+                      placeholder="Variant Label"
+                    />
+                    <select
+                      style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
+                      value={v.network || "RuPay"}
+                      onChange={(e) => {
+                        const updated = [...(f.variants || [])];
+                        updated[vIdx] = { ...updated[vIdx], network: e.target.value };
+                        setF({ ...f, variants: updated });
+                      }}
+                    >
+                      {ccNetworks.map((n: string) => (
+                        <option key={n}>{n}</option>
+                      ))}
+                    </select>
+                    <input
+                      style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
+                      maxLength={4}
+                      value={v.last4 || ""}
+                      onChange={(e) => {
+                        const updated = [...(f.variants || [])];
+                        updated[vIdx] = { ...updated[vIdx], last4: e.target.value };
+                        setF({ ...f, variants: updated });
+                      }}
+                      placeholder="Last 4"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (f.variants || []).filter((_: any, i: number) => i !== vIdx);
+                        setF({ ...f, variants: updated });
+                      }}
+                      className="icon-btn danger"
+                      style={{ ...iconBtn, color: THEME.rust, padding: 3 }}
+                      title="Remove variant"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Quick Add Buttons */}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className="card-interactive"
+                    onClick={() => {
+                      const newV = {
+                        id: uid(),
+                        name: "RuPay UPI (Virtual)",
+                        network: "RuPay",
+                        last4: "",
+                        cardType: "virtual",
+                        status: "active",
+                      };
+                      setF({ ...f, variants: [...(f.variants || []), newV] });
+                    }}
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: 6,
+                      border: `1px dashed color-mix(in srgb, ${THEME.accent} 40%, transparent)`,
+                      background: "transparent",
+                      color: THEME.accent,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <Plus size={12} /> Add RuPay UPI (Virtual)
+                  </button>
+                  <button
+                    type="button"
+                    className="card-interactive"
+                    onClick={() => {
+                      const newV = {
+                        id: uid(),
+                        name: "Companion Amex",
+                        network: "Amex",
+                        last4: "",
+                        cardType: "physical",
+                        status: "active",
+                      };
+                      setF({ ...f, variants: [...(f.variants || []), newV] });
+                    }}
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: 6,
+                      border: `1px dashed ${THEME.line}`,
+                      background: "transparent",
+                      color: THEME.ink,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <Plus size={12} /> Add Companion Card
+                  </button>
+                  <button
+                    type="button"
+                    className="card-interactive"
+                    onClick={() => {
+                      const newV = {
+                        id: uid(),
+                        name: "Add-on Card",
+                        network: "Visa",
+                        last4: "",
+                        cardType: "addon",
+                        status: "active",
+                      };
+                      setF({ ...f, variants: [...(f.variants || []), newV] });
+                    }}
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: 6,
+                      border: `1px dashed ${THEME.line}`,
+                      background: "transparent",
+                      color: THEME.muted,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <Plus size={12} /> Custom Variant
+                  </button>
+                </div>
+              </div>
+
+              {/* Reward Points */}
+              <div style={{ borderTop: `1px solid ${THEME.line}`, paddingTop: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      color: THEME.muted,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <Star size={12} /> Reward Points (Optional)
+                  </div>
+                  {totalRewardValue !== null && (
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: THEME.accent,
+                        background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
+                        padding: "1px 7px",
+                        borderRadius: 6,
+                      }}
+                    >
+                      ≈ ₹{totalRewardValue.toLocaleString("en-IN", { maximumFractionDigits: 2 })} value
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <Field label="Points Balance">
+                    <input
+                      style={input}
+                      type="number"
+                      min="0"
+                      value={f.rewardPointsBalance || ""}
+                      onChange={(e) => setF({ ...f, rewardPointsBalance: e.target.value })}
+                      placeholder="e.g. 12500"
+                    />
+                  </Field>
+                  <Field label="Value / Point (₹)">
+                    <input
+                      style={input}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={f.rewardPointValue || ""}
+                      onChange={(e) => setF({ ...f, rewardPointValue: e.target.value })}
+                      placeholder="e.g. 0.25"
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* Shared Pool & Status Row */}
+              <div
+                style={{
+                  borderTop: `1px solid ${THEME.line}`,
+                  paddingTop: 10,
+                  display: "grid",
+                  gridTemplateColumns: "1.2fr 1fr",
+                  gap: 10,
+                  alignItems: "start",
+                }}
+              >
+                <div>
+                  <datalist id="cc-shared-group-list">
+                    {existingGroups
+                      .filter((g: string) => g)
+                      .map((g: string) => (
+                        <option key={g} value={g} />
+                      ))}
+                  </datalist>
+                  <Field label="Shared Credit Pool Name">
+                    <input
+                      style={input}
+                      value={f.sharedGroup || ""}
+                      onChange={(e) => setF({ ...f, sharedGroup: e.target.value })}
+                      placeholder="e.g. HDFC Shared Pool"
+                      list="cc-shared-group-list"
+                    />
+                  </Field>
+                  {f.sharedGroup && (
+                    <div style={{ marginTop: 6 }}>
+                      <Field label="Total Pool Limit (₹)">
+                        <input
+                          style={input}
+                          type="number"
+                          value={f.sharedGroupLimit || ""}
+                          onChange={(e) => setF({ ...f, sharedGroupLimit: e.target.value })}
+                          placeholder="e.g. 500000"
+                        />
+                      </Field>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Field label="Card Status">
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {["active", "closed"].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() =>
+                            setF({
+                              ...f,
+                              status: s,
+                              closedDate: s === "active" ? "" : f.closedDate || today(),
+                            })
+                          }
+                          style={{
+                            flex: 1,
+                            padding: "8px 0",
+                            borderRadius: 8,
+                            border:
+                              f.status === s
+                                ? `2px solid ${s === "active" ? THEME.sage : THEME.rust}`
+                                : `1.5px solid ${THEME.line}`,
+                            background:
+                              f.status === s
+                                ? s === "active"
+                                  ? "rgba(34,197,94,0.08)"
+                                  : "rgba(239,68,68,0.08)"
+                                : "transparent",
+                            color:
+                              f.status === s
+                                ? s === "active"
+                                  ? THEME.sage
+                                  : THEME.rust
+                                : THEME.muted,
+                            fontWeight: 700,
+                            fontSize: 11.5,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          {s === "active" ? "✓ Active" : "✕ Closed"}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                  {isClosed && (
+                    <div style={{ marginTop: 6 }}>
+                      <Field label="Closed On">
+                        <input
+                          style={input}
+                          type="date"
+                          value={f.closedDate || ""}
+                          onChange={(e) => setF({ ...f, closedDate: e.target.value })}
+                        />
+                      </Field>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Shared Limit Pool */}
-      <div style={{ borderTop: `1px solid ${THEME.line}`, paddingTop: 16, marginTop: 4 }}>
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: THEME.muted,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            marginBottom: 6,
-          }}
-        >
-          Shared Credit Pool (Optional)
-        </div>
-        <div style={{ fontSize: 12, color: THEME.muted, marginBottom: 12, lineHeight: 1.55 }}>
-          Some banks allocate one shared pool across multiple cards (e.g., HDFC primary + add-on, or
-          SBI Simply Click + Elite sharing a limit). Group them here — the app tracks combined
-          utilisation against the pool, not individual sub-limits.
-        </div>
-        <datalist id="cc-shared-group-list">
-          {existingGroups
-            .filter((g: string) => g)
-            .map((g: string) => (
-              <option key={g} value={g} />
-            ))}
-        </datalist>
-        <Field label="Pool Name (leave blank if this card has its own independent limit)">
-          <input
-            style={input}
-            value={f.sharedGroup || ""}
-            onChange={(e) => setF({ ...f, sharedGroup: e.target.value })}
-            placeholder="e.g. HDFC Shared Pool, SBI Family"
-            list="cc-shared-group-list"
-          />
-        </Field>
-        {f.sharedGroup && (
-          <Field label="Total Pool Credit Limit (₹) — the combined limit shared across all cards in this pool">
-            <input
-              style={input}
-              type="number"
-              value={f.sharedGroupLimit || ""}
-              onChange={(e) => setF({ ...f, sharedGroupLimit: e.target.value })}
-              placeholder="e.g. 500000"
-            />
-          </Field>
-        )}
-      </div>
-
-      {/* Card Status */}
-      <div style={{ borderTop: `1px solid ${THEME.line}`, paddingTop: 16, marginTop: 4 }}>
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: THEME.muted,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            marginBottom: 12,
-          }}
-        >
-          Card Status
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          {["active", "closed"].map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() =>
-                setF({ ...f, status: s, closedDate: s === "active" ? "" : f.closedDate || today() })
-              }
-              style={{
-                flex: 1,
-                padding: "10px 0",
-                borderRadius: 10,
-                border:
-                  f.status === s
-                    ? `2px solid ${s === "active" ? THEME.sage : THEME.rust}`
-                    : `1.5px solid ${THEME.line}`,
-                background:
-                  f.status === s
-                    ? s === "active"
-                      ? "rgba(34,197,94,0.08)"
-                      : "rgba(239,68,68,0.08)"
-                    : "transparent",
-                color: f.status === s ? (s === "active" ? THEME.sage : THEME.rust) : THEME.muted,
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {s === "active" ? "✓ Active" : "✕ Closed"}
-            </button>
-          ))}
-        </div>
-        {isClosed && (
-          <div style={{ marginTop: 12 }}>
-            <Field label="Closed On">
-              <input
-                style={input}
-                type="date"
-                value={f.closedDate || ""}
-                onChange={(e) => setF({ ...f, closedDate: e.target.value })}
-              />
-            </Field>
-          </div>
-        )}
-      </div>
-
-      <ModalActions
-        onSave={() => f.issuer && onSave(f)}
-        onClose={onClose}
-        saveLabel={initial ? "Save Changes" : "Add Credit Card"}
-        disabled={saving}
-        loading={saving}
-      />
     </Modal>
   );
 }
