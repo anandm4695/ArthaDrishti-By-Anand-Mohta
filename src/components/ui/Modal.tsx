@@ -137,6 +137,7 @@ export const ModalActions: React.FC<{
   disabled?: boolean;
   loading?: boolean;
   children?: React.ReactNode;
+  style?: React.CSSProperties;
 }> = ({
   onSave,
   onClose,
@@ -146,10 +147,11 @@ export const ModalActions: React.FC<{
   disabled = false,
   loading = false,
   children,
+  style,
 }) => {
   const actualSave = saveText || saveLabel;
   return (
-    <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 12, marginTop: 24 }}>
+    <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 12, marginTop: 24, ...style }}>
       {children ? (
         children
       ) : (

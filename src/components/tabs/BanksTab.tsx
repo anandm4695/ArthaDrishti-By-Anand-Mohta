@@ -4540,26 +4540,56 @@ function TxnModal({
   }, [f.note, isTransfer]);
 
   return (
-    <Modal title="Record Bank Transaction" onClose={onClose} maxWidth={880}>
+    <Modal
+      title="Record Bank Transaction"
+      onClose={onClose}
+      maxWidth={920}
+      footer={
+        <ModalActions
+          style={{ marginTop: 0 }}
+          onSave={() => {
+            if (saving) return;
+            const numAmt = Number(f.amount);
+            if (
+              numAmt > 0 &&
+              f.accountId &&
+              (!isTransfer || (f.toAccountId && f.accountId !== f.toAccountId))
+            ) {
+              onSave(f);
+            }
+          }}
+          onClose={onClose}
+          saveLabel="Record Transaction"
+          disabled={
+            saving ||
+            !f.amount ||
+            Number(f.amount) <= 0 ||
+            !f.accountId ||
+            (isTransfer && (!f.toAccountId || f.accountId === f.toAccountId))
+          }
+          loading={saving}
+        />
+      }
+    >
       {/* 3-Mode segmented selector */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           background: "var(--surface-1)",
-          padding: 5,
-          borderRadius: 12,
+          padding: 4,
+          borderRadius: 10,
           border: `1.5px solid ${THEME.line}`,
-          gap: 6,
-          marginBottom: 20,
+          gap: 4,
+          marginBottom: 12,
         }}
       >
         <button
           type="button"
           onClick={() => setF({ ...f, type: "debit", linkedKey: "" })}
           style={{
-            padding: "10px 14px",
-            borderRadius: 9,
+            padding: "7px 12px",
+            borderRadius: 8,
             border:
               f.type === "debit"
                 ? `1.5px solid color-mix(in srgb, ${THEME.rust} 40%, transparent)`
@@ -4570,29 +4600,24 @@ function TxnModal({
                 : "transparent",
             color: f.type === "debit" ? THEME.rust : THEME.muted,
             fontWeight: 800,
-            fontSize: 13,
+            fontSize: 12,
             cursor: "pointer",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 3,
-            boxShadow: f.type === "debit" ? "0 2px 6px rgba(220, 38, 38, 0.12)" : "none",
+            gap: 6,
             transition: "all 0.15s ease",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <TrendingDown size={15} /> <span>Expense (Debit)</span>
-          </div>
-          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Money Out • Spending</span>
+          <TrendingDown size={14} /> <span>Expense (Debit)</span>
         </button>
 
         <button
           type="button"
           onClick={() => setF({ ...f, type: "credit", linkedKey: "" })}
           style={{
-            padding: "10px 14px",
-            borderRadius: 9,
+            padding: "7px 12px",
+            borderRadius: 8,
             border:
               f.type === "credit"
                 ? `1.5px solid color-mix(in srgb, ${THEME.sage} 40%, transparent)`
@@ -4603,29 +4628,24 @@ function TxnModal({
                 : "transparent",
             color: f.type === "credit" ? THEME.sage : THEME.muted,
             fontWeight: 800,
-            fontSize: 13,
+            fontSize: 12,
             cursor: "pointer",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 3,
-            boxShadow: f.type === "credit" ? "0 2px 6px rgba(4, 130, 91, 0.12)" : "none",
+            gap: 6,
             transition: "all 0.15s ease",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <TrendingUp size={15} /> <span>Income (Credit)</span>
-          </div>
-          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Money In • Earnings</span>
+          <TrendingUp size={14} /> <span>Income (Credit)</span>
         </button>
 
         <button
           type="button"
           onClick={() => setF({ ...f, type: "transfer", category: "Transfer", linkedKey: "" })}
           style={{
-            padding: "10px 14px",
-            borderRadius: 9,
+            padding: "7px 12px",
+            borderRadius: 8,
             border:
               f.type === "transfer"
                 ? `1.5px solid color-mix(in srgb, ${THEME.violet} 40%, transparent)`
@@ -4636,38 +4656,33 @@ function TxnModal({
                 : "transparent",
             color: f.type === "transfer" ? THEME.violet : THEME.muted,
             fontWeight: 800,
-            fontSize: 13,
+            fontSize: 12,
             cursor: "pointer",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 3,
-            boxShadow: f.type === "transfer" ? "0 2px 6px rgba(139, 92, 246, 0.12)" : "none",
+            gap: 6,
             transition: "all 0.15s ease",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <ArrowLeftRight size={15} /> <span>Transfer</span>
-          </div>
-          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.8 }}>Between Accounts</span>
+          <ArrowLeftRight size={14} /> <span>Transfer</span>
         </button>
       </div>
 
-      {/* 2-Column Responsive Workspace to take full advantage of wide screen */}
+      {/* 2-Column Responsive Workspace */}
       <div className="txn-modal-grid">
         {/* Left Column: Transaction Core Inputs */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* Hero Amount Input Card */}
           <div
             style={{
               background: "var(--surface-1)",
               border: `1.5px solid ${THEME.line}`,
-              borderRadius: "var(--radius-lg)",
-              padding: "14px 16px",
+              borderRadius: "var(--radius-md)",
+              padding: "10px 14px",
               display: "flex",
               flexDirection: "column",
-              gap: 10,
+              gap: 6,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -4705,8 +4720,8 @@ function TxnModal({
               <span
                 style={{
                   position: "absolute",
-                  left: 14,
-                  fontSize: 22,
+                  left: 12,
+                  fontSize: 18,
                   fontWeight: 800,
                   color:
                     f.type === "debit"
@@ -4722,11 +4737,11 @@ function TxnModal({
               <input
                 style={{
                   ...inputStyle,
-                  fontSize: 22,
+                  fontSize: 18,
                   fontWeight: 800,
-                  paddingLeft: 36,
-                  paddingRight: 14,
-                  height: 48,
+                  paddingLeft: 30,
+                  paddingRight: 10,
+                  height: 38,
                   background: "var(--surface-0)",
                   color: THEME.ink,
                 }}
@@ -4741,7 +4756,7 @@ function TxnModal({
             </div>
 
             {/* Quick Amount Suggestion Chips */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: THEME.muted, marginRight: 2 }}>
                 Quick:
               </span>
@@ -4751,17 +4766,16 @@ function TxnModal({
                   type="button"
                   onClick={() => addAmount(amt)}
                   style={{
-                    padding: "4px 8px",
-                    borderRadius: 6,
+                    padding: "2px 6px",
+                    borderRadius: 5,
                     border: `1px solid ${THEME.line}`,
                     background: "var(--surface-0)",
                     color: THEME.ink,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: 700,
                     cursor: "pointer",
-                    transition: "all 0.15s ease",
                   }}
-                  title={`Add ₹${amt.toLocaleString("en-IN")} to amount`}
+                  title={`Add ₹${amt.toLocaleString("en-IN")}`}
                 >
                   +₹{amt >= 1000 ? `${amt / 1000}k` : amt}
                 </button>
@@ -4771,12 +4785,12 @@ function TxnModal({
                   type="button"
                   onClick={() => setF({ ...f, amount: "" })}
                   style={{
-                    padding: "4px 8px",
-                    borderRadius: 6,
+                    padding: "2px 6px",
+                    borderRadius: 5,
                     border: "none",
                     background: "transparent",
                     color: THEME.muted,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: 700,
                     cursor: "pointer",
                     marginLeft: "auto",
@@ -4788,74 +4802,33 @@ function TxnModal({
             </div>
           </div>
 
-          {/* Date with Quick Today / Yesterday */}
+          {/* Bank Account Selection */}
           <div>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 6,
+                marginBottom: 4,
               }}
             >
-              <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>Date</label>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button
-                  type="button"
-                  onClick={setDateToday}
+              <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>
+                {isTransfer ? "Source Bank Account" : "Bank Account"}
+              </label>
+              {currentAcc && (
+                <span
                   style={{
-                    border: "none",
-                    background: "transparent",
-                    color: f.date === today() ? THEME.accent : THEME.muted,
                     fontSize: 11,
-                    fontWeight: f.date === today() ? 800 : 600,
-                    cursor: "pointer",
-                    padding: "2px 4px",
+                    fontWeight: 700,
+                    color: currentBalance < 0 ? THEME.rust : THEME.muted,
                   }}
                 >
-                  Today
-                </button>
-                <span style={{ color: THEME.line }}>•</span>
-                <button
-                  type="button"
-                  onClick={setDateYesterday}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    color: THEME.muted,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    padding: "2px 4px",
-                  }}
-                >
-                  Yesterday
-                </button>
-              </div>
+                  Bal: {privacyMode ? "••••••" : fmtINR(currentBalance)}
+                </span>
+              )}
             </div>
-            <input
-              style={inputStyle}
-              type="date"
-              value={f.date}
-              onChange={(e) => setF({ ...f, date: e.target.value })}
-            />
-          </div>
-
-          {/* Bank Account Selection (Full Width so name doesn't truncate!) */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                fontWeight: 700,
-                color: THEME.ink,
-                marginBottom: 6,
-              }}
-            >
-              {isTransfer ? "Source Bank Account" : "Bank Account"}
-            </label>
             <select
-              style={inputStyle}
+              style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
               value={f.accountId}
               onChange={(e) => setF({ ...f, accountId: e.target.value })}
             >
@@ -4866,46 +4839,36 @@ function TxnModal({
                 </option>
               ))}
             </select>
-            {currentAcc && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginTop: 5,
-                  fontSize: 11,
-                  color: THEME.muted,
-                }}
-              >
-                <span>Current Available Balance</span>
-                <span
-                  style={{
-                    fontWeight: 700,
-                    color: currentBalance < 0 ? THEME.rust : THEME.ink,
-                  }}
-                >
-                  {privacyMode ? "••••••" : fmtINR(currentBalance)}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Transfer Destination Bank Account */}
           {isTransfer && (
             <div>
-              <label
+              <div
                 style={{
-                  display: "block",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: THEME.ink,
-                  marginBottom: 6,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 4,
                 }}
               >
-                Destination Bank Account
-              </label>
+                <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>
+                  Destination Bank Account
+                </label>
+                {toAcc && (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: toBalance < 0 ? THEME.rust : THEME.muted,
+                    }}
+                  >
+                    Bal: {privacyMode ? "••••••" : fmtINR(toBalance)}
+                  </span>
+                )}
+              </div>
               <select
-                style={inputStyle}
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
                 value={f.toAccountId}
                 onChange={(e) => setF({ ...f, toAccountId: e.target.value })}
               >
@@ -4917,64 +4880,107 @@ function TxnModal({
                     </option>
                   ))}
               </select>
-              {toAcc && (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginTop: 5,
-                    fontSize: 11,
-                    color: THEME.muted,
-                  }}
-                >
-                  <span>Destination Current Balance</span>
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      color: toBalance < 0 ? THEME.rust : THEME.ink,
-                    }}
-                  >
-                    {privacyMode ? "••••••" : fmtINR(toBalance)}
-                  </span>
-                </div>
-              )}
             </div>
           )}
 
-          {/* Owner / Family Profile */}
-          <Field label="Owner / Family Profile">
-            <select
-              style={inputStyle}
-              value={f.owner || "self"}
-              onChange={(e) => setF({ ...f, owner: e.target.value })}
-            >
-              {familyProfiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {formatProfileOption(p)}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {/* Date & Owner (Side-by-side in 1 row!) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 4,
+                }}
+              >
+                <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>Date</label>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button
+                    type="button"
+                    onClick={setDateToday}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: f.date === today() ? THEME.accent : THEME.muted,
+                      fontSize: 10,
+                      fontWeight: f.date === today() ? 800 : 600,
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    Today
+                  </button>
+                  <span style={{ color: THEME.line, fontSize: 10 }}>•</span>
+                  <button
+                    type="button"
+                    onClick={setDateYesterday}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: THEME.muted,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    Y'day
+                  </button>
+                </div>
+              </div>
+              <input
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                type="date"
+                value={f.date}
+                onChange={(e) => setF({ ...f, date: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.ink,
+                  marginBottom: 4,
+                }}
+              >
+                Owner / Profile
+              </label>
+              <select
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                value={f.owner || "self"}
+                onChange={(e) => setF({ ...f, owner: e.target.value })}
+              >
+                {familyProfiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {formatProfileOption(p)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Context, Live Simulation & Categorization */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* Live Balance Impact Card */}
           <div
             style={{
               background: "var(--surface-1)",
               border: `1.5px solid ${THEME.line}`,
-              borderRadius: "var(--radius-lg)",
-              padding: "16px 18px",
+              borderRadius: "var(--radius-md)",
+              padding: "10px 14px",
               display: "flex",
               flexDirection: "column",
-              gap: 12,
+              gap: 6,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Landmark size={15} style={{ color: THEME.accent }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Landmark size={14} style={{ color: THEME.accent }} />
                 <span
                   style={{
                     fontSize: 11,
@@ -4992,7 +4998,7 @@ function TxnModal({
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    padding: "2px 8px",
+                    padding: "1px 6px",
                     borderRadius: 99,
                     background: `color-mix(in srgb, ${THEME.accent} 12%, transparent)`,
                     color: THEME.accent,
@@ -5008,63 +5014,58 @@ function TxnModal({
               <>
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "baseline",
-                    fontSize: 13,
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 8,
+                    fontSize: 12,
                   }}
                 >
-                  <span style={{ color: THEME.muted }}>
-                    {currentAcc?.bankName || "Selected Bank"}
-                  </span>
-                  <span style={{ fontWeight: 600 }}>
-                    {privacyMode ? "••••••" : fmtINR(currentBalance)}
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "baseline",
-                    fontSize: 13,
-                  }}
-                >
-                  <span
-                    style={{
-                      color: f.type === "debit" ? THEME.rust : THEME.sage,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {f.type === "debit" ? "− Transaction Debit" : "+ Transaction Credit"}
-                  </span>
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      color: f.type === "debit" ? THEME.rust : THEME.sage,
-                    }}
-                  >
-                    {f.type === "debit" ? "− " : "+ "}
-                    {privacyMode ? "••••••" : fmtINR(numAmount)}
-                  </span>
+                  <div>
+                    <span style={{ color: THEME.muted, fontSize: 10, display: "block" }}>
+                      Current Balance
+                    </span>
+                    <span style={{ fontWeight: 600 }}>
+                      {privacyMode ? "••••••" : fmtINR(currentBalance)}
+                    </span>
+                  </div>
+                  <div>
+                    <span
+                      style={{
+                        color: f.type === "debit" ? THEME.rust : THEME.sage,
+                        fontSize: 10,
+                        display: "block",
+                      }}
+                    >
+                      {f.type === "debit" ? "− Debit" : "+ Credit"}
+                    </span>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: f.type === "debit" ? THEME.rust : THEME.sage,
+                      }}
+                    >
+                      {f.type === "debit" ? "− " : "+ "}
+                      {privacyMode ? "••••••" : fmtINR(numAmount)}
+                    </span>
+                  </div>
                 </div>
 
                 <div
                   style={{
                     borderTop: `1px dashed ${THEME.line}`,
-                    paddingTop: 10,
+                    paddingTop: 6,
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "baseline",
                   }}
                 >
-                  <span style={{ fontWeight: 800, fontSize: 13, color: THEME.ink }}>
+                  <span style={{ fontWeight: 700, fontSize: 12, color: THEME.ink }}>
                     Projected Balance
                   </span>
                   <span
                     style={{
                       fontWeight: 800,
-                      fontSize: 16,
+                      fontSize: 14,
                       color: projectedBalance < 0 ? THEME.rust : THEME.ink,
                     }}
                   >
@@ -5075,77 +5076,42 @@ function TxnModal({
                 {projectedBalance < 0 && numAmount > 0 && (
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: 10,
                       color: THEME.rust,
                       fontWeight: 700,
-                      padding: "6px 10px",
+                      padding: "4px 8px",
                       background: `color-mix(in srgb, ${THEME.rust} 12%, transparent)`,
-                      borderRadius: 8,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
+                      borderRadius: 6,
                     }}
                   >
-                    ⚠️ Caution: This will cause an overdraft / negative balance.
+                    ⚠️ Warning: Projected overdraft / negative balance
                   </div>
                 )}
               </>
             ) : (
               <>
-                <div style={{ fontSize: 12, color: THEME.muted, marginBottom: 2 }}>
-                  Source: <strong>{currentAcc?.bankName}</strong>
-                </div>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}
-                >
-                  <span style={{ color: THEME.muted }}>
-                    Current: {privacyMode ? "••••••" : fmtINR(currentBalance)}
-                  </span>
-                  <span style={{ fontWeight: 700, color: THEME.rust }}>
-                    − {privacyMode ? "••••••" : fmtINR(numAmount)}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  <span>Projected Source:</span>
-                  <span style={{ color: projectedBalance < 0 ? THEME.rust : THEME.ink }}>
-                    {privacyMode ? "••••••" : fmtINR(projectedBalance)}
-                  </span>
-                </div>
-
-                <div style={{ borderTop: `1px solid ${THEME.line}`, margin: "4px 0" }} />
-
-                <div style={{ fontSize: 12, color: THEME.muted, marginBottom: 2 }}>
-                  Destination: <strong>{toAcc?.bankName || "Select Destination"}</strong>
-                </div>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}
-                >
-                  <span style={{ color: THEME.muted }}>
-                    Current: {privacyMode ? "••••••" : fmtINR(toBalance)}
-                  </span>
-                  <span style={{ fontWeight: 700, color: THEME.sage }}>
-                    + {privacyMode ? "••••••" : fmtINR(numAmount)}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  <span>Projected Destination:</span>
-                  <span style={{ color: THEME.sage }}>
-                    {privacyMode ? "••••••" : fmtINR(projectedToBalance)}
-                  </span>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 11 }}>
+                  <div>
+                    <span style={{ color: THEME.muted, display: "block" }}>
+                      Src ({currentAcc?.bankName})
+                    </span>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: projectedBalance < 0 ? THEME.rust : THEME.ink,
+                      }}
+                    >
+                      {privacyMode ? "••••••" : fmtINR(projectedBalance)}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: THEME.muted, display: "block" }}>
+                      Dest ({toAcc?.bankName || "To"})
+                    </span>
+                    <span style={{ fontWeight: 700, color: THEME.sage }}>
+                      {privacyMode ? "••••••" : fmtINR(projectedToBalance)}
+                    </span>
+                  </div>
                 </div>
               </>
             )}
@@ -5154,63 +5120,97 @@ function TxnModal({
           {/* Category & Auto Link (Expense/Income only) */}
           {!isTransfer && (
             <div>
-              <Field label="Category">
-                <select
-                  style={inputStyle}
-                  value={f.category}
-                  onChange={(e) => setF({ ...f, category: e.target.value, linkedKey: "" })}
-                >
-                  {cats.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-              </Field>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 4,
+                }}
+              >
+                <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>
+                  Category
+                </label>
+              </div>
+              <select
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                value={f.category}
+                onChange={(e) => setF({ ...f, category: e.target.value, linkedKey: "" })}
+              >
+                {cats.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
 
               {(() => {
                 const cfg = getLinkConfig(f.category, f.type, state, privacyMode);
                 if (!cfg) return null;
                 return (
-                  <div style={{ marginTop: 10 }}>
-                    <Field label={`Link to ${cfg.label} (optional)`}>
-                      <select
-                        style={inputStyle}
-                        value={f.linkedKey}
-                        onChange={(e) => setF({ ...f, linkedKey: e.target.value })}
+                  <div style={{ marginTop: 6 }}>
+                    <select
+                      style={{ ...inputStyle, padding: "6px 8px", height: 34, fontSize: 12 }}
+                      value={f.linkedKey}
+                      onChange={(e) => setF({ ...f, linkedKey: e.target.value })}
+                    >
+                      <option value="">— Bank ledger only —</option>
+                      {cfg.options.map((o: any) => (
+                        <option key={o.key} value={o.key}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    {f.linkedKey && (
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: THEME.sage,
+                          marginTop: 4,
+                          fontWeight: 700,
+                          padding: "3px 8px",
+                          background: `color-mix(in srgb, ${THEME.sage} 10%, transparent)`,
+                          borderRadius: 6,
+                        }}
                       >
-                        <option value="">— Bank ledger only —</option>
-                        {cfg.options.map((o: any) => (
-                          <option key={o.key} value={o.key}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                      {f.linkedKey && (
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: THEME.sage,
-                            marginTop: 6,
-                            fontWeight: 700,
-                            padding: "6px 10px",
-                            background: `color-mix(in srgb, ${THEME.sage} 10%, transparent)`,
-                            borderRadius: 8,
-                          }}
-                        >
-                          ✓ Will auto-post and update {cfg.label} record
-                        </div>
-                      )}
-                    </Field>
+                        ✓ Will auto-post and update {cfg.label} record
+                      </div>
+                    )}
                   </div>
                 );
               })()}
             </div>
           )}
 
-          {/* Particulars / Note */}
-          <div>
-            <Field label="Particulars / Note">
+          {/* Particulars & Reference No. (Side-by-side in 1 row!) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 10 }}>
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 4,
+                }}
+              >
+                <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>
+                  Particulars / Note
+                </label>
+                {autoDetectedCat && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: THEME.accent,
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Sparkles size={10} /> {autoDetectedCat}
+                  </span>
+                )}
+              </div>
               <input
-                style={inputStyle}
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
                 value={f.note}
                 onChange={(e) => {
                   const note = e.target.value;
@@ -5218,46 +5218,39 @@ function TxnModal({
                   setF({ ...f, note, ...(cat ? { category: cat, linkedKey: "" } : {}) });
                 }}
                 placeholder={
-                  isTransfer
-                    ? "e.g. Monthly transfer to salary savings"
-                    : "e.g. Swiggy order, Electricity Bill — category auto-detects"
+                  isTransfer ? "e.g. Monthly transfer" : "e.g. Swiggy, Electricity Bill"
                 }
               />
-            </Field>
-            {autoDetectedCat && (
-              <div
+            </div>
+
+            <div>
+              <label
                 style={{
+                  display: "block",
                   fontSize: 11,
-                  color: THEME.accent,
                   fontWeight: 700,
-                  marginTop: 4,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
+                  color: THEME.ink,
+                  marginBottom: 4,
                 }}
               >
-                <Sparkles size={12} /> Auto-detected: <strong>{autoDetectedCat}</strong>
-              </div>
-            )}
+                Ref / Cheque No.
+              </label>
+              <input
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                value={f.referenceNumber || ""}
+                onChange={(e) => setF({ ...f, referenceNumber: e.target.value })}
+                placeholder="Optional ref #"
+              />
+            </div>
           </div>
-
-          {/* Reference / Cheque No. */}
-          <Field label="Reference / Cheque No.">
-            <input
-              style={inputStyle}
-              value={f.referenceNumber || ""}
-              onChange={(e) => setF({ ...f, referenceNumber: e.target.value })}
-              placeholder="Optional cheque or transaction ref #"
-            />
-          </Field>
         </div>
       </div>
 
-      {/* Dedicated Full-Width Narration / Description Section with Proper Space */}
+      {/* Dedicated Full-Width Narration / Description Section (Compact & Spacious Across 920px) */}
       <div
         style={{
-          marginTop: 16,
-          paddingTop: 16,
+          marginTop: 10,
+          paddingTop: 10,
           borderTop: `1px solid ${THEME.line}`,
         }}
       >
@@ -5266,62 +5259,28 @@ function TxnModal({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 6,
+            marginBottom: 4,
           }}
         >
-          <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>
             Narration / Description
           </label>
-          <span style={{ fontSize: 11, color: THEME.muted }}>
-            Raw bank statement narration • UPI / IMPS details • Memo
+          <span style={{ fontSize: 10, color: THEME.muted }}>
+            {f.narration ? `${f.narration.length} characters • ` : ""}Statement line / UPI memo
           </span>
         </div>
-        <textarea
+        <input
           style={{
             ...inputStyle,
-            minHeight: 64,
-            resize: "vertical",
-            fontFamily: "inherit",
-            fontSize: 13,
-            lineHeight: 1.45,
+            padding: "8px 12px",
+            height: 38,
+            fontSize: 12,
           }}
-          rows={2}
           value={f.narration}
           onChange={(e) => setF({ ...f, narration: e.target.value })}
           placeholder="e.g. UPI/428472918234/SWIGGY BANGALORE/HDFC0001234 or paste raw statement memo..."
         />
-        {f.narration && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-            <span style={{ fontSize: 11, color: THEME.muted, fontWeight: 600 }}>
-              {f.narration.length} characters
-            </span>
-          </div>
-        )}
       </div>
-
-      <ModalActions
-        onSave={() => {
-          if (saving) return;
-          const numAmt = Number(f.amount);
-          if (
-            numAmt > 0 &&
-            f.accountId &&
-            (!isTransfer || (f.toAccountId && f.accountId !== f.toAccountId))
-          ) {
-            onSave(f);
-          }
-        }}
-        onClose={onClose}
-        saveLabel="Record Transaction"
-        disabled={
-          saving ||
-          !f.amount ||
-          Number(f.amount) <= 0 ||
-          !f.accountId ||
-          (isTransfer && (!f.toAccountId || f.accountId === f.toAccountId))
-        }
-        loading={saving}
-      />
     </Modal>
   );
 }
@@ -5375,18 +5334,32 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
   };
 
   return (
-    <Modal title="Edit Transaction Details" onClose={onClose} maxWidth={880}>
+    <Modal
+      title="Edit Transaction Details"
+      onClose={onClose}
+      maxWidth={920}
+      footer={
+        <ModalActions
+          style={{ marginTop: 0 }}
+          onSave={() => Number(f.amount) > 0 && f.accountId && onSave(f)}
+          onClose={onClose}
+          saveLabel="Save Changes"
+          disabled={saving || !f.amount || Number(f.amount) <= 0}
+          loading={saving}
+        />
+      }
+    >
       {(txn?.linkedType || txn?.linked_type) && (
         <div
           style={{
             fontSize: 11,
             color: THEME.gold,
-            marginBottom: 14,
+            marginBottom: 10,
             fontWeight: 700,
-            padding: "8px 12px",
+            padding: "6px 10px",
             background: `color-mix(in srgb, ${THEME.gold} 10%, transparent)`,
             border: `1px solid color-mix(in srgb, ${THEME.gold} 25%, transparent)`,
-            borderRadius: 8,
+            borderRadius: 6,
           }}
         >
           <Link2 size={12} style={{ verticalAlign: -2, marginRight: 4 }} /> This transaction is
@@ -5399,12 +5372,12 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
           style={{
             fontSize: 11,
             color: THEME.sage,
-            marginBottom: 14,
+            marginBottom: 10,
             fontWeight: 700,
-            padding: "8px 12px",
+            padding: "6px 10px",
             background: `rgba(16, 185, 129, 0.1)`,
             border: `1px solid rgba(16, 185, 129, 0.25)`,
-            borderRadius: 8,
+            borderRadius: 6,
             display: "flex",
             alignItems: "center",
             gap: 6,
@@ -5417,29 +5390,32 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
       {/* 2-Column Responsive Workspace */}
       <div className="txn-modal-grid">
         {/* Left Column: Transaction Core Inputs */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* Type Selector */}
-          <Field label="Transaction Type">
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: THEME.ink, marginBottom: 4 }}>
+              Transaction Type
+            </label>
             <select
-              style={inputStyle}
+              style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
               value={f.type}
               onChange={(e) => setF({ ...f, type: e.target.value })}
             >
               <option value="debit">Debit (Expense / Money Out)</option>
               <option value="credit">Credit (Income / Money In)</option>
             </select>
-          </Field>
+          </div>
 
           {/* Hero Amount Input Card */}
           <div
             style={{
               background: "var(--surface-1)",
               border: `1.5px solid ${THEME.line}`,
-              borderRadius: "var(--radius-lg)",
-              padding: "14px 16px",
+              borderRadius: "var(--radius-md)",
+              padding: "10px 14px",
               display: "flex",
               flexDirection: "column",
-              gap: 10,
+              gap: 6,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -5472,8 +5448,8 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
               <span
                 style={{
                   position: "absolute",
-                  left: 14,
-                  fontSize: 22,
+                  left: 12,
+                  fontSize: 18,
                   fontWeight: 800,
                   color: isDebit ? THEME.rust : THEME.sage,
                   pointerEvents: "none",
@@ -5484,11 +5460,11 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
               <input
                 style={{
                   ...inputStyle,
-                  fontSize: 22,
+                  fontSize: 18,
                   fontWeight: 800,
-                  paddingLeft: 36,
-                  paddingRight: 14,
-                  height: 48,
+                  paddingLeft: 30,
+                  paddingRight: 10,
+                  height: 38,
                   background: "var(--surface-0)",
                   color: THEME.ink,
                 }}
@@ -5501,7 +5477,7 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
               />
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: THEME.muted, marginRight: 2 }}>
                 Quick:
               </span>
@@ -5511,12 +5487,12 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
                   type="button"
                   onClick={() => addAmount(amt)}
                   style={{
-                    padding: "4px 8px",
-                    borderRadius: 6,
+                    padding: "2px 6px",
+                    borderRadius: 5,
                     border: `1px solid ${THEME.line}`,
                     background: "var(--surface-0)",
                     color: THEME.ink,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: 700,
                     cursor: "pointer",
                   }}
@@ -5527,74 +5503,33 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
             </div>
           </div>
 
-          {/* Date */}
+          {/* Bank Account */}
           <div>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 6,
+                marginBottom: 4,
               }}
             >
-              <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>Date</label>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button
-                  type="button"
-                  onClick={setDateToday}
+              <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>
+                Bank Account
+              </label>
+              {currentAcc && (
+                <span
                   style={{
-                    border: "none",
-                    background: "transparent",
-                    color: f.date === today() ? THEME.accent : THEME.muted,
                     fontSize: 11,
-                    fontWeight: f.date === today() ? 800 : 600,
-                    cursor: "pointer",
-                    padding: "2px 4px",
+                    fontWeight: 700,
+                    color: currentBalance < 0 ? THEME.rust : THEME.muted,
                   }}
                 >
-                  Today
-                </button>
-                <span style={{ color: THEME.line }}>•</span>
-                <button
-                  type="button"
-                  onClick={setDateYesterday}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    color: THEME.muted,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    padding: "2px 4px",
-                  }}
-                >
-                  Yesterday
-                </button>
-              </div>
+                  Recorded: {privacyMode ? "••••••" : fmtINR(currentBalance)}
+                </span>
+              )}
             </div>
-            <input
-              style={inputStyle}
-              type="date"
-              value={f.date}
-              onChange={(e) => setF({ ...f, date: e.target.value })}
-            />
-          </div>
-
-          {/* Bank Account */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                fontWeight: 700,
-                color: THEME.ink,
-                marginBottom: 6,
-              }}
-            >
-              Bank Account
-            </label>
             <select
-              style={inputStyle}
+              style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
               value={f.accountId}
               onChange={(e) => setF({ ...f, accountId: e.target.value })}
             >
@@ -5604,63 +5539,106 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
                 </option>
               ))}
             </select>
-            {currentAcc && (
+          </div>
+
+          {/* Date & Owner (Side-by-side in 1 row!) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginTop: 5,
-                  fontSize: 11,
-                  color: THEME.muted,
+                  marginBottom: 4,
                 }}
               >
-                <span>Current Recorded Balance</span>
-                <span
-                  style={{
-                    fontWeight: 700,
-                    color: currentBalance < 0 ? THEME.rust : THEME.ink,
-                  }}
-                >
-                  {privacyMode ? "••••••" : fmtINR(currentBalance)}
-                </span>
+                <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>Date</label>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button
+                    type="button"
+                    onClick={setDateToday}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: f.date === today() ? THEME.accent : THEME.muted,
+                      fontSize: 10,
+                      fontWeight: f.date === today() ? 800 : 600,
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    Today
+                  </button>
+                  <span style={{ color: THEME.line, fontSize: 10 }}>•</span>
+                  <button
+                    type="button"
+                    onClick={setDateYesterday}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: THEME.muted,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    Y'day
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
+              <input
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                type="date"
+                value={f.date}
+                onChange={(e) => setF({ ...f, date: e.target.value })}
+              />
+            </div>
 
-          {/* Owner / Family Profile */}
-          <Field label="Owner / Family Profile">
-            <select
-              style={inputStyle}
-              value={f.owner || "self"}
-              onChange={(e) => setF({ ...f, owner: e.target.value })}
-            >
-              {familyProfiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {formatProfileOption(p)}
-                </option>
-              ))}
-            </select>
-          </Field>
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.ink,
+                  marginBottom: 4,
+                }}
+              >
+                Owner / Profile
+              </label>
+              <select
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                value={f.owner || "self"}
+                onChange={(e) => setF({ ...f, owner: e.target.value })}
+              >
+                {familyProfiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {formatProfileOption(p)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Context, Live Simulation & Details */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* Live Balance Impact Card */}
           <div
             style={{
               background: "var(--surface-1)",
               border: `1.5px solid ${THEME.line}`,
-              borderRadius: "var(--radius-lg)",
-              padding: "16px 18px",
+              borderRadius: "var(--radius-md)",
+              padding: "10px 14px",
               display: "flex",
               flexDirection: "column",
-              gap: 12,
+              gap: 6,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Landmark size={15} style={{ color: THEME.accent }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Landmark size={14} style={{ color: THEME.accent }} />
                 <span
                   style={{
                     fontSize: 11,
@@ -5678,7 +5656,7 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    padding: "2px 8px",
+                    padding: "1px 6px",
                     borderRadius: 99,
                     background: `color-mix(in srgb, ${THEME.accent} 12%, transparent)`,
                     color: THEME.accent,
@@ -5692,64 +5670,59 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
 
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                fontSize: 13,
-              }}
-            >
-              <span style={{ color: THEME.muted }}>Current Recorded Balance</span>
-              <span style={{ fontWeight: 600 }}>
-                {privacyMode ? "••••••" : fmtINR(currentBalance)}
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 8,
                 fontSize: 12,
-                color: THEME.muted,
               }}
             >
-              <span>Original Txn ({wasDebit ? "Debit" : "Credit"})</span>
-              <span>{privacyMode ? "••••••" : fmtINR(originalAmt)}</span>
-            </div>
+              <div>
+                <span style={{ color: THEME.muted, fontSize: 10, display: "block" }}>
+                  Original ({wasDebit ? "Debit" : "Credit"})
+                </span>
+                <span style={{ fontWeight: 600 }}>
+                  {privacyMode ? "••••••" : fmtINR(originalAmt)}
+                </span>
+              </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                fontSize: 13,
-              }}
-            >
-              <span style={{ color: isDebit ? THEME.rust : THEME.sage, fontWeight: 600 }}>
-                {isDebit ? "− New Debit Amount" : "+ New Credit Amount"}
-              </span>
-              <span style={{ fontWeight: 700, color: isDebit ? THEME.rust : THEME.sage }}>
-                {isDebit ? "− " : "+ "}
-                {privacyMode ? "••••••" : fmtINR(numAmount)}
-              </span>
+              <div>
+                <span
+                  style={{
+                    color: isDebit ? THEME.rust : THEME.sage,
+                    fontSize: 10,
+                    display: "block",
+                  }}
+                >
+                  {isDebit ? "− New Debit" : "+ New Credit"}
+                </span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: isDebit ? THEME.rust : THEME.sage,
+                  }}
+                >
+                  {isDebit ? "− " : "+ "}
+                  {privacyMode ? "••••••" : fmtINR(numAmount)}
+                </span>
+              </div>
             </div>
 
             <div
               style={{
                 borderTop: `1px dashed ${THEME.line}`,
-                paddingTop: 10,
+                paddingTop: 6,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "baseline",
               }}
             >
-              <span style={{ fontWeight: 800, fontSize: 13, color: THEME.ink }}>
+              <span style={{ fontWeight: 700, fontSize: 12, color: THEME.ink }}>
                 Projected New Balance
               </span>
               <span
                 style={{
                   fontWeight: 800,
-                  fontSize: 16,
+                  fontSize: 14,
                   color: projectedBalance < 0 ? THEME.rust : THEME.ink,
                 }}
               >
@@ -5759,9 +5732,12 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
           </div>
 
           {/* Category */}
-          <Field label="Category">
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: THEME.ink, marginBottom: 4 }}>
+              Category
+            </label>
             <select
-              style={inputStyle}
+              style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
               value={f.category}
               onChange={(e) => setF({ ...f, category: e.target.value })}
             >
@@ -5769,50 +5745,58 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
                 <option key={c}>{c}</option>
               ))}
             </select>
-          </Field>
+          </div>
 
-          {/* Particulars / Note */}
-          <Field label="Particulars / Note">
-            <input
-              style={inputStyle}
-              value={f.note}
-              onChange={(e) => setF({ ...f, note: e.target.value })}
-            />
-          </Field>
-
-          <div style={{ display: "grid", gridTemplateColumns: f.statementBalance !== "" ? "1fr 1fr" : "1fr", gap: 10 }}>
-            {/* Reference / Cheque No. */}
-            <Field label="Reference / Cheque No.">
+          {/* Particulars & Reference No. (Side-by-side) */}
+          <div style={{ display: "grid", gridTemplateColumns: f.statementBalance !== "" ? "1fr 1fr" : "1.2fr 0.8fr", gap: 10 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: THEME.ink, marginBottom: 4 }}>
+                Particulars / Note
+              </label>
               <input
-                style={inputStyle}
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                value={f.note}
+                onChange={(e) => setF({ ...f, note: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: THEME.ink, marginBottom: 4 }}>
+                Ref / Cheque No.
+              </label>
+              <input
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
                 value={f.referenceNumber || ""}
                 onChange={(e) => setF({ ...f, referenceNumber: e.target.value })}
                 placeholder="Optional ref #"
               />
-            </Field>
-
-            {/* Statement Balance */}
-            {f.statementBalance !== "" && (
-              <Field label="Anchored Statement Balance (₹)">
-                <input
-                  style={inputStyle}
-                  type="number"
-                  step="0.01"
-                  value={f.statementBalance}
-                  onChange={(e) => setF({ ...f, statementBalance: e.target.value })}
-                  placeholder="Bank statement balance"
-                />
-              </Field>
-            )}
+            </div>
           </div>
+
+          {/* Statement Balance */}
+          {f.statementBalance !== "" && (
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: THEME.ink, marginBottom: 4 }}>
+                Anchored Statement Balance (₹)
+              </label>
+              <input
+                style={{ ...inputStyle, padding: "8px 10px", height: 38 }}
+                type="number"
+                step="0.01"
+                value={f.statementBalance}
+                onChange={(e) => setF({ ...f, statementBalance: e.target.value })}
+                placeholder="Bank statement balance"
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Dedicated Full-Width Narration / Description Section with Proper Space */}
+      {/* Dedicated Full-Width Narration / Description Section (Compact & Spacious Across 920px) */}
       <div
         style={{
-          marginTop: 16,
-          paddingTop: 16,
+          marginTop: 10,
+          paddingTop: 10,
           borderTop: `1px solid ${THEME.line}`,
         }}
       >
@@ -5821,46 +5805,28 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 6,
+            marginBottom: 4,
           }}
         >
-          <label style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: THEME.ink }}>
             Narration / Description
           </label>
-          <span style={{ fontSize: 11, color: THEME.muted }}>
-            Raw bank statement narration • UPI / IMPS details • Memo
+          <span style={{ fontSize: 10, color: THEME.muted }}>
+            {f.narration ? `${f.narration.length} characters • ` : ""}Statement line / UPI memo
           </span>
         </div>
-        <textarea
+        <input
           style={{
             ...inputStyle,
-            minHeight: 64,
-            resize: "vertical",
-            fontFamily: "inherit",
-            fontSize: 13,
-            lineHeight: 1.45,
+            padding: "8px 12px",
+            height: 38,
+            fontSize: 12,
           }}
-          rows={2}
           value={f.narration}
           onChange={(e) => setF({ ...f, narration: e.target.value })}
           placeholder="e.g. UPI/428472918234/SWIGGY BANGALORE/HDFC0001234 or paste raw statement memo..."
         />
-        {f.narration && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-            <span style={{ fontSize: 11, color: THEME.muted, fontWeight: 600 }}>
-              {f.narration.length} characters
-            </span>
-          </div>
-        )}
       </div>
-
-      <ModalActions
-        onSave={() => Number(f.amount) > 0 && f.accountId && onSave(f)}
-        onClose={onClose}
-        saveLabel="Save Changes"
-        disabled={saving || !f.amount || Number(f.amount) <= 0}
-        loading={saving}
-      />
     </Modal>
   );
 }
