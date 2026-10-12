@@ -17,12 +17,23 @@ export const isSupabaseReady = Boolean(
     !SUPABASE_ANON_KEY.includes("placeholder")
 );
 
+// If a session was previously written to sb-auth-token, sync it back to the project default key
+if (typeof window !== "undefined") {
+  try {
+    const custom = localStorage.getItem("sb-auth-token");
+    const projectRef = (SUPABASE_URL || "").split(".")[0].replace("https://", "");
+    const defaultKey = projectRef ? `sb-${projectRef}-auth-token` : "";
+    if (custom && defaultKey && !localStorage.getItem(defaultKey)) {
+      localStorage.setItem(defaultKey, custom);
+    }
+  } catch {}
+}
+
 export const supabase = createBrowserClient(
   SUPABASE_URL || "https://placeholder.supabase.co",
   SUPABASE_ANON_KEY || "placeholder",
   {
     cookieOptions: {
-      name: "sb-auth-token",
       secure: typeof window !== "undefined" ? window.location.protocol === "https:" : true,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 days (Audit L4 fix: replace 400 days with 7 days and secure flag)

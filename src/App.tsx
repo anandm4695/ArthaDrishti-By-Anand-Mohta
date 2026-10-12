@@ -763,24 +763,17 @@ function FinanceDashboard() {
   // Theme CSS vars + background style applied via extracted hook
   useTheme(settings);
 
-  // Audit L3 & S7: Only persist full collections for offline/demo users.
-  // For authenticated accounts, keep financial ledger strictly in memory
-  // (persisted securely to Postgres via Supabase) and only cache non-sensitive UI settings.
+  // Persist state to local cache for instant reload and offline recovery,
+  // ensuring sensitive secrets (like geminiApiKey) are never written to disk.
+  // Full financial cache is wiped securely when the user logs out (see handleSignOut).
   useEffect(() => {
     if (!loaded) return;
-    const isRealAuthUser = !!(session?.user?.id && session.user.id !== "offline-user");
-    if (isRealAuthUser) {
-      try {
-        const safeSettings = state.settings ? { ...state.settings, geminiApiKey: "" } : {};
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({ _ts: Date.now(), settings: safeSettings })
-        );
-      } catch {}
-    } else {
-      saveStateLocal(state);
-    }
-  }, [state, loaded, session]);
+    const safeState = {
+      ...state,
+      settings: state.settings ? { ...state.settings, geminiApiKey: "" } : state.settings,
+    };
+    saveStateLocal(safeState);
+  }, [state, loaded]);
 
   const snakeToCamel = snakeToCamelUtil;
 
@@ -970,9 +963,23 @@ function FinanceDashboard() {
         }
       }
 
+      // Check if critical queries returned errors (e.g. RLS permission denial or network drop)
+      const hasQueryErrors = [prof, sett, banks, txns, stks, mfs].some((r) => r?.error);
+      if (hasQueryErrors) {
+        console.warn("[fetchAllData] Supabase queries encountered errors:", {
+          profErr: prof?.error?.message,
+          banksErr: banks?.error?.message,
+          txnsErr: txns?.error?.message,
+        });
+      }
+
       // Use functional setState so failed queries fall back to current state instead of wiping data
       setState((currentState: any) => {
         if (!prof.data && !hasAnyData) {
+          if (hasQueryErrors) {
+            console.warn("[fetchAllData] Preserving current state due to database query errors");
+            return currentState;
+          }
           // Logged in but truly no cloud data — clear local state
           return DEFAULT_STATE;
         }
