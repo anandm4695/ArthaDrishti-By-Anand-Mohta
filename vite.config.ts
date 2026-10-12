@@ -1,11 +1,11 @@
-import { defineConfig } from "vite";
+import { defineConfig, type ESBuildOptions } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "fs";
 import path from "path";
 import url from "url";
 
 export default defineConfig(({ mode }) => ({
-  esbuild: mode === "production" ? { drop: ["console", "debugger"] as const } : {},
+  esbuild: mode === "production" ? ({ drop: ["console", "debugger"] } as ESBuildOptions) : undefined,
   plugins: [
     react(),
     {
