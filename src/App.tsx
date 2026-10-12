@@ -614,13 +614,45 @@ function FinanceDashboard() {
   const validateMfaAssurance = useCallback(async (supaSession: any): Promise<boolean> => {
     if (!supaSession?.user || supaSession.user.id === "offline-user") return true;
     try {
-      const { data: aalData, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (!error && aalData) {
-        // If user enrolled a verified factor, nextLevel is 'aal2'.
-        // If currentLevel is NOT 'aal2', user must pass MFA challenge first (Audit L1)
-        if (aalData.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+      // 1. Fast synchronous JWT claims check without acquiring GoTrue navigator lock
+      const token = supaSession.access_token;
+      if (token && typeof token === "string") {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          const payload = JSON.parse(jsonPayload);
+          // If JWT claim 'aal' is already 'aal2', 2FA is satisfied!
+          if (payload?.aal === "aal2") {
+            return true;
+          }
+        }
+      }
+
+      // 2. Fast check of user verified factors if attached to session
+      const factors = supaSession.user?.factors;
+      if (Array.isArray(factors) && factors.length > 0) {
+        const hasVerifiedFactor = factors.some((f: any) => f.status === "verified");
+        if (hasVerifiedFactor) {
+          // User enrolled verified TOTP, but token is not aal2 -> prompt for 2FA
           return false;
         }
+        return true;
+      }
+
+      // 3. Fallback with safety timeout to prevent deadlocks with auth state events
+      const aalPromise = supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: new Error("timeout") }), 1200)
+      );
+      const { data: aalData } = await Promise.race([aalPromise, timeoutPromise]);
+      if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+        return false;
       }
     } catch (err) {
       console.warn("[App] MFA assurance check:", err);
@@ -663,7 +695,12 @@ function FinanceDashboard() {
         });
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (_event: any, supaSession: any) => {
+      } = supabase.auth.onAuthStateChange(async (event: any, supaSession: any) => {
+        if (event === "SIGNED_OUT") {
+          setMfaPending(false);
+          setSession(null);
+          return;
+        }
         if (supaSession) {
           const isCompliant = await validateMfaAssurance(supaSession);
           if (isCompliant) {
@@ -4896,6 +4933,10 @@ function FinanceDashboard() {
         }}
         onRecoveryComplete={() => setRecoveryMode(false)}
         initialMode={mfaPending ? "mfa" : undefined}
+        onCancelMfa={() => {
+          setMfaPending(false);
+          supabase.auth.signOut().catch(() => {});
+        }}
       />
     );
   }

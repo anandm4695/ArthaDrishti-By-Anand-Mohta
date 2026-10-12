@@ -53,8 +53,12 @@ function friendlyError(msg: string): string {
     return "Please enter a valid email address.";
   if (m.includes("signup is disabled"))
     return "New sign-ups are currently disabled. Please contact the admin.";
+  if (m.includes("invalid totp") || m.includes("invalid code") || m.includes("invalid authentication code") || m.includes("challenge failed"))
+    return "Invalid verification code. Please check your authenticator app and enter the latest 6-digit code.";
+  if (m.includes("mfa factor") || m.includes("factor not found") || m.includes("no mfa factor"))
+    return "Authenticator factor not found. Please sign in again with your password.";
   if (m.includes("expired") || m.includes("invalid or has expired"))
-    return "This link has expired or was already used. Please request a new one.";
+    return "This link or challenge has expired. Please try again.";
   return msg;
 }
 
@@ -107,10 +111,12 @@ export default function Auth({
   onLogin,
   onRecoveryComplete,
   initialMode,
+  onCancelMfa,
 }: {
   onLogin: (session: any) => void;
   onRecoveryComplete?: () => void;
   initialMode?: "login" | "signup" | "forgot" | "reset" | "mfa";
+  onCancelMfa?: () => void;
 }) {
   // Detect password-recovery link in the URL hash or forced MFA mode
   const [mode, setMode] = useState<"login" | "signup" | "forgot" | "reset" | "mfa">(() => {
@@ -120,6 +126,13 @@ export default function Auth({
     }
     return "login";
   });
+
+  // Sync mode if initialMode changes externally (e.g. forced AAL2 requirement)
+  useEffect(() => {
+    if (initialMode && initialMode !== mode) {
+      setMode(initialMode);
+    }
+  }, [initialMode]);
 
   // Remember Me: restore saved email
   const savedEmail =
@@ -261,7 +274,10 @@ export default function Auth({
     if (mode !== "mfa") return;
     if (mfaFactorId) return;
     supabase.auth.mfa.listFactors().then(({ data }) => {
-      const verified = data?.totp?.find((f: any) => f.status === "verified") || data?.totp?.[0];
+      const verified =
+        data?.totp?.find((f: any) => f.status === "verified") ||
+        data?.totp?.[0] ||
+        data?.all?.find((f: any) => f.status === "verified");
       if (verified) setMfaFactorId(verified.id);
     }).catch(() => {});
   }, [mode, mfaFactorId]);
@@ -409,20 +425,53 @@ export default function Auth({
     setLoading(true);
     setError(null);
     try {
-      if (!mfaFactorId) throw new Error("No MFA factor identified. Please sign in again.");
-      const { error } = await supabase.auth.mfa.challengeAndVerify({
-        factorId: mfaFactorId,
+      let factorId = mfaFactorId;
+      if (!factorId) {
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const verified =
+          factorsData?.totp?.find((f: any) => f.status === "verified") ||
+          factorsData?.totp?.[0] ||
+          factorsData?.all?.find((f: any) => f.status === "verified");
+        if (verified?.id) {
+          factorId = verified.id;
+          setMfaFactorId(verified.id);
+        }
+      }
+      if (!factorId) {
+        throw new Error("Unable to identify authenticator factor. Please cancel and sign in again.");
+      }
+
+      // Add safety timeout so verification never hangs indefinitely
+      const verifyPromise = supabase.auth.mfa.challengeAndVerify({
+        factorId,
         code: cleanCode,
       });
+      const timeoutPromise = new Promise<any>((_, reject) =>
+        setTimeout(() => reject(new Error("Verification request timed out. Please try again.")), 15000)
+      );
+
+      const { data, error } = await Promise.race([verifyPromise, timeoutPromise]);
       if (error) throw error;
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
+
+      // challengeAndVerify directly returns verified session object in data
+      const activeSession = (data as any)?.session || data;
+      if (activeSession && activeSession.access_token) {
         if (rememberMe) localStorage.setItem("pf_remember_email", email.trim());
-        onLogin(session);
+        onLogin(activeSession);
       } else {
-        setError("Authentication session not found. Please sign in again.");
+        const getSessionPromise = supabase.auth.getSession();
+        const getSessionTimeout = new Promise<{ data: { session: any } }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null } }), 3000)
+        );
+        const {
+          data: { session },
+        } = await Promise.race([getSessionPromise, getSessionTimeout]);
+        if (session) {
+          if (rememberMe) localStorage.setItem("pf_remember_email", email.trim());
+          onLogin(session);
+        } else {
+          setError("Authentication session not found. Please sign in again.");
+        }
       }
     } catch (err: any) {
       setError(friendlyError(err.message || "Invalid authentication code"));
@@ -951,6 +1000,7 @@ export default function Auth({
                           setMfaCode("");
                           setMfaFactorId(null);
                           switchMode("login");
+                          onCancelMfa?.();
                         }}
                         className="af-back-link"
                       >
