@@ -889,6 +889,9 @@ CREATE TABLE IF NOT EXISTS public.loans (
   note             text,                                        -- 81
   given_date       date,                                        -- 81
   due_date         date,                                        -- 81
+  start_date       date,                                        -- 103
+  emi_start_date   date,                                        -- 103
+  forgiven_date    date,                                        -- 103
   payments         jsonb DEFAULT '[]'::jsonb,                    -- 83
   created_at       timestamp with time zone DEFAULT now()
 );

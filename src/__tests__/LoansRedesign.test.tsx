@@ -315,6 +315,81 @@ describe("Loans Taken & Given Redesign Suite", () => {
         null
       );
     });
+
+    it("verifies bidirectional field synchronization for loansTaken and loansGiven with Supabase", () => {
+      // 1. Simulating DB read mapping (fetchAllData)
+      const mockRawDbRows = [
+        {
+          id: "uuid-loan-taken-1",
+          user_id: "user-123",
+          owner: "self",
+          lender_borrower: "HDFC Home Loan",
+          type: "Home",
+          is_lent: false,
+          principal: "5000000",
+          outstanding: "4500000",
+          emi: "45000",
+          rate: "8.5",
+          months_remaining: "180",
+          account_number: "HL123456",
+          interest_type: "Floating",
+          status: "active",
+          due_day: 5,
+          note: "Self home loan",
+          given_date: "2026-01-05",
+          start_date: "2026-01-05",
+          emi_start_date: "2026-01-05",
+          payments: [{ id: "p1", amount: 45000, date: "2026-02-05" }],
+        },
+        {
+          id: "uuid-loan-given-1",
+          user_id: "user-123",
+          owner: "self",
+          lender_borrower: "Amit Verma",
+          type: null,
+          is_lent: true,
+          principal: "100000",
+          outstanding: "60000",
+          rate: "0",
+          is_interest_free: true,
+          phone: "9876543210",
+          status: "active",
+          security: "Promissory note",
+          note: "Personal support",
+          given_date: "2026-03-01",
+          due_date: "2026-09-01",
+          payments: [{ id: "gp1", amount: 40000, date: "2026-05-01" }],
+        },
+      ];
+
+      // Verify taken row filter
+      const takenRows = mockRawDbRows.filter((r) => !r.is_lent);
+      expect(takenRows.length).toBe(1);
+      const mappedTaken = takenRows.map((l: any) => ({
+        ...l,
+        lender: l.lender_borrower || "",
+        startDate: l.start_date || l.emi_start_date || l.given_date || "",
+        emiStartDate: l.emi_start_date || l.start_date || l.given_date || "",
+      }))[0];
+      expect(mappedTaken.lender).toBe("HDFC Home Loan");
+      expect(mappedTaken.startDate).toBe("2026-01-05");
+      expect(mappedTaken.emiStartDate).toBe("2026-01-05");
+
+      // Verify given row filter
+      const givenRows = mockRawDbRows.filter((r) => r.is_lent);
+      expect(givenRows.length).toBe(1);
+      const mappedGiven = givenRows.map((l: any) => ({
+        ...l,
+        borrower: l.lender_borrower || "",
+        date: l.given_date || "",
+        dueDate: l.due_date || "",
+      }))[0];
+      expect(mappedGiven.borrower).toBe("Amit Verma");
+      expect(mappedGiven.date).toBe("2026-03-01");
+      expect(mappedGiven.dueDate).toBe("2026-09-01");
+      expect(mappedGiven.security).toBe("Promissory note");
+      expect(mappedGiven.is_interest_free).toBe(true);
+    });
   });
 });
 

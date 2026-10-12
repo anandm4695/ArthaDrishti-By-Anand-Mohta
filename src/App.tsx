@@ -1149,12 +1149,15 @@ function FinanceDashboard() {
                 loansTaken: snakeToCamel(lns.data.filter((x: any) => !x.is_lent)).map((l: any) => ({
                   ...l,
                   lender: l.lenderBorrower || l.lender || "",
+                  startDate: l.startDate || l.emiStartDate || l.givenDate || "",
+                  emiStartDate: l.emiStartDate || l.startDate || l.givenDate || "",
                 })),
                 loansGiven: snakeToCamel(lns.data.filter((x: any) => x.is_lent)).map((l: any) => ({
                   ...l,
                   borrower: l.lenderBorrower || l.borrower || "",
                   lender: l.lenderBorrower || l.lender || "",
                   date: l.givenDate || l.date || "",
+                  dueDate: l.dueDate || "",
                 })),
               }
             : {}),
@@ -2397,6 +2400,17 @@ function FinanceDashboard() {
         finalItem.is_lent = false;
         finalItem.lender_borrower =
           item.lender || item.lenderBorrower || finalItem.lender || finalItem.lender_borrower || "";
+        const sDate =
+          item.startDate ||
+          item.emiStartDate ||
+          finalItem.start_date ||
+          finalItem.emi_start_date ||
+          null;
+        finalItem.start_date = sDate;
+        finalItem.emi_start_date = sDate;
+        if (sDate && !finalItem.given_date) {
+          finalItem.given_date = sDate;
+        }
         delete finalItem.lender;
       }
       if (key === "loansGiven") {
@@ -2411,6 +2425,9 @@ function FinanceDashboard() {
           "";
         finalItem.given_date =
           item.date || item.givenDate || finalItem.date || finalItem.given_date || null;
+        if (item.dueDate || finalItem.due_date) {
+          finalItem.due_date = item.dueDate || finalItem.due_date || null;
+        }
         delete finalItem.borrower;
         delete finalItem.lender;
         delete finalItem.date;
@@ -3674,18 +3691,34 @@ function FinanceDashboard() {
           delete finalPatch.opening_bal;
           delete finalPatch.issuer;
         }
-        if (key === "loansTaken" && patch.lender) {
-          finalPatch.lender_borrower = patch.lender;
-          delete finalPatch.lender;
+        if (key === "loansTaken") {
+          if (patch.lender) {
+            finalPatch.lender_borrower = patch.lender;
+            delete finalPatch.lender;
+          }
+          if (patch.startDate !== undefined || patch.emiStartDate !== undefined) {
+            const sDate = patch.startDate || patch.emiStartDate || null;
+            finalPatch.start_date = sDate;
+            finalPatch.emi_start_date = sDate;
+            if (sDate) finalPatch.given_date = sDate;
+          }
         }
-        if (key === "loansGiven" && (patch.borrower || patch.lender)) {
-          finalPatch.lender_borrower = patch.borrower || patch.lender;
-          delete finalPatch.borrower;
-          delete finalPatch.lender;
-        }
-        if (key === "loansGiven" && patch.date !== undefined) {
-          finalPatch.given_date = patch.date || null;
-          delete finalPatch.date;
+        if (key === "loansGiven") {
+          if (patch.borrower || patch.lender) {
+            finalPatch.lender_borrower = patch.borrower || patch.lender;
+            delete finalPatch.borrower;
+            delete finalPatch.lender;
+          }
+          if (patch.date !== undefined || patch.givenDate !== undefined) {
+            finalPatch.given_date = patch.date || patch.givenDate || null;
+            delete finalPatch.date;
+          }
+          if (patch.dueDate !== undefined) {
+            finalPatch.due_date = patch.dueDate || null;
+          }
+          if (patch.forgivenDate !== undefined) {
+            finalPatch.forgiven_date = patch.forgivenDate || null;
+          }
         }
         if (key === "taxPayments") {
           if (patch.taxType !== undefined && patch.type === undefined) finalPatch.type = patch.taxType;
