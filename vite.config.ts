@@ -5,7 +5,7 @@ import path from "path";
 import url from "url";
 
 export default defineConfig(({ mode }) => ({
-  esbuild: mode === "production" ? { drop: ["console", "debugger"] } : {},
+  esbuild: mode === "production" ? { drop: ["console", "debugger"] as const } : {},
   plugins: [
     react(),
     {
