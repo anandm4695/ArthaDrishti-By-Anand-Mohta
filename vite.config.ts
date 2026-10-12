@@ -9,6 +9,16 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     {
+      name: "strip-console-production",
+      transform(code, id) {
+        if (mode === "production" && !id.includes("node_modules") && (id.endsWith(".ts") || id.endsWith(".tsx") || id.endsWith(".js"))) {
+          const stripped = code.replace(/console\.(log|debug)\([^)]*\);?/g, "");
+          return { code: stripped, map: null };
+        }
+        return null;
+      },
+    },
+    {
       name: "local-api-runner",
       configureServer(server) {
         server.middlewares.use(async (req, res, next) => {

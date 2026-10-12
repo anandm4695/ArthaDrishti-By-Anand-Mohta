@@ -5264,7 +5264,7 @@ function AIAssistantSection({ geminiApiKey, updateSettings }: any) {
           >
             Google AI Studio <ExternalLink size={11} style={{ verticalAlign: -1 }} />
           </a>
-          . Keys remain strictly stored in your private browser database.
+          . AI requests are routed through the secure serverless proxy (/api/ai). If GEMINI_API_KEY is configured on Vercel, requests run server-side without storing keys in your browser or database.
         </div>
 
         {geminiApiKey ? (

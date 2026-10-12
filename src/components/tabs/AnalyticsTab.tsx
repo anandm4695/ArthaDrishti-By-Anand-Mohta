@@ -608,17 +608,19 @@ const DashboardSectionHeader: React.FC<{
         {icon && (
           <div style={{ color: THEME.accent, display: "flex", alignItems: "center" }}>{icon}</div>
         )}
-        <span
+        <h2
           style={{
             fontSize: 15,
             fontWeight: 900,
             textTransform: "uppercase",
             letterSpacing: "0.12em",
             color: THEME.ink,
+            margin: 0,
+            display: "inline",
           }}
         >
           {title}
-        </span>
+        </h2>
         <div style={{ flex: 1, height: 1, background: THEME.line }} />
       </div>
       <p
@@ -4106,20 +4108,21 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
           {dashboardWidgets?.["smartInsights"] !== false && smartInsights.length > 0 && (
             <div style={{ marginBottom: 24 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <span
+                <h3
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 800,
                     color: THEME.muted,
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
+                    margin: 0,
                   }}
                 >
                   Strategic Insights
-                </span>
+                </h3>
                 <span
                   style={{
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: 800,
                     padding: "2px 8px",
                     borderRadius: "var(--radius-xs)",
@@ -4243,7 +4246,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                       <Crown size={18} />
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                         Wealth Standing
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 800, color: THEME.ink, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -4288,7 +4291,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                       <Shield size={18} />
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                         Capital Runway
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 800, color: THEME.ink, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -4327,7 +4330,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                       <Zap size={18} />
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                         Monthly Cash Velocity
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 800, color: metrics.netSavings >= 0 ? THEME.sage : THEME.rust, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -4367,7 +4370,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                       <Activity size={18} />
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: THEME.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                         Obligations & Dues
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 800, color: THEME.ink, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

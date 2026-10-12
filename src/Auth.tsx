@@ -106,12 +106,15 @@ const MODE_ORDER = { login: 0, signup: 1, forgot: 2, reset: 3, mfa: 4 } as const
 export default function Auth({
   onLogin,
   onRecoveryComplete,
+  initialMode,
 }: {
   onLogin: (session: any) => void;
   onRecoveryComplete?: () => void;
+  initialMode?: "login" | "signup" | "forgot" | "reset" | "mfa";
 }) {
-  // Detect password-recovery link in the URL hash
+  // Detect password-recovery link in the URL hash or forced MFA mode
   const [mode, setMode] = useState<"login" | "signup" | "forgot" | "reset" | "mfa">(() => {
+    if (initialMode) return initialMode;
     if (capturedUrlHash.includes("type=recovery")) {
       return "reset";
     }
@@ -252,6 +255,16 @@ export default function Auth({
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
+
+  // Auto-fetch TOTP factor id when MFA mode is active (Audit L1)
+  useEffect(() => {
+    if (mode !== "mfa") return;
+    if (mfaFactorId) return;
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      const verified = data?.totp?.find((f: any) => f.status === "verified") || data?.totp?.[0];
+      if (verified) setMfaFactorId(verified.id);
+    }).catch(() => {});
+  }, [mode, mfaFactorId]);
 
   // Validation
   const emailErr =

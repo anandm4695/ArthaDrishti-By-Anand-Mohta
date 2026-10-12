@@ -10,7 +10,8 @@
     "api/mf-nav.js":       { "maxDuration": 10 },
     "api/rc-lookup.js":    { "maxDuration": 15 },
     "api/send-summary.js": { "maxDuration": 60 },
-    "api/cron-update-prices.js": { "maxDuration": 60 }
+    "api/cron-update-prices.js": { "maxDuration": 60 },
+    "api/ai.js":           { "maxDuration": 30 }
   },
   "crons": [
     {
@@ -33,7 +34,8 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" }
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://arthadrishti-app.vercel.app" }
       ]
     }
   ],
@@ -43,8 +45,5 @@
       "destination": "/",
       "permanent": false
     }
-  ],
-  "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

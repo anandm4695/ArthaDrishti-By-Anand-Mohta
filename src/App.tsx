@@ -16,7 +16,7 @@ import { PrivacyProvider, usePrivacy } from "./context/PrivacyContext";
 import { getDemoState, DEMO_USER_SESSION, isDemoSession } from "./utils/demoData";
 
 // Modular Imports
-import { THEME, DENSITY } from "./utils/constants";
+import { THEME, DENSITY, STORAGE_KEY } from "./utils/constants";
 import { DEFAULT_MASTER_DATA, MasterDataContext } from "./utils/masterData";
 import {
   uid,
@@ -227,6 +227,7 @@ const DEFAULT_STATE = {
 function FinanceDashboard() {
   const [session, setSession] = useState<any>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [mfaPending, setMfaPending] = useState(false);
   // A Supabase password-recovery link establishes a real session before React renders.
   // We must not let that truthy session skip straight into the dashboard — force the
   // "set new password" screen until the reset completes (Auth.tsx clears this via
@@ -451,7 +452,7 @@ function FinanceDashboard() {
         if (updates.emailHour !== undefined) dbUpdates.email_hour = updates.emailHour;
         if (updates.emailAddress !== undefined) dbUpdates.email_address = updates.emailAddress;
         if (updates.fromEmail !== undefined) dbUpdates.from_email = updates.fromEmail;
-        if (updates.geminiApiKey !== undefined) dbUpdates.gemini_api_key = updates.geminiApiKey;
+        // Audit L2: Never persist Gemini API keys into plain-text database tables
         if (updates.goldPricePerGram !== undefined)
           dbUpdates.gold_price_per_gram = updates.goldPricePerGram;
 
@@ -594,13 +595,37 @@ function FinanceDashboard() {
     }
   }, [session, isAuthChecking]);
 
+  const validateMfaAssurance = useCallback(async (supaSession: any): Promise<boolean> => {
+    if (!supaSession?.user || supaSession.user.id === "offline-user") return true;
+    try {
+      const { data: aalData, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (!error && aalData) {
+        // If user enrolled a verified factor, nextLevel is 'aal2'.
+        // If currentLevel is NOT 'aal2', user must pass MFA challenge first (Audit L1)
+        if (aalData.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+          return false;
+        }
+      }
+    } catch (err) {
+      console.warn("[App] MFA assurance check:", err);
+    }
+    return true;
+  }, []);
+
   useEffect(() => {
     try {
       supabase.auth
         .getSession()
-        .then(({ data: { session: supaSession }, error }: any) => {
+        .then(async ({ data: { session: supaSession }, error }: any) => {
           if (!error && supaSession) {
-            setSession(supaSession);
+            const isCompliant = await validateMfaAssurance(supaSession);
+            if (isCompliant) {
+              setMfaPending(false);
+              setSession(supaSession);
+            } else {
+              setMfaPending(true);
+              setSession(null);
+            }
           } else if (localStorage.getItem("pf_demo_mode") === "true") {
             setSession(DEMO_USER_SESSION);
             setState((prev: any) => {
@@ -622,9 +647,16 @@ function FinanceDashboard() {
         });
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event: any, supaSession: any) => {
+      } = supabase.auth.onAuthStateChange(async (_event: any, supaSession: any) => {
         if (supaSession) {
-          setSession(supaSession);
+          const isCompliant = await validateMfaAssurance(supaSession);
+          if (isCompliant) {
+            setMfaPending(false);
+            setSession(supaSession);
+          } else {
+            setMfaPending(true);
+            setSession(null);
+          }
         } else if (localStorage.getItem("pf_demo_mode") === "true") {
           setSession(DEMO_USER_SESSION);
         } else {
@@ -639,7 +671,7 @@ function FinanceDashboard() {
       }
       setIsAuthChecking(false);
     }
-  }, []);
+  }, [validateMfaAssurance]);
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -678,11 +710,24 @@ function FinanceDashboard() {
   // Theme CSS vars + background style applied via extracted hook
   useTheme(settings);
 
-  // Always save to localStorage on every state change (works offline + demo mode)
+  // Audit L3 & S7: Only persist full collections for offline/demo users.
+  // For authenticated accounts, keep financial ledger strictly in memory
+  // (persisted securely to Postgres via Supabase) and only cache non-sensitive UI settings.
   useEffect(() => {
     if (!loaded) return;
-    saveStateLocal(state);
-  }, [state, loaded]);
+    const isRealAuthUser = !!(session?.user?.id && session.user.id !== "offline-user");
+    if (isRealAuthUser) {
+      try {
+        const safeSettings = state.settings ? { ...state.settings, geminiApiKey: "" } : {};
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ _ts: Date.now(), settings: safeSettings })
+        );
+      } catch {}
+    } else {
+      saveStateLocal(state);
+    }
+  }, [state, loaded, session]);
 
   const snakeToCamel = snakeToCamelUtil;
 
@@ -1673,23 +1718,40 @@ function FinanceDashboard() {
       });
 
       if (uid3 && uid3 !== "offline-user") {
-        supabase
-          .from("net_worth_history")
-          .upsert(
-            corrected.map((h: any) => ({
-              user_id: uid3,
-              month: h.month,
-              net_worth: h.netWorth,
-              cash: h.cash,
-              equity: h.equity,
-              debt: h.debt,
-              real_estate: h.realEstate,
-              vehicles: h.vehicles,
-              liabilities: h.liabilities,
-            })),
-            { onConflict: "user_id,month" }
-          )
-          .then(() => {});
+        const payload = corrected.map((h: any) => ({
+          user_id: uid3,
+          month: h.month,
+          net_worth: h.netWorth,
+          cash: h.cash,
+          equity: h.equity,
+          debt: h.debt,
+          real_estate: h.realEstate,
+          vehicles: h.vehicles,
+          liabilities: h.liabilities,
+        }));
+        Promise.resolve(
+          supabase
+            .from("net_worth_history")
+            .upsert(payload, { onConflict: "user_id,month" })
+        )
+          .then(async ({ error }: any) => {
+            if (error) {
+              for (const row of payload) {
+                const { data: ex } = await supabase
+                  .from("net_worth_history")
+                  .select("id")
+                  .eq("user_id", uid3)
+                  .eq("month", row.month)
+                  .maybeSingle();
+                if (ex?.id) {
+                  await supabase.from("net_worth_history").update(row).eq("id", ex.id);
+                } else {
+                  await supabase.from("net_worth_history").insert(row);
+                }
+              }
+            }
+          })
+          .catch(() => {});
 
         const newMaster = { ...(s.masterData || DEFAULT_MASTER_DATA), _nwBackfillV2: true };
         masterDataRef.current = newMaster;
@@ -2026,13 +2088,28 @@ function FinanceDashboard() {
         const newHistory = [...history, { month: ym, netWorth: nw, ...breakdown }].slice(-36);
         const uid2 = session?.user?.id;
         if (uid2 && uid2 !== "offline-user") {
-          supabase
-            .from("net_worth_history")
-            .upsert(
-              { user_id: uid2, month: ym, net_worth: nw, ...breakdown },
-              { onConflict: "user_id,month" }
-            )
-            .then(() => {});
+          const snapshotPayload = { user_id: uid2, month: ym, net_worth: nw, ...breakdown };
+          Promise.resolve(
+            supabase
+              .from("net_worth_history")
+              .upsert(snapshotPayload, { onConflict: "user_id,month" })
+          )
+            .then(async ({ error }: any) => {
+              if (error) {
+                const { data: existing } = await supabase
+                  .from("net_worth_history")
+                  .select("id")
+                  .eq("user_id", uid2)
+                  .eq("month", ym)
+                  .maybeSingle();
+                if (existing?.id) {
+                  await supabase.from("net_worth_history").update(snapshotPayload).eq("id", existing.id);
+                } else {
+                  await supabase.from("net_worth_history").insert(snapshotPayload);
+                }
+              }
+            })
+            .catch(() => {});
         }
         return { ...s, netWorthHistory: newHistory };
       });
@@ -2975,7 +3052,6 @@ function FinanceDashboard() {
   // Automatic background reconnect sync when online
   useEffect(() => {
     const handleOnline = () => {
-      console.log("[Network] Online event detected, syncing any pending transactions...");
       resyncTransactions();
     };
     window.addEventListener("online", handleOnline);
@@ -4725,7 +4801,7 @@ function FinanceDashboard() {
     return <LoadingScreen />;
   }
 
-  if (!session || recoveryMode) {
+  if (!session || recoveryMode || mfaPending) {
     if (!isSupabaseConfigured) {
       return (
         <div
@@ -4799,9 +4875,11 @@ function FinanceDashboard() {
             } catch {}
             setState((prev: any) => getDemoState(prev?.settings));
           }
+          setMfaPending(false);
           setSession(s);
         }}
         onRecoveryComplete={() => setRecoveryMode(false)}
+        initialMode={mfaPending ? "mfa" : undefined}
       />
     );
   }

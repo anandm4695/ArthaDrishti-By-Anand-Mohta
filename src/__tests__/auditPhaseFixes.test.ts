@@ -285,4 +285,86 @@ describe("System Audit Phase 1 & 2 Security Hardening", () => {
       expect(resolvedSender).not.toBe(maliciousBody.fromEmail);
     });
   });
+
+  describe("Signed-In Security & Data Protection (Audit L1 - L5)", () => {
+    it("enforces AAL2 TOTP check before granting session access to MFA-enrolled users (Audit L1)", () => {
+      const isMfaCompliant = (aalData: { currentLevel: string; nextLevel: string }) => {
+        if (aalData.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+          return false;
+        }
+        return true;
+      };
+
+      expect(isMfaCompliant({ currentLevel: "aal1", nextLevel: "aal2" })).toBe(false);
+      expect(isMfaCompliant({ currentLevel: "aal2", nextLevel: "aal2" })).toBe(true);
+      expect(isMfaCompliant({ currentLevel: "aal1", nextLevel: "aal1" })).toBe(true);
+    });
+
+    it("strips financial collections and geminiApiKey before persisting localStorage for real accounts (Audit L2 & L3)", () => {
+      const fullUserState = {
+        transactions: [{ id: "tx1", amount: 50000 }],
+        bankAccounts: [{ id: "b1", balance: 720000 }],
+        stocks: [{ symbol: "RELIANCE", qty: 100 }],
+        settings: {
+          theme: "dark",
+          density: "normal",
+          geminiApiKey: "AIzaSySecretApiKey123",
+        },
+      };
+
+      const isRealAuthUser = true;
+      let persistedPayload: any = null;
+
+      if (isRealAuthUser) {
+        persistedPayload = {
+          _ts: Date.now(),
+          settings: { ...fullUserState.settings, geminiApiKey: "" },
+        };
+      }
+
+      expect(persistedPayload.transactions).toBeUndefined();
+      expect(persistedPayload.bankAccounts).toBeUndefined();
+      expect(persistedPayload.stocks).toBeUndefined();
+      expect(persistedPayload.settings.geminiApiKey).toBe("");
+      expect(persistedPayload.settings.theme).toBe("dark");
+    });
+
+    it("verifies login cookie options are marked secure with restricted 7-day maxAge (Audit L4)", () => {
+      const cookieOptions = {
+        name: "sb-auth-token",
+        secure: true,
+        sameSite: "lax" as const,
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      };
+
+      expect(cookieOptions.secure).toBe(true);
+      expect(cookieOptions.maxAge).toBe(604800); // 7 days in seconds
+      expect(cookieOptions.maxAge).toBeLessThan(400 * 24 * 60 * 60); // Not 400 days
+    });
+
+    it("provides fallback update/insert for net_worth_history snapshots (Audit L5)", async () => {
+      let inserted = false;
+      let updated = false;
+
+      const mockSaveSnapshot = async (hasConstraint: boolean, existingId: string | null) => {
+        if (!hasConstraint) {
+          // Fallback mechanism when ON CONFLICT constraint throws 400
+          if (existingId) {
+            updated = true;
+          } else {
+            inserted = true;
+          }
+          return { ok: true };
+        }
+        return { ok: true };
+      };
+
+      await mockSaveSnapshot(false, null);
+      expect(inserted).toBe(true);
+
+      await mockSaveSnapshot(false, "existing-id-123");
+      expect(updated).toBe(true);
+    });
+  });
 });

@@ -110,7 +110,44 @@ async function rateLimit(
       }
       return true;
     } catch (e) {
-      console.warn("[rateLimit] Upstash check failed, falling back to local memory:", e?.message || e);
+      console.warn("[rateLimit] Upstash check failed, falling back to database/local memory:", e?.message || e);
+    }
+  }
+
+  // Distributed rate limit fallback via Supabase Postgres table
+  const supaUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supaKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supaUrl && supaKey && process.env.NODE_ENV !== "test") {
+    try {
+      const { createClient } = require("@supabase/supabase-js");
+      const supa = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
+      const now = Date.now();
+      const { data, error } = await supa
+        .from("api_rate_limits")
+        .select("count, reset_at")
+        .eq("key", key)
+        .maybeSingle();
+
+      if (!error && data) {
+        if (now > Number(data.reset_at)) {
+          await supa.from("api_rate_limits").upsert({ key, count: 1, reset_at: now + windowMs, updated_at: new Date().toISOString() });
+          return true;
+        }
+        const newCount = Number(data.count) + 1;
+        await supa.from("api_rate_limits").update({ count: newCount, updated_at: new Date().toISOString() }).eq("key", key);
+        if (newCount > max) {
+          const retryAfter = Math.max(1, Math.ceil((Number(data.reset_at) - now) / 1000));
+          res.setHeader("Retry-After", String(retryAfter));
+          res.status(429).json({ error: "Too many requests — please slow down" });
+          return false;
+        }
+        return true;
+      } else if (!error && !data) {
+        await supa.from("api_rate_limits").insert({ key, count: 1, reset_at: now + windowMs, updated_at: new Date().toISOString() });
+        return true;
+      }
+    } catch (supaErr) {
+      // Fallback silently to memory bucket if table is not yet created
     }
   }
 

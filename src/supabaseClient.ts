@@ -19,5 +19,14 @@ export const isSupabaseReady = Boolean(
 
 export const supabase = createBrowserClient(
   SUPABASE_URL || "https://placeholder.supabase.co",
-  SUPABASE_ANON_KEY || "placeholder"
+  SUPABASE_ANON_KEY || "placeholder",
+  {
+    cookieOptions: {
+      name: "sb-auth-token",
+      secure: typeof window !== "undefined" ? window.location.protocol === "https:" : true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days (Audit L4 fix: replace 400 days with 7 days and secure flag)
+      path: "/",
+    },
+  }
 );

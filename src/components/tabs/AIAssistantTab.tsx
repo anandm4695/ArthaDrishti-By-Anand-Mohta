@@ -22,6 +22,7 @@ import {
   Award,
 } from "lucide-react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { supabase } from "../../supabaseClient";
 import { THEME } from "../../utils/constants";
 import { fmtINRFull, getEffectiveRent, today, getAutoDetectedDeductions } from "../../utils/finance";
 import { getCurrentFY } from "../../utils/appConstants";
@@ -1772,12 +1773,41 @@ You have access to local tools/functions to retrieve real-time and detailed tran
 
   const handleSend = async (prefill?: string) => {
     const userText = (prefill ?? input).trim();
-    if (!userText || !apiKey || loading) return;
+    if (!userText || loading) return;
 
     setInput("");
     setMessages((prev) => [...prev, { role: "user", text: userText }]);
     setLoading(true);
     setError(null);
+
+    // If no client API key, attempt secure serverless AI proxy route (Audit L2)
+    if (!apiKey) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({
+            prompt: userText,
+            systemInstruction: generateContext(),
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Please configure GEMINI_API_KEY on Vercel or enter an API key in Settings.");
+        }
+        const aiJson = await res.json();
+        setMessages((prev) => [...prev, { role: "model", text: aiJson.text }]);
+      } catch (err: any) {
+        setError(err.message || "Failed to reach AI service.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
