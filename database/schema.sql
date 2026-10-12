@@ -1,5 +1,5 @@
 -- ================================================================
--- PERSONAL FINANCE BY ANAND MOHTA — CONSOLIDATED SCHEMA
+-- ARTHADRISHTI BY ANAND MOHTA — CONSOLIDATED SCHEMA
 -- ================================================================
 -- Generated 2026-08-04 by merging migrations 01_initial_schema.sql
 -- through 89_sip_status_stepup.sql (91 files) into a single file that

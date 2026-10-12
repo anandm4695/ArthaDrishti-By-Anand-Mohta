@@ -1,4 +1,4 @@
-# 🔄 Personal Finance - System Reset & Restoration Guide
+# 🔄 ArthaDrishti by Anand Mohta - System Reset & Restoration Guide
 
 This document contains everything needed to restore the project environment after a system reset.
 

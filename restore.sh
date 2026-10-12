@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # ==============================================================================
-# Personal Finance Project - Automated Restoration Script
+# ArthaDrishti by Anand Mohta - Automated Restoration Script
 # ==============================================================================
 
 set -e
 
-echo "🚀 [1/5] Starting Personal Finance Environment Restoration..."
+echo "🚀 [1/5] Starting ArthaDrishti Environment Restoration..."
 
 # Check Node.js
 if ! command -v node &> /dev/null; then

@@ -1729,7 +1729,7 @@ export const CalculatorsTab: React.FC<CalculatorsTabProps> = ({ metrics, state, 
 
   const handleCopySummary = () => {
     let text = `[${currentCalcMeta.label}] Summary\nCategory: ${currentCalcMeta.categoryLabel}\n`;
-    text += `Personal Finance Hub • Generated on ${new Date().toLocaleDateString("en-IN")}\n\n`;
+    text += `ArthaDrishti by Anand Mohta • Generated on ${new Date().toLocaleDateString("en-IN")}\n\n`;
 
     if (calcTab === "emi") {
       text += `Loan Principal: ₹${Number(emiP).toLocaleString("en-IN")}\n`;

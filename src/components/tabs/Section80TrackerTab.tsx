@@ -1122,7 +1122,7 @@ Tax Regime: ${activeRegime === "old" ? "Old Tax Regime" : "New Tax Regime (Simul
 TOTAL CHAPTER VI-A & SEC 24 DEDUCTIONS: ${fmtINRFull(data.totalDeductions)}
 ESTIMATED TAX SAVINGS (@ ${(effectiveTaxRate * 100).toFixed(1)}%): ${fmtINRFull(data.taxSaved)}
 --------------------------------------------------
-Generated via Personal Finance by Anand Mohta on ${new Date().toLocaleDateString("en-IN")}
+Generated via ArthaDrishti by Anand Mohta on ${new Date().toLocaleDateString("en-IN")}
     `.trim();
 
     navigator.clipboard.writeText(text);

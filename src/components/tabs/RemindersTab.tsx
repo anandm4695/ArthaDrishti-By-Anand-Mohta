@@ -160,7 +160,7 @@ function fmtDisplayDate(dateStr: string): string {
 function generateGoogleCalendarUrl(r: any): string {
   const title = encodeURIComponent(r.title);
   const details = encodeURIComponent(
-    `${r.subtitle || ""}\n\nCategory: ${r.type}\nAmount: ${r.amount ? `₹${r.amount}` : "N/A"}\nManaged via Personal Finance App`
+    `${r.subtitle || ""}\n\nCategory: ${r.type}\nAmount: ${r.amount ? `₹${r.amount}` : "N/A"}\nManaged via ArthaDrishti by Anand Mohta`
   );
   const dateFormatted = (r.date || "").replace(/-/g, "");
   const nextDay = new Date(new Date((r.date || today()) + "T00:00:00").getTime() + 86400000)
@@ -180,7 +180,7 @@ function exportIcsFile(reminders: any[]) {
       `DESCRIPTION:${(r.subtitle || "").replace(/\n/g, "\\n")}`,
       `DTSTART;VALUE=DATE:${dStr}`,
       `CATEGORIES:${r.type}`,
-      `UID:${r.id}-${dStr}@personalfinance`,
+      `UID:${r.id}-${dStr}@arthadrishti`,
       "END:VEVENT",
     ].join("\r\n");
   });
@@ -188,7 +188,7 @@ function exportIcsFile(reminders: any[]) {
   const icsData = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Personal Finance App//Reminders & Alerts//EN",
+    "PRODID:-//ArthaDrishti by Anand Mohta//Reminders & Alerts//EN",
     "CALSCALE:GREGORIAN",
     ...events,
     "END:VCALENDAR",
@@ -415,7 +415,7 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
       return;
     }
     try {
-      new Notification("Personal Finance Alert System", {
+      new Notification("ArthaDrishti Alert System", {
         body: "Test Alert: Your notification center is active and alerts are verified!",
         icon: "https://img.icons8.com/color/128/bell.png",
       });

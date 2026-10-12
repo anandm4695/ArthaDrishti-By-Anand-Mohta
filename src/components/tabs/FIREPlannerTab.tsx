@@ -691,7 +691,7 @@ export const FIREPlannerTab = ({ state, metrics }: any) => {
 • Monthly Passive Freedom Dividend: ${fmtINR(fireCalc.monthlyFreedomDividend)}/mo (${fireCalc.freedomDividendCoveragePct.toFixed(1)}% living expenses)
 • Projected FI Age: ${fireCalc.fireAge.toFixed(1)} yrs (${fireCalc.targetDateFormatted})
 • Assumptions: Return: ${returnRate}% | Inflation: ${inflationRate}% | SWR: ${swr}% | Monthly Savings: ${fmtINR(monthlySavings)}
-Generated via Personal Finance by Anand Mohta`;
+Generated via ArthaDrishti by Anand Mohta`;
 
     navigator.clipboard.writeText(text);
     setCopiedSummary(true);

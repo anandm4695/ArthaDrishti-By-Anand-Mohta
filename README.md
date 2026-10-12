@@ -21,8 +21,8 @@ A comprehensive personal finance dashboard built with React and TypeScript — t
 ## Quick Start
 
 ```bash
-git clone https://github.com/anandm4695/Personalfinance.git
-cd Personalfinance
+git clone https://github.com/anandm4695/ArthaDrishti-By-Anand-Mohta.git
+cd ArthaDrishti-By-Anand-Mohta
 npm install
 cp .env.example .env   # add your Supabase credentials
 npm start

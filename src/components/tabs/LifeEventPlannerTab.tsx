@@ -830,7 +830,7 @@ export const LifeEventPlannerTab: React.FC<{
 • Monthly Surplus Consumption: ${monthlySurplus > 0 ? `${surplusUtilizationPct.toFixed(0)}% of ₹${fmtINRFull(monthlySurplus)}` : "Surplus unavailable"}
 ${peakYear ? `• Peak Cash Demand Year: ${peakYear.year} (₹${fmtINRFull(peakYear.total)} needed)` : ""}
 
-Generated from Personal Finance OS on ${today()}`;
+Generated from ArthaDrishti by Anand Mohta on ${today()}`;
 
     navigator.clipboard.writeText(summaryText);
     setCopiedSummary(true);

@@ -1746,7 +1746,7 @@ function renderFooterBlock(recipientName, cadenceDesc) {
       </a>
     </div>
     <div style="font-size:11.5px;color:#94a3b8;line-height:1.7;font-weight:500;">
-      Personal Finance by Anand Mohta · ${cadenceDesc} prepared for ${escapeHtml(recipientName)}<br>
+      ArthaDrishti by Anand Mohta · ${cadenceDesc} prepared for ${escapeHtml(recipientName)}<br>
       <a href="${APP_URL}/#settings" style="color:#64748b;text-decoration:none;font-size:11px;">
         Manage email preferences &amp; notification schedule
       </a>

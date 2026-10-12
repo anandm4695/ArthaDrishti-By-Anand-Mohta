@@ -1,8 +1,8 @@
 # 📋 System Reset & Restoration Reference Record
 
 **Date**: September 10, 2026  
-**Project**: Personal Finance by Anand Mohta  
-**Repository**: [https://github.com/anandm4695/Personalfinance.git](https://github.com/anandm4695/Personalfinance.git)  
+**Project**: ArthaDrishti by Anand Mohta  
+**Repository**: [https://github.com/anandm4695/ArthaDrishti-By-Anand-Mohta.git](https://github.com/anandm4695/ArthaDrishti-By-Anand-Mohta.git)  
 **Primary Directory**: `/Users/anandmohta/Anand Mac book/Personal/Personal Finance by Anand Mohta`
 
 ---
