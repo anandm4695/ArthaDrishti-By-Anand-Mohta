@@ -47,10 +47,15 @@ export const supabase = createBrowserClient(
           .filter(Boolean)
           .map((c) => {
             const idx = c.indexOf("=");
-            return {
-              name: idx > -1 ? c.slice(0, idx) : c,
-              value: idx > -1 ? decodeURIComponent(c.slice(idx + 1)) : "",
-            };
+            const name = idx > -1 ? c.slice(0, idx).trim() : c.trim();
+            const rawVal = idx > -1 ? c.slice(idx + 1) : "";
+            let value = rawVal;
+            try {
+              value = decodeURIComponent(rawVal);
+            } catch {
+              value = rawVal;
+            }
+            return { name, value };
           });
       },
       setAll(cookiesToSet) {

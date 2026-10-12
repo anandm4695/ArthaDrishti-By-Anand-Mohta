@@ -1,18 +1,18 @@
-import { defineConfig, type ESBuildOptions } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "fs";
 import path from "path";
 import url from "url";
 
 export default defineConfig(({ mode }) => ({
-  esbuild: mode === "production" ? ({ drop: ["console", "debugger"] } as ESBuildOptions) : undefined,
+  esbuild: mode === "production" ? { drop: ["console", "debugger"] } : {},
   plugins: [
     react(),
     {
       name: "strip-console-production",
-      renderChunk(code) {
-        if (mode === "production") {
-          const stripped = code.replace(/console\.(log|debug)\([^)]*\);?/g, "void 0;");
+      transform(code, id) {
+        if (mode === "production" && !id.includes("node_modules") && (id.endsWith(".ts") || id.endsWith(".tsx") || id.endsWith(".js"))) {
+          const stripped = code.replace(/console\.(log|debug)\([^)]*\);?/g, "");
           return { code: stripped, map: null };
         }
         return null;

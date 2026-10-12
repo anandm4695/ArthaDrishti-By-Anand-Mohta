@@ -151,15 +151,32 @@
 
   <script>
     // Hide splash once React root renders
-    const observer = new MutationObserver(() => {
-      const root = document.getElementById('root');
-      if (root && root.children.length > 0) {
-        const splash = document.getElementById('app-loading');
-        if (splash) { splash.classList.add('hidden'); setTimeout(() => splash.remove(), 500); }
-        observer.disconnect();
+    function dismissSplash() {
+      const splash = document.getElementById('app-loading');
+      if (splash) {
+        splash.classList.add('hidden');
+        setTimeout(() => splash.remove(), 500);
       }
+    }
+    const rootEl = document.getElementById('root');
+    if (rootEl && rootEl.children.length > 0) {
+      dismissSplash();
+    } else if (rootEl) {
+      const observer = new MutationObserver(() => {
+        if (rootEl.children.length > 0) {
+          dismissSplash();
+          observer.disconnect();
+        }
+      });
+      observer.observe(rootEl, { childList: true });
+    }
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (rootEl && rootEl.children.length > 0) {
+          dismissSplash();
+        }
+      }, 2500);
     });
-    observer.observe(document.getElementById('root'), { childList: true });
   </script>
 
   <script type="module" src="/src/index.tsx"></script>
