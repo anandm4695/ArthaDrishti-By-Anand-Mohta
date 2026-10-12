@@ -1865,14 +1865,32 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
     --grid-min-lg: 220px;
     --grid-min-md: 160px;
   }
+  .app-sidebar.sidebar-compact,
+  .app-sidebar:not(.sidebar-expanded) {
+    width: 72px !important;
+    min-width: 72px !important;
+  }
+  .app-sidebar.sidebar-expanded {
+    position: absolute !important;
+    z-index: 500 !important;
+    width: 280px !important;
+    min-width: 280px !important;
+    box-shadow: var(--shadow-2xl) !important;
+  }
   .app-sidebar {
     overflow: hidden !important;
   }
+  .header-search {
+    max-width: 200px !important;
+  }
+  .desktop-only.header-subtitle {
+    display: none !important;
+  }
   .app-header-bar {
-    padding: 12px 20px !important;
+    padding: 12px 18px !important;
   }
   .app-main-content {
-    padding: 24px 20px !important;
+    padding: 20px 16px !important;
   }
   .mobile-only {
     display: none !important;
@@ -1936,7 +1954,10 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
 
   /* Header: tighter padding */
   .app-header-bar {
-    padding: 10px 16px !important;
+    padding: 10px 14px !important;
+  }
+  .header-title {
+    font-size: 15px !important;
   }
 
   /* Main content: reduced padding + bottom safe area for nav bar */
@@ -2153,8 +2174,10 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
 
 /* On tablet auto-compact the sidebar */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .app-sidebar {
-    overflow: hidden !important;
+  .app-sidebar.sidebar-compact,
+  .app-sidebar:not(.sidebar-expanded) {
+    width: 72px !important;
+    min-width: 72px !important;
   }
 }
 
@@ -3073,6 +3096,12 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
 
   .app-main-content [style*="repeat(4"],
   .app-main-content [style*="repeat(4,"],
+  .app-main-content [style*="repeat(5"],
+  .app-main-content [style*="repeat(5,"],
+  .app-main-content [style*="repeat(6"],
+  .app-main-content [style*="repeat(6,"],
+  .app-main-content [style*="repeat(7"],
+  .app-main-content [style*="repeat(7,"],
   .app-main-content [style*="1fr 1fr 1fr 1fr"],
   .app-main-content [style*="2fr 1fr 1fr 1fr 1fr"] {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -3334,6 +3363,12 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
 
   .app-main-content [style*="repeat(4"],
   .app-main-content [style*="repeat(4,"],
+  .app-main-content [style*="repeat(5"],
+  .app-main-content [style*="repeat(5,"],
+  .app-main-content [style*="repeat(6"],
+  .app-main-content [style*="repeat(6,"],
+  .app-main-content [style*="repeat(7"],
+  .app-main-content [style*="repeat(7,"],
   .app-main-content [style*="1fr 1fr 1fr 1fr"],
   .app-main-content [style*="2fr 1fr 1fr 1fr 1fr"] {
     grid-template-columns: 1fr !important;

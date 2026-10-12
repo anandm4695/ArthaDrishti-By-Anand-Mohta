@@ -101,4 +101,27 @@ describe("Responsive Mobile & Tablet Layout Integrity", () => {
     expect(toastContainer).toBeTruthy();
     expect(toastContainer.textContent).toContain("Data saved successfully");
   });
+
+  it("renders WorkspaceSidebar with sidebar-compact class when minimized", async () => {
+    const { WorkspaceSidebar } = await import("../components/workspace/WorkspaceSidebar");
+    const { container } = render(
+      <WorkspaceSidebar
+        tab="analytics"
+        subTab={null}
+        setTab={vi.fn()}
+        setSubTab={vi.fn()}
+        sidebarMinimized={true}
+        setSidebarMinimized={vi.fn()}
+        sidebarHovered={false}
+        setSidebarHovered={vi.fn()}
+        isSidebarCompact={true}
+        collapsedGroups={{}}
+        setCollapsedGroups={vi.fn()}
+      />
+    );
+
+    const sidebar = container.querySelector(".app-sidebar");
+    expect(sidebar).toBeTruthy();
+    expect(sidebar?.classList.contains("sidebar-compact")).toBe(true);
+  });
 });

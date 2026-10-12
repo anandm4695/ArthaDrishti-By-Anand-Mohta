@@ -335,6 +335,22 @@ function FinanceDashboard() {
       localStorage.setItem("pf_sidebar_minimized", String(sidebarMinimized));
     } catch {}
   }, [sidebarMinimized]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined" && window.innerWidth >= 769 && window.innerWidth <= 1024) {
+        if (!localStorage.getItem("pf_sidebar_minimized_manual")) {
+          setSidebarMinimized(true);
+        }
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, []);
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const isSidebarCompact = sidebarMinimized && !sidebarHovered;
   const { toasts, showToast } = useToast();
@@ -4938,7 +4954,8 @@ function FinanceDashboard() {
       <div
         className={darkMode ? "dark-theme" : ""}
         style={{
-          height: "100vh",
+          height: "100dvh",
+          minHeight: "100vh",
           background: "var(--t-paper)",
           fontFamily: "var(--t-font, var(--font-sans))",
           color: THEME.ink,
@@ -5023,7 +5040,6 @@ function FinanceDashboard() {
               flexDirection: "column",
               overflowY: tab === "ai" ? "hidden" : "auto",
               overflowX: "hidden",
-              ...(tab === "ai" ? { padding: "24px 40px" } : {}),
               position: "relative",
               zIndex: 1,
               filter: privacyMode ? "blur(16px)" : "none",

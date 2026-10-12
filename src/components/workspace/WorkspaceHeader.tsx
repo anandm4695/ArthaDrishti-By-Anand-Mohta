@@ -141,12 +141,15 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 }}
               >
                 <div
-                  className="desktop-only"
+                  className="header-title"
                   style={{
                     fontWeight: 800,
                     fontSize: 18,
                     color: THEME.ink,
                     letterSpacing: "-0.01em",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
                   {greeting.title}

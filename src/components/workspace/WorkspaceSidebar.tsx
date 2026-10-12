@@ -39,7 +39,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 }) => {
   return (
         <aside
-          className="glass app-sidebar"
+          className={`glass app-sidebar ${!isSidebarCompact ? "sidebar-expanded" : "sidebar-compact"}`}
           onMouseEnter={() => {
             if (
               sidebarMinimized &&
@@ -119,11 +119,11 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
               aria-label={sidebarMinimized ? "Expand sidebar" : "Collapse sidebar"}
               style={{
                 position: isSidebarCompact ? "static" : "absolute",
-                top: isSidebarCompact ? undefined : 16,
+                top: isSidebarCompact ? undefined : 14,
                 right: isSidebarCompact ? undefined : 10,
                 transform: "none",
-                width: 26,
-                height: 26,
+                width: 32,
+                height: 32,
                 borderRadius: 8,
                 border: `1.5px solid ${THEME.line}`,
                 background: "var(--t-paper)",
@@ -149,7 +149,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                 (e.currentTarget as HTMLButtonElement).style.color = THEME.muted;
               }}
             >
-              {sidebarMinimized ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+              {sidebarMinimized ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
             </button>
           </div>
 
@@ -240,10 +240,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                               } else {
                                 setTab(t.id);
                                 setSubTab(hasChildren ? t.children![0].id : null);
-                              }
-                              if (isSidebarCompact) {
-                                setSidebarMinimized(false);
-                                setSidebarHovered(false);
                               }
                             }}
                             title={isSidebarCompact ? t.label : undefined}

@@ -2493,7 +2493,7 @@ const AF_STYLES = `
 }
 
 /* ── Responsive Viewports ───────────────── */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .af-brand-panel {
     display: none;
   }
