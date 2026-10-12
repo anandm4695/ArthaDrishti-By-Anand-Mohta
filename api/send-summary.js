@@ -3310,8 +3310,12 @@ function buildSubject(frequency, netWorth, refDate = new Date()) {
 async function handler(req, res) {
   if (!handleCors(req, res, { allowedMethods: "GET, POST, OPTIONS" })) return;
 
-  // ── Health check — called by Settings UI to diagnose config ───────────────
+  // ── Health check — called by Settings UI to diagnose config (strictly authenticated) ───
   if (req.method === "GET" && req.query?.action === "healthcheck") {
+    const auth = await verifyManualAuth(req);
+    if (!auth.ok) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
     const isTestDomain = FROM_EMAIL === "onboarding@resend.dev";
     const hasServiceKey = !!(
       process.env.SUPABASE_SERVICE_EMAIL_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -3403,7 +3407,7 @@ async function handler(req, res) {
         });
 
       // Security hardening (Finding S3): Rate limit manual sends per user (5 per day)
-      if (!rateLimit(req, res, { max: 5, windowMs: 24 * 60 * 60 * 1000, keyPrefix: "manual_send_", customKey: auth.user.id })) {
+      if (!(await rateLimit(req, res, { max: 5, windowMs: 24 * 60 * 60 * 1000, keyPrefix: "manual_send_", customKey: auth.user.id }))) {
         return;
       }
 

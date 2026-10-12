@@ -68,8 +68,8 @@ function fetchJson(url) {
 module.exports = async function handler(req, res) {
   if (!handleCors(req, res)) return;
 
-  // Allow up to 180 requests per minute per IP for mutual fund batch/portfolio loads
-  if (!rateLimit(req, res, { max: 180, windowMs: 60_000 })) return;
+  // Enforce per-IP rate limit for mutual fund lookups
+  if (!(await rateLimit(req, res, { max: 60, windowMs: 60_000 }))) return;
 
   const { code, range } = req.query;
   if (!code) return res.status(400).json({ error: "code required" });
@@ -83,7 +83,7 @@ module.exports = async function handler(req, res) {
 
   const cached = cache.get(cacheKey);
   if (cached && now < cached.expiresAt) {
-    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
+    res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200");
     return res.status(200).json(cached.payload);
   }
 
@@ -149,7 +149,7 @@ module.exports = async function handler(req, res) {
 
     cache.set(cacheKey, { payload, expiresAt: now + CACHE_TTL_MS });
 
-    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
+    res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200");
     return res.status(200).json(payload);
   } catch (e) {
     console.error(`[mf-nav] ${cleanCode}:`, e?.message || e);

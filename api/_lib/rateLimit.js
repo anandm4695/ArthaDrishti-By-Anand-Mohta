@@ -1,10 +1,39 @@
-// Best-effort per-instance rate limiter and CORS helper for Vercel serverless functions.
+// Distributed & in-memory sliding-window rate limiter and CORS helper for Vercel serverless functions.
+let upstashLimiter = null;
+const hasUpstashEnv = !!(
+  (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ||
+  (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+);
+
+if (hasUpstashEnv) {
+  try {
+    const { Ratelimit } = require("@upstash/ratelimit");
+    const { Redis } = require("@upstash/redis");
+    const redis = process.env.UPSTASH_REDIS_REST_URL
+      ? Redis.fromEnv()
+      : new Redis({
+          url: process.env.KV_REST_API_URL,
+          token: process.env.KV_REST_API_TOKEN,
+        });
+
+    upstashLimiter = (max, windowMs) =>
+      new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(max, `${Math.max(1, Math.ceil(windowMs / 1000))} s`),
+        prefix: "@arthadrishti/rl",
+      });
+  } catch (err) {
+    console.warn("[rateLimit] Upstash Ratelimit init warning:", err?.message || err);
+  }
+}
 
 const buckets = new Map();
 
 function clientIp(req) {
   if (!req) return "127.0.0.1";
-  const fwd = req.headers ? (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"]) : null;
+  const fwd = req.headers
+    ? req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || req.headers["x-real-ip"]
+    : null;
   if (fwd) return String(fwd).split(",")[0].trim();
   return req.socket?.remoteAddress || req.ip || "127.0.0.1";
 }
@@ -23,7 +52,9 @@ function isAllowedOrigin(origin) {
     // Custom configured app domain
     const appUrl = process.env.APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
     if (appUrl) {
-      const configuredHost = new URL(appUrl.startsWith("http") ? appUrl : `https://${appUrl}`).hostname.toLowerCase();
+      const configuredHost = new URL(
+        appUrl.startsWith("http") ? appUrl : `https://${appUrl}`
+      ).hostname.toLowerCase();
       if (host === configuredHost) return true;
     }
     return false;
@@ -37,7 +68,7 @@ function handleCors(req, res, { allowedMethods = "GET, OPTIONS" } = {}) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
 
-  const origin = req.headers ? (req.headers.origin || req.headers.Origin) : null;
+  const origin = req.headers ? req.headers.origin || req.headers.Origin : null;
   if (origin) {
     if (isAllowedOrigin(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
@@ -58,8 +89,32 @@ function handleCors(req, res, { allowedMethods = "GET, OPTIONS" } = {}) {
   return true;
 }
 
-function rateLimit(req, res, { windowMs = 60_000, max = 30, keyPrefix = "", customKey = null } = {}) {
-  const key = keyPrefix + (customKey || clientIp(req));
+async function rateLimit(
+  req,
+  res,
+  { windowMs = 60_000, max = 30, keyPrefix = "", customKey = null } = {}
+) {
+  const ip = customKey || clientIp(req);
+  const key = `${keyPrefix}${ip}`;
+
+  // If Upstash Redis is configured, enforce distributed rate limiting across serverless instances
+  if (upstashLimiter) {
+    try {
+      const rl = upstashLimiter(max, windowMs);
+      const { success, reset } = await rl.limit(key);
+      if (!success) {
+        const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+        res.setHeader("Retry-After", String(retryAfter));
+        res.status(429).json({ error: "Too many requests — please slow down" });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn("[rateLimit] Upstash check failed, falling back to local memory:", e?.message || e);
+    }
+  }
+
+  // Local sliding-window bucket fallback
   const now = Date.now();
   const bucket = buckets.get(key);
 
@@ -70,7 +125,8 @@ function rateLimit(req, res, { windowMs = 60_000, max = 30, keyPrefix = "", cust
 
   bucket.count++;
   if (bucket.count > max) {
-    res.setHeader("Retry-After", String(Math.ceil((bucket.resetAt - now) / 1000)));
+    const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
+    res.setHeader("Retry-After", String(retryAfter));
     res.status(429).json({ error: "Too many requests — please slow down" });
     return false;
   }

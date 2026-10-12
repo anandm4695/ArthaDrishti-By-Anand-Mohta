@@ -101,7 +101,7 @@ function getStrength(pw: string): { score: number; label: string; color: string;
 }
 
 /* ─── Mode order for slide animations ───────────────────────────────── */
-const MODE_ORDER = { login: 0, signup: 1, forgot: 2, reset: 3 } as const;
+const MODE_ORDER = { login: 0, signup: 1, forgot: 2, reset: 3, mfa: 4 } as const;
 
 export default function Auth({
   onLogin,
@@ -111,7 +111,7 @@ export default function Auth({
   onRecoveryComplete?: () => void;
 }) {
   // Detect password-recovery link in the URL hash
-  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "reset">(() => {
+  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "reset" | "mfa">(() => {
     if (capturedUrlHash.includes("type=recovery")) {
       return "reset";
     }
@@ -145,6 +145,15 @@ export default function Auth({
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const [activeTabFeature, setActiveTabFeature] = useState<number>(0);
 
+  // MFA TOTP State (Audit S4)
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaFocused, setMfaFocused] = useState(false);
+
+  // Turnstile CAPTCHA State (Audit S4)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+
   const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
   const onCapsLockKey = (e: React.KeyboardEvent<HTMLInputElement>) =>
     setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"));
@@ -168,6 +177,41 @@ export default function Auth({
   const isSignUp = mode === "signup";
   const isReset = mode === "reset";
   const isLogin = mode === "login";
+  const isMfa = mode === "mfa";
+
+  // Cloudflare Turnstile loader (Audit S4)
+  const turnstileSiteKey = ((import.meta as any).env?.VITE_TURNSTILE_SITE_KEY as string) || "";
+  useEffect(() => {
+    if (isSignUp && turnstileSiteKey && turnstileContainerRef.current) {
+      if (!(window as any).turnstile) {
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        script.async = true;
+        script.onload = () => {
+          if ((window as any).turnstile && turnstileContainerRef.current) {
+            try {
+              (window as any).turnstile.render(turnstileContainerRef.current, {
+                sitekey: turnstileSiteKey,
+                callback: (token: string) => setTurnstileToken(token),
+              });
+            } catch (err) {
+              console.warn("Turnstile render error:", err);
+            }
+          }
+        };
+        document.head.appendChild(script);
+      } else {
+        try {
+          (window as any).turnstile.render(turnstileContainerRef.current, {
+            sitekey: turnstileSiteKey,
+            callback: (token: string) => setTurnstileToken(token),
+          });
+        } catch (err) {
+          console.warn("Turnstile render error:", err);
+        }
+      }
+    }
+  }, [isSignUp, turnstileSiteKey]);
 
   // Auto-cycle feature showcase
   useEffect(() => {
@@ -279,6 +323,7 @@ export default function Auth({
           email: cleanEmail,
           password,
           options: {
+            captchaToken: turnstileToken || undefined,
             data: displayName.trim()
               ? { full_name: displayName.trim(), display_name: displayName.trim() }
               : undefined,
@@ -296,6 +341,24 @@ export default function Auth({
           password,
         });
         if (error) throw error;
+
+        // Check if TOTP MFA is required (AAL2)
+        try {
+          const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+            const { data: factorsData } = await supabase.auth.mfa.listFactors();
+            const totpFactor = factorsData?.totp?.[0];
+            if (totpFactor) {
+              setMfaFactorId(totpFactor.id);
+              setMode("mfa");
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (mfaErr) {
+          console.warn("[Auth] MFA check:", mfaErr);
+        }
+
         if (rememberMe) {
           localStorage.setItem("pf_remember_email", cleanEmail);
         } else {
@@ -311,6 +374,38 @@ export default function Auth({
       const rawMsg: string = err?.message || "";
       setError(friendlyError(rawMsg));
       setShowResendLink(!isSignUp && !isForgot && rawMsg.toLowerCase().includes("email not confirmed"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = mfaCode.trim().replace(/\D/g, "");
+    if (!cleanCode || cleanCode.length !== 6) {
+      setError("Please enter the 6-digit verification code");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      if (!mfaFactorId) throw new Error("No MFA factor identified. Please sign in again.");
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: mfaFactorId,
+        code: cleanCode,
+      });
+      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        if (rememberMe) localStorage.setItem("pf_remember_email", email.trim());
+        onLogin(session);
+      } else {
+        setError("Authentication session not found. Please sign in again.");
+      }
+    } catch (err: any) {
+      setError(friendlyError(err.message || "Invalid authentication code"));
     } finally {
       setLoading(false);
     }
@@ -352,7 +447,7 @@ export default function Auth({
     onLogin(DEMO_USER_SESSION);
   };
 
-  const switchMode = (m: "login" | "signup" | "forgot" | "reset") => {
+  const switchMode = (m: "login" | "signup" | "forgot" | "reset" | "mfa") => {
     if (m === mode) return;
     setSlideDir(MODE_ORDER[m] >= MODE_ORDER[mode] ? 1 : -1);
     setError(null);
@@ -374,6 +469,8 @@ export default function Auth({
     setShowConfirmPass(false);
     setShowNewPass(false);
     setShowConfirmNewPass(false);
+    setMfaCode("");
+    setMfaFactorId(null);
     setMode(m);
   };
 
@@ -566,7 +663,9 @@ export default function Auth({
                         ? "Reset your password"
                         : isSignUp
                           ? "Join ArthaDrishti"
-                          : "Welcome back"}
+                          : isMfa
+                            ? "Two-Factor Verification"
+                            : "Welcome back"}
                   </h2>
                   <p className="af-card-sub">
                     {isReset
@@ -575,7 +674,9 @@ export default function Auth({
                         ? "Enter your registered email and we'll dispatch an instant recovery link."
                         : isSignUp
                           ? "Start tracking your total net worth and family assets in one unified dashboard."
-                          : "Enter your credentials to access your financial dashboard."}
+                          : isMfa
+                            ? "Enter the 6-digit verification code from your authenticator app to access your vault."
+                            : "Enter your credentials to access your financial dashboard."}
                   </p>
                 </div>
 
@@ -771,6 +872,68 @@ export default function Auth({
 
                     <div className="af-switch">
                       <button type="button" onClick={handleCancelReset} className="af-back-link">
+                        <ArrowLeft size={14} />
+                        <span>Cancel and return to sign in</span>
+                      </button>
+                    </div>
+                  </form>
+                ) : isMfa ? (
+                  /* ══ MFA TOTP VERIFICATION MODE (Audit S4) ══ */
+                  <form onSubmit={handleMfaSubmit} className="af-form" noValidate>
+                    <div className="af-info-banner" style={{ borderLeft: "3px solid #10B981" }}>
+                      <ShieldCheck size={18} style={{ color: "#10B981", flexShrink: 0 }} />
+                      <span>Enter the 6-digit verification code generated by your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password, Authy).</span>
+                    </div>
+
+                    <div className="af-field">
+                      <label className="af-lbl" htmlFor="af-mfacode">
+                        Authenticator Code
+                      </label>
+                      <div className={wrapCls(mfaFocused, "")}>
+                        <span className="af-inp-icon">
+                          <Lock size={16} />
+                        </span>
+                        <input
+                          id="af-mfacode"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          value={mfaCode}
+                          onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          onFocus={() => setMfaFocused(true)}
+                          onBlur={() => setMfaFocused(false)}
+                          className="af-inp af-inp-padded"
+                          style={{ letterSpacing: "0.25em", fontSize: 18, fontWeight: 700, textAlign: "center" }}
+                          placeholder="000000"
+                          autoFocus
+                          autoComplete="one-time-code"
+                        />
+                      </div>
+                    </div>
+
+                    <button type="submit" disabled={loading || mfaCode.length !== 6} className="af-cta-btn">
+                      <div className="af-cta-shine" />
+                      {loading ? (
+                        <Loader2 size={18} className="af-spin" aria-hidden="true" />
+                      ) : (
+                        <>
+                          <span>Verify & Sign In</span>
+                          <ArrowRight size={16} strokeWidth={2.5} aria-hidden="true" />
+                        </>
+                      )}
+                    </button>
+
+                    <div className="af-switch">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMfaCode("");
+                          setMfaFactorId(null);
+                          switchMode("login");
+                        }}
+                        className="af-back-link"
+                      >
                         <ArrowLeft size={14} />
                         <span>Cancel and return to sign in</span>
                       </button>
@@ -1014,6 +1177,21 @@ export default function Auth({
                         Forgot password?
                       </button>
                     </div>
+                  )}
+
+                  {/* Cloudflare Turnstile CAPTCHA widget (Audit S4) */}
+                  {isSignUp && (
+                    <div
+                      id="cf-turnstile-container"
+                      ref={turnstileContainerRef}
+                      style={{
+                        minHeight: 42,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        margin: "8px 0 12px 0",
+                      }}
+                    />
                   )}
 
                   {/* Primary CTA Button with Gold Ingot Polish */}

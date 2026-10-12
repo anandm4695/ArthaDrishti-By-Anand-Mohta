@@ -4946,14 +4946,21 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                           {metrics.savingsRate.toFixed(1)}%
                         </div>
                         <div style={{ fontSize: 11, color: THEME.muted, marginBottom: 6, fontWeight: 600 }}>
-                          of monthly income
+                          of income after EMIs
                         </div>
-                        <Badge
-                          variant={metrics.savingsRate >= 20 ? "sage" : metrics.savingsRate >= 10 ? "gold" : "rust"}
-                          style={{ fontSize: 10, padding: "2px 8px" }}
-                        >
-                          {metrics.savingsRate >= 30 ? "Optimal (30%+)" : metrics.savingsRate >= 20 ? "On Track" : "Needs Boost"}
-                        </Badge>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <Badge
+                            variant={metrics.savingsRate >= 20 ? "sage" : metrics.savingsRate >= 10 ? "gold" : "rust"}
+                            style={{ fontSize: 10, padding: "2px 8px" }}
+                          >
+                            {metrics.savingsRate >= 30 ? "Optimal (30%+)" : metrics.savingsRate >= 20 ? "On Track" : "Needs Boost"}
+                          </Badge>
+                          {metrics.totalMonthlyEMI > 0 && (
+                            <span style={{ fontSize: 10, color: THEME.muted, fontWeight: 600 }}>
+                              {metrics.savingsRateBeforeEMI.toFixed(0)}% pre-EMI
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -6045,12 +6052,14 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                   >
                     {[
                       {
-                        label: "Liquid Balance",
+                        label: "Liquid Reserves",
                         value: <Money value={efLiquidBalance} variant="full" />,
                         sub:
                           nearTermFDs > 0
-                            ? `Incl. ${privacyMode ? "••••" : fmtINRFull(nearTermFDs)} near-term FDs`
-                            : "Bank cash",
+                            ? `Bank cash + ${privacyMode ? "••••" : fmtINRFull(nearTermFDs)} near-term FDs`
+                            : efLiquidBalance > metrics.cashInBanks
+                              ? `Bank cash (${privacyMode ? "••••" : fmtINRFull(metrics.cashInBanks)}) + liquid funds`
+                              : "Bank savings & current",
                         color: THEME.accent,
                       },
                       {

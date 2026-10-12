@@ -14,7 +14,7 @@ const yfFetchOptions = () => ({ fetchOptions: { signal: AbortSignal.timeout(YF_T
 
 module.exports = async function handler(req, res) {
   if (!handleCors(req, res)) return;
-  if (!rateLimit(req, res, { max: 30, windowMs: 60_000 })) return;
+  if (!(await rateLimit(req, res, { max: 30, windowMs: 60_000 }))) return;
 
   const { symbol } = req.query;
   if (!symbol) return res.status(400).json({ error: "symbol query param required" });
@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
     const exDividendDate = toUnix(cal?.exDividendDate ?? det?.exDividendDate ?? null);
     const dividendDate = toUnix(cal?.dividendDate ?? null);
 
-    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
+    res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200");
     return res.status(200).json({
       symbol,
       exDividendDate,

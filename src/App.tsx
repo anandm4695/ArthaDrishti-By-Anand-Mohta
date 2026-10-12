@@ -4351,6 +4351,10 @@ function FinanceDashboard() {
       localStorage.removeItem("pf_demo_mode");
       localStorage.removeItem("finance_dashboard_v1");
       localStorage.removeItem("finance_credit_scores");
+      localStorage.removeItem("finance_ai_notes");
+      localStorage.removeItem("pf_dismissed_alerts");
+      localStorage.removeItem("arthadrishti_cf_salary_pref");
+      if (typeof sessionStorage !== "undefined") sessionStorage.clear();
     } catch {}
     await supabase.auth.signOut().catch(() => {});
     setSession(null);
@@ -4663,6 +4667,59 @@ function FinanceDashboard() {
   const isSupabaseConfigured = !!(
     import.meta.env.VITE_SUPABASE_URL && !import.meta.env.VITE_SUPABASE_URL.includes("placeholder")
   );
+
+  // Check for 404 Not Found (Audit E1: Unknown SPA URLs render a proper 404 screen instead of soft 200)
+  const isInvalidRoute =
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/" &&
+    window.location.pathname !== "/index.html";
+
+  if (isInvalidRoute) {
+    return (
+      <div
+        id="not-found-page"
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--t-paper, #0B1220)",
+          color: "var(--t-ink, #F1F3F9)",
+          padding: 24,
+          textAlign: "center",
+          fontFamily: "var(--t-font, var(--font-sans))",
+        }}
+      >
+        <div style={{ fontSize: 72, fontWeight: 800, color: "var(--t-gold, #C5A152)", marginBottom: 12 }}>
+          404
+        </div>
+        <h1 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 12px 0" }}>
+          Page Not Found
+        </h1>
+        <p style={{ color: "var(--t-muted, #94A3B8)", maxWidth: 440, marginBottom: 24, fontSize: 15 }}>
+          The path <code style={{ background: "rgba(255,255,255,0.08)", padding: "2px 6px", borderRadius: 4 }}>{typeof window !== "undefined" ? window.location.pathname : ""}</code> does not exist on ArthaDrishti.
+        </p>
+        <button
+          onClick={() => {
+            window.location.href = "/";
+          }}
+          style={{
+            padding: "10px 24px",
+            background: "var(--t-gold, #C5A152)",
+            color: "#0B1220",
+            border: "none",
+            borderRadius: 8,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontSize: 14,
+          }}
+        >
+          Return to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   if (isAuthChecking) {
     return <LoadingScreen />;

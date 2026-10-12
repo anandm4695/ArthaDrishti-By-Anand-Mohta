@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
   if (!handleCors(req, res)) return;
   // Tighter than the other proxies — every live-provider call here costs real
   // money (Surepass is ~₹2-4/lookup once the free tier is exhausted).
-  if (!rateLimit(req, res, { max: 10, windowMs: 60_000, keyPrefix: "rc:" })) return;
+  if (!(await rateLimit(req, res, { max: 10, windowMs: 60_000, keyPrefix: "rc:" }))) return;
 
   const reg = String(req.query.reg || "")
     .trim()

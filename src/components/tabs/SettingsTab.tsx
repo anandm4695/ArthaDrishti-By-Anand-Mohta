@@ -2020,6 +2020,95 @@ function SecuritySection({
   const [passError, setPassError] = useState<string | null>(null);
   const [passSuccess, setPassSuccess] = useState<string | null>(null);
 
+  // MFA TOTP State & Handlers (Audit S4)
+  const [mfaFactors, setMfaFactors] = useState<any[]>([]);
+  const [mfaEnrolling, setMfaEnrolling] = useState(false);
+  const [mfaEnrollData, setMfaEnrollData] = useState<{ id: string; secret: string; qr_code?: string; uri?: string } | null>(null);
+  const [mfaVerifyCode, setMfaVerifyCode] = useState("");
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaMsg, setMfaMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const fetchMfaFactors = React.useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (!error && data) {
+        setMfaFactors(data.totp || []);
+      }
+    } catch (e) {
+      console.warn("Failed to list MFA factors:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMfaFactors();
+  }, [fetchMfaFactors]);
+
+  const handleStartMfaEnroll = async () => {
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", issuer: "ArthaDrishti" });
+      if (error) throw error;
+      setMfaEnrollData({
+        id: data.id,
+        secret: data.totp.secret,
+        qr_code: data.totp.qr_code,
+        uri: data.totp.uri,
+      });
+      setMfaEnrolling(true);
+    } catch (err: any) {
+      setMfaMsg({ type: "err", text: err?.message || "Failed to initiate MFA setup" });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleConfirmMfaEnroll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaEnrollData?.id) return;
+    const cleanCode = mfaVerifyCode.trim().replace(/\D/g, "");
+    if (cleanCode.length !== 6) {
+      setMfaMsg({ type: "err", text: "Please enter the 6-digit code from your authenticator app" });
+      return;
+    }
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: mfaEnrollData.id,
+        code: cleanCode,
+      });
+      if (error) throw error;
+      setMfaMsg({ type: "ok", text: "Two-factor authentication successfully enabled and verified!" });
+      setMfaEnrolling(false);
+      setMfaEnrollData(null);
+      setMfaVerifyCode("");
+      await fetchMfaFactors();
+    } catch (err: any) {
+      setMfaMsg({ type: "err", text: err?.message || "Verification code incorrect. Please try again." });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleDisableMfa = async (factorId: string) => {
+    if (!window.confirm("Are you sure you want to disable two-factor authentication? Your account will only be protected by password.")) {
+      return;
+    }
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId });
+      if (error) throw error;
+      setMfaMsg({ type: "ok", text: "Two-factor authentication disabled." });
+      await fetchMfaFactors();
+    } catch (err: any) {
+      setMfaMsg({ type: "err", text: err?.message || "Failed to disable MFA" });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
   const criteria = {
     minLength: newPassword.length >= 8,
     hasUpper: /[A-Z]/.test(newPassword),
@@ -2611,6 +2700,221 @@ function SecuritySection({
             </Button>
           </div>
         </form>
+      </Card>
+
+      {/* ── Two-Factor Authentication (TOTP MFA - Audit S4) ── */}
+      <Card style={{ padding: 24 }}>
+        <div style={{ marginBottom: 18 }}>
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: THEME.ink,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ShieldCheck size={18} color={THEME.accent} /> Two-Factor Authentication (TOTP MFA)
+            </div>
+            <span
+              style={{
+                fontSize: 11.5,
+                fontWeight: 700,
+                padding: "3px 10px",
+                borderRadius: 999,
+                background: mfaFactors.length > 0 ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.12)",
+                color: mfaFactors.length > 0 ? THEME.sage : "#DC2626",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: mfaFactors.length > 0 ? THEME.sage : "#DC2626",
+                }}
+              />
+              {mfaFactors.length > 0 ? "AAL2 Enforced (Active)" : "Disabled (Password Only)"}
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: THEME.muted, marginTop: 4 }}>
+            Protect your sensitive financial portfolio with an extra layer of security using Google Authenticator, Microsoft Authenticator, 1Password, or Authy.
+          </div>
+        </div>
+
+        {mfaMsg && (
+          <div
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              background: mfaMsg.type === "ok" ? "#F0FDF4" : "#FEF2F2",
+              border: `1px solid ${mfaMsg.type === "ok" ? "#BBF7D0" : "#FECACA"}`,
+              color: mfaMsg.type === "ok" ? "#15803D" : "#B91C1C",
+              fontSize: 13,
+              fontWeight: 500,
+              marginBottom: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            {mfaMsg.type === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            {mfaMsg.text}
+          </div>
+        )}
+
+        {mfaFactors.length > 0 ? (
+          <div>
+            <div
+              style={{
+                padding: "14px 18px",
+                borderRadius: 8,
+                background: "var(--surface-0)",
+                border: `1px solid ${THEME.line}`,
+                marginBottom: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: THEME.ink }}>
+                  Time-Based One-Time Password (TOTP)
+                </div>
+                <div style={{ fontSize: 12, color: THEME.muted, marginTop: 2 }}>
+                  Enrolled authenticator factor: {mfaFactors[0].friendly_name || "Authenticator App"}
+                </div>
+              </div>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => handleDisableMfa(mfaFactors[0].id)}
+                disabled={mfaLoading}
+              >
+                Disable 2FA
+              </Button>
+            </div>
+          </div>
+        ) : mfaEnrolling && mfaEnrollData ? (
+          <form onSubmit={handleConfirmMfaEnroll} style={{ display: "grid", gap: 16, maxWidth: 540 }}>
+            <div
+              style={{
+                padding: "14px 18px",
+                borderRadius: 8,
+                background: "var(--surface-0)",
+                border: `1px solid ${THEME.line}`,
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 700, color: THEME.ink, marginBottom: 8 }}>
+                Step 1: Scan QR Code or Enter Secret Key
+              </div>
+              <div style={{ fontSize: 12, color: THEME.muted, marginBottom: 12 }}>
+                Scan this code with your authenticator app (Google Authenticator, Authy, Microsoft Authenticator).
+              </div>
+
+              {mfaEnrollData.qr_code && (
+                <div style={{ display: "flex", justifyContent: "center", margin: "12px 0" }}>
+                  <img
+                    src={mfaEnrollData.qr_code}
+                    alt="MFA QR Code"
+                    style={{ width: 160, height: 160, borderRadius: 8, border: `1px solid ${THEME.line}` }}
+                  />
+                </div>
+              )}
+
+              <div style={{ marginTop: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+                  Manual Secret Key:
+                </span>
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    background: "var(--surface-1)",
+                    borderRadius: 6,
+                    fontSize: 12.5,
+                    fontFamily: "monospace",
+                    fontWeight: 700,
+                    color: THEME.ink,
+                    letterSpacing: "0.1em",
+                    marginTop: 4,
+                    wordBreak: "break-all",
+                    userSelect: "all",
+                  }}
+                >
+                  {mfaEnrollData.secret}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: THEME.ink, marginBottom: 6 }}>
+                Step 2: Enter 6-Digit Verification Code
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={mfaVerifyCode}
+                onChange={(e) => setMfaVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  border: `1px solid ${THEME.line}`,
+                  fontSize: 18,
+                  fontWeight: 700,
+                  letterSpacing: "0.25em",
+                  textAlign: "center",
+                  fontFamily: "monospace",
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+              <Button
+                type="submit"
+                variant="accent"
+                disabled={mfaLoading || mfaVerifyCode.length !== 6}
+                icon={<CheckCircle2 size={14} />}
+              >
+                {mfaLoading ? "Verifying..." : "Verify & Activate 2FA"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setMfaEnrolling(false);
+                  setMfaEnrollData(null);
+                  setMfaVerifyCode("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div>
+            <Button
+              variant="accent"
+              onClick={handleStartMfaEnroll}
+              disabled={mfaLoading}
+              icon={<ShieldCheck size={14} />}
+            >
+              {mfaLoading ? "Preparing Setup..." : "Set Up Two-Factor Authentication"}
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* ── Active Session & Logs ── */}
@@ -3812,10 +4116,8 @@ function EmailSummarySection({ state, emailSettings, updateEmailSettings }: any)
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
         body: JSON.stringify({
-          emailTo: address,
           frequency: chosenFreq,
           recipientName: state?.profile?.name || "there",
-          fromEmail: fromEmail.trim() || undefined,
         }),
       });
       const json = await res.json();
@@ -3838,10 +4140,15 @@ function EmailSummarySection({ state, emailSettings, updateEmailSettings }: any)
     setChecking(true);
     setHealth(null);
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const params = fromEmail.trim()
         ? `?action=healthcheck&fromEmail=${encodeURIComponent(fromEmail.trim())}`
         : "?action=healthcheck";
-      const res = await fetch(`/api/send-summary${params}`);
+      const res = await fetch(`/api/send-summary${params}`, {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      });
       const json = await res.json();
       setHealth(json);
     } catch (e: any) {

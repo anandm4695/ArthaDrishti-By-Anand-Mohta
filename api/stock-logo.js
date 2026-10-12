@@ -608,7 +608,7 @@ async function resolveWithYahoo(symbol) {
 
 module.exports = async function handler(req, res) {
   if (!handleCors(req, res)) return;
-  if (!rateLimit(req, res, { max: 30, windowMs: 60_000 })) return;
+  if (!(await rateLimit(req, res, { max: 60, windowMs: 60_000 }))) return;
 
   const { symbol } = req.query;
   if (!symbol) return res.status(400).json({ error: "symbol required" });
@@ -658,6 +658,6 @@ module.exports = async function handler(req, res) {
     faviconUrl = (await resolveWithYahoo(canonicalYfSym)) || (await resolveWithYahoo(sym));
   }
 
-  res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
+  res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
   return res.status(200).json({ logoUrl, faviconUrl });
 };

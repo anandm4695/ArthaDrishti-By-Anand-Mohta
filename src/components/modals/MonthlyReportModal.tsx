@@ -544,10 +544,8 @@ export function MonthlyReportModal({
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
         body: JSON.stringify({
-          emailTo,
           frequency: "monthly",
           recipientName: state.profile?.name || "there",
-          fromEmail: state.settings?.fromEmail || undefined,
           refDate: reportDate.toISOString(),
         }),
       });

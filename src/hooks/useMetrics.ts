@@ -773,18 +773,21 @@ export function useMetrics(
       realEstateAsset +
       vehicleAsset +
       govtSchemesValue;
-    const netSavings = monthIncome - monthExpense;
-    const savingsRate = monthIncome > 0 ? (Math.max(0, netSavings) / monthIncome) * 100 : 0;
-    const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
 
-    // FOIR: total monthly EMI / monthly income -- safe lending threshold is <40%
-    // Only include active loans (outstanding > 0, and monthsRemaining unset OR > 0;
-    // explicitly 0 means fully paid). Outstanding is checked too since monthsRemaining
-    // can go stale (e.g. balance edited to 0 by hand without resyncing tenure).
+    // FOIR & Monthly Debt Obligations:
+    // Only include active loans (outstanding > 0, and monthsRemaining unset OR > 0)
     const totalMonthlyEMI = (sState.loansTaken || [])
       .filter((l: any) => (l.status || "").toLowerCase() !== "closed" && loanOutstanding(l) > 0 && Number(l.monthsRemaining ?? 1) > 0)
       .reduce((s: number, l: any) => s + Number(l.emi || 0), 0);
     const foir = monthIncome > 0 ? (totalMonthlyEMI / monthIncome) * 100 : 0;
+
+    // Monthly Cashflow & Savings (Audit D1 & D4):
+    // Deduct fixed debt obligations (EMIs) from net cashflow and savings rate so true retained savings is reflected
+    const totalMonthlyOutflow = monthExpense + totalMonthlyEMI;
+    const netSavings = monthIncome - totalMonthlyOutflow;
+    const savingsRate = monthIncome > 0 ? (Math.max(0, netSavings) / monthIncome) * 100 : 0;
+    const savingsRateBeforeEMI = monthIncome > 0 ? (Math.max(0, monthIncome - monthExpense) / monthIncome) * 100 : 0;
+    const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
 
     // Credit utilization: cc outstanding / cc total limit (shared-pool deduplication)
     const activeCC = (sState.creditCards || []).filter(
@@ -942,6 +945,9 @@ export function useMetrics(
       overallGoalPct,
       goalsCompleted,
       totalMonthlyEMI,
+      totalMonthlyOutflow,
+      savingsRateBeforeEMI,
+      savingsRateAfterEMI: savingsRate,
       foir,
       totalCCLimit,
       creditUtilization,

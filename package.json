@@ -10,6 +10,8 @@
   "main": "src/index.tsx",
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "resend": "^6.12.3",
     "yahoo-finance2": "^3.14.0"
   },

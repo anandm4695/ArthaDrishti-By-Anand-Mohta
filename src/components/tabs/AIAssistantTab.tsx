@@ -427,6 +427,15 @@ export const AIAssistantTab: React.FC<AIAssistantTabProps> = ({
 
   const apiKey = state?.settings?.geminiApiKey || "";
 
+  // Data transmission consent notice (Audit S8)
+  const [consentDismissed, setConsentDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("ai_consent_accepted") === "true";
+    } catch {
+      return false;
+    }
+  });
+
   const WELCOME: { role: "model"; text: string } = {
     role: "model",
     text: "Hello! I'm your **AI Financial Advisor**.\n\nI've analysed a summary of your finances. Ask me anything — savings strategy, debt management, investment allocation, tax planning, or retirement goals.\n\nOr pick a suggestion below to get started.",
@@ -2006,6 +2015,54 @@ You have access to local tools/functions to retrieve real-time and detailed tran
       <SectionTitle sub="Powered by Gemini 2.5 Flash · Financial summary sent per request · Multi-turn">
         AI Advisor
       </SectionTitle>
+
+      {/* Data Consent & Privacy Notice (Audit S8) */}
+      {!consentDismissed && (
+        <div
+          style={{
+            padding: "10px 16px",
+            background: "rgba(59, 130, 246, 0.08)",
+            border: "1px solid rgba(59, 130, 246, 0.2)",
+            borderRadius: "var(--radius-sm)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 12,
+            fontSize: 12.5,
+            color: THEME.ink,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ShieldCheck size={16} color="#3B82F6" style={{ flexShrink: 0 }} />
+            <span>
+              <strong>Privacy Notice:</strong> A structured summary of your portfolio is sent to Google's Gemini API over HTTPS to generate advice. Your API key remains on this device only.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setConsentDismissed(true);
+              try {
+                localStorage.setItem("ai_consent_accepted", "true");
+              } catch {}
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#3B82F6",
+              fontWeight: 700,
+              cursor: "pointer",
+              fontSize: 12,
+              padding: "4px 8px",
+              borderRadius: 4,
+              whiteSpace: "nowrap",
+            }}
+          >
+            I understand
+          </button>
+        </div>
+      )}
 
       <Card
         style={{

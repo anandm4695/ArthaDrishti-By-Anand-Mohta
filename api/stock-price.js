@@ -14,7 +14,7 @@ const yfFetchOptions = () => ({ fetchOptions: { signal: AbortSignal.timeout(YF_T
 
 module.exports = async function handler(req, res) {
   if (!handleCors(req, res)) return;
-  if (!rateLimit(req, res, { max: 30, windowMs: 60_000 })) return;
+  if (!(await rateLimit(req, res, { max: 30, windowMs: 60_000 }))) return;
 
   const { symbols } = req.query;
   if (!symbols) return res.status(400).json({ error: "symbols query param required" });
@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s && /^[A-Z0-9.\-&]+$/i.test(s) && s.length <= 20)
-    .slice(0, 30);
+    .slice(0, 25);
 
   const results = {};
 
@@ -88,6 +88,6 @@ module.exports = async function handler(req, res) {
     })
   );
 
-  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+  res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
   return res.status(200).json(results);
 };
