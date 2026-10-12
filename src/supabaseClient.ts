@@ -36,8 +36,37 @@ export const supabase = createBrowserClient(
     cookieOptions: {
       secure: typeof window !== "undefined" ? window.location.protocol === "https:" : true,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days (Audit L4 fix: replace 400 days with 7 days and secure flag)
+      maxAge: 604800, // 7 days (Audit L4 fix: enforce 7-day maxAge instead of 400 days)
       path: "/",
+    },
+    cookies: {
+      getAll() {
+        if (typeof document === "undefined") return [];
+        return document.cookie
+          .split("; ")
+          .filter(Boolean)
+          .map((c) => {
+            const idx = c.indexOf("=");
+            return {
+              name: idx > -1 ? c.slice(0, idx) : c,
+              value: idx > -1 ? decodeURIComponent(c.slice(idx + 1)) : "",
+            };
+          });
+      },
+      setAll(cookiesToSet) {
+        if (typeof document === "undefined") return;
+        cookiesToSet.forEach(({ name, value, options }) => {
+          const isDelete = !value;
+          const maxAge = isDelete ? 0 : 604800; // 7 days
+          const secure =
+            typeof window !== "undefined" && window.location.protocol === "https:"
+              ? "; Secure"
+              : "";
+          const path = options?.path || "/";
+          const sameSite = options?.sameSite ? `; SameSite=${options.sameSite}` : "; SameSite=Lax";
+          document.cookie = `${name}=${value ? encodeURIComponent(value) : ""}; Max-Age=${maxAge}; Path=${path}${sameSite}${secure}`;
+        });
+      },
     },
   }
 );

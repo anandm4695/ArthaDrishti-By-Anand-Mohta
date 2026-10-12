@@ -4,7 +4,9 @@ import { isSeniorCitizen } from "./masterData";
 
 export const loadState = () => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw =
+      (typeof sessionStorage !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null) ||
+      (typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -13,7 +15,15 @@ export const loadState = () => {
 
 export const saveStateLocal = (s: any) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...s, _ts: Date.now() }));
+    const serialized = JSON.stringify({ ...s, _ts: Date.now() });
+    // Audit L3 & S7: Store in sessionStorage so full financial ledger never survives browser restarts
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(STORAGE_KEY, serialized);
+    }
+    // Remove persistent copy from localStorage to prevent unencrypted disk persistence
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   } catch {}
 };
 

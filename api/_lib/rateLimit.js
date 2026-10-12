@@ -116,7 +116,10 @@ async function rateLimit(
 
   // Distributed rate limit fallback via Supabase Postgres table
   const supaUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supaKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supaKey =
+    process.env.SUPABASE_SERVICE_EMAIL_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
   if (supaUrl && supaKey && process.env.NODE_ENV !== "test") {
     try {
       const { createClient } = require("@supabase/supabase-js");

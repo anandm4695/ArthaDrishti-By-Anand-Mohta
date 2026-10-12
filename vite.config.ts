@@ -10,9 +10,9 @@ export default defineConfig(({ mode }) => ({
     react(),
     {
       name: "strip-console-production",
-      transform(code, id) {
-        if (mode === "production" && !id.includes("node_modules") && (id.endsWith(".ts") || id.endsWith(".tsx") || id.endsWith(".js"))) {
-          const stripped = code.replace(/console\.(log|debug)\([^)]*\);?/g, "");
+      renderChunk(code) {
+        if (mode === "production") {
+          const stripped = code.replace(/console\.(log|debug)\([^)]*\);?/g, "void 0;");
           return { code: stripped, map: null };
         }
         return null;

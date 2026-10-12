@@ -14,7 +14,7 @@ const yfFetchOptions = () => ({ fetchOptions: { signal: AbortSignal.timeout(YF_T
 
 module.exports = async function handler(req, res) {
   if (!handleCors(req, res)) return;
-  if (!(await rateLimit(req, res, { max: 20, windowMs: 60_000 }))) return;
+  if (!(await rateLimit(req, res, { max: 30, windowMs: 60_000 }))) return;
 
   const { symbols } = req.query;
   if (!symbols) return res.status(400).json({ error: "symbols query param required" });
