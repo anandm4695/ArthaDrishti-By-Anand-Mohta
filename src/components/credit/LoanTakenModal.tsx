@@ -16,6 +16,7 @@ import { useMasterData, formatProfileOption } from "../../utils/masterData";
 import { Modal, ModalActions } from "../ui/Modal";
 import { Field } from "../ui/Form";
 import { Money } from "../ui/Money";
+import { BankLogo } from "../ui/BrandLogos";
 
 interface LoanTakenModalProps {
   initial?: any;
@@ -292,12 +293,28 @@ export function LoanTakenModal({
 
             <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 12 }}>
               <Field label="Bank / Lending Institution">
-                <input
-                  style={inputStyle}
-                  placeholder="e.g. HDFC Bank, SBI, ICICI, Bajaj Finserv"
-                  value={f.lender}
-                  onChange={(e) => setF({ ...f, lender: e.target.value })}
-                />
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    style={inputStyle}
+                    list="popular-lenders-list"
+                    placeholder="e.g. LiquiLoans, HDFC Bank, SBI, ICICI, Bajaj Finserv"
+                    value={f.lender}
+                    onChange={(e) => setF({ ...f, lender: e.target.value })}
+                  />
+                  {Boolean(f.lender?.trim()) && (
+                    <BankLogo bankName={f.lender} size={34} borderRadius={8} />
+                  )}
+                </div>
+                <datalist id="popular-lenders-list">
+                  <option value="LiquiLoans" />
+                  <option value="HDFC Bank" />
+                  <option value="State Bank of India" />
+                  <option value="ICICI Bank" />
+                  <option value="Axis Bank" />
+                  <option value="Kotak Mahindra Bank" />
+                  <option value="Bajaj Finserv" />
+                  <option value="Tata Capital" />
+                </datalist>
               </Field>
 
               <Field label="Loan Account No. (Optional)">

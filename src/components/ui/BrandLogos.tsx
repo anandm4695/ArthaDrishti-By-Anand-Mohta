@@ -121,6 +121,18 @@ export const CANONICAL_BRANDS: Record<string, BrandInfo> = {
   fi: { domain: "fi.money", name: "Fi Money", color: "#00d09c", isPrimaryInstitution: true },
   sc: { domain: "sc.com", localSvg: "/sc-logo.svg", name: "Standard Chartered", color: "#007934", isPrimaryInstitution: true },
 
+  // ── Lending Institutions & NBFC-P2P (Priority 1) ──────────────────────────
+  liquiloans: { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiLoans", color: "#189bd7", isPrimaryInstitution: true },
+  "liqui loans": { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiLoans", color: "#189bd7", isPrimaryInstitution: true },
+  "liquiloans p2p": { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiLoans", color: "#189bd7", isPrimaryInstitution: true },
+  "liqui loans p2p": { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiLoans", color: "#189bd7", isPrimaryInstitution: true },
+  "ndx p2p": { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiLoans", color: "#189bd7", isPrimaryInstitution: true },
+  "ndx p2p private limited": { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiLoans", color: "#189bd7", isPrimaryInstitution: true },
+  liquimoney: { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiMoney", color: "#189bd7", isPrimaryInstitution: true },
+  "liqui money": { domain: "liquiloans.com", localSvg: "/liquiloans-logo.svg", name: "LiquiMoney", color: "#189bd7", isPrimaryInstitution: true },
+  "bajaj finserv": { domain: "bajajfinserv.in", growwSym: "BAJAJFINSV", name: "Bajaj Finserv", color: "#005a9c", isPrimaryInstitution: true },
+  "tata capital": { domain: "tatacapital.com", growwSym: "TATACONSUM", name: "Tata Capital", color: "#004c8f", isPrimaryInstitution: true },
+
   // ── Insurance Companies ───────────────────────────────────────────────────
   lic: { domain: "licindia.in", localSvg: "/lic-logo.svg", name: "Life Insurance Corporation of India (LIC)", color: "#1d4e9e", isPrimaryInstitution: true },
   "life insurance corporation": { domain: "licindia.in", localSvg: "/lic-logo.svg", name: "Life Insurance Corporation of India (LIC)", color: "#1d4e9e", isPrimaryInstitution: true },

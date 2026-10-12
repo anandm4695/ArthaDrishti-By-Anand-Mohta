@@ -97,6 +97,49 @@ describe("Loans Taken & Given Redesign Suite", () => {
       expect(screen.getByText("SBI")).toBeTruthy();
     });
 
+    it("renders LiquiLoans logo in loan taken cards and resolves canonical branding", async () => {
+      const { resolveBrand } = await import("../components/ui/BrandLogos");
+      const brand = resolveBrand("LiquiLoans");
+      expect(brand).toBeDefined();
+      expect(brand?.name).toBe("LiquiLoans");
+      expect(brand?.domain).toBe("liquiloans.com");
+      expect(brand?.localSvg).toBe("/liquiloans-logo.svg");
+
+      // Variations
+      expect(resolveBrand("liquiloans")?.name).toBe("LiquiLoans");
+      expect(resolveBrand("Liqui Loans P2P")?.name).toBe("LiquiLoans");
+
+      const liquiLoan = [
+        {
+          id: "loan-liqui-1",
+          lender: "LiquiLoans",
+          type: "Personal",
+          principal: 200000,
+          outstanding: 150000,
+          emi: 12500,
+          rate: 10.5,
+          monthsRemaining: 14,
+          dueDay: "10",
+          status: "active",
+        },
+      ];
+
+      render(
+        <LoanTakenSection
+          items={liquiLoan}
+          onRemove={vi.fn()}
+          onEdit={vi.fn()}
+          onAdd={vi.fn()}
+          onUpdate={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("LiquiLoans")).toBeTruthy();
+      const logoImg = screen.getByRole("img", { name: "LiquiLoans" });
+      expect(logoImg).toBeTruthy();
+      expect(logoImg.getAttribute("src")).toBe("/liquiloans-logo.svg");
+    });
+
     it("filters active vs paid off and supports search", () => {
       render(
         <LoanTakenSection
