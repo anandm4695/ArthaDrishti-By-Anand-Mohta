@@ -35,21 +35,29 @@ export function LoanTakenModal({
   const { loanTypes, familyProfiles } = useMasterData();
 
   const [f, setF] = useState(
-    initial || {
-      lender: "",
-      type: loanTypes[0] || "Personal",
-      accountNumber: "",
-      principal: "",
-      outstanding: "",
-      emi: "",
-      rate: "",
-      monthsRemaining: "",
-      dueDay: "",
-      interestType: "Floating",
-      status: "active",
-      note: "",
-      owner: "self",
-    }
+    initial
+      ? {
+          ...initial,
+          startDate: initial.startDate || initial.emiStartDate || "",
+          emiStartDate: initial.emiStartDate || initial.startDate || "",
+        }
+      : {
+          lender: "",
+          type: loanTypes[0] || "Personal",
+          accountNumber: "",
+          principal: "",
+          outstanding: "",
+          emi: "",
+          rate: "",
+          monthsRemaining: "",
+          dueDay: "",
+          startDate: "",
+          emiStartDate: "",
+          interestType: "Floating",
+          status: "active",
+          note: "",
+          owner: "self",
+        }
   );
 
   const [selectedBankId, setSelectedBankId] = useState<string>("");
@@ -123,6 +131,8 @@ export function LoanTakenModal({
     const outstanding = f.outstanding !== "" ? f.outstanding : f.principal;
     const loanData = {
       ...f,
+      startDate: f.startDate || f.emiStartDate || "",
+      emiStartDate: f.emiStartDate || f.startDate || "",
       principal: principalAmt,
       outstanding: Math.max(0, Number(outstanding) || 0),
       emi: Number(f.emi) || 0,
@@ -188,10 +198,12 @@ export function LoanTakenModal({
   let totalInterest = 0;
   let payoffDateStr = "";
 
+  const startDateObj = f.startDate || f.emiStartDate ? new Date((f.startDate || f.emiStartDate) + "T00:00:00") : null;
+
   if (emiVal > 0 && monthsVal > 0) {
     totalPayable = emiVal * monthsVal;
     totalInterest = Math.max(0, totalPayable - balanceToRepay);
-    const d = new Date();
+    const d = startDateObj ? new Date(startDateObj.getTime()) : new Date();
     d.setMonth(d.getMonth() + monthsVal);
     payoffDateStr = d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
   } else if (balanceToRepay > 0 && monthsVal > 0 && rateVal > 0) {
@@ -201,7 +213,7 @@ export function LoanTakenModal({
       (Math.pow(1 + monthlyRate, monthsVal) - 1);
     totalPayable = Math.round(estEmi * monthsVal);
     totalInterest = Math.max(0, totalPayable - balanceToRepay);
-    const d = new Date();
+    const d = startDateObj ? new Date(startDateObj.getTime()) : new Date();
     d.setMonth(d.getMonth() + monthsVal);
     payoffDateStr = d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
   }
@@ -516,17 +528,38 @@ export function LoanTakenModal({
               </div>
             </div>
 
-            <Field label="Monthly EMI Due Day (1–31)">
-              <input
-                style={inputStyle}
-                type="number"
-                min={1}
-                max={31}
-                placeholder="e.g. 5 (5th of each month)"
-                value={f.dueDay || ""}
-                onChange={(e) => setF({ ...f, dueDay: e.target.value })}
-              />
-            </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
+              <Field label="Monthly EMI Start Date">
+                <input
+                  style={inputStyle}
+                  type="date"
+                  value={f.startDate || f.emiStartDate || ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const updates: any = { startDate: val, emiStartDate: val };
+                    if (val && !f.dueDay) {
+                      const parsedDay = new Date(val + "T00:00:00").getDate();
+                      if (parsedDay >= 1 && parsedDay <= 31) {
+                        updates.dueDay = String(parsedDay);
+                      }
+                    }
+                    setF((prev: any) => ({ ...prev, ...updates }));
+                  }}
+                />
+              </Field>
+
+              <Field label="Monthly EMI Due Day (1–31)">
+                <input
+                  style={inputStyle}
+                  type="number"
+                  min={1}
+                  max={31}
+                  placeholder="e.g. 5 (5th of each month)"
+                  value={f.dueDay || ""}
+                  onChange={(e) => setF({ ...f, dueDay: e.target.value })}
+                />
+              </Field>
+            </div>
 
             {/* Live Financial Intelligence Card */}
             <div

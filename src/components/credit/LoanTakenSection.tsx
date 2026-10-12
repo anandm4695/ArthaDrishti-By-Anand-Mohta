@@ -501,7 +501,8 @@ export function LoanTakenSection({
             const payoffDate =
               months > 0
                 ? (() => {
-                    const d = new Date();
+                    const startVal = l.startDate || l.emiStartDate;
+                    const d = startVal ? new Date(startVal + "T00:00:00") : new Date();
                     d.setMonth(d.getMonth() + months);
                     return d.toLocaleString("en-IN", { month: "short", year: "numeric" });
                   })()
@@ -587,6 +588,12 @@ export function LoanTakenSection({
                       {l.dueDay && !isPaidOff && (
                         <span style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700 }}>
                           Due: {l.dueDay}{loanOrdinalSuffix(Number(l.dueDay))} / mo
+                        </span>
+                      )}
+
+                      {(l.startDate || l.emiStartDate) && !isPaidOff && (
+                        <span style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 600 }}>
+                          Started: {new Date((l.startDate || l.emiStartDate) + "T00:00:00").toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
                         </span>
                       )}
                     </div>
@@ -875,6 +882,11 @@ export function LoanTakenSection({
                       </td>
                       <td style={{ padding: "12px 14px", textAlign: "center", color: "var(--t-muted)", fontWeight: 600 }}>
                         {l.dueDay ? `${l.dueDay}${loanOrdinalSuffix(Number(l.dueDay))}` : "—"}
+                        {(l.startDate || l.emiStartDate) && (
+                          <div style={{ fontSize: 9, color: "var(--t-muted)" }}>
+                            from {new Date((l.startDate || l.emiStartDate) + "T00:00:00").toLocaleDateString("en-IN", { month: "short", year: "2-digit" })}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: "12px 14px", textAlign: "center" }}>
                         <span

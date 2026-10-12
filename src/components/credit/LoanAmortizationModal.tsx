@@ -687,6 +687,17 @@ export function LoanAmortizationModal({ loan, onClose }: LoanAmortizationModalPr
                         style={{ padding: "8px 12px", fontWeight: 800, color: "var(--t-ink)" }}
                       >
                         Month {row.month}
+                        {(() => {
+                          const sDate = loan.startDate || loan.emiStartDate;
+                          if (!sDate) return null;
+                          const d = new Date(sDate + "T00:00:00");
+                          d.setMonth(d.getMonth() + (row.month - 1));
+                          return (
+                            <span style={{ fontSize: 10, color: "var(--t-muted)", fontWeight: 600, marginLeft: 6 }}>
+                              ({d.toLocaleDateString("en-IN", { month: "short", year: "2-digit" })})
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td
                         style={{

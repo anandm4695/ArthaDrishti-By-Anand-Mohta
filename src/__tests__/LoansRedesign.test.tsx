@@ -8,6 +8,7 @@ import { LoanAmortizationModal } from "../components/credit/LoanAmortizationModa
 import { LoanPrepaymentDrawer } from "../components/credit/LoanPrepaymentDrawer";
 import { LoanReminderModal } from "../components/credit/LoanReminderModal";
 import { LoanPaymentModal } from "../components/credit/LoanPaymentModal";
+import { LoanTakenModal } from "../components/credit/LoanTakenModal";
 import { generateAmortization } from "../components/tabs/LoanAmortizationTab";
 
 describe("Loans Taken & Given Redesign Suite", () => {
@@ -266,6 +267,53 @@ describe("Loans Taken & Given Redesign Suite", () => {
       expect(screen.getByText(/Payoff Trajectory/i)).toBeTruthy();
       expect(screen.getByText(/Monthly Breakdown/i)).toBeTruthy();
       expect(screen.getByText(/Yearly Summary/i)).toBeTruthy();
+    });
+
+    it("supports Monthly EMI Start Date in LoanTakenModal and saves it", () => {
+      const onSave = vi.fn();
+      render(
+        <LoanTakenModal
+          onSave={onSave}
+          onClose={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText(/Monthly EMI Start Date/i)).toBeTruthy();
+
+      // Enter loan details
+      fireEvent.change(screen.getByPlaceholderText(/HDFC Bank, SBI, ICICI, Bajaj Finserv/i), {
+        target: { value: "Kotak Mahindra Home Loan" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/2500000/i), {
+        target: { value: "3000000" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/8.75/i), {
+        target: { value: "8.75" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/24500/i), {
+        target: { value: "28000" },
+      });
+
+      // Select EMI Start Date - should prefill dueDay to 15
+      const dateInputs = document.querySelectorAll('input[type="date"]');
+      expect(dateInputs.length).toBeGreaterThan(0);
+      const emiStartDateInput = dateInputs[0];
+      fireEvent.change(emiStartDateInput, { target: { value: "2026-06-15" } });
+
+      const dueDayInput = screen.getByPlaceholderText(/5th of each month/i) as HTMLInputElement;
+      expect(dueDayInput.value).toBe("15");
+
+      fireEvent.click(screen.getByRole("button", { name: /Add Loan Taken/i }));
+
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lender: "Kotak Mahindra Home Loan",
+          principal: 3000000,
+          startDate: "2026-06-15",
+          dueDay: "15",
+        }),
+        null
+      );
     });
   });
 });

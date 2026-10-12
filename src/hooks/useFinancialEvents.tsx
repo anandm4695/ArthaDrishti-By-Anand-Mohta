@@ -771,7 +771,7 @@ export function useRecurringPayments(state: any, todayStr: string, todayDate: Da
         dueDay: Number(l.dueDay || 5),
         owner: l.owner,
         monthsLeft: Number(l.monthsRemaining),
-        startedAt: todayDate,
+        startedAt: l.startDate || l.emiStartDate || todayDate,
       });
     });
 
