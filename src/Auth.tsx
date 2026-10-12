@@ -154,7 +154,14 @@ export default function Auth({
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement>(null);
 
-  const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768
+  );
+  useEffect(() => {
+    const handleResize = () => setIsMobileViewport(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const onCapsLockKey = (e: React.KeyboardEvent<HTMLInputElement>) =>
     setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"));
 
@@ -1885,6 +1892,7 @@ const AF_STYLES = `
   align-items: center;
   justify-content: center;
   padding: 48px 36px;
+  min-height: 100dvh;
   min-height: 100vh;
   overflow-y: auto;
   position: relative;
@@ -2138,7 +2146,7 @@ const AF_STYLES = `
   border: none;
   outline: none;
   padding: 13px 14px;
-  font-size: 14.5px;
+  font-size: 16px;
   font-family: inherit;
   color: #FFFFFF;
   min-width: 0;
@@ -2508,11 +2516,55 @@ const AF_STYLES = `
     padding: 16px 12px;
   }
   .af-card {
-    padding: 26px 20px;
+    padding: 24px 18px;
     border-radius: 20px;
   }
   .af-card-title {
-    font-size: 23px;
+    font-size: 22px;
+  }
+  .af-segment-btn {
+    padding: 9px 12px;
+    font-size: 12.5px;
+  }
+  .af-demo-btn {
+    padding: 12px 14px;
+    font-size: 12.5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .af-form-panel {
+    padding: 12px 8px;
+  }
+  .af-card {
+    padding: 20px 14px;
+    border-radius: 16px;
+    gap: 16px;
+  }
+  .af-card-title {
+    font-size: 20px;
+  }
+  .af-segment-btn {
+    padding: 8px 8px;
+    font-size: 11.5px;
+  }
+  .af-demo-btn {
+    padding: 11px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 340px) {
+  .af-card {
+    padding: 16px 10px;
+  }
+  .af-segment-btn {
+    padding: 7px 4px;
+    font-size: 10.5px;
+  }
+  .af-demo-btn {
+    padding: 10px 8px;
+    font-size: 11px;
   }
 }
 `;

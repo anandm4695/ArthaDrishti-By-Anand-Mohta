@@ -92,7 +92,7 @@ export const StatCard = ({
   icon,
   color = "var(--t-accent)",
   borderColor,
-  iconBg,
+  iconBg: _iconBg,
   numericValue,
   formatValue,
   maskInPrivacyMode = true,
@@ -189,6 +189,7 @@ export const StatCard = ({
           )}
         </div>
         <div
+          className="stat-card-value"
           style={{
             fontFamily: "var(--font-display)",
             fontSize: 27,
@@ -197,6 +198,7 @@ export const StatCard = ({
             letterSpacing: "-0.01em",
             lineHeight: 1.1,
             fontVariantNumeric: "tabular-nums",
+            overflowWrap: "anywhere",
           }}
         >
           {maskInPrivacyMode ? <Prv>{displayValue}</Prv> : displayValue}

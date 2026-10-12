@@ -140,16 +140,7 @@ export function ToastStack({ toasts }: { toasts: { id: string; msg: string; type
       role="status"
       aria-live="polite"
       aria-atomic="false"
-      style={{
-        position: "fixed",
-        bottom: 32,
-        right: 20,
-        zIndex: "var(--z-toast)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        pointerEvents: "none",
-      }}
+      className="toast-stack-container"
     >
       {toasts.map((t) => {
         const cfg = configs[t.type] || configs.success;

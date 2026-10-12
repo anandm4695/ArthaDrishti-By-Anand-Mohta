@@ -240,6 +240,11 @@ body {
    shadow box trailing the cursor across cards rather than a subtle glow.
    Wrapper/content classes stay since Card.tsx/StatCard.tsx still rely on
    them for stacking + flex layout, just with no visual overlay anymore. */
+.app-main-content {
+  padding: 40px;
+  box-sizing: border-box;
+}
+
 .spotlight-wrapper {
   position: relative;
   overflow: hidden;
@@ -1195,7 +1200,8 @@ tbody tr:hover td {
   border-left: 1px solid var(--t-line);
   box-shadow: var(--shadow-xl);
   width: min(440px, 100vw);
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1292,16 +1298,16 @@ tbody tr:hover td {
 .mobile-bottom-nav {
   display: none;
   position: fixed;
-  bottom: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   left: 12px;
   right: 12px;
   z-index: 200;
-  background: color-mix(in srgb, var(--surface-0) 88%, transparent);
+  background: color-mix(in srgb, var(--surface-0) 90%, transparent);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--t-line);
   border-radius: var(--radius-2xl);
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 6px;
   box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
@@ -1855,16 +1861,38 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
 @media (min-width: 769px) and (max-width: 1024px) {
   :root {
     --card-pad: 18px;
-    --section-gap: 24px;
+    --section-gap: 22px;
+    --grid-min-lg: 220px;
+    --grid-min-md: 160px;
   }
   .app-sidebar {
     overflow: hidden !important;
+  }
+  .app-header-bar {
+    padding: 12px 20px !important;
+  }
+  .app-main-content {
+    padding: 24px 20px !important;
   }
   .mobile-only {
     display: none !important;
   }
   .form-grid-2 {
     grid-template-columns: 1fr 1fr;
+  }
+
+  /* Prevent 4-column inline grids from squishing cards on tablet portrait/landscape */
+  .app-main-content [style*="repeat(4"],
+  .app-main-content [style*="repeat(4,"],
+  .app-main-content [style*="1fr 1fr 1fr 1fr"],
+  .app-main-content [style*="2fr 1fr 1fr 1fr 1fr"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .app-main-content [style*="repeat(3"],
+  .app-main-content [style*="repeat(3,"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
   }
 }
 
@@ -1884,6 +1912,9 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
     --card-pad: 14px;
     --section-gap: 16px;
     --app-font-size: 13px;
+    --grid-min-lg: 100%;
+    --grid-min-md: 150px;
+    --grid-min-sm: 120px;
   }
 
   /* Show bottom nav, hide sidebar & desktop nav */
@@ -1911,7 +1942,7 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
   /* Main content: reduced padding + bottom safe area for nav bar */
   .app-main-content {
     padding: 16px !important;
-    padding-bottom: 80px !important;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   /* Footer: hide on mobile to save space */
@@ -1919,15 +1950,18 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
     display: none !important;
   }
 
-  /* Modals: slide up from bottom like iOS sheets */
+  /* Modals: slide up from bottom like iOS sheets with safe-area insets */
   .modal-backdrop {
     padding: 0;
     align-items: flex-end;
   }
   .modal-panel {
     border-radius: 20px 20px 0 0;
+    max-height: calc(92dvh - env(safe-area-inset-top, 0px));
     max-height: 92vh;
-    max-width: 100%;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     animation: mobileDrawerSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .modal-header {
@@ -1935,17 +1969,18 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
   }
   .modal-body {
     padding: 16px 20px;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Alerts panel: full width */
+  /* Alerts panel: full width, placed above floating bottom nav */
   .alerts-panel {
     position: fixed !important;
     top: auto !important;
-    bottom: 64px;
-    left: 8px;
-    right: 8px;
-    width: auto;
-    max-height: 60vh;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-height: calc(65dvh - env(safe-area-inset-bottom, 0px));
     border-radius: 16px;
     z-index: var(--z-modal) !important;
   }
@@ -2140,8 +2175,56 @@ input[type="range"].themed-slider::-moz-range-thumb:hover {
   }
   @media (max-width: 768px) {
     .app-main-content {
-      padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+      padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
     }
+  }
+}
+
+/* ── Toast notifications stack container ────────────────────── */
+.toast-stack-container {
+  position: fixed;
+  bottom: 32px;
+  right: 20px;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: min(380px, calc(100vw - 32px));
+}
+@media (max-width: 768px) {
+  .toast-stack-container {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 16px !important;
+    right: 16px !important;
+    max-width: 100% !important;
+    align-items: center !important;
+  }
+}
+
+/* ── Touch targets & active feedback ──────────────────────────── */
+@media (max-width: 1024px), (pointer: coarse) {
+  .header-icon-btn,
+  .icon-circle-btn,
+  .modal-close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .icon-btn {
+    min-width: 40px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  button:active,
+  [role="button"]:active {
+    opacity: 0.85;
+    transform: scale(0.985);
+  }
+  .card-interactive:active,
+  .spotlight-wrapper[role="button"]:active {
+    transform: scale(0.99);
   }
 }
 
@@ -3085,11 +3168,12 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
   }
 
   /* ── AMOUNT DISPLAYS: scale down ── */
-  .amount-lg {
-    font-size: 22px;
+  .amount-lg,
+  .stat-card-value {
+    font-size: 22px !important;
   }
   .amount-md {
-    font-size: 17px;
+    font-size: 17px !important;
   }
 
   /* ── CHARTS: reduce height on mobile ── */
@@ -3272,11 +3356,12 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
   }
 
   /* ── AMOUNTS: smaller ── */
-  .amount-lg {
-    font-size: 20px;
+  .amount-lg,
+  .stat-card-value {
+    font-size: 20px !important;
   }
   .amount-md {
-    font-size: 15px;
+    font-size: 15px !important;
   }
 
   /* ── INPUTS: iOS zoom prevention (16px min) ── */
@@ -3310,6 +3395,43 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
   /* Asset Class Comparison needs room for rotated labels + bottom legend + value labels */
   .asset-comparison-chart .recharts-wrapper {
     max-height: 460px;
+  }
+}
+
+/* ── Global iOS Safari Input Auto-Zoom Prevention (<= 1024px) ── */
+@media (max-width: 1024px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea,
+  .form-input,
+  .header-search input,
+  .mobile-nav-drawer input,
+  .dt-search-wrapper input,
+  .cmd-item input {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Small phone optimizations (<= 360px, e.g. iPhone SE, Galaxy Fold cover) ── */
+@media (max-width: 360px) {
+  .app-main-content {
+    padding: 10px 8px !important;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .app-header-bar {
+    padding: 8px 10px !important;
+  }
+  .spotlight-wrapper {
+    padding: 12px 10px !important;
+  }
+  .hero-card {
+    padding: 12px 10px !important;
+  }
+  .amount-lg {
+    font-size: 18px !important;
+  }
+  .amount-md {
+    font-size: 14px !important;
   }
 }
 

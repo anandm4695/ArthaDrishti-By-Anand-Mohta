@@ -99,6 +99,7 @@ export const Drawer: React.FC<DrawerProps> = ({ title, onClose, children, footer
             className="modal-footer"
             style={{
               padding: "16px 28px",
+              paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
               borderTop: "1px solid var(--t-line)",
               display: "flex",
               justifyContent: "flex-end",

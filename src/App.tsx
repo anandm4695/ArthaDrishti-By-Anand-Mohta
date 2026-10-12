@@ -4896,7 +4896,8 @@ function FinanceDashboard() {
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
-            height: "100vh",
+            height: "100dvh",
+            minHeight: "100vh",
             overflow: "hidden",
           }}
         >
@@ -4944,7 +4945,7 @@ function FinanceDashboard() {
               flexDirection: "column",
               overflowY: tab === "ai" ? "hidden" : "auto",
               overflowX: "hidden",
-              padding: tab === "ai" ? "24px 40px" : "40px",
+              ...(tab === "ai" ? { padding: "24px 40px" } : {}),
               position: "relative",
               zIndex: 1,
               filter: privacyMode ? "blur(16px)" : "none",

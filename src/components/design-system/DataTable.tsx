@@ -169,7 +169,7 @@ export function DataTable<T extends Record<string, any>>({
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                fontSize: "13px",
+                fontSize: "16px",
                 color: "var(--t-ink, #f4f4f5)",
                 width: "100%",
               }}
@@ -180,18 +180,19 @@ export function DataTable<T extends Record<string, any>>({
                 style={{
                   background: "transparent",
                   border: "none",
-                  padding: 0,
+                  padding: "4px",
                   cursor: "pointer",
                   color: "var(--t-muted)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transition: "color 0.15s ease",
+                  flexShrink: 0,
                 }}
                 title="Clear search"
                 aria-label="Clear search"
               >
-                <X size={13} />
+                <X size={14} />
               </button>
             )}
           </div>
@@ -203,7 +204,7 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Responsive Table Container */}
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr

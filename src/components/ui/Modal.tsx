@@ -97,7 +97,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
         aria-label={typeof title === "string" ? title : "Modal Dialog"}
         tabIndex={-1}
-        style={{ maxWidth: `min(${effectiveMaxWidth}px, 95vw)` }}
+        style={{ maxWidth: `min(${effectiveMaxWidth}px, 100%)` }}
       >
         <div className="modal-header">
           <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{title}</h2>
@@ -111,6 +111,7 @@ export const Modal: React.FC<ModalProps> = ({
             className="modal-footer"
             style={{
               padding: "16px 28px",
+              paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
               borderTop: "1px solid var(--t-line)",
               display: "flex",
               justifyContent: "flex-end",

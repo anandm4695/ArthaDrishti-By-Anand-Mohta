@@ -1014,7 +1014,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                       background: "transparent",
                       border: "none",
                       outline: "none",
-                      fontSize: 14,
+                      fontSize: 16,
                       color: THEME.ink,
                       fontFamily: "inherit",
                       width: "100%",
@@ -1036,10 +1036,9 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      // Enlarge the tap target to ~36px on this touch-only surface
-                      // without changing the visible icon size or layout.
-                      padding: 11,
-                      margin: -11,
+                      // Enlarge the tap target to >= 44px on this touch-only surface
+                      padding: 14,
+                      margin: -14,
                       flexShrink: 0,
                     }}
                   >

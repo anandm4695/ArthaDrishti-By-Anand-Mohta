@@ -321,6 +321,7 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
         {showGoToPage && totalPages > 2 && (
           <form
             onSubmit={handleGoToSubmit}
+            className="desktop-only"
             style={{
               display: "inline-flex",
               alignItems: "center",

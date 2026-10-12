@@ -31,7 +31,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
   setSubTab,
   sidebarMinimized,
   setSidebarMinimized,
-  sidebarHovered,
+  sidebarHovered: _sidebarHovered,
   setSidebarHovered,
   isSidebarCompact,
   collapsedGroups,
@@ -40,7 +40,15 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
   return (
         <aside
           className="glass app-sidebar"
-          onMouseEnter={() => sidebarMinimized && setSidebarHovered(true)}
+          onMouseEnter={() => {
+            if (
+              sidebarMinimized &&
+              typeof window !== "undefined" &&
+              window.matchMedia("(hover: hover) and (pointer: fine)").matches
+            ) {
+              setSidebarHovered(true);
+            }
+          }}
           onMouseLeave={() => setSidebarHovered(false)}
           style={{
             width: isSidebarCompact ? 72 : 280,
@@ -48,7 +56,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             borderRight: `1px solid ${THEME.line}`,
             position: "sticky",
             top: 0,
-            height: "100vh",
+            height: "100dvh",
+            minHeight: "100vh",
             display: "flex",
             flexDirection: "column",
             zIndex: 100,

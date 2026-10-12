@@ -268,7 +268,8 @@ export function MobileNav({ tab, setTab, setSubTab }: MobileNavProps) {
               bottom: 0,
               left: 0,
               right: 0,
-              maxHeight: "88vh",
+              maxHeight: "min(88dvh, 88vh)",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
               background: "var(--surface-0)",
               borderRadius: "24px 24px 0 0",
               boxShadow: "0 -8px 32px rgba(15,23,42,0.16)",
@@ -330,7 +331,7 @@ export function MobileNav({ tab, setTab, setSubTab }: MobileNavProps) {
                     background: "transparent",
                     border: "none",
                     outline: "none",
-                    fontSize: 14,
+                    fontSize: 16,
                     color: "var(--t-ink)",
                     fontFamily: "inherit",
                     width: "100%",
@@ -362,8 +363,8 @@ export function MobileNav({ tab, setTab, setSubTab }: MobileNavProps) {
                 onClick={() => setDrawerOpen(false)}
                 aria-label="Close menu"
                 style={{
-                  width: 36,
-                  height: 36,
+                  width: 44,
+                  height: 44,
                   borderRadius: 10,
                   border: "1.5px solid var(--t-line)",
                   background: "transparent",
@@ -375,7 +376,7 @@ export function MobileNav({ tab, setTab, setSubTab }: MobileNavProps) {
                   flexShrink: 0,
                 }}
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 

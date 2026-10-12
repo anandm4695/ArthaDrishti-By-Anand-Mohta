@@ -258,7 +258,7 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
               border: "none",
               outline: "none",
               color: "var(--t-ink, #f4f4f5)",
-              fontSize: "15px",
+              fontSize: "16px",
               fontWeight: 500,
             }}
           />
@@ -272,14 +272,15 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
                 background: "color-mix(in srgb, var(--t-muted) 15%, transparent)",
                 border: "none",
                 borderRadius: "50%",
-                width: 22,
-                height: 22,
+                width: 28,
+                height: 28,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 color: "var(--t-muted)",
                 cursor: "pointer",
                 padding: 0,
+                flexShrink: 0,
               }}
               title="Clear search"
               aria-label="Clear search"
