@@ -437,11 +437,11 @@ export function CreditPoolManagerModal({
                   >
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <BankLogo domain={sug.bankName} size={18} />
+                        <BankLogo bankName={sug.bankName} size={18} />
                         <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>
                           {sug.bankName}
                         </span>
-                        <Badge variant="subtle">{sug.cards.length} Cards</Badge>
+                        <Badge variant="neutral">{sug.cards.length} Cards</Badge>
                       </div>
                       <div style={{ fontSize: 11.5, color: THEME.muted, marginTop: 4 }}>
                         Individual sum: <strong>{fmtINRFull(totalIndiv)}</strong> → Pool Combined Limit:{" "}
@@ -552,7 +552,7 @@ export function CreditPoolManagerModal({
                           <span style={{ fontSize: 15, fontWeight: 900, color: THEME.ink }}>
                             {pool.name}
                           </span>
-                          <Badge variant="subtle">{pool.cards.length} Cards</Badge>
+                          <Badge variant="neutral">{pool.cards.length} Cards</Badge>
                           <span style={{ fontSize: 11, color: THEME.muted }}>
                             Key: <code>{pool.key}</code>
                           </span>

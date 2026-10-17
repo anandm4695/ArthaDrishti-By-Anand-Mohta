@@ -967,6 +967,7 @@ export interface CreditPortfolioSummary {
   standaloneCards: any[];
   pools: Record<string, CreditPoolInfo>;
   poolList: CreditPoolInfo[];
+  poolBreakdown: CreditPoolInfo[];
   totalLimit: number;
   totalOutstanding: number;
   totalAvailable: number;
@@ -1084,6 +1085,7 @@ export const computeCreditPortfolioSummary = (cards: any[] = []): CreditPortfoli
     standaloneCards,
     pools,
     poolList,
+    poolBreakdown: poolList,
     totalLimit,
     totalOutstanding,
     totalAvailable,
@@ -1112,6 +1114,7 @@ export const getCardEffectiveLimitAndAvail = (
         poolOutstanding: pool.totalOutstanding,
         poolAvailable: pool.available,
         poolUtilization: pool.utilizationPct,
+        effectiveUtilization: pool.utilizationPct,
         poolCardCount: pool.cards.length,
         effectiveLimit: pool.poolLimit,
         effectiveAvailable: pool.available,
@@ -1121,13 +1124,15 @@ export const getCardEffectiveLimitAndAvail = (
   }
   const lim = Number(card?.limit ?? card?.cardLimit) || 0;
   const out = ccOutstanding(card);
+  const util = lim > 0 ? Math.round((out / lim) * 100) : (out > 0 ? 100 : 0);
   return {
     isShared: false,
     poolName: "",
     poolLimit: lim,
     poolOutstanding: out,
     poolAvailable: Math.max(0, lim - out),
-    poolUtilization: lim > 0 ? Math.round((out / lim) * 100) : (out > 0 ? 100 : 0),
+    poolUtilization: util,
+    effectiveUtilization: util,
     poolCardCount: 1,
     effectiveLimit: lim,
     effectiveAvailable: Math.max(0, lim - out),

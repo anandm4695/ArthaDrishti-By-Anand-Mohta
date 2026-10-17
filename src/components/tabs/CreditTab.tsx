@@ -2982,14 +2982,12 @@ function CCList({
       {/* Shared limit pool sections */}
       {Object.entries(groupedCards).map(([groupKey, group]) => {
         const { name: groupName, cards } = group;
-        const poolInfo = ccPortfolioSummary.poolBreakdown.find(
-          (p) => p.name.trim().toLowerCase() === groupKey
-        );
-        const declaredLimit = Math.max(...cards.map((c: any) => Number(c.sharedGroupLimit) || 0));
-        const maxCardLimit = Math.max(...cards.map((c: any) => Number(c.limit) || 0));
-        const groupLimit = poolInfo ? poolInfo.limit : (declaredLimit > 0 ? declaredLimit : maxCardLimit);
+        const poolInfo = ccPortfolioSummary.pools?.[groupKey];
+        const declaredLimit = Math.max(0, ...cards.map((c: any) => Number(c.sharedGroupLimit) || 0));
+        const maxCardLimit = Math.max(0, ...cards.map((c: any) => Number(c.limit) || 0));
+        const groupLimit = poolInfo ? poolInfo.poolLimit : (declaredLimit > 0 ? declaredLimit : maxCardLimit);
         const groupOutstanding = poolInfo
-          ? poolInfo.outstanding
+          ? poolInfo.totalOutstanding
           : cards.reduce((s: number, c: any) => s + ccOutstanding(c), 0);
         const groupUtil = groupLimit > 0 ? Math.min(100, (groupOutstanding / groupLimit) * 100) : 0;
         const groupAvailable = Math.max(0, groupLimit - groupOutstanding);
