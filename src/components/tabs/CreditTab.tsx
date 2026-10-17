@@ -44,9 +44,14 @@ import {
   Phone,
   Layers,
   Wifi,
+  Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { getCardGradient } from "../../utils/cardColors";
+import { CreditCardVisual } from "../credit/CreditCardVisual";
+import { CardArtPickerModal } from "../credit/CardArtPickerModal";
+import { getMatchingCardPreset, resolveCardArtwork } from "../../utils/cardAssets";
 import {
   fmtINR,
   fmtINRFull,
@@ -434,11 +439,13 @@ const card = {
   padding: 20,
 };
 
-const cardDark = {
-  background: THEME.ink,
-  color: "#fff",
-  borderRadius: 12,
+const cardSurface = {
+  background: "var(--t-card-bg, var(--surface-0))",
+  color: "var(--t-ink)",
+  borderRadius: 14,
+  border: "1px solid var(--t-line)",
   padding: 20,
+  boxShadow: "var(--shadow-card)",
 };
 
 const iconBtn = {
@@ -555,6 +562,28 @@ export function CreditTab({
   const [modal, setModal] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [managePoolsOpen, setManagePoolsOpen] = useState(false);
+  const [artPickerTarget, setArtPickerTarget] = useState<{ card: any; variantId?: string | null } | null>(null);
+
+  const handleArtPicked = async (imageUrl: string) => {
+    if (!artPickerTarget) return;
+    const { card, variantId } = artPickerTarget;
+    try {
+      if (variantId) {
+        const updatedVariants = (card.variants || []).map((v: any) =>
+          v.id === variantId ? { ...v, cardImageUrl: imageUrl } : v
+        );
+        await updateItem("creditCards", card.id, { variants: updatedVariants });
+        showToast?.(`Variant card artwork updated for ${card.issuer}`, "success");
+      } else {
+        await updateItem("creditCards", card.id, { cardImageUrl: imageUrl });
+        showToast?.(`Card artwork updated for ${card.issuer}`, "success");
+      }
+    } catch (err: any) {
+      showToast?.(`Failed to update artwork: ${err?.message || "Unknown error"}`, "error");
+    } finally {
+      setArtPickerTarget(null);
+    }
+  };
 
   // Normalized portfolio summary with shared pool deduplication
   const ccPortfolioSummary = useMemo(
@@ -993,6 +1022,9 @@ export function CreditTab({
               items={state.creditCards}
               onRemove={(id: any) => removeItem("creditCards", id)}
               onEdit={setEditId}
+              onEditArt={(card: any, variantId?: string | null) =>
+                setArtPickerTarget({ card, variantId: variantId || null })
+              }
               onUpdateCard={async (id: any, updates: any) => {
                 try {
                   await updateItem("creditCards", id, updates);
@@ -1237,6 +1269,30 @@ export function CreditTab({
           saving={savingBatchPools}
         />
       )}
+
+      {artPickerTarget && (
+        <CardArtPickerModal
+          isOpen={Boolean(artPickerTarget)}
+          onClose={() => setArtPickerTarget(null)}
+          onSelectImage={handleArtPicked}
+          currentImageUrl={
+            artPickerTarget.variantId
+              ? (artPickerTarget.card.variants || []).find((v: any) => v.id === artPickerTarget.variantId)?.cardImageUrl || ""
+              : artPickerTarget.card.cardImageUrl || ""
+          }
+          cardName={
+            artPickerTarget.variantId
+              ? (artPickerTarget.card.variants || []).find((v: any) => v.id === artPickerTarget.variantId)?.name || artPickerTarget.card.issuer
+              : artPickerTarget.card.issuer
+          }
+          network={
+            artPickerTarget.variantId
+              ? (artPickerTarget.card.variants || []).find((v: any) => v.id === artPickerTarget.variantId)?.network || artPickerTarget.card.network
+              : artPickerTarget.card.network
+          }
+          isVariant={Boolean(artPickerTarget.variantId)}
+        />
+      )}
     </div>
   );
 }
@@ -1253,6 +1309,7 @@ function CCEmptyState({ onAdd, onAddPreset }: any) {
       waiverInfo: "Spend 4L/yr for fee waiver",
       rewardPointsBalance: "5000",
       rewardPointValue: "0.5",
+      cardImageUrl: "/cards/hdfc-regalia-gold.png",
     },
     {
       issuer: "ICICI Amazon Pay",
@@ -1264,6 +1321,7 @@ function CCEmptyState({ onAdd, onAddPreset }: any) {
       waiverInfo: "Lifetime Free Card",
       rewardPointsBalance: "1200",
       rewardPointValue: "1",
+      cardImageUrl: "/cards/icici-amazon-pay.webp",
     },
     {
       issuer: "SBI SimplyClick",
@@ -1275,6 +1333,7 @@ function CCEmptyState({ onAdd, onAddPreset }: any) {
       waiverInfo: "Spend 1L/yr for fee waiver",
       rewardPointsBalance: "2500",
       rewardPointValue: "0.25",
+      cardImageUrl: "/cards/sbi-simplyclick.png",
     },
     {
       issuer: "Federal Scapia (RuPay UPI)",
@@ -1286,6 +1345,7 @@ function CCEmptyState({ onAdd, onAddPreset }: any) {
       waiverInfo: "Lifetime Free Card",
       rewardPointsBalance: "3000",
       rewardPointValue: "0.2",
+      cardImageUrl: "/cards/federal-scapia.png",
       variants: [
         {
           id: "scapia-rupay",
@@ -1293,6 +1353,7 @@ function CCEmptyState({ onAdd, onAddPreset }: any) {
           network: "RuPay",
           last4: "8899",
           cardType: "virtual",
+          cardImageUrl: "/cards/federal-scapia.png",
         },
       ],
     },
@@ -1306,6 +1367,7 @@ function CCEmptyState({ onAdd, onAddPreset }: any) {
       waiverInfo: "5 reward points per ₹150 spent",
       rewardPointsBalance: "8000",
       rewardPointValue: "1",
+      cardImageUrl: "/cards/sc-ultimate.png",
     },
   ];
 
@@ -1833,6 +1895,7 @@ function CCList({
   onAdd,
   onAddPreset,
   existingGroups: _existingGroups,
+  onEditArt,
 }: any) {
   const [selectedLedger, setSelectedLedger] = useState<string | null>(null);
   const [paymentCard, setPaymentCard] = useState<any | null>(null);
@@ -1976,263 +2039,35 @@ function CCList({
     return (
       <div
         key={c.id}
+        className="card-base card-hover"
         style={{
-          ...cardDark,
           position: "relative",
           background: isClosed
-            ? `linear-gradient(135deg, #33333d 0%, #202028 100%)`
-            : getCardGradient(c.issuer),
-          padding: "22px 20px 62px",
-          opacity: isClosed ? 0.8 : 1,
-          filter: isClosed ? "grayscale(35%)" : "none",
-          borderRadius: 18,
-          boxShadow: isClosed ? "none" : "0 10px 32px rgba(0, 0, 0, 0.35)",
-          border: "1px solid rgba(255, 255, 255, 0.14)",
+            ? "color-mix(in srgb, var(--surface-1) 85%, var(--surface-0))"
+            : "var(--t-card-bg, var(--surface-0))",
+          color: "var(--t-ink)",
+          padding: "16px 16px 60px 16px",
+          opacity: isClosed ? 0.85 : 1,
+          borderRadius: 22,
+          boxShadow: isClosed ? "none" : "var(--shadow-card)",
+          border: "1px solid var(--t-line)",
           overflow: "hidden",
-          transition: "transform 0.18s ease, box-shadow 0.18s ease",
+          transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
         }}
       >
-        {/* Shimmer / Glossy Mesh Overlay */}
-        {!isClosed && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(125deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 35%, transparent 65%)",
-              pointerEvents: "none",
-            }}
-          />
-        )}
-
-        {/* Top Header: Bank Logo + Network Logo + Status/Owner Badge */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            position: "relative",
-            zIndex: 2,
-            marginBottom: 14,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <BankLogo bankName={c.issuer || c.cardName || c.name || c.bank || "Credit Card"} size={32} />
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <CardNetworkLogo network={c.network} />
-              {(c.variants || []).map((v: any, vIdx: number) => (
-                <React.Fragment key={v.id || vIdx}>
-                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, fontWeight: 800 }}>+</span>
-                  <CardNetworkLogo network={v.network} />
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {c.sharedGroup && (
-              <span
-                style={{
-                  fontSize: 9.5,
-                  padding: "2px 7px",
-                  borderRadius: 6,
-                  background: "rgba(254,240,138,0.2)",
-                  color: "#fef08a",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 3,
-                }}
-                title={`Shared Limit Pool: ${c.sharedGroup}`}
-              >
-                <Layers size={10} /> Pool
-              </span>
-            )}
-            <OwnerBadge owner={c.owner} />
-          </div>
-        </div>
-
-        {/* EMV Chip and Contactless indicator */}
-        {!isClosed && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 12,
-              position: "relative",
-              zIndex: 2,
-            }}
-          >
-            {/* Realistic Gold EMV Chip */}
-            <div
-              style={{
-                width: 36,
-                height: 27,
-                borderRadius: 6,
-                background: "linear-gradient(135deg, #fcd34d 0%, #d97706 70%, #fef3c7 100%)",
-                position: "relative",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 5px rgba(0,0,0,0.25)",
-                overflow: "hidden",
-                border: "1px solid rgba(180,83,9,0.5)",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: 0,
-                  right: 0,
-                  height: 1,
-                  background: "rgba(0,0,0,0.25)",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  top: 0,
-                  bottom: 0,
-                  width: 1,
-                  background: "rgba(0,0,0,0.25)",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  left: "26%",
-                  right: "26%",
-                  top: "22%",
-                  bottom: "22%",
-                  borderRadius: 3,
-                  border: "1px solid rgba(0,0,0,0.25)",
-                }}
-              />
-            </div>
-
-            {/* Contactless Wave Icon */}
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="rgba(255,255,255,0.9)"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              style={{ transform: "rotate(90deg)" }}
-            >
-              <path d="M5 12a7 7 0 0 1 7-7" />
-              <path d="M5 17a12 12 0 0 1 12-12" />
-              <path d="M5 22a17 17 0 0 1 17-17" />
-              <circle cx="5" cy="7" r="1.5" fill="currentColor" />
-            </svg>
-
-            {(c.variants || []).length > 0 && (
-              <div
-                style={{
-                  marginLeft: "auto",
-                  background: "rgba(254,240,138,0.18)",
-                  border: "1px solid rgba(254,240,138,0.3)",
-                  padding: "3px 8px",
-                  borderRadius: 6,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#fef08a",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <Sparkles size={11} /> Dual-Card Account ({(c.variants || []).length + 1} Cards)
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Card Issuer & Account Title */}
-        <div
-          style={{
-            fontSize: 19,
-            fontWeight: 800,
-            color: "#fff",
-            letterSpacing: "-0.02em",
-            textShadow: "0 1px 3px rgba(0,0,0,0.4)",
-          }}
-        >
-          {c.issuer}
-        </div>
-
-        {/* Card Number(s) Display */}
-        <div style={{ marginTop: 8 }}>
-          <div
-            style={{
-              fontSize: 14.5,
-              letterSpacing: "0.1em",
-              color: "rgba(255,255,255,0.95)",
-              fontFamily: "monospace",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
-            }}
-          >
-            <span>•••• •••• •••• {c.last4 || "••••"}</span>
-            <span
-              style={{
-                fontSize: 9,
-                padding: "2px 6px",
-                borderRadius: 4,
-                background: "rgba(255,255,255,0.18)",
-                color: "#fff",
-                fontWeight: 700,
-                letterSpacing: "normal",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              Primary ({c.network})
-            </span>
-          </div>
-
-          {(c.variants || []).map((v: any, vIdx: number) => (
-            <div
-              key={v.id || vIdx}
-              style={{
-                fontSize: 13,
-                letterSpacing: "0.08em",
-                marginTop: 4,
-                color: "rgba(255,255,255,0.85)",
-                fontFamily: "monospace",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                flexWrap: "wrap",
-              }}
-            >
-              <span>•••• •••• •••• {v.last4 || "••••"}</span>
-              <span
-                style={{
-                  fontSize: 9,
-                  padding: "1.5px 6px",
-                  borderRadius: 4,
-                  background: "rgba(254,240,138,0.2)",
-                  color: "#fef08a",
-                  fontWeight: 700,
-                  letterSpacing: "normal",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                {v.name || `${v.network} Variant`}
-              </span>
-            </div>
-          ))}
-        </div>
+        {/* Authentic Physical / Virtual Card Face Hero with Real Card Art & Variant Switcher */}
+        <CreditCardVisual
+          card={c}
+          isClosed={isClosed}
+          cardholderName={c.owner}
+          onEditArt={(vId) => onEditArt?.(c, vId || null)}
+        />
 
         {isClosed && c.closedDate && (
           <div
             style={{
               fontSize: 11,
-              color: "rgba(255,140,140,0.9)",
+              color: "var(--state-danger, #dc2626)",
               marginTop: 6,
               fontWeight: 600,
             }}
@@ -2252,17 +2087,17 @@ function CCList({
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: 12,
-            marginTop: 18,
-            padding: "10px 12px",
-            borderRadius: 12,
-            background: "rgba(0,0,0,0.22)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            marginTop: 16,
+            padding: "12px 14px",
+            borderRadius: 14,
+            background: "var(--surface-1)",
+            border: "1px solid var(--t-line)",
           }}
         >
           <div>
             <div
               style={{
-                color: "rgba(245,239,227,0.6)",
+                color: "var(--t-muted)",
                 fontSize: 9.5,
                 textTransform: "uppercase",
                 fontWeight: 800,
@@ -2276,14 +2111,14 @@ function CCList({
                 fontFamily: "var(--font-display)",
                 fontWeight: 800,
                 fontSize: 18,
-                color: ccOutstanding(c) > 0 ? "#ff9999" : "#6ee7b7",
+                color: ccOutstanding(c) > 0 ? "var(--state-danger, #dc2626)" : "var(--state-success, #04825b)",
                 letterSpacing: "-0.01em",
                 marginTop: 2,
               }}
             >
               <Money value={ccOutstanding(c)} variant="full" />
               {Number(c.outstanding) < 0 && (
-                <span style={{ fontSize: 10, fontWeight: 600, color: "#6ee7b7", marginLeft: 4 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: "var(--state-success, #04825b)", marginLeft: 4 }}>
                   (₹{Math.abs(Number(c.outstanding)).toLocaleString("en-IN")} CR)
                 </span>
               )}
@@ -2292,7 +2127,7 @@ function CCList({
           <div>
             <div
               style={{
-                color: "rgba(245,239,227,0.6)",
+                color: "var(--t-muted)",
                 fontSize: 9.5,
                 textTransform: "uppercase",
                 fontWeight: 800,
@@ -2306,7 +2141,9 @@ function CCList({
               {eff.isShared && (
                 <span
                   style={{
-                    background: "rgba(255,255,255,0.18)",
+                    background: "color-mix(in srgb, var(--t-accent) 15%, transparent)",
+                    color: "var(--t-accent)",
+                    border: "1px solid color-mix(in srgb, var(--t-accent) 30%, transparent)",
                     padding: "1px 5px",
                     borderRadius: 4,
                     fontSize: 8.5,
@@ -2322,7 +2159,7 @@ function CCList({
                 fontFamily: "var(--font-display)",
                 fontWeight: 800,
                 fontSize: 18,
-                color: "#fff",
+                color: "var(--t-ink)",
                 letterSpacing: "-0.01em",
                 marginTop: 2,
               }}
@@ -2330,7 +2167,7 @@ function CCList({
               <Money value={displayLimit} variant="full" />
             </div>
             {eff.isShared && cardLimitNum > 0 && cardLimitNum !== displayLimit && (
-              <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.5)", marginTop: 1 }}>
+              <div style={{ fontSize: 9.5, color: "var(--t-muted)", marginTop: 1 }}>
                 Card Sub: ₹{cardLimitNum.toLocaleString("en-IN")}
               </div>
             )}
@@ -2342,7 +2179,7 @@ function CCList({
           <div style={{ marginTop: 14 }}>
             <div
               className="progress-track"
-              style={{ height: 6, background: "rgba(255,255,255,0.18)", borderRadius: 3 }}
+              style={{ height: 6, background: "var(--surface-2, #e2e8f0)", borderRadius: 3 }}
             >
               <div
                 className="progress-fill"
@@ -2362,16 +2199,16 @@ function CCList({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginTop: 5,
+                marginTop: 6,
                 fontSize: 10.5,
                 fontWeight: 700,
               }}
             >
-              <span style={{ color: util > 70 ? "#ff8888" : util > 30 ? "#fde047" : "#86efac" }}>
+              <span style={{ color: util > 70 ? "var(--state-danger, #dc2626)" : util > 30 ? "var(--state-warning, #ac5f05)" : "var(--state-success, #04825b)" }}>
                 {util.toFixed(1)}% {eff.isShared ? "pool limit used" : "limit used"}
               </span>
-              <span style={{ color: "rgba(255,255,255,0.7)" }}>
-                Avail{eff.isShared ? " in Pool" : ""}: <Money value={displayAvail} variant="full" />
+              <span style={{ color: "var(--t-muted)" }}>
+                Avail{eff.isShared ? " in Pool" : ""}: <strong style={{ color: "var(--t-ink)" }}><Money value={displayAvail} variant="full" /></strong>
               </span>
             </div>
           </div>
@@ -2385,18 +2222,18 @@ function CCList({
             gridTemplateColumns: "1fr 1fr",
             gap: 8,
             fontSize: 11.5,
-            color: "rgba(245,239,227,0.85)",
+            color: "var(--t-muted)",
           }}
         >
           <div>
-            Bill Date: <strong style={{ color: "#fff" }}>{c.billDate ? `${c.billDate}th` : "—"}</strong>
+            Bill Date: <strong style={{ color: "var(--t-ink)" }}>{c.billDate ? `${c.billDate}th` : "—"}</strong>
           </div>
           <div>
-            Due Day: <strong style={{ color: "#fff" }}>{c.dueDay ? `${c.dueDay}th` : "—"}</strong>
+            Due Day: <strong style={{ color: "var(--t-ink)" }}>{c.dueDay ? `${c.dueDay}th` : "—"}</strong>
           </div>
           <div>
             Annual Fee:{" "}
-            <strong style={{ color: "#fff" }}>
+            <strong style={{ color: "var(--t-ink)" }}>
               <Money value={c.annualFee} variant="exact" />
               {c.feeMonth ? ` · ${Number(c.feeDay) || 1} ${MONTH_NAMES[Number(c.feeMonth) - 1]}` : ""}
             </strong>
@@ -2410,7 +2247,7 @@ function CCList({
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: copiedHelplineId === c.id ? "#86efac" : "#fff",
+                  color: copiedHelplineId === c.id ? "var(--state-success, #04825b)" : "var(--t-ink)",
                   fontWeight: 700,
                   fontSize: 11.5,
                   cursor: "pointer",
@@ -2425,7 +2262,7 @@ function CCList({
                 {copiedHelplineId === c.id ? <Check size={11} /> : <Copy size={11} opacity={0.7} />}
               </button>
             ) : (
-              <strong style={{ color: "#fff" }}>—</strong>
+              <strong style={{ color: "var(--t-muted)" }}>—</strong>
             )}
           </div>
         </div>
@@ -2436,11 +2273,12 @@ function CCList({
             style={{
               marginTop: 10,
               fontSize: 10.5,
-              background: "rgba(255,255,255,0.08)",
-              padding: "5px 10px",
-              borderRadius: 6,
-              color: THEME.gold,
-              fontWeight: 500,
+              background: "color-mix(in srgb, var(--t-gold) 10%, var(--surface-1))",
+              border: "1px solid color-mix(in srgb, var(--t-gold) 25%, transparent)",
+              padding: "6px 10px",
+              borderRadius: 8,
+              color: "var(--t-gold)",
+              fontWeight: 600,
             }}
           >
             Fee Waiver: {c.waiverInfo}
@@ -2453,10 +2291,11 @@ function CCList({
             style={{
               marginTop: 10,
               fontSize: 10.5,
-              background: "rgba(255,255,255,0.08)",
-              padding: "5px 10px",
-              borderRadius: 6,
-              color: "rgba(255,255,255,0.9)",
+              background: "var(--surface-1)",
+              border: "1px solid var(--t-line)",
+              padding: "6px 10px",
+              borderRadius: 8,
+              color: "var(--t-muted)",
               fontWeight: 500,
               display: "flex",
               justifyContent: "space-between",
@@ -2464,14 +2303,14 @@ function CCList({
             }}
           >
             <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <Star size={11} color="#fef08a" />
-              <strong style={{ color: "#fff" }}>
+              <Star size={12} color="var(--t-gold)" fill="var(--t-gold)" />
+              <strong style={{ color: "var(--t-ink)" }}>
                 <Prv>{Math.round(Number(c.rewardPointsBalance)).toLocaleString("en-IN")}</Prv>
               </strong>{" "}
               pts
             </span>
             {Number(c.rewardPointValue) > 0 && (
-              <span style={{ color: THEME.gold, fontWeight: 700 }}>
+              <span style={{ color: "var(--t-gold)", fontWeight: 700 }}>
                 ≈ <Money value={Number(c.rewardPointsBalance) * Number(c.rewardPointValue)} variant="full" />
               </span>
             )}
@@ -2501,8 +2340,9 @@ function CCList({
                     style={{
                       padding: "3px 8px",
                       borderRadius: 6,
-                      background: "rgba(255, 255, 255, 0.12)",
-                      color: "rgba(255,255,255,0.85)",
+                      background: "var(--surface-1)",
+                      border: "1px solid var(--t-line)",
+                      color: "var(--t-muted)",
                       fontSize: 10,
                       fontWeight: 600,
                     }}
@@ -2521,8 +2361,9 @@ function CCList({
                       style={{
                         padding: "3px 8px",
                         borderRadius: 6,
-                        background: "rgba(34,197,94,0.22)",
-                        color: "#86efac",
+                        background: "color-mix(in srgb, var(--t-sage) 14%, var(--surface-1))",
+                        border: "1px solid color-mix(in srgb, var(--t-sage) 35%, transparent)",
+                        color: "var(--state-success, var(--t-sage))",
                         fontSize: 10,
                         fontWeight: 700,
                         display: "inline-flex",
@@ -2545,11 +2386,20 @@ function CCList({
                 const isWarning = daysLeft <= 7 && daysLeft > 3;
 
                 const badgeBg = isUrgent
-                  ? "rgba(239, 68, 68, 0.3)"
+                  ? "color-mix(in srgb, var(--t-rust) 14%, var(--surface-1))"
                   : isWarning
-                    ? "rgba(245, 158, 11, 0.3)"
-                    : "rgba(255, 255, 255, 0.12)";
-                const badgeColor = isUrgent ? "#ff9999" : isWarning ? "#fde047" : "#fff";
+                    ? "color-mix(in srgb, var(--t-gold) 14%, var(--surface-1))"
+                    : "var(--surface-1)";
+                const badgeBorder = isUrgent
+                  ? "1px solid color-mix(in srgb, var(--t-rust) 35%, transparent)"
+                  : isWarning
+                    ? "1px solid color-mix(in srgb, var(--t-gold) 35%, transparent)"
+                    : "1px solid var(--t-line)";
+                const badgeColor = isUrgent
+                  ? "var(--state-danger, var(--t-rust))"
+                  : isWarning
+                    ? "var(--state-warning, var(--t-gold))"
+                    : "var(--t-muted)";
 
                 const label =
                   daysLeft <= 0
@@ -2564,6 +2414,7 @@ function CCList({
                       padding: "3px 8px",
                       borderRadius: 6,
                       background: badgeBg,
+                      border: badgeBorder,
                       color: badgeColor,
                       fontSize: 10,
                       fontWeight: 700,
@@ -2588,8 +2439,15 @@ function CCList({
                   style={{
                     padding: "3px 8px",
                     borderRadius: 6,
-                    background: daysLeft <= 30 ? "rgba(245,158,11,0.22)" : "rgba(255,255,255,0.1)",
-                    color: daysLeft <= 30 ? "#fde047" : "rgba(255,255,255,0.8)",
+                    background:
+                      daysLeft <= 30
+                        ? "color-mix(in srgb, var(--t-gold) 14%, var(--surface-1))"
+                        : "var(--surface-1)",
+                    border:
+                      daysLeft <= 30
+                        ? "1px solid color-mix(in srgb, var(--t-gold) 35%, transparent)"
+                        : "1px solid var(--t-line)",
+                    color: daysLeft <= 30 ? "var(--state-warning, var(--t-gold))" : "var(--t-muted)",
                     fontSize: 10,
                     fontWeight: 600,
                   }}
@@ -2609,16 +2467,14 @@ function CCList({
             left: 0,
             right: 0,
             height: 48,
-            background: "rgba(15,15,22,0.65)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            borderTop: "1px solid rgba(255,255,255,0.12)",
+            background: "var(--surface-1)",
+            borderTop: "1px solid var(--t-line)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0 10px",
-            borderBottomLeftRadius: 18,
-            borderBottomRightRadius: 18,
+            padding: "0 12px",
+            borderBottomLeftRadius: 21,
+            borderBottomRightRadius: 21,
           }}
         >
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -2627,9 +2483,9 @@ function CCList({
                 type="button"
                 onClick={() => setPaymentCard(c)}
                 style={{
-                  background: "rgba(34,197,94,0.22)",
-                  border: "1px solid rgba(34,197,94,0.45)",
-                  color: "#86efac",
+                  background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--t-sage) 35%, transparent)",
+                  color: "var(--state-success, var(--t-sage))",
                   padding: "5px 10px",
                   borderRadius: 8,
                   fontSize: 11,
@@ -2638,7 +2494,7 @@ function CCList({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 4,
-                  transition: "background 0.15s ease",
+                  transition: "all 0.15s ease",
                 }}
                 title="Record payment toward this card"
               >
@@ -2649,9 +2505,9 @@ function CCList({
               type="button"
               onClick={() => setSelectedLedger(c.id)}
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "#fff",
+                background: "var(--surface-0)",
+                border: "1px solid var(--t-line)",
+                color: "var(--t-ink)",
                 padding: "5px 10px",
                 borderRadius: 8,
                 fontSize: 11,
@@ -2660,6 +2516,8 @@ function CCList({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
+                boxShadow: "var(--shadow-xs)",
+                transition: "all 0.15s ease",
               }}
               title="View transaction ledger and import/export CSV"
             >
@@ -2679,13 +2537,16 @@ function CCList({
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "rgba(255,140,140,0.8)",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  padding: "4px 6px",
+                  color: "var(--t-muted)",
+                  fontSize: 11,
+                  fontWeight: 600,
                   cursor: "pointer",
+                  padding: "4px 8px",
                   borderRadius: 6,
+                  transition: "color 0.15s ease",
                 }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t-rust)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t-muted)")}
               >
                 Close
               </button>
@@ -2696,10 +2557,10 @@ function CCList({
                 onClick={() => onUpdateCard(c.id, { status: "active", closedDate: "" })}
                 title="Reactivate card"
                 style={{
-                  background: "rgba(34,197,94,0.2)",
-                  border: "1px solid rgba(34,197,94,0.4)",
-                  color: "#86efac",
-                  fontSize: 10,
+                  background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--t-sage) 35%, transparent)",
+                  color: "var(--state-success, var(--t-sage))",
+                  fontSize: 11,
                   fontWeight: 700,
                   padding: "4px 8px",
                   cursor: "pointer",
@@ -2716,13 +2577,16 @@ function CCList({
               style={{
                 background: "transparent",
                 border: "none",
-                color: "rgba(255,255,255,0.8)",
+                color: "var(--t-muted)",
                 cursor: "pointer",
                 padding: 5,
                 borderRadius: 6,
                 display: "inline-flex",
                 alignItems: "center",
+                transition: "color 0.15s ease",
               }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t-accent)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t-muted)")}
             >
               <Pencil size={13} />
             </button>
@@ -2733,13 +2597,16 @@ function CCList({
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#ff9999",
+                color: "var(--t-muted)",
                 cursor: "pointer",
                 padding: 5,
                 borderRadius: 6,
                 display: "inline-flex",
                 alignItems: "center",
+                transition: "color 0.15s ease",
               }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t-rust)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t-muted)")}
             >
               <Trash2 size={13} />
             </button>
@@ -7014,269 +6881,14 @@ function CCCardPreview({
   ownerName: string;
   isClosed: boolean;
 }) {
-  const gradient = isClosed
-    ? "linear-gradient(135deg, #383842 0%, #202028 100%)"
-    : getCardGradient(card.issuer || "");
-  const formattedLast4 = card.last4 ? card.last4.padStart(4, "•") : "••••";
-  const numLimit = Number(card.limit) || 0;
-  const numOut = Number(card.outstanding) || 0;
-
   return (
-    <div
-      className="cc-preview-card"
-      style={{
-        background: gradient,
-        opacity: isClosed ? 0.8 : 1,
-        filter: isClosed ? "grayscale(40%)" : "none",
-        minHeight: 205,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
-    >
-      <div className="cc-preview-sheen" />
-
-      {/* Top Bar: Bank Logo + Title + Network Logo + Status */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-          <BankLogo
-            bankName={card.issuer || "Credit Card"}
-            size={32}
-          />
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 800,
-                color: "#ffffff",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: 210,
-                letterSpacing: "-0.01em",
-                textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-              }}
-            >
-              {card.issuer || "Card Issuer"}
-            </div>
-            {card.sharedGroup && (
-              <span
-                style={{
-                  fontSize: 9.5,
-                  padding: "1px 6px",
-                  borderRadius: 6,
-                  background: "rgba(255,255,255,0.18)",
-                  backdropFilter: "blur(4px)",
-                  color: "#fff",
-                  fontWeight: 700,
-                  display: "inline-block",
-                  marginTop: 2,
-                }}
-              >
-                Pool: {card.sharedGroup}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <CardNetworkLogo network={card.network} />
-          {isClosed ? (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                padding: "2px 7px",
-                borderRadius: 99,
-                background: "rgba(239, 68, 68, 0.25)",
-                border: "1px solid rgba(239, 68, 68, 0.45)",
-                color: "#fca5a5",
-                textTransform: "uppercase",
-              }}
-            >
-              Closed
-            </span>
-          ) : card.autoPay ? (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                padding: "2px 7px",
-                borderRadius: 99,
-                background: "rgba(34, 197, 94, 0.22)",
-                border: "1px solid rgba(34, 197, 94, 0.4)",
-                color: "#86efac",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              <Check size={10} strokeWidth={3} /> Autopay
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Middle Row: Chip + Contactless wave + Variants Pills */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          margin: "12px 0 8px",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <ChipSVG />
-          <Wifi
-            size={18}
-            style={{
-              transform: "rotate(90deg)",
-              color: "rgba(255, 255, 255, 0.7)",
-            }}
-          />
-        </div>
-
-        {Array.isArray(card.variants) && card.variants.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            {card.variants.map((v: any, idx: number) => (
-              <span
-                key={v.id || idx}
-                style={{
-                  fontSize: 10,
-                  padding: "2px 7px",
-                  borderRadius: 6,
-                  background: "rgba(255,255,255,0.18)",
-                  backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  color: "#ffffff",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 3,
-                }}
-              >
-                + {v.name || v.network || "Variant"} {v.last4 ? `(•${v.last4})` : ""}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Card Number Row */}
-      <div
-        style={{
-          fontSize: 16.5,
-          fontWeight: 700,
-          letterSpacing: "0.22em",
-          color: "#ffffff",
-          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-          textShadow: "0 2px 4px rgba(0, 0, 0, 0.55)",
-          position: "relative",
-          zIndex: 2,
-          margin: "2px 0 10px",
-        }}
-      >
-        •••• &nbsp;•••• &nbsp;•••• &nbsp;{formattedLast4}
-      </div>
-
-      {/* Bottom Bar: Cardholder, Cycle, Limits */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
-          position: "relative",
-          zIndex: 2,
-          borderTop: "1px solid rgba(255, 255, 255, 0.15)",
-          paddingTop: 8,
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.08em",
-              color: "rgba(255, 255, 255, 0.65)",
-              textTransform: "uppercase",
-              fontWeight: 700,
-            }}
-          >
-            Cardholder
-          </div>
-          <div
-            style={{
-              fontSize: 11.5,
-              fontWeight: 800,
-              color: "#ffffff",
-              textTransform: "uppercase",
-              letterSpacing: "0.03em",
-              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-            }}
-          >
-            {ownerName}
-          </div>
-        </div>
-
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.08em",
-              color: "rgba(255, 255, 255, 0.65)",
-              textTransform: "uppercase",
-              fontWeight: 700,
-            }}
-          >
-            Billing Cycle
-          </div>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#ffffff",
-              letterSpacing: "0.02em",
-            }}
-          >
-            {card.billDate ? `${card.billDate}th` : "—"} / {card.dueDay ? `${card.dueDay}th` : "—"}
-          </div>
-        </div>
-
-        <div style={{ textAlign: "right" }}>
-          <div
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.08em",
-              color: "rgba(255, 255, 255, 0.65)",
-              textTransform: "uppercase",
-              fontWeight: 700,
-            }}
-          >
-            Credit Limit
-          </div>
-          <div
-            style={{
-              fontSize: 11.5,
-              fontWeight: 800,
-              color: "#ffffff",
-              letterSpacing: "-0.01em",
-              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-            }}
-          >
-            {numLimit > 0 ? `₹${numLimit.toLocaleString("en-IN")}` : "—"}
-          </div>
-        </div>
-      </div>
+    <div style={{ width: "100%" }}>
+      <CreditCardVisual
+        card={card}
+        isClosed={isClosed}
+        cardholderName={ownerName}
+        showVariantSwitcher={true}
+      />
     </div>
   );
 }
@@ -7296,6 +6908,8 @@ const POPULAR_CARDS = [
 function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving }: any) {
   const { ccNetworks, familyProfiles } = useMasterData();
   const [activeStep, setActiveStep] = useState(0);
+  const [pickerModalOpen, setPickerModalOpen] = useState(false);
+  const [pickerVariantIdx, setPickerVariantIdx] = useState<number | null>(null);
   const [f, setF] = useState(() => {
     if (!initial) {
       return {
@@ -7322,6 +6936,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
         rewardPointsBalance: "",
         rewardPointValue: "",
         variants: [],
+        cardImageUrl: "",
       };
     }
     return {
@@ -7357,6 +6972,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
       rewardPointValue:
         initial.rewardPointValue != null ? String(initial.rewardPointValue) : "",
       variants: Array.isArray(initial.variants) ? initial.variants : [],
+      cardImageUrl: initial.cardImageUrl || "",
     };
   });
 
@@ -7496,6 +7112,53 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
               <span style={{ fontSize: 10, color: THEME.muted, fontWeight: 600 }}>Real-time</span>
             </div>
             <CCCardPreview card={f} ownerName={ownerDisplayName} isClosed={isClosed} />
+            <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setPickerVariantIdx(null);
+                  setPickerModalOpen(true);
+                }}
+                className="btn btn-subtle"
+                style={{
+                  flex: 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "6px 10px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: `1px solid ${THEME.line}`,
+                  color: THEME.ink,
+                  background: "var(--surface-1)",
+                  cursor: "pointer",
+                }}
+              >
+                <Camera size={13} color={THEME.accent} />
+                {f.cardImageUrl ? "Change Card Art" : "Choose Card Artwork"}
+              </button>
+              {f.cardImageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setF({ ...f, cardImageUrl: "" })}
+                  className="btn btn-subtle"
+                  style={{
+                    padding: "6px 9px",
+                    fontSize: 11,
+                    borderRadius: 8,
+                    color: THEME.rust,
+                    border: `1px solid ${THEME.line}`,
+                    background: "var(--surface-1)",
+                    cursor: "pointer",
+                  }}
+                  title="Reset to default preset artwork"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Quick Snapshot Overview */}
@@ -7586,10 +7249,12 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                         key={c.label}
                         type="button"
                         onClick={() => {
+                          const matched = getMatchingCardPreset(c.issuer, c.network);
                           setF({
                             ...f,
                             issuer: c.issuer,
                             network: c.network,
+                            cardImageUrl: matched?.imageUrl || f.cardImageUrl,
                           });
                         }}
                         style={{
@@ -7720,6 +7385,143 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     placeholder="0"
                   />
                 </Field>
+              </div>
+
+              {/* Card Face Artwork & Imagery */}
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  background: "var(--surface-1)",
+                  border: `1px solid ${THEME.line}`,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <Camera size={14} color={THEME.accent} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>
+                      Card Face Artwork & Variant Imagery
+                    </span>
+                  </div>
+                  {f.cardImageUrl ? (
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: THEME.sage,
+                        background: "rgba(34,197,94,0.12)",
+                        padding: "2px 7px",
+                        borderRadius: 6,
+                      }}
+                    >
+                      Custom Image Applied
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 600,
+                        color: THEME.muted,
+                      }}
+                    >
+                      Default Preset
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPickerVariantIdx(null);
+                      setPickerModalOpen(true);
+                    }}
+                    className="btn btn-subtle"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "7px 12px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      borderRadius: 8,
+                      border: `1px solid ${THEME.accent}`,
+                      color: THEME.accent,
+                      background: "color-mix(in srgb, var(--t-accent) 10%, transparent)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <ImageIcon size={13} />
+                    Choose from Gallery / Upload Photo
+                  </button>
+
+                  {/* Auto-match button if preset exists */}
+                  {(() => {
+                    const matched = getMatchingCardPreset(f.issuer, f.network);
+                    if (matched && matched.imageUrl && matched.imageUrl !== f.cardImageUrl) {
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setF({ ...f, cardImageUrl: matched.imageUrl })}
+                          className="btn btn-subtle"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "7px 10px",
+                            fontSize: 11.5,
+                            fontWeight: 600,
+                            borderRadius: 8,
+                            color: THEME.sage,
+                            cursor: "pointer",
+                          }}
+                          title={`Auto-apply ${matched.name} artwork`}
+                        >
+                          <Sparkles size={12} />
+                          Auto-Match: {matched.name}
+                        </button>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {f.cardImageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setF({ ...f, cardImageUrl: "" })}
+                      className="btn btn-subtle"
+                      style={{
+                        padding: "7px 10px",
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        borderRadius: 8,
+                        color: THEME.rust,
+                        cursor: "pointer",
+                      }}
+                      title="Clear custom image and revert to preset gradient"
+                    >
+                      Reset Image
+                    </button>
+                  )}
+                </div>
+
+                {/* Direct Image URL input for advanced users */}
+                <div style={{ marginTop: 8 }}>
+                  <input
+                    style={{ ...input, fontSize: 11.5, padding: "6px 10px" }}
+                    placeholder="Or paste direct image URL (https://...)"
+                    value={f.cardImageUrl || ""}
+                    onChange={(e) => setF({ ...f, cardImageUrl: e.target.value })}
+                  />
+                </div>
               </div>
 
               {/* Shared Credit Pool configuration directly on Step 1 */}
@@ -7982,69 +7784,121 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                 </div>
 
                 {/* Existing variants list */}
-                {(f.variants || []).map((v: any, vIdx: number) => (
-                  <div
-                    key={v.id || vIdx}
-                    style={{
-                      padding: "8px 10px",
-                      background: "var(--surface-1)",
-                      border: `1px solid ${THEME.line}`,
-                      borderRadius: 8,
-                      marginBottom: 6,
-                      display: "grid",
-                      gridTemplateColumns: "1.2fr 1fr 0.9fr auto",
-                      gap: 8,
-                      alignItems: "center",
-                    }}
-                  >
-                    <input
-                      style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
-                      value={v.name || ""}
-                      onChange={(e) => {
-                        const updated = [...(f.variants || [])];
-                        updated[vIdx] = { ...updated[vIdx], name: e.target.value };
-                        setF({ ...f, variants: updated });
-                      }}
-                      placeholder="Variant Label"
-                    />
-                    <select
-                      style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
-                      value={v.network || "RuPay"}
-                      onChange={(e) => {
-                        const updated = [...(f.variants || [])];
-                        updated[vIdx] = { ...updated[vIdx], network: e.target.value };
-                        setF({ ...f, variants: updated });
+                {(f.variants || []).map((v: any, vIdx: number) => {
+                  const vArt = resolveCardArtwork({
+                    name: v.name,
+                    issuer: f.issuer,
+                    network: v.network,
+                    cardImageUrl: v.cardImageUrl,
+                  });
+                  return (
+                    <div
+                      key={v.id || vIdx}
+                      style={{
+                        padding: "8px 10px",
+                        background: "var(--surface-1)",
+                        border: `1px solid ${THEME.line}`,
+                        borderRadius: 8,
+                        marginBottom: 6,
+                        display: "grid",
+                        gridTemplateColumns: "auto 1.2fr 1fr 0.9fr auto",
+                        gap: 8,
+                        alignItems: "center",
                       }}
                     >
-                      {ccNetworks.map((n: string) => (
-                        <option key={n}>{n}</option>
-                      ))}
-                    </select>
-                    <input
-                      style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
-                      maxLength={4}
-                      value={v.last4 || ""}
-                      onChange={(e) => {
-                        const updated = [...(f.variants || [])];
-                        updated[vIdx] = { ...updated[vIdx], last4: e.target.value };
-                        setF({ ...f, variants: updated });
-                      }}
-                      placeholder="Last 4"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updated = (f.variants || []).filter((_: any, i: number) => i !== vIdx);
-                        setF({ ...f, variants: updated });
-                      }}
-                      className="icon-btn danger"
-                      style={{ ...iconBtn, color: THEME.rust, padding: 3 }}
-                      title="Remove variant"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
+                      {/* Variant Card Art Thumbnail / Picker Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPickerVariantIdx(vIdx);
+                          setPickerModalOpen(true);
+                        }}
+                        title={v.cardImageUrl ? "Change variant card image" : "Choose card artwork for this variant"}
+                        style={{
+                          width: 42,
+                          height: 27,
+                          borderRadius: 4,
+                          border: `1.5px solid ${v.cardImageUrl ? THEME.accent : THEME.line}`,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          padding: 0,
+                          position: "relative",
+                          background: vArt.imageUrl
+                            ? `url(${vArt.imageUrl}) center/cover no-repeat`
+                            : vArt.bgGradient,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                        }}
+                      >
+                        {!vArt.imageUrl && (
+                          <ImageIcon size={12} color="rgba(255,255,255,0.7)" />
+                        )}
+                      </button>
+                      <input
+                        style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
+                        value={v.name || ""}
+                        onChange={(e) => {
+                          const updated = [...(f.variants || [])];
+                          updated[vIdx] = { ...updated[vIdx], name: e.target.value };
+                          setF({ ...f, variants: updated });
+                        }}
+                        placeholder="Variant Label"
+                      />
+                      <select
+                        style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
+                        value={v.network || "RuPay"}
+                        onChange={(e) => {
+                          const updated = [...(f.variants || [])];
+                          updated[vIdx] = { ...updated[vIdx], network: e.target.value };
+                          setF({ ...f, variants: updated });
+                        }}
+                      >
+                        {ccNetworks.map((n: string) => (
+                          <option key={n}>{n}</option>
+                        ))}
+                      </select>
+                      <input
+                        style={{ ...input, padding: "6px 8px", fontSize: 12.5 }}
+                        maxLength={4}
+                        value={v.last4 || ""}
+                        onChange={(e) => {
+                          const updated = [...(f.variants || [])];
+                          updated[vIdx] = { ...updated[vIdx], last4: e.target.value };
+                          setF({ ...f, variants: updated });
+                        }}
+                        placeholder="Last 4"
+                      />
+                      <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPickerVariantIdx(vIdx);
+                            setPickerModalOpen(true);
+                          }}
+                          className="icon-btn"
+                          style={{ ...iconBtn, color: THEME.accent, padding: 3 }}
+                          title="Card artwork / photo"
+                        >
+                          <Camera size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (f.variants || []).filter((_: any, i: number) => i !== vIdx);
+                            setF({ ...f, variants: updated });
+                          }}
+                          className="icon-btn danger"
+                          style={{ ...iconBtn, color: THEME.rust, padding: 3 }}
+                          title="Remove variant"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {/* Quick Add Buttons */}
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
@@ -8052,6 +7906,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     type="button"
                     className="card-interactive"
                     onClick={() => {
+                      const match = getMatchingCardPreset((f.issuer || "") + " RuPay", "RuPay");
                       const newV = {
                         id: uid(),
                         name: "RuPay UPI (Virtual)",
@@ -8059,6 +7914,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                         last4: "",
                         cardType: "virtual",
                         status: "active",
+                        cardImageUrl: match?.imageUrl || "",
                       };
                       setF({ ...f, variants: [...(f.variants || []), newV] });
                     }}
@@ -8082,6 +7938,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     type="button"
                     className="card-interactive"
                     onClick={() => {
+                      const match = getMatchingCardPreset((f.issuer || "") + " Amex", "Amex");
                       const newV = {
                         id: uid(),
                         name: "Companion Amex",
@@ -8089,6 +7946,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                         last4: "",
                         cardType: "physical",
                         status: "active",
+                        cardImageUrl: match?.imageUrl || "",
                       };
                       setF({ ...f, variants: [...(f.variants || []), newV] });
                     }}
@@ -8311,6 +8169,46 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
           )}
         </div>
       </div>
+
+      {pickerModalOpen && (
+        <CardArtPickerModal
+          isOpen={pickerModalOpen}
+          onClose={() => {
+            setPickerModalOpen(false);
+            setPickerVariantIdx(null);
+          }}
+          currentImageUrl={
+            pickerVariantIdx !== null
+              ? (f.variants || [])[pickerVariantIdx]?.cardImageUrl || ""
+              : f.cardImageUrl || ""
+          }
+          cardName={
+            pickerVariantIdx !== null
+              ? (f.variants || [])[pickerVariantIdx]?.name || f.issuer
+              : f.issuer || "Credit Card"
+          }
+          network={
+            pickerVariantIdx !== null
+              ? (f.variants || [])[pickerVariantIdx]?.network || f.network
+              : f.network
+          }
+          isVariant={pickerVariantIdx !== null}
+          onSelectImage={(url) => {
+            if (pickerVariantIdx !== null) {
+              const updated = [...(f.variants || [])];
+              updated[pickerVariantIdx] = {
+                ...updated[pickerVariantIdx],
+                cardImageUrl: url,
+              };
+              setF({ ...f, variants: updated });
+            } else {
+              setF({ ...f, cardImageUrl: url });
+            }
+            setPickerModalOpen(false);
+            setPickerVariantIdx(null);
+          }}
+        />
+      )}
     </Modal>
   );
 }

@@ -847,6 +847,7 @@ CREATE TABLE IF NOT EXISTS public.credit_cards (
   reward_points_balance numeric DEFAULT 0,                     -- 79
   reward_point_value    numeric DEFAULT 0,                     -- 79
   variants              jsonb DEFAULT '[]'::jsonb,              -- 87
+  card_image_url        text DEFAULT '',                       -- 104
   created_at            timestamp with time zone DEFAULT now()
 );
 

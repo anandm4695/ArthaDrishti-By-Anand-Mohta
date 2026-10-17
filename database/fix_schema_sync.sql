@@ -429,6 +429,7 @@ ALTER TABLE public.credit_cards ADD COLUMN IF NOT EXISTS lounge_count     intege
 ALTER TABLE public.credit_cards ADD COLUMN IF NOT EXISTS notes            text;
 ALTER TABLE public.credit_cards ADD COLUMN IF NOT EXISTS shared_group       text;
 ALTER TABLE public.credit_cards ADD COLUMN IF NOT EXISTS shared_group_limit numeric DEFAULT 0;
+ALTER TABLE public.credit_cards ADD COLUMN IF NOT EXISTS card_image_url    text DEFAULT '';
 
 -- prepaid_cards
 ALTER TABLE public.prepaid_cards ADD COLUMN IF NOT EXISTS status      text DEFAULT 'active';

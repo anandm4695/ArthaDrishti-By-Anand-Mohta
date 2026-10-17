@@ -1,0 +1,294 @@
+import { describe, it, expect } from "vitest";
+import {
+  CARD_ART_PRESETS,
+  getMatchingCardPreset,
+  resolveCardArtwork,
+  searchCardPresets,
+} from "../utils/cardAssets";
+import { CreditCardEntity, CardVariant } from "../types/finance";
+
+describe("Credit Card Artwork & Variant Visuals Engine", () => {
+  describe("Preset Catalog & Tag Matching", () => {
+    it("contains comprehensive curated Indian & Global card designs", () => {
+      expect(CARD_ART_PRESETS.length).toBeGreaterThan(25);
+
+      const presetIds = CARD_ART_PRESETS.map((p) => p.id);
+      expect(presetIds).toContain("hdfc-infinia");
+      expect(presetIds).toContain("hdfc-regalia-gold");
+      expect(presetIds).toContain("icici-amazon-pay");
+      expect(presetIds).toContain("icici-sapphiro");
+      expect(presetIds).toContain("federal-scapia");
+      expect(presetIds).toContain("federal-scapia-rupay");
+      expect(presetIds).toContain("sbi-cashback");
+      expect(presetIds).toContain("amex-platinum");
+      expect(presetIds).toContain("onecard-metal");
+    });
+
+    it("correctly matches HDFC Infinia card presets", () => {
+      const match = getMatchingCardPreset("HDFC Bank Infinia Metal", "Visa");
+      expect(match).toBeDefined();
+      expect(match?.id).toBe("hdfc-infinia");
+      expect(match?.category).toBe("metal");
+      expect(match?.bgGradient).toContain("#1e2530");
+    });
+
+    it("matches Federal Scapia Visa vs RuPay virtual variant accurately", () => {
+      const visaMatch = getMatchingCardPreset("Federal Scapia Card", "Visa");
+      expect(visaMatch).toBeDefined();
+      expect(visaMatch?.id).toBe("federal-scapia");
+
+      const rupayMatch = getMatchingCardPreset("Scapia RuPay UPI Virtual", "RuPay");
+      expect(rupayMatch).toBeDefined();
+      expect(rupayMatch?.id).toBe("federal-scapia-rupay");
+      expect(rupayMatch?.category).toBe("virtual");
+    });
+
+    it("matches ICICI Sapphiro dual-network configurations", () => {
+      const mcMatch = getMatchingCardPreset("ICICI Sapphiro Mastercard", "Mastercard");
+      expect(mcMatch).toBeDefined();
+      expect(mcMatch?.id).toBe("icici-sapphiro");
+
+      const amexMatch = getMatchingCardPreset("ICICI Sapphiro Companion Amex", "Amex");
+      expect(amexMatch).toBeDefined();
+      expect(amexMatch?.id).toBe("icici-sapphiro-amex");
+    });
+
+    it("matches Tata Neu Infinity RuPay card", () => {
+      const match = getMatchingCardPreset("HDFC Tata Neu Infinity", "RuPay");
+      expect(match).toBeDefined();
+      expect(match?.id).toBe("hdfc-tata-neu-infinity");
+    });
+
+    it("matches diverse other Indian bank cards (RBL, YES Bank, BOB, Niyo, Kotak, IndusInd, IDFC)", () => {
+      const rbl = getMatchingCardPreset("RBL World Safari", "Visa");
+      expect(rbl?.id).toBe("rbl-world-safari");
+      expect(rbl?.imageUrl).toBe("/cards/rbl-world-safari.png");
+
+      const yes = getMatchingCardPreset("YES Bank Marquee", "Visa");
+      expect(yes?.id).toBe("yes-marquee");
+      expect(yes?.imageUrl).toBe("/cards/yes-marquee.png");
+
+      const bob = getMatchingCardPreset("Bank of Baroda Eterna", "Visa");
+      expect(bob?.id).toBe("bob-eterna");
+      expect(bob?.imageUrl).toBe("/cards/bob-eterna.png");
+
+      const niyo = getMatchingCardPreset("Niyo Global Forex Card", "Visa");
+      expect(niyo?.id).toBe("niyo-global");
+      expect(niyo?.imageUrl).toBe("/cards/niyo-global.png");
+
+      const kotak = getMatchingCardPreset("Kotak White Reserve", "Visa");
+      expect(kotak?.id).toBe("kotak-white");
+      expect(kotak?.imageUrl).toBe("/cards/kotak-white.png");
+
+      const indusind = getMatchingCardPreset("IndusInd Legend", "Visa");
+      expect(indusind?.id).toBe("indusind-legend");
+      expect(indusind?.imageUrl).toBe("/cards/indusind-legend.png");
+
+      const idfc = getMatchingCardPreset("IDFC FIRST Wealth", "Visa");
+      expect(idfc?.id).toBe("idfc-wealth");
+      expect(idfc?.imageUrl).toBe("/cards/idfc-wealth.png");
+
+      const sbiSave = getMatchingCardPreset("SBI SimplySAVE RuPay", "RuPay");
+      expect(sbiSave?.id).toBe("sbi-simplysave");
+      expect(sbiSave?.imageUrl).toBe("/cards/sbi-simplysave.png");
+
+      const sbiElite = getMatchingCardPreset("SBI Card ELITE", "Visa");
+      expect(sbiElite?.id).toBe("sbi-elite");
+      expect(sbiElite?.imageUrl).toBe("/cards/sbi-elite.png");
+
+      const hdfcMb = getMatchingCardPreset("HDFC MoneyBack+", "Visa");
+      expect(hdfcMb?.id).toBe("hdfc-moneyback");
+      expect(hdfcMb?.imageUrl).toBe("/cards/hdfc-moneyback.png");
+
+      const fedCelesta = getMatchingCardPreset("Federal Bank Celesta", "Visa");
+      expect(fedCelesta?.id).toBe("federal-celesta");
+      expect(fedCelesta?.imageUrl).toBe("/cards/federal-celesta.png");
+    });
+  });
+
+  describe("searchCardPresets", () => {
+    it("filters presets by query and category filter", () => {
+      const allResults = searchCardPresets("hdfc", "all");
+      expect(allResults.length).toBeGreaterThan(2);
+
+      const metalResults = searchCardPresets("hdfc", "metal");
+      expect(metalResults.some((p) => p.id === "hdfc-infinia")).toBe(true);
+    });
+
+    it("returns all presets when search query is empty", () => {
+      const all = searchCardPresets("", "all");
+      expect(all.length).toBe(CARD_ART_PRESETS.length);
+    });
+  });
+
+  describe("resolveCardArtwork", () => {
+    it("resolves preset artwork and official bank website image URL when matching name is provided without custom image", () => {
+      const art = resolveCardArtwork({
+        issuer: "SBI Cashback Card",
+        network: "Visa",
+      });
+
+      expect(art.presetName).toBe("SBI Cashback Card");
+      expect(art.hasCustomImage).toBe(false);
+      expect(art.bgGradient).toContain("#003366");
+      expect(art.accentColor).toBe("#38bdf8");
+      expect(art.imageUrl).toMatch(/sbi-cashback|sbicard\.com/);
+    });
+
+    it("has authentic official bank website/CDN image URLs for top Indian credit cards", () => {
+      const infinia = getMatchingCardPreset("HDFC Infinia Metal", "Visa");
+      expect(infinia?.imageUrl).toMatch(/cards\/hdfc-infinia|hdfcbankPWS/);
+      expect(infinia?.officialImageUrl).toContain("hdfcbankPWS");
+
+      const amzPay = getMatchingCardPreset("ICICI Amazon Pay", "Visa");
+      expect(amzPay?.imageUrl).toMatch(/cards\/icici-amazon-pay|icicibank\.com/);
+      expect(amzPay?.officialImageUrl).toContain("icicibank.com");
+
+      const sbiCb = getMatchingCardPreset("SBI Cashback", "Visa");
+      expect(sbiCb?.imageUrl).toMatch(/cards\/sbi-cashback|sbicard\.com/);
+      expect(sbiCb?.officialImageUrl).toContain("sbicard.com");
+
+      const axisAtlas = getMatchingCardPreset("Axis Atlas", "Visa");
+      expect(axisAtlas?.imageUrl).toMatch(/cards\/axis-atlas|axis\.bank\.in/);
+      expect(axisAtlas?.officialImageUrl).toContain("axis.bank.in");
+
+      const scapia = getMatchingCardPreset("Federal Scapia Card", "Visa");
+      expect(scapia?.imageUrl).toMatch(/cards\/federal-scapia|federal\.bank\.in|scapia\.cards/);
+
+      const amexPlat = getMatchingCardPreset("American Express Platinum", "Amex");
+      expect(amexPlat?.imageUrl).toMatch(/cards\/amex-platinum|aexp-static\.com/);
+      expect(amexPlat?.officialImageUrl).toContain("aexp-static.com");
+
+      const onecard = getMatchingCardPreset("OneCard Metal", "Visa");
+      expect(onecard?.imageUrl).toMatch(/cards\/onecard-metal|getonecard\.app/);
+      expect(onecard?.officialImageUrl).toContain("getonecard.app");
+
+      const scUltimate = getMatchingCardPreset("Standard Chartered Ultimate", "Visa");
+      expect(scUltimate?.imageUrl).toMatch(/cards\/sc-ultimate|sc\.com/);
+      expect(scUltimate?.officialImageUrl).toContain("sc.com");
+    });
+
+    it("prioritizes custom user-uploaded or linked image URL over preset image", () => {
+      const customUrl = "https://images.unsplash.com/custom-my-card.png";
+      const art = resolveCardArtwork({
+        issuer: "HDFC Infinia",
+        network: "Visa",
+        cardImageUrl: customUrl,
+      });
+
+      expect(art.hasCustomImage).toBe(true);
+      expect(art.imageUrl).toBe(customUrl);
+    });
+
+    it("handles closed cards by providing a muted grayscale visual style", () => {
+      const art = resolveCardArtwork({
+        issuer: "HDFC Infinia",
+        network: "Visa",
+        status: "closed",
+      });
+
+      expect(art.badgeText).toBe("ACCOUNT CLOSED");
+      expect(art.accentColor).toBe("#71717a");
+      expect(art.bgGradient).toContain("#27272a");
+    });
+
+    it("gracefully falls back to a sleek dark gradient for unknown issuers", () => {
+      const art = resolveCardArtwork({
+        issuer: "Local Cooperative Bank Custom CC",
+        network: "Visa",
+      });
+
+      expect(art.hasCustomImage).toBe(false);
+      expect(art.imageUrl).toBe("");
+      expect(art.bgGradient).toBeDefined();
+      expect(art.network).toBe("Visa");
+    });
+  });
+
+  describe("Dual-Card and Variant Card Data Model Integrity", () => {
+    it("supports cardImageUrl property on primary card entity and variants", () => {
+      const variant: CardVariant = {
+        id: "var-1",
+        name: "Scapia RuPay UPI",
+        network: "RuPay",
+        last4: "8899",
+        cardType: "virtual",
+        status: "active",
+        cardImageUrl: "https://images.unsplash.com/scapia-rupay.png",
+      };
+
+      const primaryCard: CreditCardEntity = {
+        id: "cc-1",
+        issuer: "Federal Scapia",
+        network: "Visa",
+        last4: "1234",
+        limit: "500000",
+        outstanding: "12500",
+        cardImageUrl: "https://images.unsplash.com/scapia-visa.png",
+        variants: [variant],
+      };
+
+      expect(primaryCard.cardImageUrl).toBe("https://images.unsplash.com/scapia-visa.png");
+      expect(primaryCard.variants?.[0]?.cardImageUrl).toBe("https://images.unsplash.com/scapia-rupay.png");
+
+      // Resolve primary art
+      const primaryArt = resolveCardArtwork({
+        issuer: primaryCard.issuer,
+        network: primaryCard.network,
+        cardImageUrl: primaryCard.cardImageUrl,
+      });
+      expect(primaryArt.imageUrl).toBe(primaryCard.cardImageUrl);
+
+      // Resolve variant art
+      const variantArt = resolveCardArtwork({
+        name: variant.name,
+        issuer: primaryCard.issuer,
+        network: variant.network,
+        cardImageUrl: variant.cardImageUrl,
+      });
+      expect(variantArt.imageUrl).toBe(variant.cardImageUrl);
+    });
+  });
+
+  describe("User Requested 30 Specific Indian & Global Credit Cards", () => {
+    const requiredCards: Array<{ query: string; expectedId: string; expectedImage: string }> = [
+      { query: "HDFC Diners Club Credit Card", expectedId: "hdfc-diners-black", expectedImage: "/cards/hdfc-diners-black.png" },
+      { query: "HDFC Swiggy Credit Card", expectedId: "hdfc-swiggy", expectedImage: "/cards/hdfc-swiggy.png" },
+      { query: "ICICI Amazon Pay Credit Card", expectedId: "icici-amazon-pay", expectedImage: "/cards/icici-amazon-pay.png" },
+      { query: "ICICI Sapphiro Amex Credit Card", expectedId: "icici-sapphiro-amex", expectedImage: "/cards/icici-sapphiro-amex.png" },
+      { query: "ICICI Sapphiro Master Credit Card", expectedId: "icici-sapphiro", expectedImage: "/cards/icici-sapphiro.png" },
+      { query: "Kotak Air + Credit Card", expectedId: "kotak-air-plus", expectedImage: "/cards/kotak-air-plus.png" },
+      { query: "IDFC First Wealth Card", expectedId: "idfc-wealth", expectedImage: "/cards/idfc-wealth.png" },
+      { query: "Federal Scapia Credit Card", expectedId: "federal-scapia", expectedImage: "/cards/federal-scapia.png" },
+      { query: "Axis Bank Airtel Credit Card", expectedId: "axis-airtel", expectedImage: "/cards/axis-airtel.png" },
+      { query: "Axis Bank Atlas Credit Card", expectedId: "axis-atlas", expectedImage: "/cards/axis-atlas.png" },
+      { query: "Induslnd Avios Credit Card", expectedId: "indusind-avios", expectedImage: "/cards/indusind-avios.png" },
+      { query: "Standered Charted Ultimate Credit Card", expectedId: "sc-ultimate", expectedImage: "/cards/sc-ultimate.png" },
+      { query: "Amex Rewards Credit Card", expectedId: "amex-mrcc", expectedImage: "/cards/amex-mrcc.png" },
+      { query: "RBL World Safari Credit Card", expectedId: "rbl-world-safari", expectedImage: "/cards/rbl-world-safari.png" },
+      { query: "SBI Cash Back Credit Card", expectedId: "sbi-cashback", expectedImage: "/cards/sbi-cashback.png" },
+      { query: "Amex Reserve Credt Card", expectedId: "amex-reserve", expectedImage: "/cards/amex-reserve.png" },
+      { query: "Yes Bank Uni Credit Card", expectedId: "yes-uni", expectedImage: "/cards/yes-uni.png" },
+      { query: "Axis Bank Magnus Credit Card", expectedId: "axis-magnus", expectedImage: "/cards/axis-magnus.png" },
+      { query: "Federal Bank One Metal Credit Card", expectedId: "federal-one-metal", expectedImage: "/cards/federal-one-metal.png" },
+      { query: "Axis Bank ACE Credit Card", expectedId: "axis-ace", expectedImage: "/cards/axis-ace.png" },
+      { query: "SBI Octane Credit Card", expectedId: "sbi-octane", expectedImage: "/cards/sbi-octane.png" },
+      { query: "HSBC Credit Card", expectedId: "hsbc-live-plus", expectedImage: "/cards/hsbc-live-plus.png" },
+      { query: "OLA Money SBI Credit Card", expectedId: "ola-sbi", expectedImage: "/cards/ola-sbi.png" },
+      { query: "RBL Zomato Credit Card", expectedId: "rbl-zomato", expectedImage: "/cards/rbl-zomato.png" },
+      { query: "Kotak Zen Credit Card", expectedId: "kotak-zen", expectedImage: "/cards/kotak-zen.png" },
+      { query: "CITI Rewards Credit Card", expectedId: "citi-rewards", expectedImage: "/cards/citi-rewards.png" },
+      { query: "Standered Charted Manhattan Credit Card", expectedId: "sc-manhattan", expectedImage: "/cards/sc-manhattan.png" },
+      { query: "Axis Bank Flipkart Credit Card", expectedId: "axis-flipkart", expectedImage: "/cards/axis-flipkart.png" },
+      { query: "ICICI Platinum  Credit Card", expectedId: "icici-platinum", expectedImage: "/cards/icici-platinum.png" },
+      { query: "HDFC Times Credit Card", expectedId: "hdfc-times", expectedImage: "/cards/hdfc-times.png" },
+    ];
+
+    it.each(requiredCards)("accurately matches query '$query' to preset $expectedId with image $expectedImage", ({ query, expectedId, expectedImage }) => {
+      const match = getMatchingCardPreset(query);
+      expect(match).toBeDefined();
+      expect(match?.id).toBe(expectedId);
+      expect(match?.imageUrl).toBe(expectedImage);
+    });
+  });
+});

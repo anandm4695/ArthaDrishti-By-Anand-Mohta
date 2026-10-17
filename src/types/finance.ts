@@ -260,6 +260,7 @@ export interface CardVariant {
   cardType?: "physical" | "virtual" | "addon" | string;
   status?: "active" | "inactive" | "blocked" | string;
   notes?: string;
+  cardImageUrl?: string; // High-res card face artwork or custom image for this variant
 }
 
 export interface CreditCardTransaction {
@@ -297,6 +298,7 @@ export interface CreditCardEntity {
   rewardPointsBalance?: string | number;
   rewardPointValue?: string | number;
   variants?: CardVariant[]; // Multi-variant linked cards (e.g. Scapia RuPay + Visa, Sapphiro MC + Amex)
+  cardImageUrl?: string; // High-res card face artwork or custom image
 }
 
 // ────────────────────────────────────────────────────────────
