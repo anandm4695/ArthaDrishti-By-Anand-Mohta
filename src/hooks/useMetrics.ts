@@ -17,6 +17,7 @@ import {
   EMERGENCY_FUND_TARGET_MONTHS,
   getSubscriptionMonthlyEquivalent,
   informalPersonOutstanding,
+  computeCreditPortfolioSummary,
 } from "../utils/finance";
 import { getCurrentFY } from "../utils/appConstants";
 import { DEFAULT_MASTER_DATA, FamilyProfile } from "../utils/masterData";
@@ -790,26 +791,9 @@ export function useMetrics(
     const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
 
     // Credit utilization: cc outstanding / cc total limit (shared-pool deduplication)
-    const activeCC = (sState.creditCards || []).filter(
-      (c: any) => (c.status || "").toLowerCase() !== "closed"
-    );
-    const ccGroupPools: Record<string, number> = {};
-    activeCC.forEach((c: any) => {
-      if (c.sharedGroup) {
-        ccGroupPools[c.sharedGroup] = Math.max(
-          ccGroupPools[c.sharedGroup] || 0,
-          Number(c.sharedGroupLimit) || Number(c.limit || (c as any).cardLimit) || 0
-        );
-      }
-    });
-    const totalCCLimit =
-      activeCC
-        .filter((c: any) => !c.sharedGroup)
-        .reduce(
-          (s: number, c: any) => s + Number((c as any).limit || (c as any).cardLimit || 0),
-          0
-        ) + (Object.values(ccGroupPools) as number[]).reduce((s: number, v: number) => s + v, 0);
-    const creditUtilization = totalCCLimit > 0 ? (ccOutstanding / totalCCLimit) * 100 : 0;
+    const ccSummary = computeCreditPortfolioSummary(sState.creditCards || []);
+    const totalCCLimit = ccSummary.totalLimit;
+    const creditUtilization = ccSummary.utilizationPct;
 
     // Compute FY-aware tax liability with auto-detected deductions and manual overrides
     const taxDue = getTaxDueForDashboard(sState, annualIncome);

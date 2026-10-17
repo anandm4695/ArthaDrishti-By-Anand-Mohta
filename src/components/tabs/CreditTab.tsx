@@ -47,7 +47,19 @@ import {
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { getCardGradient } from "../../utils/cardColors";
-import { fmtINRFull, fmtINRExact, today, uid, getCCDueDate, loanOutstanding, ccOutstanding } from "../../utils/finance";
+import {
+  fmtINR,
+  fmtINRFull,
+  fmtINRExact,
+  today,
+  uid,
+  getCCDueDate,
+  loanOutstanding,
+  ccOutstanding,
+  computeCreditPortfolioSummary,
+  getCardEffectiveLimitAndAvail,
+} from "../../utils/finance";
+import { CreditPoolManagerModal } from "../credit/CreditPoolManagerModal";
 import { useMasterData, formatProfileOption, DEFAULT_MASTER_DATA } from "../../utils/masterData";
 import { Modal, ModalActions } from "../ui/Modal";
 import { Field } from "../ui/Form";
@@ -542,13 +554,40 @@ export function CreditTab({
   const [sub, setSub] = useState(subTab || "cc");
   const [modal, setModal] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [managePoolsOpen, setManagePoolsOpen] = useState(false);
+
+  // Normalized portfolio summary with shared pool deduplication
+  const ccPortfolioSummary = useMemo(
+    () => computeCreditPortfolioSummary(state.creditCards || []),
+    [state.creditCards]
+  );
 
   // Existing shared group names — passed to modals for datalist suggestions
   const existingGroups: string[] = Array.from(
     new Set<string>(
-      (state.creditCards || []).filter((c: any) => c.sharedGroup).map((c: any) => c.sharedGroup as string)
+      (state.creditCards || [])
+        .map((c: any) => (typeof c.sharedGroup === "string" ? c.sharedGroup.trim() : ""))
+        .filter(Boolean)
     )
   );
+
+  const [savingBatchPools, setSavingBatchPools] = useState(false);
+  const handleBatchUpdateCards = async (updates: { id: string; patch: any }[]) => {
+    setSavingBatchPools(true);
+    try {
+      for (const u of updates) {
+        await updateItem("creditCards", u.id, u.patch);
+      }
+      showToast?.(
+        `Successfully updated shared credit pools across ${updates.length} card${updates.length > 1 ? "s" : ""}!`,
+        "success"
+      );
+    } catch (err: any) {
+      showToast?.(`Failed to update credit pools: ${err?.message || "Unknown error"}`, "error");
+    } finally {
+      setSavingBatchPools(false);
+    }
+  };
 
   const { run: saveNewCC, loading: savingNewCC } = useAsyncAction(
     async (v: any) => {
@@ -721,6 +760,16 @@ export function CreditTab({
       >
         <SectionTitle sub={activeMeta.sub}>{activeMeta.label}</SectionTitle>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {sub === "cc" && (
+            <Button
+              variant="outline"
+              icon={<Layers size={14} />}
+              onClick={() => setManagePoolsOpen(true)}
+              title="Manage shared credit limit pools across your cards"
+            >
+              Credit Pools {ccPortfolioSummary.poolList.length > 0 ? `(${ccPortfolioSummary.poolList.length})` : ""}
+            </Button>
+          )}
           {(sub === "cc" || sub === "prepaid") && (
             <Button
               variant="outline"
@@ -752,56 +801,26 @@ export function CreditTab({
         {sub === "cc" && (
           <>
             {(() => {
-              const activeCards = (state.creditCards || []).filter(
-                (c: any) => (c.status || "active").toLowerCase() !== "closed"
-              );
-              // For shared-pool cards, count the pool limit once (max across group), not the sum of sub-limits
-              const groupPools: Record<string, number> = {};
-              activeCards.forEach((c: any) => {
-                if (c.sharedGroup) {
-                  groupPools[c.sharedGroup] = Math.max(
-                    groupPools[c.sharedGroup] || 0,
-                    Number(c.sharedGroupLimit) || Number(c.limit || c.cardLimit) || 0
-                  );
-                }
-              });
-              const totalLimit =
-                activeCards
-                  .filter((c: any) => !c.sharedGroup)
-                  .reduce((acc: number, c: any) => acc + (Number(c.limit || c.cardLimit) || 0), 0) +
-                (Object.values(groupPools) as number[]).reduce(
-                  (acc: number, v: number) => acc + v,
-                  0
-                );
-              const totalOutstandingCC = activeCards.reduce(
-                (acc: any, c: any) => acc + ccOutstanding(c),
-                0
-              );
-              const totalAvailable = Math.max(0, totalLimit - totalOutstandingCC);
-              const utilPct =
-                totalLimit > 0
-                  ? Math.min(100, Math.max(0, Math.round((totalOutstandingCC / totalLimit) * 100)))
-                  : 0;
-
-              const totalAnnualFees = activeCards
-                .filter((c: any) => Number(c.annualFee) > 0)
-                .reduce((acc: number, c: any) => acc + Number(c.annualFee), 0);
-              const feeCardCount = activeCards.filter((c: any) => Number(c.annualFee) > 0).length;
-
-              const totalRewardPoints = activeCards.reduce(
-                (acc: number, c: any) => acc + (Number(c.rewardPointsBalance) || 0),
-                0
-              );
-              const totalRewardValue = activeCards.reduce(
-                (acc: number, c: any) =>
-                  acc + (Number(c.rewardPointsBalance) || 0) * (Number(c.rewardPointValue) || 0),
-                0
-              );
+              const {
+                activeCards,
+                totalLimit,
+                totalOutstanding: totalOutstandingCC,
+                totalAvailable,
+                utilizationPct: utilPct,
+                totalAnnualFees,
+                feeCardCount,
+                totalRewardPoints,
+                totalRewardValue,
+                poolList,
+              } = ccPortfolioSummary;
 
               const statCards = [
                 {
                   label: "Total Limit",
-                  sub: `${activeCards.length} active card${activeCards.length !== 1 ? "s" : ""}`,
+                  sub:
+                    poolList.length > 0
+                      ? `${activeCards.length} active cards · ${poolList.length} shared pool${poolList.length !== 1 ? "s" : ""}`
+                      : `${activeCards.length} active card${activeCards.length !== 1 ? "s" : ""}`,
                   value: fmtINRFull(totalLimit),
                   numericValue: totalLimit,
                   color: THEME.accent,
@@ -1207,6 +1226,15 @@ export function CreditTab({
           onSave={(v: any) => saveLentEdit(editId, v)}
           onClose={() => setEditId(null)}
           saving={savingLentEdit}
+        />
+      )}
+
+      {managePoolsOpen && (
+        <CreditPoolManagerModal
+          creditCards={state.creditCards || []}
+          onClose={() => setManagePoolsOpen(false)}
+          onSaveBatch={handleBatchUpdateCards}
+          saving={savingBatchPools}
         />
       )}
     </div>
@@ -1824,6 +1852,7 @@ function CCList({
 
   const activeCards = items.filter((c: any) => (c.status || "active").toLowerCase() !== "closed");
   const closedCards = items.filter((c: any) => (c.status || "active").toLowerCase() === "closed");
+  const ccPortfolioSummary = useMemo(() => computeCreditPortfolioSummary(items), [items]);
 
   // Filtered cards
   const displayCards = useMemo(() => {
@@ -1913,13 +1942,15 @@ function CCList({
     );
   }
 
-  // Partition display cards into ungrouped and shared-pool groups
+  // Partition display cards into ungrouped and shared-pool groups (normalized by case-insensitive name)
   const ungroupedCards: any[] = [];
-  const groupedCards: Record<string, any[]> = {};
+  const groupedCards: Record<string, { name: string; cards: any[] }> = {};
   displayCards.forEach((c: any) => {
-    if (c.sharedGroup) {
-      if (!groupedCards[c.sharedGroup]) groupedCards[c.sharedGroup] = [];
-      groupedCards[c.sharedGroup].push(c);
+    const rawGroup = typeof c.sharedGroup === "string" ? c.sharedGroup.trim() : "";
+    if (rawGroup) {
+      const key = rawGroup.toLowerCase();
+      if (!groupedCards[key]) groupedCards[key] = { name: rawGroup, cards: [] };
+      groupedCards[key].cards.push(c);
     } else {
       ungroupedCards.push(c);
     }
@@ -1935,7 +1966,11 @@ function CCList({
   const renderCard = (c: any) => {
     const isClosed = (c.status || "active").toLowerCase() === "closed";
     const cardOut = ccOutstanding(c);
-    const util = Number(c.limit) ? (cardOut / Number(c.limit)) * 100 : 0;
+    const eff = getCardEffectiveLimitAndAvail(c, ccPortfolioSummary);
+    const cardLimitNum = Number(c.limit) || 0;
+    const displayLimit = eff.isShared ? eff.effectiveLimit : cardLimitNum;
+    const displayAvail = eff.isShared ? eff.effectiveAvailable : Math.max(0, cardLimitNum - cardOut);
+    const util = eff.isShared ? eff.effectiveUtilization : (cardLimitNum > 0 ? (cardOut / cardLimitNum) * 100 : 0);
     const txnCount = (c.transactions || []).length;
 
     return (
@@ -2262,9 +2297,25 @@ function CCList({
                 textTransform: "uppercase",
                 fontWeight: 800,
                 letterSpacing: "0.06em",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
               }}
             >
-              {c.sharedGroup ? "Card Sub-Limit" : "Credit Limit"}
+              {eff.isShared ? "Shared Pool Limit" : "Credit Limit"}
+              {eff.isShared && (
+                <span
+                  style={{
+                    background: "rgba(255,255,255,0.18)",
+                    padding: "1px 5px",
+                    borderRadius: 4,
+                    fontSize: 8.5,
+                    fontWeight: 700,
+                  }}
+                >
+                  Pool
+                </span>
+              )}
             </div>
             <div
               style={{
@@ -2276,12 +2327,17 @@ function CCList({
                 marginTop: 2,
               }}
             >
-              <Money value={c.limit} variant="full" />
+              <Money value={displayLimit} variant="full" />
             </div>
+            {eff.isShared && cardLimitNum > 0 && cardLimitNum !== displayLimit && (
+              <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.5)", marginTop: 1 }}>
+                Card Sub: ₹{cardLimitNum.toLocaleString("en-IN")}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Sub-limit utilization bar — active cards only */}
+        {/* Utilization bar — active cards only */}
         {!isClosed && (
           <div style={{ marginTop: 14 }}>
             <div
@@ -2312,10 +2368,10 @@ function CCList({
               }}
             >
               <span style={{ color: util > 70 ? "#ff8888" : util > 30 ? "#fde047" : "#86efac" }}>
-                {util.toFixed(1)}% {c.sharedGroup ? "sub-limit" : "limit"} used
+                {util.toFixed(1)}% {eff.isShared ? "pool limit used" : "limit used"}
               </span>
-              <span style={{ color: "rgba(255,255,255,0.65)" }}>
-                Avail: <Money value={Math.max(0, (Number(c.limit) || 0) - ccOutstanding(c))} variant="full" />
+              <span style={{ color: "rgba(255,255,255,0.7)" }}>
+                Avail{eff.isShared ? " in Pool" : ""}: <Money value={displayAvail} variant="full" />
               </span>
             </div>
           </div>
@@ -2924,19 +2980,24 @@ function CCList({
       )}
 
       {/* Shared limit pool sections */}
-      {Object.entries(groupedCards).map(([groupName, cards]) => {
-        const groupLimit = Math.max(...cards.map((c: any) => Number(c.sharedGroupLimit) || 0));
-        const groupOutstanding = cards.reduce(
-          (s: number, c: any) => s + ccOutstanding(c),
-          0
+      {Object.entries(groupedCards).map(([groupKey, group]) => {
+        const { name: groupName, cards } = group;
+        const poolInfo = ccPortfolioSummary.poolBreakdown.find(
+          (p) => p.name.trim().toLowerCase() === groupKey
         );
+        const declaredLimit = Math.max(...cards.map((c: any) => Number(c.sharedGroupLimit) || 0));
+        const maxCardLimit = Math.max(...cards.map((c: any) => Number(c.limit) || 0));
+        const groupLimit = poolInfo ? poolInfo.limit : (declaredLimit > 0 ? declaredLimit : maxCardLimit);
+        const groupOutstanding = poolInfo
+          ? poolInfo.outstanding
+          : cards.reduce((s: number, c: any) => s + ccOutstanding(c), 0);
         const groupUtil = groupLimit > 0 ? Math.min(100, (groupOutstanding / groupLimit) * 100) : 0;
         const groupAvailable = Math.max(0, groupLimit - groupOutstanding);
         const barColor = groupUtil > 70 ? THEME.rust : groupUtil > 30 ? THEME.gold : THEME.sage;
 
         return (
           <div
-            key={groupName}
+            key={groupKey}
             style={{
               marginBottom: 32,
               padding: 20,
@@ -7495,6 +7556,14 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
             })}
           </div>
 
+          <datalist id="cc-shared-group-list">
+            {existingGroups
+              .filter((g: string) => g)
+              .map((g: string) => (
+                <option key={g} value={g} />
+              ))}
+          </datalist>
+
           {/* ── STEP 1: Card Identity & Limits ── */}
           {activeStep === 0 && (
             <div className="cc-form-panel">
@@ -7635,7 +7704,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     placeholder="4589"
                   />
                 </Field>
-                <Field label={f.sharedGroup ? "Sub-Limit (₹)" : "Account Limit (₹)"}>
+                <Field label={f.sharedGroup ? "Card Sub-Limit (₹)" : "Account Limit (₹)"}>
                   <input
                     style={input}
                     type="number"
@@ -7653,6 +7722,64 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     placeholder="0"
                   />
                 </Field>
+              </div>
+
+              {/* Shared Credit Pool configuration directly on Step 1 */}
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  background: f.sharedGroup ? "color-mix(in srgb, var(--t-accent) 8%, var(--surface-1))" : "var(--surface-1)",
+                  border: `1px solid ${f.sharedGroup ? "color-mix(in srgb, var(--t-accent) 30%, transparent)" : "var(--border)"}`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: f.sharedGroup ? 10 : 0 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 12, fontWeight: 700, color: THEME.ink }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(f.sharedGroup)}
+                      onChange={(e) => {
+                        if (!e.target.checked) {
+                          setF({ ...f, sharedGroup: "", sharedGroupLimit: "" });
+                        } else {
+                          const suggested = (f.issuer || "").trim() ? `${f.issuer.trim()} Shared Pool` : "Shared Pool";
+                          setF({ ...f, sharedGroup: suggested, sharedGroupLimit: f.limit || "" });
+                        }
+                      }}
+                      style={{ accentColor: THEME.accent }}
+                    />
+                    Shares credit pool with other cards (Combine limit into one pool)
+                  </label>
+                  {f.sharedGroup && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: THEME.accent, background: "color-mix(in srgb, var(--t-accent) 15%, transparent)", padding: "2px 8px", borderRadius: 6 }}>
+                      Shared Pool Active
+                    </span>
+                  )}
+                </div>
+
+                {f.sharedGroup && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10, marginTop: 8 }}>
+                    <Field label="Shared Pool Name">
+                      <input
+                        style={input}
+                        value={f.sharedGroup || ""}
+                        onChange={(e) => setF({ ...f, sharedGroup: e.target.value })}
+                        placeholder="e.g. HDFC Shared Pool"
+                        list="cc-shared-group-list"
+                      />
+                    </Field>
+                    <Field label="Combined Pool Limit (₹)">
+                      <input
+                        style={input}
+                        type="number"
+                        value={f.sharedGroupLimit || ""}
+                        onChange={(e) => setF({ ...f, sharedGroupLimit: e.target.value })}
+                        placeholder={f.limit || "e.g. 500000"}
+                      />
+                    </Field>
+                  </div>
+                )}
               </div>
             </div>
           )}

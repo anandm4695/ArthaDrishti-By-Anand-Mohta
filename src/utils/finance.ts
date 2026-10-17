@@ -950,6 +950,191 @@ export const ccOutstanding = (card: any): number => {
 };
 export const getCcOutstanding = ccOutstanding;
 
+export interface CreditPoolInfo {
+  name: string; // Display canonical name (first-seen capitalization)
+  key: string; // Normalized lookup key (trimmed and lowercased)
+  cards: any[];
+  poolLimit: number;
+  totalOutstanding: number;
+  available: number;
+  utilizationPct: number;
+  isOverLimit: boolean;
+}
+
+export interface CreditPortfolioSummary {
+  activeCards: any[];
+  closedCards: any[];
+  standaloneCards: any[];
+  pools: Record<string, CreditPoolInfo>;
+  poolList: CreditPoolInfo[];
+  totalLimit: number;
+  totalOutstanding: number;
+  totalAvailable: number;
+  utilizationPct: number;
+  isOverLimit: boolean;
+  totalAnnualFees: number;
+  feeCardCount: number;
+  totalRewardPoints: number;
+  totalRewardValue: number;
+}
+
+/**
+ * Computes deduplicated credit portfolio metrics accounting for shared credit pools.
+ * Cards sharing a pool (by normalized sharedGroup) contribute their shared pool limit
+ * (or max individual card limit) exactly ONCE to totalLimit, avoiding inflating combined limit.
+ */
+export const computeCreditPortfolioSummary = (cards: any[] = []): CreditPortfolioSummary => {
+  const allCards = Array.isArray(cards) ? cards : [];
+  const activeCards = allCards.filter(
+    (c: any) => (c?.status || "active").toLowerCase() !== "closed"
+  );
+  const closedCards = allCards.filter(
+    (c: any) => (c?.status || "active").toLowerCase() === "closed"
+  );
+
+  const pools: Record<string, CreditPoolInfo> = {};
+  const standaloneCards: any[] = [];
+
+  activeCards.forEach((c: any) => {
+    const rawGroup = typeof c?.sharedGroup === "string" ? c.sharedGroup.trim() : "";
+    if (rawGroup) {
+      const key = rawGroup.toLowerCase();
+      if (!pools[key]) {
+        pools[key] = {
+          name: rawGroup,
+          key,
+          cards: [],
+          poolLimit: 0,
+          totalOutstanding: 0,
+          available: 0,
+          utilizationPct: 0,
+          isOverLimit: false,
+        };
+      }
+      pools[key].cards.push(c);
+    } else {
+      standaloneCards.push(c);
+    }
+  });
+
+  const poolList = Object.values(pools);
+  poolList.forEach((pool) => {
+    const declaredPoolLimit = Math.max(
+      0,
+      ...pool.cards.map((c: any) => Number(c?.sharedGroupLimit) || 0)
+    );
+    const maxCardLimit = Math.max(
+      0,
+      ...pool.cards.map((c: any) => Number(c?.limit ?? c?.cardLimit) || 0)
+    );
+    // Combined pool limit is the declared pool limit, or falls back to max card limit across the pool
+    pool.poolLimit = declaredPoolLimit > 0 ? declaredPoolLimit : maxCardLimit;
+    pool.totalOutstanding = pool.cards.reduce(
+      (sum: number, c: any) => sum + ccOutstanding(c),
+      0
+    );
+    pool.available = Math.max(0, pool.poolLimit - pool.totalOutstanding);
+    pool.isOverLimit = pool.poolLimit > 0 && pool.totalOutstanding > pool.poolLimit;
+    pool.utilizationPct =
+      pool.poolLimit > 0
+        ? Math.min(100, Math.max(0, Math.round((pool.totalOutstanding / pool.poolLimit) * 100)))
+        : pool.totalOutstanding > 0
+          ? 100
+          : 0;
+  });
+
+  const standaloneLimit = standaloneCards.reduce(
+    (sum: number, c: any) => sum + (Number(c?.limit ?? c?.cardLimit) || 0),
+    0
+  );
+  const totalPoolLimit = poolList.reduce((sum: number, p: CreditPoolInfo) => sum + p.poolLimit, 0);
+  const totalLimit = standaloneLimit + totalPoolLimit;
+
+  const totalOutstanding = activeCards.reduce(
+    (sum: number, c: any) => sum + ccOutstanding(c),
+    0
+  );
+  const totalAvailable = Math.max(0, totalLimit - totalOutstanding);
+  const isOverLimit = totalLimit > 0 && totalOutstanding > totalLimit;
+  const utilizationPct =
+    totalLimit > 0
+      ? Math.min(100, Math.max(0, Math.round((totalOutstanding / totalLimit) * 100)))
+      : totalOutstanding > 0
+        ? 100
+        : 0;
+
+  const totalAnnualFees = activeCards
+    .filter((c: any) => Number(c?.annualFee) > 0)
+    .reduce((sum: number, c: any) => sum + Number(c.annualFee), 0);
+  const feeCardCount = activeCards.filter((c: any) => Number(c?.annualFee) > 0).length;
+
+  const totalRewardPoints = activeCards.reduce(
+    (sum: number, c: any) => sum + (Number(c?.rewardPointsBalance) || 0),
+    0
+  );
+  const totalRewardValue = activeCards.reduce(
+    (sum: number, c: any) =>
+      sum + (Number(c?.rewardPointsBalance) || 0) * (Number(c?.rewardPointValue) || 0),
+    0
+  );
+
+  return {
+    activeCards,
+    closedCards,
+    standaloneCards,
+    pools,
+    poolList,
+    totalLimit,
+    totalOutstanding,
+    totalAvailable,
+    utilizationPct,
+    isOverLimit,
+    totalAnnualFees,
+    feeCardCount,
+    totalRewardPoints,
+    totalRewardValue,
+  };
+};
+
+export const getCardEffectiveLimitAndAvail = (
+  card: any,
+  summary: CreditPortfolioSummary
+) => {
+  const rawGroup = typeof card?.sharedGroup === "string" ? card.sharedGroup.trim() : "";
+  if (rawGroup) {
+    const key = rawGroup.toLowerCase();
+    const pool = summary.pools[key];
+    if (pool) {
+      return {
+        isShared: true,
+        poolName: pool.name,
+        poolLimit: pool.poolLimit,
+        poolOutstanding: pool.totalOutstanding,
+        poolAvailable: pool.available,
+        poolUtilization: pool.utilizationPct,
+        poolCardCount: pool.cards.length,
+        effectiveLimit: pool.poolLimit,
+        effectiveAvailable: pool.available,
+        cardOutstanding: ccOutstanding(card),
+      };
+    }
+  }
+  const lim = Number(card?.limit ?? card?.cardLimit) || 0;
+  const out = ccOutstanding(card);
+  return {
+    isShared: false,
+    poolName: "",
+    poolLimit: lim,
+    poolOutstanding: out,
+    poolAvailable: Math.max(0, lim - out),
+    poolUtilization: lim > 0 ? Math.round((out / lim) * 100) : (out > 0 ? 100 : 0),
+    poolCardCount: 1,
+    effectiveLimit: lim,
+    effectiveAvailable: Math.max(0, lim - out),
+    cardOutstanding: out,
+  };
+};
+
 export const informalPersonOutstanding = (person: any): number => {
   if (!person) return 0;
   const tranches: any[] = Array.isArray(person.tranches) ? person.tranches : [];

@@ -47,7 +47,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
-import { fmtINR, fmtINRFull, fmtINRExact, fmtDate, today } from "../../utils/finance";
+import { fmtINR, fmtINRFull, fmtINRExact, fmtDate, today, computeCreditPortfolioSummary } from "../../utils/finance";
 import { getCurrentFYStartYear, getCurrentFY } from "../../utils/appConstants";
 import { useMasterData } from "../../utils/masterData";
 import { BankLogo, CardNetworkLogo } from "../ui/BrandLogos";
@@ -981,44 +981,19 @@ export function CardInsightsSection({
 
   // Overall Portfolio Limits & Health Metrics
   const portfolioSummary = useMemo(() => {
-    const activeCC = creditCards.filter((c: any) => (c.status || "active").toLowerCase() !== "closed");
+    const ccSum = computeCreditPortfolioSummary(creditCards);
+    const activeCC = ccSum.activeCards;
     const activePrepaid = prepaidCards.filter((p: any) => (p.status || "active").toLowerCase() !== "closed");
 
-    // Pool group limits deduplication
-    const groupPools: Record<string, number> = {};
-    activeCC.forEach((c: any) => {
-      if (c.sharedGroup) {
-        groupPools[c.sharedGroup] = Math.max(
-          groupPools[c.sharedGroup] || 0,
-          Number(c.sharedGroupLimit) || 0
-        );
-      }
-    });
-    const totalLimit =
-      activeCC
-        .filter((c: any) => !c.sharedGroup)
-        .reduce((acc: number, c: any) => acc + (Number(c.limit) || 0), 0) +
-      (Object.values(groupPools) as number[]).reduce((acc: number, v: number) => acc + v, 0);
-
-    const totalOutstanding = activeCC.reduce((acc: number, c: any) => acc + (Number(c.outstanding) || 0), 0);
-    const totalAvailable = Math.max(0, totalLimit - totalOutstanding);
-    const overallUtilPct = totalLimit > 0 ? Math.round((totalOutstanding / totalLimit) * 100) : 0;
+    const totalLimit = ccSum.totalLimit;
+    const totalOutstanding = ccSum.totalOutstanding;
+    const totalAvailable = ccSum.totalAvailable;
+    const overallUtilPct = ccSum.utilizationPct;
 
     const totalPrepaidBalance = activePrepaid.reduce((acc: number, p: any) => acc + (Number(p.balance) || 0), 0);
-
-    const totalRewardPoints = activeCC.reduce(
-      (acc: number, c: any) => acc + (Number(c.rewardPointsBalance) || 0),
-      0
-    );
-    const totalRewardValue = activeCC.reduce(
-      (acc: number, c: any) =>
-        acc + (Number(c.rewardPointsBalance) || 0) * (Number(c.rewardPointValue) || 0),
-      0
-    );
-
-    const totalAnnualFees = activeCC
-      .filter((c: any) => Number(c.annualFee) > 0)
-      .reduce((acc: number, c: any) => acc + Number(c.annualFee), 0);
+    const totalRewardPoints = ccSum.totalRewardPoints;
+    const totalRewardValue = ccSum.totalRewardValue;
+    const totalAnnualFees = ccSum.totalAnnualFees;
 
     // Billing Cycle Optimization: Best card to swipe today
     const now = new Date();

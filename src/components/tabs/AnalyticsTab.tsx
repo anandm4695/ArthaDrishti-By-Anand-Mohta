@@ -91,6 +91,7 @@ import {
   GOLD_PURITY_FACTOR,
   computeFireTarget,
   DEFAULT_FIRE_SWR,
+  computeCreditPortfolioSummary,
 } from "../../utils/finance";
 import { computeNetWorthAsOf, getEarliestNetWorthMonth, nextYm } from "../../utils/netWorthAsOf";
 import { getCurrentFY } from "../../utils/appConstants";
@@ -2811,26 +2812,11 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
     if (metrics.totalLiabilities === 0 && metrics.netWorth >= 0) earned.add("df");
 
     // Credit Smart — deduplicate shared-pool limits (consistent with useMetrics)
-    const activeCC = (state.creditCards || []).filter(
-      (c: any) => (c.status || "").toLowerCase() !== "closed"
-    );
-    const ccOut = activeCC.reduce((s: number, c: any) => s + Number(c.outstanding || 0), 0);
-    const ccGroupPoolsBadge: Record<string, number> = {};
-    activeCC.forEach((c: any) => {
-      if (c.sharedGroup) {
-        ccGroupPoolsBadge[c.sharedGroup] = Math.max(
-          ccGroupPoolsBadge[c.sharedGroup] || 0,
-          Number(c.sharedGroupLimit) || Number(c.limit || c.cardLimit) || 0
-        );
-      }
-    });
-    const ccLim =
-      activeCC
-        .filter((c: any) => !c.sharedGroup)
-        .reduce((s: number, c: any) => s + Number(c.limit || c.cardLimit || 0), 0) +
-      (Object.values(ccGroupPoolsBadge) as number[]).reduce((s: number, v: number) => s + v, 0);
-    const ccUtil = ccLim > 0 ? (ccOut / ccLim) * 100 : 0;
-    if (activeCC.length > 0 && ccOut === 0) earned.add("cc0");
+    const ccBadgeSummary = computeCreditPortfolioSummary(state.creditCards || []);
+    const ccOut = ccBadgeSummary.totalOutstanding;
+    const ccLim = ccBadgeSummary.totalLimit;
+    const ccUtil = ccBadgeSummary.utilizationPct;
+    if (ccBadgeSummary.activeCards.length > 0 && ccOut === 0) earned.add("cc0");
     if (ccLim > 0 && ccUtil < 30) earned.add("cc30");
 
     // Protected

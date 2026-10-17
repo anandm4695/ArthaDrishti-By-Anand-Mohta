@@ -43,7 +43,7 @@ import {
 } from "recharts";
 import { THEME } from "../../utils/constants";
 import { useMasterData, formatProfileOption, FamilyProfile } from "../../utils/masterData";
-import { uid, today, exportArrayToCSV, fmtINR } from "../../utils/finance";
+import { uid, today, exportArrayToCSV, fmtINR, computeCreditPortfolioSummary } from "../../utils/finance";
 import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 import { Modal, ModalActions } from "../ui/Modal";
 import { Field } from "../ui/Form";
@@ -1241,23 +1241,11 @@ function CreditPillarsEngine({
 }) {
   // 1. Credit Utilization (30% weight)
   const activeCards = (creditCards || []).filter(
-    (c) => (c.status || "").toLowerCase() !== "closed"
+    (c) => (c.status || "active").toLowerCase() !== "closed"
   );
-  const pools: Record<string, number> = {};
-  activeCards.forEach((c) => {
-    if (c.sharedGroup) {
-      pools[c.sharedGroup] = Math.max(pools[c.sharedGroup] || 0, Number(c.sharedGroupLimit) || Number(c.limit || c.cardLimit) || 0);
-    }
-  });
-  const totalLimit =
-    activeCards
-      .filter((c) => !c.sharedGroup)
-      .reduce((s: number, c) => s + Number(c.limit || c.cardLimit || 0), 0) +
-    Object.values(pools).reduce((s: number, v: number) => s + v, 0);
-  const totalOutstanding = activeCards.reduce(
-    (s: number, c) => s + Math.max(0, Number(c.outstanding || 0)),
-    0
-  );
+  const ccSum = computeCreditPortfolioSummary(creditCards);
+  const totalLimit = ccSum.totalLimit;
+  const totalOutstanding = ccSum.totalOutstanding;
   const utilization = totalLimit > 0 ? (totalOutstanding / totalLimit) * 100 : null;
 
   // 2. Payment History (35% weight)
@@ -1698,17 +1686,10 @@ function CreditScoreSimulator({
   creditCards: CreditCardItem[];
   loans: LoanItem[];
 }) {
-  const activeCards = (creditCards || []).filter(
-    (c) => (c.status || "").toLowerCase() !== "closed"
-  );
-  const totalLimit = activeCards.reduce(
-    (s: number, c) => s + Number(c.limit || c.cardLimit || 0),
-    0
-  );
-  const totalOutstanding = activeCards.reduce(
-    (s: number, c) => s + Math.max(0, Number(c.outstanding || 0)),
-    0
-  );
+  const ccSimSummary = computeCreditPortfolioSummary(creditCards);
+  const activeCards = ccSimSummary.activeCards;
+  const totalLimit = ccSimSummary.totalLimit;
+  const totalOutstanding = ccSimSummary.totalOutstanding;
 
   // Simulation Sliders / Toggles
   const [payoffAmount, setPayoffAmount] = useState(0);

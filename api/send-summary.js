@@ -674,16 +674,18 @@ function computeSummary(state, refDate = new Date()) {
 
   const ccGroupPools = {};
   activeCards.forEach((c) => {
-    if (c.sharedGroup) {
-      ccGroupPools[c.sharedGroup] = Math.max(
-        ccGroupPools[c.sharedGroup] || 0,
+    const rawGroup = typeof c.sharedGroup === "string" ? c.sharedGroup.trim() : "";
+    if (rawGroup) {
+      const key = rawGroup.toLowerCase();
+      ccGroupPools[key] = Math.max(
+        ccGroupPools[key] || 0,
         Number(c.sharedGroupLimit) || Number(c.limit || c.cardLimit) || 0
       );
     }
   });
   const creditLimit =
     activeCards
-      .filter((c) => !c.sharedGroup)
+      .filter((c) => !(typeof c.sharedGroup === "string" && c.sharedGroup.trim()))
       .reduce((s, c) => s + (Number(c.limit || c.cardLimit) || 0), 0) +
     Object.values(ccGroupPools).reduce((s, v) => s + v, 0);
   const creditAvailable = Math.max(0, creditLimit - creditOutstanding);
@@ -693,9 +695,11 @@ function computeSummary(state, refDate = new Date()) {
       : (creditOutstanding > 0 ? 100 : 0);
 
   const enrichedCards = activeCards.map((c) => {
+    const rawGroup = typeof c.sharedGroup === "string" ? c.sharedGroup.trim() : "";
+    const groupKey = rawGroup ? rawGroup.toLowerCase() : "";
     const out = Math.max(0, Number(c.outstanding || 0));
     const lim =
-      (c.sharedGroup ? ccGroupPools[c.sharedGroup] : 0) ||
+      (groupKey ? ccGroupPools[groupKey] : 0) ||
       Number(c.limit || c.cardLimit) ||
       0;
     const u = lim > 0 ? Math.min(100, Math.max(0, Math.round((out / lim) * 100))) : (out > 0 ? 100 : 0);

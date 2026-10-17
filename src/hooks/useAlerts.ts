@@ -10,6 +10,7 @@ import {
   alertDismissKey,
   loanOutstanding,
   ccOutstanding,
+  computeCreditPortfolioSummary,
 } from "../utils/finance";
 import { getCurrentFY } from "../utils/appConstants";
 import { dueStatus } from "../utils/dueStatus";
@@ -252,27 +253,9 @@ export function useAlerts(state: any, metrics: any, marketData?: Record<string, 
     // not the sum of each card's sub-limit — same dedup as useMetrics.ts/CreditTab.tsx, otherwise
     // this alert's utilization comes out artificially low for anyone using a shared pool and can
     // fail to fire when it should.
-    const activeCCForAlert = (state.creditCards || []).filter(
-      (c: any) => (c.status || "").toLowerCase() !== "closed"
-    );
-    const ccGroupPoolsForAlert: Record<string, number> = {};
-    activeCCForAlert.forEach((c: any) => {
-      if (c.sharedGroup) {
-        ccGroupPoolsForAlert[c.sharedGroup] = Math.max(
-          ccGroupPoolsForAlert[c.sharedGroup] || 0,
-          Number(c.sharedGroupLimit) || Number(c.limit || (c as any).cardLimit) || 0
-        );
-      }
-    });
-    const totalCCLimitForAlert =
-      activeCCForAlert
-        .filter((c: any) => !c.sharedGroup)
-        .reduce((s: number, c: any) => s + Number((c as any).limit || (c as any).cardLimit || 0), 0) +
-      (Object.values(ccGroupPoolsForAlert) as number[]).reduce((s: number, v: number) => s + v, 0);
-    const ccOutstandingForAlert = activeCCForAlert.reduce(
-      (s: number, c: any) => s + ccOutstanding(c),
-      0
-    );
+    const ccSummaryForAlert = computeCreditPortfolioSummary(state.creditCards || []);
+    const totalCCLimitForAlert = ccSummaryForAlert.totalLimit;
+    const ccOutstandingForAlert = ccSummaryForAlert.totalOutstanding;
     if (totalCCLimitForAlert > 0 && ccOutstandingForAlert > 0) {
       const util = (ccOutstandingForAlert / totalCCLimitForAlert) * 100;
       if (util > 75)
