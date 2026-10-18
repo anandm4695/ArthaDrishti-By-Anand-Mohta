@@ -2055,111 +2055,147 @@ function CCList({
           transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
         }}
       >
-        {/* ── CARD HEADER: Prominent, High-Contrast Card Name & Details ── */}
+        {/* ── CARD HEADER: Uniform Fixed Height so all card visuals align in one horizontal line ── */}
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 12,
+            height: 78,
             marginBottom: 14,
-            paddingBottom: 10,
+            paddingBottom: 8,
             borderBottom: "1px solid var(--t-line)",
+            boxSizing: "border-box",
           }}
         >
-          <div style={{ minWidth: 0, flex: 1 }}>
+          {/* Top Row: BankLogo + Card Title (max 2 lines, clamped) + Owner & Pool Badges */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 10,
+              minWidth: 0,
+            }}
+          >
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                flexWrap: "wrap",
-                marginBottom: 4,
+                minWidth: 0,
+                flex: 1,
               }}
             >
-              <BankLogo bankName={c.bank || c.issuer || c.cardName} size={30} borderRadius={8} />
-              <h3
+              <div style={{ flexShrink: 0 }}>
+                <BankLogo bankName={c.bank || c.issuer || c.cardName} size={30} borderRadius={8} />
+              </div>
+              <div
                 style={{
-                  margin: 0,
-                  fontSize: 19,
-                  fontWeight: 800,
-                  color: "var(--t-ink)",
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1.25,
-                  wordBreak: "break-word",
+                  minWidth: 0,
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  height: 40,
                 }}
               >
-                {c.issuer || c.cardName || "Credit Card"}
-              </h3>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: 16.5,
+                    fontWeight: 800,
+                    color: "var(--t-ink)",
+                    letterSpacing: "-0.015em",
+                    lineHeight: 1.22,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    wordBreak: "break-word",
+                  }}
+                  title={c.issuer || c.cardName || "Credit Card"}
+                >
+                  {c.issuer || c.cardName || "Credit Card"}
+                </h3>
+              </div>
+            </div>
+
+            {/* Badges: Owner (Self) and Shared Pool */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
+              {c.owner && (
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: 99,
+                    background: "var(--surface-2)",
+                    color: "var(--t-ink)",
+                    border: "1px solid var(--t-line)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {c.owner === "self" ? "Self" : c.owner}
+                </span>
+              )}
               {c.sharedGroup && (
                 <span
                   style={{
-                    fontSize: 10,
-                    padding: "2px 8px",
-                    borderRadius: 6,
+                    fontSize: 9.5,
+                    padding: "1px 6px",
+                    borderRadius: 5,
                     background: "rgba(254, 240, 138, 0.18)",
                     color: "var(--t-gold, #ca8a04)",
                     fontWeight: 700,
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 3.5,
+                    gap: 3,
                     border: "1px solid rgba(254, 240, 138, 0.4)",
+                    whiteSpace: "nowrap",
                   }}
                   title={`Shared Limit Pool: ${c.sharedGroup}`}
                 >
-                  <Layers size={10.5} /> Pool: {c.sharedGroup}
+                  <Layers size={9.5} /> {c.sharedGroup}
                 </span>
-              )}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 12.5,
-                color: "var(--t-muted)",
-                fontWeight: 600,
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                  fontWeight: 700,
-                  color: "var(--t-ink)",
-                }}
-              >
-                {c.network}
-              </span>
-              {c.last4 && (
-                <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 700 }}>
-                  •••• {c.last4}
-                </span>
-              )}
-              {c.cardType && (
-                <span style={{ textTransform: "capitalize" }}>• {c.cardType}</span>
-              )}
-              {c.bank && c.bank !== c.issuer && (
-                <span>• {c.bank}</span>
               )}
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            {c.owner && (
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "3px 9px",
-                  borderRadius: 99,
-                  background: "var(--surface-2)",
-                  color: "var(--t-ink)",
-                  border: "1px solid var(--t-line)",
-                }}
-              >
-                {c.owner === "self" ? "Self" : c.owner}
+
+          {/* Bottom Row: Network, Masked Digits, Card Type & Bank */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 12,
+              color: "var(--t-muted)",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              height: 18,
+            }}
+          >
+            <span
+              style={{
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                fontWeight: 700,
+                color: "var(--t-ink)",
+              }}
+            >
+              {c.network}
+            </span>
+            {c.last4 && (
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 700 }}>
+                •••• {c.last4}
               </span>
+            )}
+            {c.cardType && (
+              <span style={{ textTransform: "capitalize" }}>• {c.cardType}</span>
+            )}
+            {c.bank && c.bank !== c.issuer && (
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>• {c.bank}</span>
             )}
           </div>
         </div>
