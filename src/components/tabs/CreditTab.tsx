@@ -2072,15 +2072,16 @@ function CCList({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: 10,
                 flexWrap: "wrap",
-                marginBottom: 3,
+                marginBottom: 4,
               }}
             >
+              <BankLogo bankName={c.bank || c.issuer || c.cardName} size={30} borderRadius={8} />
               <h3
                 style={{
                   margin: 0,
-                  fontSize: 18.5,
+                  fontSize: 19,
                   fontWeight: 800,
                   color: "var(--t-ink)",
                   letterSpacing: "-0.02em",
@@ -6991,6 +6992,25 @@ function CCCardPreview({
 }) {
   return (
     <div style={{ width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 10,
+        }}
+      >
+        <BankLogo bankName={card?.bank || card?.issuer || card?.cardName} size={28} borderRadius={7} />
+        <span
+          style={{
+            fontSize: 16,
+            fontWeight: 800,
+            color: "var(--t-ink)",
+          }}
+        >
+          {card?.issuer || card?.cardName || "Credit Card"}
+        </span>
+      </div>
       <CreditCardVisual
         card={card}
         isClosed={isClosed}

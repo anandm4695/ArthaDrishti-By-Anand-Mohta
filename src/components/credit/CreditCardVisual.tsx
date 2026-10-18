@@ -291,6 +291,7 @@ export interface CreditCardVisualProps {
   compact?: boolean;
   isClosed?: boolean;
   cardholderName?: string;
+  showCardNameOnImage?: boolean;
 }
 
 export function CreditCardVisual({
@@ -302,6 +303,7 @@ export function CreditCardVisual({
   compact = false,
   isClosed = false,
   cardholderName = "",
+  showCardNameOnImage = false,
 }: CreditCardVisualProps) {
   // Local active variant tracking if uncontrolled
   const [localVariantId, setLocalVariantId] = useState<string | null>(null);
@@ -331,6 +333,7 @@ export function CreditCardVisual({
     cardImageUrl: activeImageUrl,
     status: isClosed ? "closed" : card.status,
   });
+  const hasImage = Boolean(art.imageUrl);
 
   // Smart vertical orientation detection & interactive rotation
   const [isVerticalArt, setIsVerticalArt] = useState(false);
@@ -578,105 +581,107 @@ export function CreditCardVisual({
           }}
         />
 
-        {/* ── TOP BAR: Issuer / Bank Logo + Card Name + Card Art Button + Network Variant ── */}
+        {/* ── TOP BAR: Issuer / Bank Logo (Only on plain gradient fallback without real photo art) + Actions ── */}
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: (!hasImage || showCardNameOnImage) ? "space-between" : "flex-end",
             alignItems: "center",
             position: "relative",
             zIndex: 4,
             gap: 8,
           }}
         >
-          {/* Bank Logo + Card Name & Variant Tags */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              minWidth: 0,
-              flex: 1,
-              maxWidth: "calc(100% - 90px)",
-              background: "rgba(10, 15, 26, 0.82)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              padding: compact ? "4px 8px" : "5px 10px",
-              borderRadius: 9,
-              border: "1px solid rgba(255, 255, 255, 0.28)",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-            }}
-          >
-            <BankLogo bankName={card.issuer || card.cardName || activeName} size={compact ? 22 : 26} />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  fontSize: compact ? 13.5 : 15,
-                  fontWeight: 800,
-                  color: "#ffffff",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  letterSpacing: "-0.01em",
-                  textShadow: "0 2px 4px rgba(0,0,0,0.95)",
-                }}
-                title={activeName}
-              >
-                {activeName}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 1 }}>
-                {isViewingVariant ? (
-                  <span
-                    style={{
-                      fontSize: 8.5,
-                      fontWeight: 800,
-                      padding: "1px 5px",
-                      borderRadius: 4,
-                      background: "rgba(254, 240, 138, 0.3)",
-                      color: "#fef08a",
-                      border: "1px solid rgba(254, 240, 138, 0.5)",
-                      letterSpacing: "0.03em",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    ⚡ {selectedVariant?.name || `${selectedVariant?.network || "LINKED"} VARIANT`}
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      fontSize: 8.5,
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,0.85)",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                      letterSpacing: "0.04em",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {art.badgeText || "PRIMARY CARD"}
-                  </span>
-                )}
-                {card.sharedGroup && (
-                  <span
-                    style={{
-                      fontSize: 8,
-                      fontWeight: 700,
-                      padding: "1px 5px",
-                      borderRadius: 4,
-                      background: "rgba(255,255,255,0.22)",
-                      color: "#ffffff",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Pool: {card.sharedGroup}
-                  </span>
-                )}
+          {/* Bank Logo + Card Name & Variant Tags: Only rendered when there is NO real card photo artwork */}
+          {(!hasImage || showCardNameOnImage) && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                minWidth: 0,
+                flex: 1,
+                maxWidth: "calc(100% - 90px)",
+                background: "rgba(10, 15, 26, 0.82)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                padding: compact ? "4px 8px" : "5px 10px",
+                borderRadius: 9,
+                border: "1px solid rgba(255, 255, 255, 0.28)",
+                boxShadow: "0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+              }}
+            >
+              <BankLogo bankName={card.issuer || card.cardName || activeName} size={compact ? 22 : 26} />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: compact ? 13.5 : 15,
+                    fontWeight: 800,
+                    color: "#ffffff",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    letterSpacing: "-0.01em",
+                    textShadow: "0 2px 4px rgba(0,0,0,0.95)",
+                  }}
+                  title={activeName}
+                >
+                  {activeName}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 1 }}>
+                  {isViewingVariant ? (
+                    <span
+                      style={{
+                        fontSize: 8.5,
+                        fontWeight: 800,
+                        padding: "1px 5px",
+                        borderRadius: 4,
+                        background: "rgba(254, 240, 138, 0.3)",
+                        color: "#fef08a",
+                        border: "1px solid rgba(254, 240, 138, 0.5)",
+                        letterSpacing: "0.03em",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      ⚡ {selectedVariant?.name || `${selectedVariant?.network || "LINKED"} VARIANT`}
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: 8.5,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,0.85)",
+                        textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                        letterSpacing: "0.04em",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {art.badgeText || "PRIMARY CARD"}
+                    </span>
+                  )}
+                  {card.sharedGroup && (
+                    <span
+                      style={{
+                        fontSize: 8,
+                        fontWeight: 700,
+                        padding: "1px 5px",
+                        borderRadius: 4,
+                        background: "rgba(255,255,255,0.22)",
+                        color: "#ffffff",
+                        border: "1px solid rgba(255,255,255,0.25)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Pool: {card.sharedGroup}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Right Action: Card Art Switcher + Payment Network Badge */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, marginLeft: "auto" }}>
             {onEditArt && (
               <button
                 type="button"
