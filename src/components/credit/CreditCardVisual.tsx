@@ -596,28 +596,29 @@ export function CreditCardVisual({
               alignItems: "center",
               gap: 8,
               minWidth: 0,
-              background: "rgba(0, 0, 0, 0.45)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              padding: "4px 8px",
-              borderRadius: 8,
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.35)",
+              flex: 1,
+              maxWidth: "calc(100% - 90px)",
+              background: "rgba(10, 15, 26, 0.82)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              padding: compact ? "4px 8px" : "5px 10px",
+              borderRadius: 9,
+              border: "1px solid rgba(255, 255, 255, 0.28)",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
             }}
           >
             <BankLogo bankName={card.issuer || card.cardName || activeName} size={compact ? 22 : 26} />
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div
                 style={{
-                  fontSize: compact ? 13 : 14.5,
+                  fontSize: compact ? 13.5 : 15,
                   fontWeight: 800,
                   color: "#ffffff",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   letterSpacing: "-0.01em",
-                  textShadow: "0 1px 3px rgba(0,0,0,0.9)",
-                  maxWidth: compact ? 120 : 180,
+                  textShadow: "0 2px 4px rgba(0,0,0,0.95)",
                 }}
                 title={activeName}
               >

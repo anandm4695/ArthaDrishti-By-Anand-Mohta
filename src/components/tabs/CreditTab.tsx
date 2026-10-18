@@ -2055,6 +2055,114 @@ function CCList({
           transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
         }}
       >
+        {/* ── CARD HEADER: Prominent, High-Contrast Card Name & Details ── */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 12,
+            marginBottom: 14,
+            paddingBottom: 10,
+            borderBottom: "1px solid var(--t-line)",
+          }}
+        >
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+                marginBottom: 3,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 18.5,
+                  fontWeight: 800,
+                  color: "var(--t-ink)",
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.25,
+                  wordBreak: "break-word",
+                }}
+              >
+                {c.issuer || c.cardName || "Credit Card"}
+              </h3>
+              {c.sharedGroup && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    padding: "2px 8px",
+                    borderRadius: 6,
+                    background: "rgba(254, 240, 138, 0.18)",
+                    color: "var(--t-gold, #ca8a04)",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3.5,
+                    border: "1px solid rgba(254, 240, 138, 0.4)",
+                  }}
+                  title={`Shared Limit Pool: ${c.sharedGroup}`}
+                >
+                  <Layers size={10.5} /> Pool: {c.sharedGroup}
+                </span>
+              )}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 12.5,
+                color: "var(--t-muted)",
+                fontWeight: 600,
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  fontWeight: 700,
+                  color: "var(--t-ink)",
+                }}
+              >
+                {c.network}
+              </span>
+              {c.last4 && (
+                <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 700 }}>
+                  •••• {c.last4}
+                </span>
+              )}
+              {c.cardType && (
+                <span style={{ textTransform: "capitalize" }}>• {c.cardType}</span>
+              )}
+              {c.bank && c.bank !== c.issuer && (
+                <span>• {c.bank}</span>
+              )}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            {c.owner && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "3px 9px",
+                  borderRadius: 99,
+                  background: "var(--surface-2)",
+                  color: "var(--t-ink)",
+                  border: "1px solid var(--t-line)",
+                }}
+              >
+                {c.owner === "self" ? "Self" : c.owner}
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Authentic Physical / Virtual Card Face Hero with Real Card Art & Variant Switcher */}
         <CreditCardVisual
           card={c}
