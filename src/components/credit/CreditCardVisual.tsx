@@ -366,92 +366,12 @@ export function CreditCardVisual({
 
   return (
     <div style={{ position: "relative", width: "100%" }}>
-      {/* ── Multi-Card Variant Switcher Strip (if card has variants) ── */}
-      {showVariantSwitcher && hasVariants && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 10,
-            overflowX: "auto",
-            paddingBottom: 2,
-          }}
-        >
-          {/* Primary Card Tab */}
-          <button
-            type="button"
-            onClick={() => handleSelectVariant(null)}
-            style={{
-              padding: "4px 9px",
-              borderRadius: 6,
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: "pointer",
-              border: !isViewingVariant ? `1.5px solid ${THEME.accent}` : `1px solid ${THEME.line}`,
-              background: !isViewingVariant ? "color-mix(in srgb, var(--t-accent) 15%, transparent)" : "var(--surface-1)",
-              color: !isViewingVariant ? THEME.accent : THEME.muted,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              transition: "all 0.15s ease",
-            }}
-          >
-            <CreditCard size={12} />
-            <span>Primary ({card.network || "Visa"}) · •••• {card.last4 || "••••"}</span>
-          </button>
-
-          {/* Variant Tabs */}
-          {variants.map((v, idx) => {
-            const isTabActive = currentVariantId === v.id;
-            return (
-              <button
-                key={v.id || idx}
-                type="button"
-                onClick={() => handleSelectVariant(v.id)}
-                style={{
-                  padding: "4px 9px",
-                  borderRadius: 6,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  border: isTabActive ? `1.5px solid ${THEME.accent}` : `1px solid ${THEME.line}`,
-                  background: isTabActive ? "color-mix(in srgb, var(--t-accent) 15%, transparent)" : "var(--surface-1)",
-                  color: isTabActive ? THEME.accent : THEME.muted,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <Sparkles size={11} color={isTabActive ? THEME.accent : THEME.gold} />
-                <span>
-                  {v.name || `${v.network} Variant`} · •••• {v.last4 || "••••"}
-                </span>
-                {v.cardImageUrl && (
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 99,
-                      background: THEME.sage,
-                      display: "inline-block",
-                    }}
-                    title="Custom Variant Art Active"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* ── Main Physical Card Face ── */}
       <div
         className="credit-card-face"
         style={{
           width: "100%",
-          minHeight: compact ? 170 : 210,
+          aspectRatio: "1.586",
           borderRadius: 18,
           background: art.bgGradient,
           position: "relative",
@@ -889,6 +809,86 @@ export function CreditCardVisual({
           </div>
         </div>
       </div>
+
+      {/* ── Multi-Card Variant Switcher Strip (Rendered cleanly BELOW physical card face) ── */}
+      {showVariantSwitcher && hasVariants && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginTop: 10,
+            overflowX: "auto",
+            paddingBottom: 2,
+          }}
+        >
+          {/* Primary Card Tab */}
+          <button
+            type="button"
+            onClick={() => handleSelectVariant(null)}
+            style={{
+              padding: "4px 9px",
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+              border: !isViewingVariant ? `1.5px solid ${THEME.accent}` : `1px solid ${THEME.line}`,
+              background: !isViewingVariant ? "color-mix(in srgb, var(--t-accent) 15%, transparent)" : "var(--surface-1)",
+              color: !isViewingVariant ? THEME.accent : THEME.muted,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              transition: "all 0.15s ease",
+            }}
+          >
+            <CreditCard size={12} />
+            <span>Primary ({card.network || "Visa"}) · •••• {card.last4 || "••••"}</span>
+          </button>
+
+          {/* Variant Tabs */}
+          {variants.map((v, idx) => {
+            const isTabActive = currentVariantId === v.id;
+            return (
+              <button
+                key={v.id || idx}
+                type="button"
+                onClick={() => handleSelectVariant(v.id)}
+                style={{
+                  padding: "4px 9px",
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  border: isTabActive ? `1.5px solid ${THEME.accent}` : `1px solid ${THEME.line}`,
+                  background: isTabActive ? "color-mix(in srgb, var(--t-accent) 15%, transparent)" : "var(--surface-1)",
+                  color: isTabActive ? THEME.accent : THEME.muted,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <Sparkles size={11} color={isTabActive ? THEME.accent : THEME.gold} />
+                <span>
+                  {v.name || `${v.network} Variant`} · •••• {v.last4 || "••••"}
+                </span>
+                {v.cardImageUrl && (
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 99,
+                      background: THEME.sage,
+                      display: "inline-block",
+                    }}
+                    title="Custom Variant Art Active"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
