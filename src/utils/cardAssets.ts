@@ -679,6 +679,7 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "PLATINUM RESERVE",
     patternType: "filigree",
     imageUrl: "/cards/amex-reserve.png",
+    officialImageUrl: "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/bold_reserve_in_960x608.png",
   },
   {
     id: "amex-gold",

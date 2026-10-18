@@ -159,6 +159,14 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       expect(amexPlat?.imageUrl).toMatch(/cards\/amex-platinum|aexp-static\.com/);
       expect(amexPlat?.officialImageUrl).toContain("aexp-static.com");
 
+      const amexGold = getMatchingCardPreset("Amex Gold Card", "Amex");
+      expect(amexGold?.imageUrl).toBe("/cards/amex-gold.png");
+      expect(amexGold?.officialImageUrl).toContain("aexp-static.com");
+
+      const amexReserve = getMatchingCardPreset("Amex Platinum Reserve", "Amex");
+      expect(amexReserve?.imageUrl).toBe("/cards/amex-reserve.png");
+      expect(amexReserve?.officialImageUrl).toContain("aexp-static.com");
+
       const onecard = getMatchingCardPreset("OneCard Metal", "Visa");
       expect(onecard?.imageUrl).toMatch(/cards\/onecard-metal|getonecard\.app/);
       expect(onecard?.officialImageUrl).toContain("getonecard.app");
