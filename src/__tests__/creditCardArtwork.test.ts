@@ -103,6 +103,18 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       const fedCelesta = getMatchingCardPreset("Federal Bank Celesta", "Visa");
       expect(fedCelesta?.id).toBe("federal-celesta");
       expect(fedCelesta?.imageUrl).toBe("/cards/federal-celesta.png");
+
+      const fedImperio = getMatchingCardPreset("Federal Bank Imperio", "Visa");
+      expect(fedImperio?.id).toBe("federal-imperio");
+      expect(fedImperio?.imageUrl).toBe("/cards/federal-imperio.png");
+
+      const fedSignet = getMatchingCardPreset("Federal Bank Signet", "RuPay");
+      expect(fedSignet?.id).toBe("federal-signet");
+      expect(fedSignet?.imageUrl).toBe("/cards/federal-signet.png");
+
+      const fedWave = getMatchingCardPreset("Federal Bank Wave RuPay", "RuPay");
+      expect(fedWave?.id).toBe("federal-wave");
+      expect(fedWave?.imageUrl).toBe("/cards/federal-wave.png");
     });
   });
 
