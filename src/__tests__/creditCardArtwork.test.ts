@@ -131,6 +131,22 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       const hsbcTravel = getMatchingCardPreset("HSBC TravelOne Credit Card", "Mastercard");
       expect(hsbcTravel?.id).toBe("hsbc-travel-one");
       expect(hsbcTravel?.imageUrl).toBe("/cards/hsbc-travel-one.png");
+
+      const iciciEmeralde = getMatchingCardPreset("ICICI Emeralde Metal Credit Card", "Visa");
+      expect(iciciEmeralde?.id).toBe("icici-emeralde");
+      expect(iciciEmeralde?.imageUrl).toBe("/cards/icici-emeralde.png");
+
+      const iciciRubyx = getMatchingCardPreset("ICICI Rubyx Credit Card", "Mastercard");
+      expect(iciciRubyx?.id).toBe("icici-rubyx");
+      expect(iciciRubyx?.imageUrl).toBe("/cards/icici-rubyx.png");
+
+      const iciciCoral = getMatchingCardPreset("ICICI Coral RuPay Credit Card", "RuPay");
+      expect(iciciCoral?.id).toBe("icici-coral-rupay");
+      expect(iciciCoral?.imageUrl).toBe("/cards/icici-coral.png");
+
+      const iciciMmt = getMatchingCardPreset("ICICI MakeMyTrip Credit Card", "Visa");
+      expect(iciciMmt?.id).toBe("icici-makemytrip");
+      expect(iciciMmt?.imageUrl).toBe("/cards/icici-makemytrip.png");
     });
   });
 
@@ -324,6 +340,10 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       { query: "Standered Charted Manhattan Credit Card", expectedId: "sc-manhattan", expectedImage: "/cards/sc-manhattan.png" },
       { query: "Axis Bank Flipkart Credit Card", expectedId: "axis-flipkart", expectedImage: "/cards/axis-flipkart.png" },
       { query: "ICICI Platinum  Credit Card", expectedId: "icici-platinum", expectedImage: "/cards/icici-platinum.png" },
+      { query: "ICICI Emeralde Credit Card", expectedId: "icici-emeralde", expectedImage: "/cards/icici-emeralde.png" },
+      { query: "ICICI Rubyx Credit Card", expectedId: "icici-rubyx", expectedImage: "/cards/icici-rubyx.png" },
+      { query: "ICICI Coral Credit Card", expectedId: "icici-coral-rupay", expectedImage: "/cards/icici-coral.png" },
+      { query: "ICICI MakeMyTrip Credit Card", expectedId: "icici-makemytrip", expectedImage: "/cards/icici-makemytrip.png" },
       { query: "HDFC Times Credit Card", expectedId: "hdfc-times", expectedImage: "/cards/hdfc-times.png" },
     ];
 

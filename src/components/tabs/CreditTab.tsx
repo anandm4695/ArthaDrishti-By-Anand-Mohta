@@ -7483,6 +7483,9 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     <option value="ICICI Amazon Pay" />
                     <option value="ICICI Sapphiro" />
                     <option value="ICICI Emeralde" />
+                    <option value="ICICI Rubyx" />
+                    <option value="ICICI Coral" />
+                    <option value="ICICI Platinum" />
                     <option value="SBI Cashback" />
                     <option value="SBI SimplyClick" />
                     <option value="SBI Card PRIME" />

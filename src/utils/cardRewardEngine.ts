@@ -579,6 +579,84 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     defaultOfflineReturnPct: 0.5,
     specialPerks: ["DreamFolios DragonPass international lounge access", "Golf rounds quarterly", "Dual Mastercard + Amex companion cards"],
   },
+  {
+    matchKeys: ["emeralde", "icici emeralde"],
+    cardDisplayName: "ICICI Emeralde Metal Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 30.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to ₹750 discount twice a month)", badge: "BOGO ₹750 Movies" },
+      taj: { returnPct: 4.0, perkType: "reward_points", description: "4 ICICI Reward Points per ₹100 (₹1/point value) on luxury stays" },
+      makemytrip: { returnPct: 4.0, perkType: "reward_points", description: "4 ICICI Reward Points per ₹100 on flight & luxury travel bookings" },
+      swiggy: { returnPct: 3.0, perkType: "reward_points", description: "Culinary Treats dining discount + accelerated points" },
+    },
+    categoryPerks: {
+      "Entertainment": { returnPct: 30.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹750 discount twice every month on BookMyShow" },
+      "Travel": { returnPct: 4.0, perkType: "reward_points", description: "4 Reward Points per ₹100 (1:1 redemption ratio for air miles)" },
+      "Food & Dining": { returnPct: 3.0, perkType: "discount", description: "ICICI Culinary Treats fine dining discounts" },
+    },
+    defaultOnlineReturnPct: 4.0,
+    defaultOfflineReturnPct: 4.0,
+    specialPerks: [
+      "Unlimited domestic and international airport lounge access via DreamFolios DragonPass",
+      "Unlimited complimentary golf rounds and lessons globally",
+      "Dedicated 24/7 Emeralde metal card concierge and Taj Epicure membership",
+    ],
+  },
+  {
+    matchKeys: ["rubyx", "icici rubyx"],
+    cardDisplayName: "ICICI Rubyx Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 20.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to ₹250 discount twice a month)", badge: "BOGO ₹250 Movies" },
+      swiggy: { returnPct: 1.5, perkType: "reward_points", description: "ICICI Culinary Treats dining discount + 4 ICICI Rewards per ₹100" },
+      makemytrip: { returnPct: 1.5, perkType: "reward_points", description: "2 ICICI Reward Points per ₹100 + complimentary lounge visits" },
+    },
+    categoryPerks: {
+      "Entertainment": { returnPct: 20.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹250 discount twice every month on BMS" },
+      "Food & Dining": { returnPct: 2.5, perkType: "discount", description: "Culinary Treats dining privileges" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "2 complimentary domestic airport lounge visits per quarter on spend criteria",
+      "Complimentary golf rounds and dual-card variant privileges",
+    ],
+  },
+  {
+    matchKeys: ["coral", "icici coral"],
+    cardDisplayName: "ICICI Coral Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 25.0, perkType: "discount", description: "25% discount up to ₹100 on BookMyShow twice a month", badge: "25% BMS Discount" },
+      swiggy: { returnPct: 1.0, perkType: "reward_points", description: "2 ICICI Reward Points per ₹100 on dining" },
+    },
+    categoryPerks: {
+      "Entertainment": { returnPct: 25.0, perkType: "discount", description: "25% off up to ₹100 on movie tickets on BookMyShow and Inox" },
+      "Utilities & Bills": { returnPct: 1.0, perkType: "reward_points", description: "2 Reward Points per ₹100 spent via RuPay UPI scan & pay" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "1 complimentary domestic airport lounge visit per quarter on qualifying spends",
+      "1 complimentary domestic railway lounge visit per quarter",
+      "Seamless RuPay UPI merchant QR payments",
+    ],
+  },
+  {
+    matchKeys: ["icici makemytrip", "makemytrip icici", "mmt signature"],
+    cardDisplayName: "ICICI MakeMyTrip Signature Card",
+    merchantPerks: {
+      makemytrip: { returnPct: 4.0, perkType: "cashback", description: "₹4 My Cash per ₹200 on MakeMyTrip hotel & holiday bookings", badge: "4% My Cash" },
+      airindia: { returnPct: 2.0, perkType: "cashback", description: "₹2 My Cash per ₹200 on flight bookings" },
+      indigo: { returnPct: 2.0, perkType: "cashback", description: "₹2 My Cash per ₹200 on domestic flights" },
+    },
+    categoryPerks: {
+      "Travel": { returnPct: 4.0, perkType: "cashback", description: "Accelerated My Cash on hotel bookings and vacation packages" },
+    },
+    defaultOnlineReturnPct: 1.25,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Welcome voucher of ₹1,500 My Cash + MakeMyTrip Black Tier membership",
+      "1 complimentary international lounge access + 2 domestic airport lounge visits/quarter",
+    ],
+  },
 
   // ── SBI Cards
   {
