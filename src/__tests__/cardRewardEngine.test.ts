@@ -158,5 +158,30 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(onlineResult.topCard?.cardName).toBe("IndusInd Bank Pinnacle Credit Card");
     expect(onlineResult.topCard?.returnPct).toBe(2.5);
   });
+
+  it("identifies Kotak IndianOil RuPay fuel savings, Mojo Platinum online rewards, and White Reserve luxury perks", () => {
+    const kotakPortfolio = [
+      { id: "k1", issuer: "Kotak IndianOil RuPay", limit: 200000, outstanding: 0, status: "active" },
+      { id: "k2", issuer: "Kotak Mojo Platinum", limit: 300000, outstanding: 0, status: "active" },
+      { id: "k3", issuer: "Kotak Zen Signature", limit: 400000, outstanding: 0, status: "active" },
+      { id: "k4", issuer: "Kotak White Reserve", limit: 800000, outstanding: 0, status: "active" },
+    ];
+
+    const fuelResult = rankCardsForPayment(kotakPortfolio, "IndianOil Fuel Station", "Fuel & Gas", 3000);
+    expect(fuelResult.topCard?.cardName).toBe("Kotak IndianOil RuPay");
+    expect(fuelResult.topCard?.returnPct).toBe(5.0);
+
+    const onlineResult = rankCardsForPayment(kotakPortfolio, "Amazon", "Online Shopping", 5000);
+    expect(onlineResult.topCard?.cardName).toBe("Kotak Mojo Platinum");
+    expect(onlineResult.topCard?.returnPct).toBe(2.0);
+
+    const fashionResult = rankCardsForPayment(kotakPortfolio, "Myntra", "Shopping & Fashion", 4000);
+    expect(fashionResult.topCard?.cardName).toBe("Kotak Zen Signature");
+    expect(fashionResult.topCard?.returnPct).toBe(2.5);
+
+    const luxuryResult = rankCardsForPayment(kotakPortfolio, "Apple", "Luxury & Shopping", 80000);
+    expect(luxuryResult.topCard?.cardName).toBe("Kotak White Reserve");
+    expect(luxuryResult.topCard?.returnPct).toBe(3.5);
+  });
 });
 

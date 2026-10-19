@@ -1121,6 +1121,109 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     defaultOfflineReturnPct: 2.0,
     specialPerks: ["₹10,000 Taj voucher on ₹4L spend", "48,000 MR points convertible to Marriott Bonvoy", "8 complimentary domestic lounge visits"],
   },
+
+  // ── Kotak Mahindra Bank Cards ──────────────────────────────────────────────
+  {
+    matchKeys: ["kotak white", "white reserve", "kotak white reserve"],
+    cardDisplayName: "Kotak White Reserve",
+    merchantPerks: {
+      apple: { returnPct: 3.5, perkType: "reward_points", description: "White Pass value unlocked upon luxury milestone spends (₹1.5L - ₹12L yields up to ₹27,000 White Pass)", badge: "White Pass Luxury" },
+      taj: { returnPct: 3.5, perkType: "reward_points", description: "Direct redemption of White Pass currency at luxury brands and Taj hotels" },
+      forex_international: { returnPct: 2.0, perkType: "reward_points", description: "Reduced 2.0% forex markup + White Pass milestone accrual" },
+    },
+    categoryPerks: {
+      "Luxury & Shopping": { returnPct: 3.5, perkType: "reward_points", description: "White Pass milestone program providing up to 3.5% effective value on curated luxury brands" },
+      "Travel & Flights": { returnPct: 3.0, perkType: "reward_points", description: "Unlimited domestic and international airport lounge access + White Pass flight redemptions" },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 1.5,
+    forexMarkupPct: 2.0,
+    specialPerks: ["White Pass currency with up to ₹27,000 vouchers per year", "Unlimited domestic & international lounge access", "Low 2.0% forex markup"],
+  },
+  {
+    matchKeys: ["kotak zen", "zen signature", "zen credit card"],
+    cardDisplayName: "Kotak Zen Signature",
+    merchantPerks: {
+      myntra: { returnPct: 2.5, perkType: "reward_points", description: "10 Zen Points per ₹150 on apparel & lifestyle purchases with milestone accelerator (up to 2.5% effective return)", badge: "10X Zen Points" },
+      zara: { returnPct: 2.5, perkType: "reward_points", description: "10 Zen Points per ₹150 on fashion retail" },
+      zomato: { returnPct: 2.0, perkType: "reward_points", description: "10 Zen Points per ₹150 on dining and food delivery" },
+      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "10 Zen Points per ₹150 on food and dining orders" },
+    },
+    categoryPerks: {
+      "Shopping & Fashion": { returnPct: 2.5, perkType: "reward_points", description: "10 Zen Points per ₹150 on Apparel, Lifestyle & Departmental stores (up to 2.5% return)" },
+      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "10 Zen Points per ₹150 on dining & restaurants" },
+    },
+    defaultOnlineReturnPct: 0.83,
+    defaultOfflineReturnPct: 0.83,
+    specialPerks: ["10 Zen Points per ₹150 on Apparel, Lifestyle & Dining", "8 complimentary airport lounge visits/yr", "₹7,500 milestone shopping voucher on ₹6L annual spend"],
+  },
+  {
+    matchKeys: ["kotak mojo", "mojo platinum", "mojo credit card"],
+    cardDisplayName: "Kotak Mojo Platinum",
+    merchantPerks: {
+      amazon: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on all online purchases (1 Mojo Point = ₹0.40, 2.0% net return)", badge: "5 Mojo Pts (2%)" },
+      flipkart: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on e-commerce spends" },
+      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on online food ordering" },
+      zomato: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on online orders" },
+      bookmyshow: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on ticket bookings" },
+    },
+    categoryPerks: {
+      "Online Shopping": { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on all online transactions (2.0% return rate)" },
+      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on food delivery apps" },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: ["5 Mojo Points per ₹100 on all online spends (2% value)", "2.5 Mojo Points per ₹100 on offline spends", "8 complimentary domestic airport lounge visits"],
+  },
+  {
+    matchKeys: ["kotak league", "league platinum", "kotak league platinum"],
+    cardDisplayName: "Kotak League Platinum",
+    merchantPerks: {
+      myntra: { returnPct: 1.33, perkType: "reward_points", description: "8X Reward Points per ₹150 on apparel and lifestyle spends (1.33% return)" },
+      bookmyshow: { returnPct: 3.0, perkType: "discount", description: "4 free PVR movie tickets or 10,000 reward points on ₹1.25L spend every 6 months", badge: "Free Movie Tickets" },
+    },
+    categoryPerks: {
+      "Shopping & Fashion": { returnPct: 1.33, perkType: "reward_points", description: "8X Reward Points per ₹150 on Apparel, Luxury, Travel & Airlines" },
+      "Entertainment & Movies": { returnPct: 3.0, perkType: "discount", description: "PVR movie tickets milestone benefit on ₹1.25L semi-annual spend" },
+    },
+    defaultOnlineReturnPct: 0.67,
+    defaultOfflineReturnPct: 0.67,
+    specialPerks: ["8X Reward Points on apparel, luxury goods and departmental stores", "4 free PVR movie tickets every 6 months on ₹1.25L spend", "Fuel surcharge waiver"],
+  },
+  {
+    matchKeys: ["kotak indianoil", "kotak iocl", "indianoil rupay", "kotak indianoil rupay"],
+    cardDisplayName: "Kotak IndianOil RuPay",
+    merchantPerks: {
+      fuel_pumps: { returnPct: 5.0, perkType: "reward_points", description: "4% back in reward points (24 points per ₹150) at IndianOil fuel outlets + 1% fuel surcharge waiver", badge: "5% Fuel Savings" },
+      indianoil_fuel: { returnPct: 5.0, perkType: "reward_points", description: "4% back in reward points (24 points per ₹150) at IndianOil fuel outlets + 1% fuel surcharge waiver", badge: "5% Fuel Savings" },
+      hpcl_fuel: { returnPct: 1.0, perkType: "cashback", description: "1% fuel surcharge waiver on transactions between ₹500 and ₹3,000" },
+      bpcl_fuel: { returnPct: 1.0, perkType: "cashback", description: "1% fuel surcharge waiver" },
+    },
+    categoryPerks: {
+      "Fuel": { returnPct: 5.0, perkType: "reward_points", description: "5% total savings (4% rewards + 1% surcharge waiver) at IndianOil fuel stations" },
+      "Fuel & Gas": { returnPct: 5.0, perkType: "reward_points", description: "5% total savings (4% rewards + 1% surcharge waiver) at IndianOil fuel stations" },
+      "Groceries & Supermarket": { returnPct: 2.0, perkType: "reward_points", description: "2% back (12 reward points per ₹150) on grocery purchases" },
+      "Dining & Food Delivery": { returnPct: 2.0, perkType: "reward_points", description: "2% back in reward points on dining spends" },
+    },
+    defaultOnlineReturnPct: 0.5,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: ["5% total savings on IndianOil fuel purchases", "UPI on Credit Card linked with BHIM, PhonePe, Google Pay", "2% back on groceries and dining"],
+  },
+  {
+    matchKeys: ["kotak 811", "dream different", "kotak dream different"],
+    cardDisplayName: "Kotak 811 #DreamDifferent",
+    merchantPerks: {
+      amazon: { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on online shopping (2 pts per ₹100, 1.0% return)", badge: "2X Online Pts" },
+      flipkart: { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on online purchases" },
+      swiggy: { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on online ordering" },
+    },
+    categoryPerks: {
+      "Online Shopping": { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on all online shopping portals" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: ["Zero joining fee and lifetime free credit card against FD", "2X rewards on all online spends", "90% cash withdrawal of FD amount with 48 days interest-free"],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

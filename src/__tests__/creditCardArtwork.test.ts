@@ -393,6 +393,13 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       { query: "IndusInd Tiger Credit Card", expectedId: "indusind-tiger", expectedImage: "/cards/indusind-tiger.png" },
       { query: "IndusInd Samman RuPay Credit Card", expectedId: "indusind-samman", expectedImage: "/cards/indusind-samman.png" },
       { query: "IndusInd Nexxt Credit Card", expectedId: "indusind-nexxt", expectedImage: "/cards/indusind-nexxt.png" },
+      { query: "Kotak White Credit Card", expectedId: "kotak-white", expectedImage: "/cards/kotak-white.png" },
+      { query: "Kotak League Platinum Credit Card", expectedId: "kotak-league", expectedImage: "/cards/kotak-league.png" },
+      { query: "Kotak Mojo Platinum Credit Card", expectedId: "kotak-mojo", expectedImage: "/cards/kotak-mojo.png" },
+      { query: "Kotak 811 Dream Different Credit Card", expectedId: "kotak-811", expectedImage: "/cards/kotak-811.png" },
+      { query: "Kotak Royale Signature Credit Card", expectedId: "kotak-royale", expectedImage: "/cards/kotak-royale.png" },
+      { query: "Kotak Privy League Signature Credit Card", expectedId: "kotak-privy-league", expectedImage: "/cards/kotak-privy-league.png" },
+      { query: "Kotak IndianOil RuPay Credit Card", expectedId: "kotak-iocl", expectedImage: "/cards/kotak-iocl.png" },
     ];
 
     it.each(requiredCards)("accurately matches query '$query' to preset $expectedId with image $expectedImage", ({ query, expectedId, expectedImage }) => {
