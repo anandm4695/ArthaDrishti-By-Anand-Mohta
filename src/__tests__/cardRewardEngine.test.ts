@@ -183,5 +183,30 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(luxuryResult.topCard?.cardName).toBe("Kotak White Reserve");
     expect(luxuryResult.topCard?.returnPct).toBe(3.5);
   });
+
+  it("identifies SBI Octane fuel return, IRCTC travel perks, SBI Cashback online savings, and Aurum luxury benefits", () => {
+    const sbiPortfolio = [
+      { id: "s1", issuer: "BPCL SBI Card Octane", limit: 250000, outstanding: 0, status: "active" },
+      { id: "s2", issuer: "IRCTC SBI Card", limit: 200000, outstanding: 0, status: "active" },
+      { id: "s3", issuer: "SBI Cashback Credit Card", limit: 300000, outstanding: 0, status: "active" },
+      { id: "s4", issuer: "SBI Aurum Metal Credit Card", limit: 1000000, outstanding: 0, status: "active" },
+    ];
+
+    const fuelResult = rankCardsForPayment(sbiPortfolio, "BPCL Petrol Pump", "Fuel & Automotive", 2000);
+    expect(fuelResult.topCard?.cardName).toBe("BPCL SBI Card Octane");
+    expect(fuelResult.topCard?.returnPct).toBe(7.25);
+
+    const trainResult = rankCardsForPayment(sbiPortfolio, "IRCTC", "Travel & Flights", 3500);
+    expect(trainResult.topCard?.cardName).toBe("IRCTC SBI Card");
+    expect(trainResult.topCard?.returnPct).toBe(10.0);
+
+    const onlineResult = rankCardsForPayment(sbiPortfolio, "Amazon", "Online Shopping", 5000);
+    expect(onlineResult.topCard?.cardName).toBe("SBI Cashback Credit Card");
+    expect(onlineResult.topCard?.returnPct).toBe(5.0);
+
+    const movieResult = rankCardsForPayment(sbiPortfolio, "BookMyShow", "Entertainment", 1000);
+    expect(movieResult.topCard?.cardName).toBe("SBI Aurum Metal Credit Card");
+    expect(movieResult.topCard?.returnPct).toBe(15.0);
+  });
 });
 
