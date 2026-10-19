@@ -7493,6 +7493,8 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     <option value="Axis Magnus" />
                     <option value="Axis Airtel" />
                     <option value="Federal Scapia" />
+                    <option value="IDFC FIRST Wealth" />
+                    <option value="IDFC FIRST WOW!" />
                     <option value="Kotak League" />
                     <option value="IndusInd Legend" />
                     <option value="AU Zenith+" />

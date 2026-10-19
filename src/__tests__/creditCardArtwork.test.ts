@@ -88,6 +88,10 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       expect(idfc?.id).toBe("idfc-wealth");
       expect(idfc?.imageUrl).toBe("/cards/idfc-wealth.png");
 
+      const idfcWow = getMatchingCardPreset("IDFC FIRST WOW Credit Card", "Visa");
+      expect(idfcWow?.id).toBe("idfc-wow");
+      expect(idfcWow?.imageUrl).toBe("/cards/idfc-wow.png");
+
       const sbiSave = getMatchingCardPreset("SBI SimplySAVE RuPay", "RuPay");
       expect(sbiSave?.id).toBe("sbi-simplysave");
       expect(sbiSave?.imageUrl).toBe("/cards/sbi-simplysave.png");
@@ -311,6 +315,7 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       { query: "ICICI Sapphiro Master Credit Card", expectedId: "icici-sapphiro", expectedImage: "/cards/icici-sapphiro.png" },
       { query: "Kotak Air + Credit Card", expectedId: "kotak-air-plus", expectedImage: "/cards/kotak-air-plus.png" },
       { query: "IDFC First Wealth Card", expectedId: "idfc-wealth", expectedImage: "/cards/idfc-wealth.png" },
+      { query: "IDFC FIRST WOW Credit Card", expectedId: "idfc-wow", expectedImage: "/cards/idfc-wow.png" },
       { query: "Federal Scapia Credit Card", expectedId: "federal-scapia", expectedImage: "/cards/federal-scapia.png" },
       { query: "Axis Bank Airtel Credit Card", expectedId: "axis-airtel", expectedImage: "/cards/axis-airtel.png" },
       { query: "Axis Bank Atlas Credit Card", expectedId: "axis-atlas", expectedImage: "/cards/axis-atlas.png" },

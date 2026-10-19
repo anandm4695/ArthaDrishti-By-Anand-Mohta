@@ -790,6 +790,50 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     ],
   },
 
+  // ── IDFC FIRST Bank Cards
+  {
+    matchKeys: ["idfc first wealth", "idfc wealth", "first wealth"],
+    cardDisplayName: "IDFC FIRST Wealth Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to ₹500 off twice a month)", badge: "BOGO ₹500 Movies" },
+      makemytrip: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points on monthly spends above ₹30,000" },
+      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "6X Reward Points on dining & food delivery" },
+      zomato: { returnPct: 2.0, perkType: "reward_points", description: "6X Reward Points on culinary experiences" },
+    },
+    categoryPerks: {
+      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹500 twice every month on BMS" },
+      "Travel": { returnPct: 2.5, perkType: "reward_points", description: "4 complimentary domestic and international airport & spa visits per quarter" },
+      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "6X reward points on all dining transactions" },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "10X Reward Points on incremental spends above ₹30,000/month (points never expire)",
+      "4 complimentary domestic & international airport lounge visits + 4 spa visits per quarter",
+      "Buy 1 Get 1 free movie ticket up to ₹500 on BookMyShow twice every month",
+      "Low dynamic interest APR starting from 9% p.a. with 1.5% low forex markup",
+    ],
+  },
+  {
+    matchKeys: ["idfc first wow", "idfc wow", "first wow", "wow card"],
+    cardDisplayName: "IDFC FIRST WOW! Credit Card",
+    merchantPerks: {
+      makemytrip: { returnPct: 1.5, perkType: "reward_points", description: "Reward points on travel with 0% foreign exchange markup" },
+      amazon: { returnPct: 1.0, perkType: "reward_points", description: "Reward points that never expire on all retail spends" },
+    },
+    categoryPerks: {
+      "International Spends": { returnPct: 3.5, perkType: "cashback", description: "0% zero forex markup fee across all foreign currencies worldwide" },
+      "Travel": { returnPct: 3.5, perkType: "cashback", description: "Zero forex markup on all overseas travel bookings and merchant spends" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Zero Forex markup (0% foreign currency fee) on all international transactions",
+      "100% guaranteed approval against Fixed Deposit earning attractive interest",
+      "Lifetime Free (LTF) with zero annual fee and reward points that never expire",
+    ],
+  },
+
   // ── Standard Chartered Cards
   {
     matchKeys: ["ultimate", "standard chartered ultimate", "sc ultimate"],
