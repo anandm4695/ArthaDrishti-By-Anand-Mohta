@@ -7497,6 +7497,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     <option value="IDFC FIRST WOW!" />
                     <option value="Kotak League" />
                     <option value="IndusInd Legend" />
+                    <option value="IndusInd Avios" />
                     <option value="AU Zenith+" />
                     <option value="OneCard" />
                     <option value="Amex Platinum" />

@@ -65,6 +65,7 @@ export function CardArtPickerModal({
     { id: "axis", label: "Axis" },
     { id: "hsbc", label: "HSBC" },
     { id: "idfc", label: "IDFC FIRST" },
+    { id: "indusind", label: "IndusInd" },
     { id: "federal", label: "Federal / Scapia" },
     { id: "amex", label: "Amex" },
     { id: "kotak", label: "Kotak" },

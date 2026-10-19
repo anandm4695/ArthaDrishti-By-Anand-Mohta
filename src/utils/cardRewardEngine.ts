@@ -834,6 +834,50 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     ],
   },
 
+  // ── IndusInd Bank Cards
+  {
+    matchKeys: ["indusind legend", "legend credit card", "indusind legend visa", "legend"],
+    cardDisplayName: "IndusInd Bank Legend Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to 3 free tickets per quarter, max ₹200 off per ticket)", badge: "BOGO BMS Movies" },
+      eazydiner: { returnPct: 20.0, perkType: "discount", description: "Complimentary dining discount privileges via EazyDiner" },
+    },
+    categoryPerks: {
+      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹200 on BookMyShow up to 3 times/quarter" },
+      "Weekend Spends": { returnPct: 2.0, perkType: "reward_points", description: "2 Reward Points per ₹100 on weekend spends (double rewards)" },
+      "Weekday Spends": { returnPct: 1.0, perkType: "reward_points", description: "1 Reward Point per ₹100 on weekday spends" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Buy 1 Get 1 Free movie tickets on BookMyShow (up to 3 free tickets per quarter, ₹200 max discount per ticket)",
+      "2 Reward Points per ₹100 spent on weekends (1 RP per ₹100 on weekdays)",
+      "Complimentary domestic airport lounge access via Visa Signature lounge program",
+      "Zero fuel surcharge across all petrol pumps in India (1% surcharge waiver)",
+    ],
+  },
+  {
+    matchKeys: ["indusind avios", "indusind avios visa infinite", "avios visa infinite", "induslnd avios", "british airways avios", "qatar airways avios", "avios"],
+    cardDisplayName: "IndusInd Bank Avios Visa Infinite Credit Card",
+    merchantPerks: {
+      makemytrip: { returnPct: 4.0, perkType: "reward_points", description: "Accelerated Avios points on flight bookings and overseas hotels" },
+      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free movie ticket discounts on BookMyShow", badge: "BOGO Movies" },
+    },
+    categoryPerks: {
+      "Airlines & Flights": { returnPct: 5.0, perkType: "reward_points", description: "5 Avios per ₹200 spent on Qatar Airways & British Airways official channels" },
+      "International Spends": { returnPct: 6.0, perkType: "reward_points", description: "Up to 6 Avios per ₹200 at preferred international destinations with low 1.5% forex" },
+      "Travel": { returnPct: 3.0, perkType: "reward_points", description: "3 Avios per ₹200 on standard international and domestic travel spends" },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 1.5,
+    specialPerks: [
+      "Earn 5 Avios for every ₹200 spent on British Airways and Qatar Airways direct bookings",
+      "Up to 6 Avios per ₹200 on POS spends at preferred international destination with low 1.5% forex markup",
+      "20,000 bonus Avios welcome gift + 5,000 bonus Avios upon annual card renewal",
+      "Complimentary Priority Pass international airport lounge access + airport meet-and-greet services",
+    ],
+  },
+
   // ── Standard Chartered Cards
   {
     matchKeys: ["ultimate", "standard chartered ultimate", "sc ultimate"],

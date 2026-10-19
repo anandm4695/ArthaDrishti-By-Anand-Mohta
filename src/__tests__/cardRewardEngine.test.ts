@@ -120,4 +120,22 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(result.bestMarketAlternative?.returnPct).toBeGreaterThanOrEqual(10.0);
     expect(result.bestMarketAlternative?.savingsInINR).toBeGreaterThanOrEqual(200);
   });
+
+  it("identifies IndusInd Legend BookMyShow BOGO and IndusInd Avios travel benefits", () => {
+    const indusindPortfolio = [
+      { id: "c1", issuer: "IndusInd Legend", limit: 300000, outstanding: 0, status: "active" },
+      { id: "c2", issuer: "IndusInd Avios Visa Infinite", limit: 500000, outstanding: 0, status: "active" },
+    ];
+
+    const movieResult = rankCardsForPayment(indusindPortfolio, "BookMyShow", "Entertainment", 800);
+    expect(movieResult.topCard).not.toBeNull();
+    expect(["IndusInd Legend", "IndusInd Avios Visa Infinite"]).toContain(movieResult.topCard?.cardName);
+    expect(movieResult.topCard?.returnPct).toBe(50.0);
+
+    const travelResult = rankCardsForPayment(indusindPortfolio, "International Travel", "International Spends", 25000);
+    expect(travelResult.topCard).not.toBeNull();
+    expect(travelResult.topCard?.cardName).toBe("IndusInd Avios Visa Infinite");
+    expect(travelResult.topCard?.returnPct).toBe(6.0);
+  });
 });
+

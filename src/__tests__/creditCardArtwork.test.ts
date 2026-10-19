@@ -84,6 +84,10 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       expect(indusind?.id).toBe("indusind-legend");
       expect(indusind?.imageUrl).toBe("/cards/indusind-legend.png");
 
+      const indusindAvios = getMatchingCardPreset("IndusInd Avios Visa Infinite", "Visa");
+      expect(indusindAvios?.id).toBe("indusind-avios");
+      expect(indusindAvios?.imageUrl).toBe("/cards/indusind-avios.png");
+
       const idfc = getMatchingCardPreset("IDFC FIRST Wealth", "Visa");
       expect(idfc?.id).toBe("idfc-wealth");
       expect(idfc?.imageUrl).toBe("/cards/idfc-wealth.png");
