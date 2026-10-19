@@ -647,6 +647,70 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     defaultOfflineReturnPct: 1.5,
     specialPerks: ["10% cashback on Dining, Food Delivery & Groceries (capped at ₹1,000/billing cycle)", "1.5% unlimited cashback on all other spends"],
   },
+  {
+    matchKeys: ["hsbc premier", "premier mastercard", "hsbc world elite"],
+    cardDisplayName: "HSBC Premier Credit Card",
+    merchantPerks: {
+      makemytrip: { returnPct: 3.0, perkType: "air_miles", description: "3 reward points per ₹100 (3% air miles transfer rate) on flights and hotels", badge: "3% Air Miles" },
+      taj: { returnPct: 4.0, perkType: "reward_points", description: "Accelerated points on luxury dining and Taj hotel bookings", badge: "4% Luxury" },
+      apple: { returnPct: 2.0, perkType: "reward_points", description: "2% rewards on electronics and Apple devices" },
+      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "2% rewards on gourmet dining & delivery" },
+      zomato: { returnPct: 2.0, perkType: "reward_points", description: "2% rewards on dining out & culinary experiences" },
+    },
+    categoryPerks: {
+      Travel: { returnPct: 3.0, perkType: "air_miles", description: "3% points transfer to Singapore Airlines, British Airways, and partner airlines" },
+      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "2% points on fine dining and restaurants" },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 1.5,
+    specialPerks: [
+      "3 reward points per ₹100 on international spends & travel",
+      "Unlimited complimentary international airport lounge access via Priority Pass",
+      "Complimentary golf rounds and lessons globally",
+      "Dedicated Premier concierge and zero foreign currency conversion markup promos",
+    ],
+  },
+  {
+    matchKeys: ["hsbc travelone", "hsbc travel one", "travelone"],
+    cardDisplayName: "HSBC TravelOne Credit Card",
+    merchantPerks: {
+      makemytrip: { returnPct: 4.0, perkType: "air_miles", description: "4% rewards with instant transfer to 16+ airline/hotel partner programs", badge: "4% Travel" },
+      airindia: { returnPct: 4.0, perkType: "air_miles", description: "Instant 1:1 air miles redemption for flight bookings" },
+      indigo: { returnPct: 4.0, perkType: "air_miles", description: "4% miles on domestic and international travel" },
+      agoda: { returnPct: 4.0, perkType: "air_miles", description: "Accelerated points on worldwide hotel reservations" },
+    },
+    categoryPerks: {
+      Travel: { returnPct: 4.0, perkType: "air_miles", description: "Instant transfer to 16+ airline/hotel loyalty programs in the HSBC app" },
+      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "2% points on dining and culinary treats" },
+    },
+    defaultOnlineReturnPct: 1.2,
+    defaultOfflineReturnPct: 1.2,
+    specialPerks: [
+      "Instant reward points transfer to 16+ airline & hotel partners via HSBC app",
+      "4 reward points per ₹100 on travel & dining",
+      "Complimentary international and domestic airport lounge visits",
+    ],
+  },
+  {
+    matchKeys: ["hsbc platinum", "hsbc visa platinum"],
+    cardDisplayName: "HSBC Platinum Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 5.0, perkType: "cashback", description: "Buy 1 Get 1 free movie ticket discount on BookMyShow", badge: "BOGO Movies" },
+      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "2% reward rate on dining & food orders" },
+      zomato: { returnPct: 2.0, perkType: "reward_points", description: "2% reward rate on dining out" },
+    },
+    categoryPerks: {
+      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "5X rewards on dining, hotels, and telecom during first 12 months" },
+      Entertainment: { returnPct: 5.0, perkType: "cashback", description: "BookMyShow movie ticket discounts and weekend privileges" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "2 reward points per ₹150 spent on all retail transactions",
+      "5X reward points on dining, hotels, and telecom in the first 12 months",
+      "Fuel surcharge waiver and no joining fee promotion",
+    ],
+  },
 
   // ── Standard Chartered Cards
   {

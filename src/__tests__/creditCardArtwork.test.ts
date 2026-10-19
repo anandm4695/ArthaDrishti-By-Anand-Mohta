@@ -115,6 +115,22 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       const fedWave = getMatchingCardPreset("Federal Bank Wave RuPay", "RuPay");
       expect(fedWave?.id).toBe("federal-wave");
       expect(fedWave?.imageUrl).toBe("/cards/federal-wave.png");
+
+      const hsbcLive = getMatchingCardPreset("HSBC Live+ Credit Card", "Visa");
+      expect(hsbcLive?.id).toBe("hsbc-live-plus");
+      expect(hsbcLive?.imageUrl).toBe("/cards/hsbc-live-plus.png");
+
+      const hsbcPrem = getMatchingCardPreset("HSBC Premier Credit Card", "Mastercard");
+      expect(hsbcPrem?.id).toBe("hsbc-premier");
+      expect(hsbcPrem?.imageUrl).toBe("/cards/hsbc-premier.png");
+
+      const hsbcPlat = getMatchingCardPreset("HSBC Platinum Credit Card", "Visa");
+      expect(hsbcPlat?.id).toBe("hsbc-platinum");
+      expect(hsbcPlat?.imageUrl).toBe("/cards/hsbc-platinum.png");
+
+      const hsbcTravel = getMatchingCardPreset("HSBC TravelOne Credit Card", "Mastercard");
+      expect(hsbcTravel?.id).toBe("hsbc-travel-one");
+      expect(hsbcTravel?.imageUrl).toBe("/cards/hsbc-travel-one.png");
     });
   });
 
@@ -294,6 +310,10 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       { query: "Axis Bank ACE Credit Card", expectedId: "axis-ace", expectedImage: "/cards/axis-ace.png" },
       { query: "SBI Octane Credit Card", expectedId: "sbi-octane", expectedImage: "/cards/sbi-octane.png" },
       { query: "HSBC Credit Card", expectedId: "hsbc-live-plus", expectedImage: "/cards/hsbc-live-plus.png" },
+      { query: "HSBC Live+ Credit Card", expectedId: "hsbc-live-plus", expectedImage: "/cards/hsbc-live-plus.png" },
+      { query: "HSBC Premier Credit Card", expectedId: "hsbc-premier", expectedImage: "/cards/hsbc-premier.png" },
+      { query: "HSBC Platinum Credit Card", expectedId: "hsbc-platinum", expectedImage: "/cards/hsbc-platinum.png" },
+      { query: "HSBC TravelOne Credit Card", expectedId: "hsbc-travel-one", expectedImage: "/cards/hsbc-travel-one.png" },
       { query: "OLA Money SBI Credit Card", expectedId: "ola-sbi", expectedImage: "/cards/ola-sbi.png" },
       { query: "RBL Zomato Credit Card", expectedId: "rbl-zomato", expectedImage: "/cards/rbl-zomato.png" },
       { query: "Kotak Zen Credit Card", expectedId: "kotak-zen", expectedImage: "/cards/kotak-zen.png" },

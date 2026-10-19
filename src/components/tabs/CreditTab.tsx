@@ -7498,6 +7498,9 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     <option value="Amex MRCC" />
                     <option value="Amex SmartEarn" />
                     <option value="HSBC Live+" />
+                    <option value="HSBC Premier" />
+                    <option value="HSBC Platinum" />
+                    <option value="HSBC TravelOne" />
                     <option value="RBL ShopRite" />
                   </datalist>
                 </Field>
