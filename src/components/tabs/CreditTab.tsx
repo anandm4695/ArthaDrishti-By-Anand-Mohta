@@ -7498,6 +7498,12 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                     <option value="Kotak League" />
                     <option value="IndusInd Legend" />
                     <option value="IndusInd Avios" />
+                    <option value="IndusInd Pinnacle" />
+                    <option value="IndusInd EazyDiner" />
+                    <option value="IndusInd Platinum RuPay" />
+                    <option value="IndusInd Tiger" />
+                    <option value="IndusInd Samman RuPay" />
+                    <option value="IndusInd Nexxt" />
                     <option value="AU Zenith+" />
                     <option value="OneCard" />
                     <option value="Amex Platinum" />

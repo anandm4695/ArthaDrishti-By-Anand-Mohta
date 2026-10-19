@@ -137,5 +137,26 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(travelResult.topCard?.cardName).toBe("IndusInd Avios Visa Infinite");
     expect(travelResult.topCard?.returnPct).toBe(6.0);
   });
+
+  it("identifies IndusInd EazyDiner dining discount, Pinnacle e-commerce perks, and Platinum RuPay UPI", () => {
+    const portfolio = [
+      { id: "c3", issuer: "IndusInd Bank EazyDiner Credit Card", limit: 200000, outstanding: 0, status: "active" },
+      { id: "c4", issuer: "IndusInd Bank Pinnacle Credit Card", limit: 500000, outstanding: 0, status: "active" },
+      { id: "c5", issuer: "IndusInd Platinum RuPay", limit: 150000, outstanding: 0, status: "active" },
+    ];
+
+    const diningResult = rankCardsForPayment(portfolio, "EazyDiner", "Food & Dining", 2000);
+    expect(diningResult.topCard?.cardName).toBe("IndusInd Bank EazyDiner Credit Card");
+    expect(diningResult.topCard?.returnPct).toBe(25.0);
+    expect(diningResult.topCard?.savingsInINR).toBe(500);
+
+    const upiResult = rankCardsForPayment(portfolio, "Local Kirana QR", "UPI Payments", 500);
+    expect(upiResult.topCard?.cardName).toBe("IndusInd Platinum RuPay");
+    expect(upiResult.topCard?.returnPct).toBe(2.0);
+
+    const onlineResult = rankCardsForPayment(portfolio, "Flipkart", "Online Shopping", 10000);
+    expect(onlineResult.topCard?.cardName).toBe("IndusInd Bank Pinnacle Credit Card");
+    expect(onlineResult.topCard?.returnPct).toBe(2.5);
+  });
 });
 

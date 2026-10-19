@@ -877,6 +877,121 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
       "Complimentary Priority Pass international airport lounge access + airport meet-and-greet services",
     ],
   },
+  {
+    matchKeys: ["indusind pinnacle", "pinnacle credit card", "pinnacle", "indusind bank pinnacle"],
+    cardDisplayName: "IndusInd Bank Pinnacle Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to 3 free tickets per month, max ₹200 off per ticket)", badge: "BOGO BMS Movies" },
+      makemytrip: { returnPct: 2.5, perkType: "reward_points", description: "2.5 Reward Points per ₹100 on e-commerce travel bookings" },
+    },
+    categoryPerks: {
+      "Travel & Flights": { returnPct: 2.5, perkType: "reward_points", description: "2.5 Reward Points per ₹100 on online travel bookings" },
+      "Online Shopping": { returnPct: 2.5, perkType: "reward_points", description: "2.5 Reward Points per ₹100 spent on e-commerce platforms" },
+      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie tickets on BookMyShow up to 3 times per month" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "2.5 Reward Points for every ₹100 spent on e-commerce transactions",
+      "Buy 1 Get 1 Free movie tickets on BookMyShow (up to 3 tickets per month, ₹200 max discount each)",
+      "Complimentary Priority Pass lounge access & international airport meet-and-assist",
+      "Low 1.5% foreign currency markup fee on international transactions",
+      "Complimentary golf games and golf lessons privileges",
+    ],
+  },
+  {
+    matchKeys: ["indusind eazydiner", "eazydiner credit card", "eazydiner indusind", "eazydiner"],
+    cardDisplayName: "IndusInd Bank EazyDiner Credit Card",
+    merchantPerks: {
+      eazydiner: { returnPct: 25.0, perkType: "discount", description: "Guaranteed extra 25% off up to ₹1,000 via PayEazy on EazyDiner", badge: "25% PayEazy Off" },
+      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to 2 tickets per month, max ₹200 off each)", badge: "BOGO BMS" },
+    },
+    categoryPerks: {
+      "Food & Dining": { returnPct: 10.0, perkType: "reward_points", description: "10 Reward Points per ₹100 on dining, shopping, and entertainment spends" },
+      "Entertainment": { returnPct: 10.0, perkType: "reward_points", description: "10 Reward Points per ₹100 on entertainment spends" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Extra 25% up to ₹1,000 off on every dining bill paid via PayEazy on the EazyDiner app",
+      "Complimentary 1-year EazyDiner Prime membership with up to 50% discount at partner restaurants",
+      "10 Reward Points per ₹100 on Dining, Shopping & Entertainment spends",
+      "Buy 1 Get 1 Free movie tickets on BookMyShow (up to 2 free tickets per month, max ₹200 each)",
+      "2 complimentary domestic airport lounge visits per calendar quarter",
+    ],
+  },
+  {
+    matchKeys: ["indusind platinum rupay", "platinum rupay", "indusind rupay", "indusind platinum"],
+    cardDisplayName: "IndusInd Bank Platinum RuPay Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 20.0, perkType: "discount", description: "Special BookMyShow movie discounts" },
+    },
+    categoryPerks: {
+      "UPI Payments": { returnPct: 2.0, perkType: "reward_points", description: "2 Reward Points per ₹100 on UPI merchant QR transactions" },
+      "Online Shopping": { returnPct: 1.0, perkType: "reward_points", description: "1 Reward Point per ₹100 on online merchant spends" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.7,
+    specialPerks: [
+      "Seamlessly link with UPI apps (Google Pay, PhonePe, Paytm, CRED) for scan & pay credit transactions",
+      "2 Reward Points for every ₹100 spent on UPI merchant transactions",
+      "1% fuel surcharge waiver across all fuel stations in India",
+      "Comprehensive complimentary travel and personal accident insurance cover",
+    ],
+  },
+  {
+    matchKeys: ["indusind tiger", "tiger credit card", "tiger card"],
+    cardDisplayName: "IndusInd Bank Tiger Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free movie tickets on BookMyShow (twice per quarter)", badge: "BOGO BMS" },
+    },
+    categoryPerks: {
+      "Food & Dining": { returnPct: 3.0, perkType: "reward_points", description: "6 Accelerated Reward Points per ₹100 on dining spends" },
+      "Travel & Flights": { returnPct: 3.0, perkType: "reward_points", description: "6 Accelerated Reward Points per ₹100 on travel bookings" },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Exclusive partnership with WWF India supporting wildlife and tiger conservation",
+      "6 Accelerated Reward Points per ₹100 spent on Dining and Travel",
+      "2 complimentary domestic airport lounge visits per calendar quarter",
+      "Buy 1 Get 1 Free movie tickets on BookMyShow twice per quarter up to ₹200 each",
+    ],
+  },
+  {
+    matchKeys: ["indusind nexxt", "nexxt credit card", "nexxt"],
+    cardDisplayName: "IndusInd Bank Nexxt Credit Card",
+    merchantPerks: {
+      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free movie tickets on BookMyShow up to 2 tickets per month", badge: "BOGO BMS" },
+    },
+    categoryPerks: {
+      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie tickets on BookMyShow" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Interactive push-button card with LED lights to switch between Credit, Rewards, and EMI at POS",
+      "1 Reward Point per ₹100 spent on all retail transactions",
+      "Buy 1 Get 1 Free movie tickets on BookMyShow (up to 2 tickets per month, max ₹200 discount)",
+      "1% fuel surcharge waiver across all petrol pumps in India",
+    ],
+  },
+  {
+    matchKeys: ["indusind samman", "samman rupay", "samman credit card", "samman"],
+    cardDisplayName: "IndusInd Bank Samman RuPay Credit Card",
+    merchantPerks: {},
+    categoryPerks: {
+      "UPI Payments": { returnPct: 1.5, perkType: "reward_points", description: "Reward points on UPI QR merchant transactions" },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.7,
+    specialPerks: [
+      "Dedicated card crafted for government and defense personnel on the RuPay network",
+      "UPI linkable for fast and secure QR payments anywhere",
+      "Zero joining and annual fees with lifetime free privileges",
+      "1% fuel surcharge waiver across India",
+    ],
+  },
 
   // ── Standard Chartered Cards
   {

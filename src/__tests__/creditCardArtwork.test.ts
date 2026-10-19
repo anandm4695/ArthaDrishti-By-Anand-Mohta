@@ -88,6 +88,30 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       expect(indusindAvios?.id).toBe("indusind-avios");
       expect(indusindAvios?.imageUrl).toBe("/cards/indusind-avios.png");
 
+      const indusindPinnacle = getMatchingCardPreset("IndusInd Pinnacle", "Visa");
+      expect(indusindPinnacle?.id).toBe("indusind-pinnacle");
+      expect(indusindPinnacle?.imageUrl).toBe("/cards/indusind-pinnacle.png");
+
+      const indusindRupay = getMatchingCardPreset("IndusInd Platinum RuPay", "RuPay");
+      expect(indusindRupay?.id).toBe("indusind-platinum-rupay");
+      expect(indusindRupay?.imageUrl).toBe("/cards/indusind-platinum-rupay.png");
+
+      const indusindEazy = getMatchingCardPreset("IndusInd EazyDiner Credit Card", "Visa");
+      expect(indusindEazy?.id).toBe("indusind-eazydiner");
+      expect(indusindEazy?.imageUrl).toBe("/cards/indusind-eazydiner.png");
+
+      const indusindTiger = getMatchingCardPreset("IndusInd Tiger Credit Card", "Mastercard");
+      expect(indusindTiger?.id).toBe("indusind-tiger");
+      expect(indusindTiger?.imageUrl).toBe("/cards/indusind-tiger.png");
+
+      const indusindSamman = getMatchingCardPreset("IndusInd Samman RuPay", "RuPay");
+      expect(indusindSamman?.id).toBe("indusind-samman");
+      expect(indusindSamman?.imageUrl).toBe("/cards/indusind-samman.png");
+
+      const indusindNexxt = getMatchingCardPreset("IndusInd Nexxt Credit Card", "Mastercard");
+      expect(indusindNexxt?.id).toBe("indusind-nexxt");
+      expect(indusindNexxt?.imageUrl).toBe("/cards/indusind-nexxt.png");
+
       const idfc = getMatchingCardPreset("IDFC FIRST Wealth", "Visa");
       expect(idfc?.id).toBe("idfc-wealth");
       expect(idfc?.imageUrl).toBe("/cards/idfc-wealth.png");
@@ -226,6 +250,14 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       const scUltimate = getMatchingCardPreset("Standard Chartered Ultimate", "Visa");
       expect(scUltimate?.imageUrl).toMatch(/cards\/sc-ultimate|sc\.com/);
       expect(scUltimate?.officialImageUrl).toContain("sc.com");
+
+      const indusindAviosCard = getMatchingCardPreset("IndusInd Avios", "Visa");
+      expect(indusindAviosCard?.imageUrl).toBe("/cards/indusind-avios.png");
+      expect(indusindAviosCard?.officialImageUrl).toContain("indusind.bank.in");
+
+      const indusindLegendCard = getMatchingCardPreset("IndusInd Legend", "Visa");
+      expect(indusindLegendCard?.imageUrl).toBe("/cards/indusind-legend.png");
+      expect(indusindLegendCard?.officialImageUrl).toContain("indusind.bank.in");
     });
 
     it("prioritizes custom user-uploaded or linked image URL over preset image", () => {
@@ -354,6 +386,13 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       { query: "ICICI Coral Credit Card", expectedId: "icici-coral-rupay", expectedImage: "/cards/icici-coral.png" },
       { query: "ICICI MakeMyTrip Credit Card", expectedId: "icici-makemytrip", expectedImage: "/cards/icici-makemytrip.png" },
       { query: "HDFC Times Credit Card", expectedId: "hdfc-times", expectedImage: "/cards/hdfc-times.png" },
+      { query: "IndusInd Bank Legend Credit Card", expectedId: "indusind-legend", expectedImage: "/cards/indusind-legend.png" },
+      { query: "IndusInd Pinnacle Credit Card", expectedId: "indusind-pinnacle", expectedImage: "/cards/indusind-pinnacle.png" },
+      { query: "IndusInd EazyDiner Credit Card", expectedId: "indusind-eazydiner", expectedImage: "/cards/indusind-eazydiner.png" },
+      { query: "IndusInd Platinum RuPay Credit Card", expectedId: "indusind-platinum-rupay", expectedImage: "/cards/indusind-platinum-rupay.png" },
+      { query: "IndusInd Tiger Credit Card", expectedId: "indusind-tiger", expectedImage: "/cards/indusind-tiger.png" },
+      { query: "IndusInd Samman RuPay Credit Card", expectedId: "indusind-samman", expectedImage: "/cards/indusind-samman.png" },
+      { query: "IndusInd Nexxt Credit Card", expectedId: "indusind-nexxt", expectedImage: "/cards/indusind-nexxt.png" },
     ];
 
     it.each(requiredCards)("accurately matches query '$query' to preset $expectedId with image $expectedImage", ({ query, expectedId, expectedImage }) => {
