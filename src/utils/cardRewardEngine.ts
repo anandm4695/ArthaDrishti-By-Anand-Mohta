@@ -260,6 +260,16 @@ export const POPULAR_MERCHANTS: MerchantInfo[] = [
     description: "Indian Railways train tickets and Vande Bharat bookings",
   },
   {
+    id: "vistara",
+    name: "Club Vistara / Air India",
+    category: "Travel & Flights",
+    brandName: "Vistara",
+    keywords: ["vistara", "club vistara", "air india", "airindia", "flight booking", "airline"],
+    typicalSpend: 9000,
+    description: "Domestic and international airline flight tickets and Club Vistara frequent flyer flights",
+    badge: "Premier Airline",
+  },
+  {
     id: "uber",
     name: "Uber / Ola Cabs",
     category: "Travel & Flights",
@@ -2167,92 +2177,711 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     ],
   },
 
-  // ── IDFC FIRST Bank Cards
+  // ── IDFC FIRST Bank Cards (Phase 15) ─────────────────────────────────────────
   {
-    matchKeys: ["idfc first wealth", "idfc wealth", "first wealth"],
-    cardDisplayName: "IDFC FIRST Wealth Credit Card",
+    matchKeys: [
+      "idfc-private",
+      "idfc first private",
+      "idfc private",
+      "first private",
+      "idfc private metal",
+    ],
+    cardDisplayName: "IDFC FIRST Private",
     merchantPerks: {
+      forex_international: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "Zero (0%) foreign exchange markup fee + 10X reward points on all international spends (~5.85% total value savings)",
+        badge: "0% Forex + 10X",
+      },
       bookmyshow: {
-        returnPct: 50.0,
+        returnPct: 25.0,
         perkType: "discount",
-        description: "Buy 1 Get 1 Free on BookMyShow (up to ₹500 off twice a month)",
-        badge: "BOGO ₹500 Movies",
+        description: "Buy 1 Get 1 free movie ticket up to ₹750 off on BookMyShow (twice a month)",
+        badge: "BOGO BMS ₹750",
+      },
+      taj: {
+        returnPct: 3.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on luxury stays and Taj Epicure dining",
       },
       makemytrip: {
-        returnPct: 2.5,
+        returnPct: 3.5,
         perkType: "reward_points",
-        description: "10X Reward Points on monthly spends above ₹30,000",
-      },
-      swiggy: {
-        returnPct: 2.0,
-        perkType: "reward_points",
-        description: "6X Reward Points on dining & food delivery",
-      },
-      zomato: {
-        returnPct: 2.0,
-        perkType: "reward_points",
-        description: "6X Reward Points on culinary experiences",
+        description: "10X Reward Points on travel reservations",
       },
     },
     categoryPerks: {
-      Entertainment: {
-        returnPct: 50.0,
-        perkType: "discount",
-        description: "Buy 1 Get 1 free movie ticket up to ₹500 twice every month on BMS",
+      International: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "Zero (0%) foreign currency markup fee across all overseas spends + 10X points",
       },
-      Travel: {
-        returnPct: 2.5,
+      "Movies & Cinema": {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹750 twice a month on BookMyShow",
+      },
+      "Travel & Flights": {
+        returnPct: 3.5,
         perkType: "reward_points",
-        description: "4 complimentary domestic and international airport & spa visits per quarter",
+        description: "Unlimited domestic and international airport lounge access + meet & greet privileges",
       },
       "Food & Dining": {
-        returnPct: 2.0,
+        returnPct: 3.5,
         perkType: "reward_points",
-        description: "6X reward points on all dining transactions",
+        description: "10X Reward Points on luxury dining",
       },
     },
-    defaultOnlineReturnPct: 1.5,
-    defaultOfflineReturnPct: 1.0,
+    defaultOnlineReturnPct: 2.5,
+    defaultOfflineReturnPct: 1.5,
     specialPerks: [
-      "10X Reward Points on incremental spends above ₹30,000/month (points never expire)",
-      "4 complimentary domestic & international airport lounge visits + 4 spa visits per quarter",
-      "Buy 1 Get 1 free movie ticket up to ₹500 on BookMyShow twice every month",
-      "Low dynamic interest APR starting from 9% p.a. with 1.5% low forex markup",
+      "Zero (0%) foreign currency markup fee on international transactions",
+      "Unlimited complimentary domestic and international airport lounge access",
+      "Buy 1 Get 1 free movie ticket up to ₹750 twice every month on BookMyShow",
+      "Complimentary airport meet & greet and limousine transfers",
+      "10X Reward Points on all incremental spends (points never expire)",
     ],
   },
   {
-    matchKeys: ["idfc first wow", "idfc wow", "first wow", "wow card"],
-    cardDisplayName: "IDFC FIRST WOW! Credit Card",
+    matchKeys: [
+      "idfc-mayura",
+      "idfc first mayura",
+      "idfc mayura",
+      "mayura",
+      "first mayura",
+      "mayura credit card",
+    ],
+    cardDisplayName: "IDFC FIRST Mayura",
     merchantPerks: {
+      forex_international: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "0% foreign currency markup fee across all international transactions + 10X reward points",
+        badge: "0% Forex Markup",
+      },
+      bookmyshow: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹500 off on BookMyShow (twice a month, ₹1,000/mo)",
+        badge: "BOGO BMS ₹500",
+      },
+      makemytrip: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on travel bookings (points never expire)",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on dining",
+      },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on food delivery",
+      },
+    },
+    categoryPerks: {
+      International: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "Zero (0%) forex markup fee on overseas transactions + 10X reward points",
+      },
+      "Travel & Flights": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "4 complimentary domestic and 4 international airport lounge & spa visits per quarter",
+      },
+      "Movies & Cinema": {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹500 twice monthly on BookMyShow",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on dining spends",
+      },
+    },
+    defaultOnlineReturnPct: 2.5,
+    defaultOfflineReturnPct: 1.5,
+    specialPerks: [
+      "Zero (0%) foreign currency markup fee on all international purchases",
+      "4 complimentary domestic airport lounge visits + 4 international lounge/spa visits per quarter",
+      "Buy 1 Get 1 free movie ticket up to ₹500 twice a month on BookMyShow",
+      "10X Reward Points on monthly spends above ₹20,000 and on birthdays",
+      "Metal card crafted with peacock heritage artistry",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-ashva",
+      "idfc first ashva",
+      "idfc ashva",
+      "ashva",
+      "first ashva",
+      "ashva credit card",
+    ],
+    cardDisplayName: "IDFC FIRST Ashva",
+    merchantPerks: {
+      forex_international: {
+        returnPct: 4.85,
+        perkType: "cashback",
+        description: "Low 1% foreign currency markup fee (saves 2.5% + GST) + 10X reward points",
+        badge: "1% Low Forex",
+      },
+      bookmyshow: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹400 off on BookMyShow (twice a month, ₹800/mo)",
+        badge: "BOGO BMS ₹400",
+      },
+      makemytrip: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on travel bookings",
+      },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on dining",
+      },
+    },
+    categoryPerks: {
+      International: {
+        returnPct: 4.85,
+        perkType: "cashback",
+        description: "Low 1% foreign currency markup fee + 10X reward points",
+      },
+      "Travel & Flights": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "2 complimentary domestic and 2 international airport lounge visits per quarter",
+      },
+      "Movies & Cinema": {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹400 twice monthly on BookMyShow",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on dining",
+      },
+    },
+    defaultOnlineReturnPct: 2.5,
+    defaultOfflineReturnPct: 1.25,
+    specialPerks: [
+      "Low 1% foreign exchange markup fee",
+      "2 complimentary domestic and 2 international airport lounge visits per quarter",
+      "Buy 1 Get 1 free movie ticket up to ₹400 twice a month on BookMyShow",
+      "10X Reward Points on monthly spends above ₹20,000 and on birthdays",
+      "Metal card crafted with royal stallion aesthetic",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-wealth",
+      "idfc first wealth",
+      "idfc wealth",
+      "first wealth",
+      "idfc wealth credit card",
+    ],
+    cardDisplayName: "IDFC FIRST Wealth",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹500 off on BookMyShow (twice a month)",
+        badge: "BOGO BMS ₹500",
+      },
+      forex_international: {
+        returnPct: 4.35,
+        perkType: "cashback",
+        description: "Low 1.5% forex markup fee + reward points (~4.35% net savings)",
+        badge: "1.5% Low Forex",
+      },
+      makemytrip: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on travel spends > ₹20k",
+      },
+      swiggy: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on online dining",
+      },
+      zomato: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on food delivery",
+      },
+    },
+    categoryPerks: {
+      "Movies & Cinema": {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹500 twice a month on BookMyShow",
+      },
+      "Travel & Flights": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "2 complimentary domestic and 2 international airport lounge & spa visits per quarter",
+      },
+      International: {
+        returnPct: 4.35,
+        perkType: "cashback",
+        description: "Low 1.5% foreign currency markup fee",
+      },
+      "Food & Dining": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on dining (10X on spends > ₹20,000/mo)",
+      },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 0.75,
+    specialPerks: [
+      "10X Reward Points on incremental monthly spends above ₹20,000 and on birthdays",
+      "2 complimentary domestic & 2 international airport lounge visits + spa visits per quarter",
+      "Buy 1 Get 1 free movie ticket up to ₹500 twice a month on BookMyShow",
+      "Low foreign currency markup of 1.5%",
+      "Complimentary golf rounds and roadside assistance across India",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-select",
+      "idfc first select",
+      "idfc select",
+      "first select",
+      "select credit card",
+    ],
+    cardDisplayName: "IDFC FIRST Select",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹250 off on BookMyShow (twice a month)",
+        badge: "BOGO BMS ₹250",
+      },
+      forex_international: {
+        returnPct: 3.85,
+        perkType: "cashback",
+        description: "Low 1.99% forex markup fee + reward points",
+        badge: "1.99% Forex",
+      },
+      swiggy: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on dining",
+      },
+      amazon: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on online retail",
+      },
+    },
+    categoryPerks: {
+      "Movies & Cinema": {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹250 twice a month on BookMyShow",
+      },
+      "Travel & Flights": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2 complimentary domestic airport lounge visits per calendar quarter",
+      },
+      "Online Shopping": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on all online shopping purchases",
+      },
+      "Food & Dining": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on dining",
+      },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 0.75,
+    specialPerks: [
+      "10X Reward Points on incremental monthly spends above ₹20,000 and on birthdays",
+      "2 complimentary domestic airport lounge visits per calendar quarter",
+      "Buy 1 Get 1 free movie ticket up to ₹250 twice a month on BookMyShow",
+      "Complimentary roadside assistance worth ₹1,399",
+      "Reward points never expire and have zero redemption fee",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-millennia",
+      "idfc first millennia",
+      "idfc millennia",
+      "first millennia",
+      "millennia credit card",
+    ],
+    cardDisplayName: "IDFC FIRST Millennia",
+    merchantPerks: {
+      paytm: {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "25% discount on movie tickets up to ₹100 twice a month on Paytm Movies",
+        badge: "25% Movies",
+      },
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "Discount on movie tickets",
+      },
+      amazon: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on online shopping",
+      },
+      flipkart: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on online shopping",
+      },
+      swiggy: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on food delivery",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points (1.5% value) on all online shopping transactions",
+      },
+      "Movies & Cinema": {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "25% discount on movie tickets up to ₹100 twice a month",
+      },
+      "Food & Dining": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on food delivery & dining",
+      },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 0.75,
+    specialPerks: [
+      "Lifetime Free (LTF) credit card with zero joining and annual fees",
+      "10X Reward Points on incremental spends above ₹20,000/mo and on birthdays",
+      "6X Reward Points on online purchases and 3X on offline retail",
+      "25% discount on movie tickets up to ₹100 twice every month",
+      "Points never expire and no redemption charges",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-classic",
+      "idfc first classic",
+      "idfc classic",
+      "first classic",
+      "classic credit card",
+    ],
+    cardDisplayName: "IDFC FIRST Classic",
+    merchantPerks: {
+      paytm: {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "25% discount on movie tickets up to ₹100 twice a month",
+        badge: "25% Movies",
+      },
+      amazon: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on online purchases",
+      },
+      flipkart: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on online shopping",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "6X Reward Points on online purchases",
+      },
+      "Movies & Cinema": {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "25% off on movie tickets up to ₹100 twice a month",
+      },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 0.75,
+    specialPerks: [
+      "Zero annual fee, zero joining fee — 100% Lifetime Free",
+      "10X Reward Points on spends above ₹20,000/mo and on birthdays",
+      "6X Reward Points on online shopping transactions",
+      "25% discount on movie tickets up to ₹100 twice a month",
+      "Complimentary roadside assistance coverage",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-wow",
+      "idfc first wow",
+      "idfc wow",
+      "first wow",
+      "wow card",
+      "wow credit card",
+    ],
+    cardDisplayName: "IDFC FIRST WOW!",
+    merchantPerks: {
+      forex_international: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "Zero (0%) foreign exchange markup fee worldwide (~5.85% net value savings)",
+        badge: "0% Forex Markup",
+      },
       makemytrip: {
         returnPct: 1.5,
         perkType: "reward_points",
-        description: "Reward points on travel with 0% foreign exchange markup",
+        description: "Travel bookings with 0% foreign currency fee",
       },
       amazon: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Reward points on all online spends",
+      },
+    },
+    categoryPerks: {
+      International: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "0% zero forex markup fee across all foreign currencies worldwide",
+      },
+      "Travel & Flights": {
+        returnPct: 3.5,
+        perkType: "cashback",
+        description: "Zero forex markup on all overseas travel and flight reservations",
+      },
+      "Online Shopping": {
         returnPct: 1.0,
         perkType: "reward_points",
         description: "Reward points that never expire on all retail spends",
       },
     },
-    categoryPerks: {
-      "International Spends": {
-        returnPct: 3.5,
-        perkType: "cashback",
-        description: "0% zero forex markup fee across all foreign currencies worldwide",
-      },
-      Travel: {
-        returnPct: 3.5,
-        perkType: "cashback",
-        description: "Zero forex markup on all overseas travel bookings and merchant spends",
-      },
-    },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
     specialPerks: [
-      "Zero Forex markup (0% foreign currency fee) on all international transactions",
-      "100% guaranteed approval against Fixed Deposit earning attractive interest",
-      "Lifetime Free (LTF) with zero annual fee and reward points that never expire",
+      "Zero (0%) foreign exchange markup fee on all international purchases",
+      "100% guaranteed approval against Fixed Deposit without income proof",
+      "Earn attractive FD interest while enjoying a credit card runway",
+      "Lifetime Free (LTF) with zero joining and annual fees",
+      "Reward points that never expire and have zero redemption charges",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-swyp",
+      "idfc first swyp",
+      "idfc swyp",
+      "first swyp",
+      "swyp",
+      "swyp credit card",
+    ],
+    cardDisplayName: "IDFC FIRST SWYP",
+    merchantPerks: {
+      zomato: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on Zomato food delivery",
+        badge: "10% Zomato",
+      },
+      swiggy: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on Swiggy orders",
+        badge: "10% Swiggy",
+      },
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on BookMyShow movie tickets",
+      },
+      spotify: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on digital subscriptions",
+      },
+      netflix: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on streaming entertainment",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on food delivery apps (Zomato, Swiggy)",
+      },
+      Entertainment: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on BookMyShow, Spotify, and Netflix",
+      },
+      "Online Shopping": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "Accelerated reward points on online merchant checkouts",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Curated 10% discounts across top youth brands: Zomato, Swiggy, BMS, Spotify",
+      "Convenient instant EMI conversions at low flat processing fees",
+      "Milestone benefits: 1,000 bonus points on ₹5,000 monthly spend",
+      "Lifetime free option with minimal spend criteria",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-hpcl-power",
+      "idfc hpcl power",
+      "idfc hpcl",
+      "idfc power+",
+      "idfc hpcl power+",
+      "idfc power",
+    ],
+    cardDisplayName: "IDFC FIRST HPCL Power+",
+    merchantPerks: {
+      hpcl: {
+        returnPct: 6.5,
+        perkType: "reward_points",
+        description: "Up to 6.5% savings on fuel at HPCL pumps (5% reward points + 1.5% HP Pay app savings) + 1% surcharge waiver",
+        badge: "6.5% Fuel Savings",
+      },
+      indianoil: {
+        returnPct: 1.0,
+        perkType: "waiver",
+        description: "1% fuel surcharge waiver",
+      },
+      bpcl: {
+        returnPct: 1.0,
+        perkType: "waiver",
+        description: "1% fuel surcharge waiver",
+      },
+      airtel: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% back in reward points on utility bills",
+        badge: "5% Utilities",
+      },
+      electricity_bills: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% back in reward points on utility bill payments",
+      },
+      blinkit: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% back in reward points on grocery purchases",
+      },
+      upi: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Seamless RuPay UPI payments at merchant QR codes with reward points",
+      },
+    },
+    categoryPerks: {
+      Fuel: {
+        returnPct: 6.5,
+        perkType: "reward_points",
+        description: "Up to 6.5% savings at HPCL pumps + 1% fuel surcharge waiver",
+      },
+      "Utilities & Bills": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% back in reward points on utility bill payments",
+      },
+      "Groceries & Essentials": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% back in reward points on grocery purchases",
+      },
+      "UPI Payments": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "RuPay credit card on UPI for merchant payments",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.75,
+    specialPerks: [
+      "Up to 6.5% total fuel savings at HPCL petrol pumps",
+      "5% back in reward points on Groceries and Utility bill payments",
+      "RuPay Credit Card on UPI: Scan and pay at any merchant QR code effortlessly",
+      "1% fuel surcharge waiver across all petrol pumps in India",
+      "Welcome benefit: ₹500 cashback on first fuel transaction of ₹500+",
+    ],
+  },
+  {
+    matchKeys: [
+      "idfc-vistara",
+      "idfc first club vistara",
+      "idfc first vistara",
+      "idfc vistara",
+      "first vistara",
+      "club vistara idfc",
+    ],
+    cardDisplayName: "IDFC FIRST Club Vistara",
+    merchantPerks: {
+      vistara: {
+        returnPct: 6.0,
+        perkType: "miles",
+        description: "6 Club Vistara (CV) Points per ₹200 spent on Vistara flights",
+        badge: "6 CV Points/₹200",
+      },
+      makemytrip: {
+        returnPct: 3.0,
+        perkType: "miles",
+        description: "3 CV Points per ₹200 spent on travel",
+      },
+      easemytrip: {
+        returnPct: 3.0,
+        perkType: "miles",
+        description: "3 CV Points per ₹200 spent on flight tickets",
+      },
+    },
+    categoryPerks: {
+      "Travel & Flights": {
+        returnPct: 6.0,
+        perkType: "miles",
+        description: "Up to 6 CV Points per ₹200 spent on flights + complimentary ticket vouchers",
+      },
+      International: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "1.99% low foreign currency markup fee",
+      },
+      "Online Shopping": {
+        returnPct: 1.5,
+        perkType: "miles",
+        description: "3 CV Points per ₹200 spent on online shopping",
+      },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Complimentary Premium Economy class flight ticket voucher on joining",
+      "Earn up to 5 complimentary flight ticket vouchers on annual spend milestones",
+      "6 Club Vistara Points per ₹200 spent on Vistara flights",
+      "2 complimentary domestic airport lounge and spa visits per quarter",
+      "Complimentary golf rounds and golf lessons",
     ],
   },
 

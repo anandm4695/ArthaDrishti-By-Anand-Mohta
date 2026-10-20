@@ -717,5 +717,194 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(zomatoEdition?.returnPct).toBe(5.0);
     expect(zomatoEdition?.savingsInINR).toBe(100);
   });
+
+  it("IDFC FIRST Bank Credit Cards Reward Engine (Phase 15)", () => {
+    const idfcPortfolio: StoredCard[] = [
+      {
+        id: "idfc-private",
+        issuer: "IDFC FIRST Private",
+        cardName: "IDFC FIRST Private",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-mayura",
+        issuer: "IDFC FIRST Mayura",
+        cardName: "IDFC FIRST Mayura",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-ashva",
+        issuer: "IDFC FIRST Ashva",
+        cardName: "IDFC FIRST Ashva",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-wealth",
+        issuer: "IDFC FIRST Wealth",
+        cardName: "IDFC FIRST Wealth",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-select",
+        issuer: "IDFC FIRST Select",
+        cardName: "IDFC FIRST Select",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-millennia",
+        issuer: "IDFC FIRST Millennia",
+        cardName: "IDFC FIRST Millennia",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-classic",
+        issuer: "IDFC FIRST Classic",
+        cardName: "IDFC FIRST Classic",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-wow",
+        issuer: "IDFC FIRST WOW!",
+        cardName: "IDFC FIRST WOW!",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-swyp",
+        issuer: "IDFC FIRST SWYP",
+        cardName: "IDFC FIRST SWYP",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-hpcl-power",
+        issuer: "IDFC FIRST HPCL Power+",
+        cardName: "IDFC FIRST HPCL Power+",
+        network: "RuPay",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "idfc-vistara",
+        issuer: "IDFC FIRST Club Vistara",
+        cardName: "IDFC FIRST Club Vistara",
+        network: "Visa",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+    ];
+
+    // 1. IDFC FIRST Private gets 25% on BookMyShow (BOGO up to ₹750) and 5.85% on Forex
+    const bmsRes = rankCardsForPayment(idfcPortfolio, "BookMyShow", "Movies & Cinema", 2000);
+    const privateBms = bmsRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Private");
+    expect(privateBms?.returnPct).toBe(25.0);
+    expect(privateBms?.savingsInINR).toBe(500);
+
+    const intlRes = rankCardsForPayment(idfcPortfolio, "Forex_International", "International", 10000);
+    const privateIntl = intlRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Private");
+    expect(privateIntl?.returnPct).toBe(5.85);
+    expect(privateIntl?.savingsInINR).toBe(585);
+
+    // 2. IDFC FIRST Mayura gets 5.85% on Forex and 20% on BMS
+    const mayuraIntl = intlRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Mayura");
+    expect(mayuraIntl?.returnPct).toBe(5.85);
+    expect(mayuraIntl?.savingsInINR).toBe(585);
+
+    const mayuraBms = bmsRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Mayura");
+    expect(mayuraBms?.returnPct).toBe(20.0);
+    expect(mayuraBms?.savingsInINR).toBe(400);
+
+    // 3. IDFC FIRST Ashva gets 4.85% on Forex and 20% on BMS
+    const ashvaIntl = intlRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Ashva");
+    expect(ashvaIntl?.returnPct).toBe(4.85);
+    expect(ashvaIntl?.savingsInINR).toBe(485);
+
+    const ashvaBms = bmsRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Ashva");
+    expect(ashvaBms?.returnPct).toBe(20.0);
+    expect(ashvaBms?.savingsInINR).toBe(400);
+
+    // 4. IDFC FIRST Wealth gets 25% on BMS and 4.35% on Forex
+    const wealthBms = bmsRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Wealth");
+    expect(wealthBms?.returnPct).toBe(25.0);
+    expect(wealthBms?.savingsInINR).toBe(500);
+
+    const wealthIntl = intlRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Wealth");
+    expect(wealthIntl?.returnPct).toBe(4.35);
+    expect(wealthIntl?.savingsInINR).toBe(435);
+
+    // 5. IDFC FIRST Select gets 20% on BMS and 3.85% on Forex
+    const selectBms = bmsRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Select");
+    expect(selectBms?.returnPct).toBe(20.0);
+    expect(selectBms?.savingsInINR).toBe(400);
+
+    const selectIntl = intlRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Select");
+    expect(selectIntl?.returnPct).toBe(3.85);
+    expect(selectIntl?.savingsInINR).toBe(385);
+
+    // 6. IDFC FIRST Millennia gets 15% on Paytm Movies and 1.5% on Amazon
+    const paytmRes = rankCardsForPayment(idfcPortfolio, "Paytm", "Movies & Cinema", 1000);
+    const millenniaPaytm = paytmRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Millennia");
+    expect(millenniaPaytm?.returnPct).toBe(15.0);
+    expect(millenniaPaytm?.savingsInINR).toBe(150);
+
+    const amzRes = rankCardsForPayment(idfcPortfolio, "Amazon", "Online Shopping", 4000);
+    const millenniaAmz = amzRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Millennia");
+    expect(millenniaAmz?.returnPct).toBe(1.5);
+    expect(millenniaAmz?.savingsInINR).toBe(60);
+
+    // 7. IDFC FIRST Classic gets 15% on Paytm Movies
+    const classicPaytm = paytmRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Classic");
+    expect(classicPaytm?.returnPct).toBe(15.0);
+    expect(classicPaytm?.savingsInINR).toBe(150);
+
+    // 8. IDFC FIRST WOW! gets 5.85% on Forex
+    const wowIntl = intlRes.rankedCards.find((c) => c.cardName === "IDFC FIRST WOW!");
+    expect(wowIntl?.returnPct).toBe(5.85);
+    expect(wowIntl?.savingsInINR).toBe(585);
+
+    // 9. IDFC FIRST SWYP gets 10% on Zomato, Swiggy, and Spotify
+    const zomatoRes = rankCardsForPayment(idfcPortfolio, "Zomato", "Food & Dining", 1500);
+    const swypZomato = zomatoRes.rankedCards.find((c) => c.cardName === "IDFC FIRST SWYP");
+    expect(swypZomato?.returnPct).toBe(10.0);
+    expect(swypZomato?.savingsInINR).toBe(150);
+
+    const spotifyRes = rankCardsForPayment(idfcPortfolio, "Spotify", "Entertainment", 500);
+    const swypSpotify = spotifyRes.rankedCards.find((c) => c.cardName === "IDFC FIRST SWYP");
+    expect(swypSpotify?.returnPct).toBe(10.0);
+    expect(swypSpotify?.savingsInINR).toBe(50);
+
+    // 10. IDFC FIRST HPCL Power+ gets 6.5% on HPCL fuel and 5% on Airtel utilities
+    const hpclRes = rankCardsForPayment(idfcPortfolio, "HPCL", "Fuel", 2000);
+    const powerHpcl = hpclRes.rankedCards.find((c) => c.cardName === "IDFC FIRST HPCL Power+");
+    expect(powerHpcl?.returnPct).toBe(6.5);
+    expect(powerHpcl?.savingsInINR).toBe(130);
+
+    const airtelRes = rankCardsForPayment(idfcPortfolio, "Airtel", "Utilities & Bills", 1000);
+    const powerAirtel = airtelRes.rankedCards.find((c) => c.cardName === "IDFC FIRST HPCL Power+");
+    expect(powerAirtel?.returnPct).toBe(5.0);
+    expect(powerAirtel?.savingsInINR).toBe(50);
+
+    // 11. IDFC FIRST Club Vistara gets 6% on Vistara flights
+    const vistaraRes = rankCardsForPayment(idfcPortfolio, "Vistara", "Travel & Flights", 10000);
+    const vistaraCard = vistaraRes.rankedCards.find((c) => c.cardName === "IDFC FIRST Club Vistara");
+    expect(vistaraCard?.returnPct).toBe(6.0);
+    expect(vistaraCard?.savingsInINR).toBe(600);
+  });
 });
 

@@ -790,6 +790,61 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
         expectedId: "rbl-zomato",
         expectedImage: "/cards/rbl-zomato.png",
       },
+      {
+        query: "IDFC FIRST Private Credit Card",
+        expectedId: "idfc-private",
+        expectedImage: "/cards/idfc-private.png",
+      },
+      {
+        query: "IDFC FIRST Mayura Credit Card",
+        expectedId: "idfc-mayura",
+        expectedImage: "/cards/idfc-mayura.png",
+      },
+      {
+        query: "IDFC FIRST Ashva Credit Card",
+        expectedId: "idfc-ashva",
+        expectedImage: "/cards/idfc-ashva.png",
+      },
+      {
+        query: "IDFC FIRST Wealth Credit Card",
+        expectedId: "idfc-wealth",
+        expectedImage: "/cards/idfc-wealth.png",
+      },
+      {
+        query: "IDFC FIRST Select Credit Card",
+        expectedId: "idfc-select",
+        expectedImage: "/cards/idfc-select.png",
+      },
+      {
+        query: "IDFC FIRST Millennia Credit Card",
+        expectedId: "idfc-millennia",
+        expectedImage: "/cards/idfc-millennia.png",
+      },
+      {
+        query: "IDFC FIRST Classic Credit Card",
+        expectedId: "idfc-classic",
+        expectedImage: "/cards/idfc-classic.png",
+      },
+      {
+        query: "IDFC FIRST WOW! Credit Card",
+        expectedId: "idfc-wow",
+        expectedImage: "/cards/idfc-wow.png",
+      },
+      {
+        query: "IDFC FIRST SWYP Credit Card",
+        expectedId: "idfc-swyp",
+        expectedImage: "/cards/idfc-swyp.png",
+      },
+      {
+        query: "IDFC FIRST HPCL Power+ Credit Card",
+        expectedId: "idfc-hpcl-power",
+        expectedImage: "/cards/idfc-hpcl-power.png",
+      },
+      {
+        query: "IDFC FIRST Club Vistara Credit Card",
+        expectedId: "idfc-vistara",
+        expectedImage: "/cards/idfc-vistara.png",
+      },
     ];
 
     it.each(requiredCards)(
