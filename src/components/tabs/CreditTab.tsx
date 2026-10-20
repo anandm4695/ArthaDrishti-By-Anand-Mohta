@@ -254,71 +254,44 @@ const CardNetworkLogo = ({ network }: { network?: string }) => {
       </svg>
     );
 
-  // Diners Club — accurate overlapping-circles logo with brand blue
+  // Diners Club — authentic split-circle emblem with brand blue and official wordmark
   if (n === "diners" || n === "diners club")
     return (
       <svg
-        width="72"
-        height="30"
-        viewBox="0 0 72 30"
+        width="82"
+        height="26"
+        viewBox="0 0 82 26"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <defs>
-          <clipPath id="diners-left-clip">
-            <circle cx="13" cy="15" r="12" />
-          </clipPath>
-          <clipPath id="diners-right-clip">
-            <circle cx="23" cy="15" r="12" />
-          </clipPath>
-        </defs>
-        {/* Left circle — blue */}
-        <circle cx="13" cy="15" r="12" fill="#004A97" />
-        {/* Right circle — white */}
-        <circle cx="23" cy="15" r="12" fill="#FFFFFF" />
-        {/* Overlap: right circle clips blue fill */}
-        <circle cx="13" cy="15" r="12" fill="#FFFFFF" clipPath="url(#diners-right-clip)" />
-        {/* Inner overlap redraw — blue intersection */}
-        <circle cx="23" cy="15" r="12" fill="#004A97" clipPath="url(#diners-left-clip)" />
-        {/* Outer rings */}
-        <circle
-          cx="13"
-          cy="15"
-          r="12"
-          fill="none"
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth="0.5"
-        />
-        <circle
-          cx="23"
-          cy="15"
-          r="12"
-          fill="none"
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth="0.5"
-        />
-        {/* Wordmark */}
+        <g transform="translate(1, 2)">
+          <circle cx="11" cy="11" r="11" fill="#004A97" />
+          <circle cx="11" cy="11" r="9.7" fill="#0079C1" />
+          <circle cx="11" cy="11" r="8.4" fill="#004A97" />
+          <path d="M16 11a5.1 5.1 0 0 0-3.4-4.8v9.6A5.1 5.1 0 0 0 16 11z" fill="#FFFFFF" />
+          <path d="M6 11a5.1 5.1 0 0 0 3.4 4.8V6.2A5.1 5.1 0 0 0 6 11z" fill="#FFFFFF" />
+        </g>
         <text
-          x="38"
-          y="13"
-          fontFamily="'Arial', sans-serif"
-          fontSize="7.5"
-          fontWeight="800"
+          x="28"
+          y="11.5"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontSize="8"
+          fontWeight="900"
           fill="#FFFFFF"
-          letterSpacing="0.8"
+          letterSpacing="0.6"
         >
-          DINERS
+          DINERS CLUB
         </text>
         <text
-          x="38"
-          y="23"
-          fontFamily="'Arial', sans-serif"
-          fontSize="7.5"
-          fontWeight="800"
-          fill="rgba(255,255,255,0.7)"
-          letterSpacing="1.5"
+          x="28.2"
+          y="20.5"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontSize="5.8"
+          fontWeight="700"
+          fill="rgba(255, 255, 255, 0.75)"
+          letterSpacing="1.6"
         >
-          CLUB
+          INTERNATIONAL
         </text>
       </svg>
     );

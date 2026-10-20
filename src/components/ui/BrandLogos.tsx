@@ -1203,41 +1203,47 @@ export const CardNetworkLogo = ({
     );
   }
 
-  // Diners Club
+  // Diners Club — authentic split-circle emblem & official wordmark
   if (n === "diners" || n === "diners club" || n.includes("diners")) {
     const textColor = isWhite ? "#FFFFFF" : "#004A97";
+    const subColor = isWhite ? "rgba(255,255,255,0.78)" : "#0079C1";
     return (
       <svg
         height={height}
-        viewBox="0 0 72 30"
+        viewBox="0 0 86 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className={className}
         style={{ display: "inline-block", verticalAlign: "middle", ...style }}
       >
-        <circle cx="13" cy="15" r="12" fill="#004A97" />
-        <circle cx="23" cy="15" r="12" fill="#0079C1" />
+        <g transform="translate(1, 1)">
+          <circle cx="11" cy="11" r="11" fill="#004A97" />
+          <circle cx="11" cy="11" r="9.7" fill="#0079C1" />
+          <circle cx="11" cy="11" r="8.4" fill="#004A97" />
+          <path d="M16 11a5.1 5.1 0 0 0-3.4-4.8v9.6A5.1 5.1 0 0 0 16 11z" fill="#FFFFFF" />
+          <path d="M6 11a5.1 5.1 0 0 0 3.4 4.8V6.2A5.1 5.1 0 0 0 6 11z" fill="#FFFFFF" />
+        </g>
         <text
-          x="38"
-          y="13"
-          fontFamily="'Arial', sans-serif"
-          fontSize="7.5"
-          fontWeight="800"
+          x="28"
+          y="10"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontSize="8"
+          fontWeight="900"
           fill={textColor}
-          letterSpacing="0.8"
+          letterSpacing="0.6"
         >
-          DINERS
+          DINERS CLUB
         </text>
         <text
-          x="38"
-          y="23"
-          fontFamily="'Arial', sans-serif"
-          fontSize="7.5"
-          fontWeight="800"
-          fill={isWhite ? "rgba(255,255,255,0.7)" : "#0079C1"}
-          letterSpacing="1.5"
+          x="28.2"
+          y="19"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontSize="5.8"
+          fontWeight="700"
+          fill={subColor}
+          letterSpacing="1.6"
         >
-          CLUB
+          INTERNATIONAL
         </text>
       </svg>
     );

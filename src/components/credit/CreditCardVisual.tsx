@@ -112,23 +112,51 @@ export function PaymentNetworkLogo({ network, size = 48 }: { network?: string; s
   }
 
   if (n === "diners" || n.includes("diners club")) {
+    const width = (size * 76) / 48;
+    const height = (size * 22) / 48;
     return (
-      <div
-        style={{
-          background: "rgba(255,255,255,0.2)",
-          color: "#fff",
-          fontWeight: 800,
-          fontSize: 9.5,
-          padding: "2px 6px",
-          borderRadius: 4,
-          border: "1px solid rgba(255,255,255,0.3)",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 3,
-        }}
+      <svg
+        width={width}
+        height={height}
+        viewBox="0 0 76 22"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}
       >
-        <span>DINERS</span>
-      </div>
+        {/* Authentic Diners Club Split-Circle Emblem */}
+        <g transform="translate(1, 1)">
+          <circle cx="10" cy="10" r="10" fill="#004A97" />
+          <circle cx="10" cy="10" r="8.8" fill="#0079C1" />
+          <circle cx="10" cy="10" r="7.6" fill="#004A97" />
+          {/* Right curved crescent in crisp white */}
+          <path d="M14.6 10a4.6 4.6 0 0 0-3.1-4.3v8.6a4.6 4.6 0 0 0 3.1-4.3z" fill="#FFFFFF" />
+          {/* Left curved crescent in crisp white */}
+          <path d="M5.4 10a4.6 4.6 0 0 0 3.1 4.3V5.7A4.6 4.6 0 0 0 5.4 10z" fill="#FFFFFF" />
+        </g>
+        {/* Official Typography */}
+        <text
+          x="25"
+          y="8.8"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontSize="7.2"
+          fontWeight="900"
+          fill="#FFFFFF"
+          letterSpacing="0.6"
+        >
+          DINERS CLUB
+        </text>
+        <text
+          x="25.2"
+          y="17.2"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontSize="5.2"
+          fontWeight="700"
+          fill="rgba(255, 255, 255, 0.78)"
+          letterSpacing="1.6"
+        >
+          INTERNATIONAL
+        </text>
+      </svg>
     );
   }
 

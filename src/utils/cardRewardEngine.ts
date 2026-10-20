@@ -727,6 +727,120 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
       "ITC 1+1 buffet dining",
     ],
   },
+  {
+    matchKeys: ["diners black", "diners club black", "hdfc diners black", "hdfc diners club black", "dcb"],
+    cardDisplayName: "HDFC Diners Club Black",
+    merchantPerks: {
+      makemytrip: {
+        returnPct: 33.3,
+        perkType: "reward_points",
+        description: "10X SmartBuy Points (33.3% value) on hotels, 5X (16.6%) on flights (1 RP = ₹1)",
+        badge: "Up to 33.3% Value",
+      },
+      swiggy: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Swiggy)",
+        badge: "16.6% via Gyftr",
+      },
+      amazon: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Amazon Shopping)",
+        badge: "16.6% via Gyftr",
+      },
+      zomato: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Zomato)",
+        badge: "16.6% via Gyftr",
+      },
+      flipkart: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Flipkart)",
+        badge: "16.6% via Gyftr",
+      },
+    },
+    categoryPerks: {
+      "Travel & Flights": {
+        returnPct: 33.3,
+        perkType: "reward_points",
+        description: "Up to 33.3% on SmartBuy hotel bookings and 16.6% on flights",
+      },
+      "Food & Dining": {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "16.6% return via SmartBuy Gyftr vouchers; 3.33% base points",
+      },
+      "International Spends": {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "3.33% base points with low 2.0% forex markup",
+      },
+    },
+    defaultOnlineReturnPct: 3.33,
+    defaultOfflineReturnPct: 3.33,
+    specialPerks: [
+      "1:1 Point conversion on flights and hotels via SmartBuy",
+      "Unlimited domestic & international lounge access for primary & add-on members",
+      "6 complimentary golf games per quarter worldwide",
+    ],
+  },
+  {
+    matchKeys: ["diners privilege", "diners club privilege", "hdfc diners privilege", "hdfc diners club privilege"],
+    cardDisplayName: "HDFC Diners Club Privilege",
+    merchantPerks: {
+      swiggy: {
+        returnPct: 2.66,
+        perkType: "reward_points",
+        description: "2X Reward Points (8 RPs per ₹150) on weekend dining & Swiggy (2.66% return)",
+        badge: "2X Points",
+      },
+      zomato: {
+        returnPct: 2.66,
+        perkType: "reward_points",
+        description: "2X Reward Points (8 RPs per ₹150) on weekend dining & Zomato (2.66% return)",
+        badge: "2X Points",
+      },
+      bookmyshow: {
+        returnPct: 2.66,
+        perkType: "reward_points",
+        description: "Buy 1 Get 1 free on BookMyShow (up to ₹250) + 2X weekend points",
+        badge: "BOGO + 2X",
+      },
+      makemytrip: {
+        returnPct: 6.67,
+        perkType: "reward_points",
+        description: "5X SmartBuy points on flight & hotel bookings (6.67% return)",
+        badge: "5X SmartBuy",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 2.66,
+        perkType: "reward_points",
+        description: "2X reward points on weekend dining (2.66% return, 1.33% weekday base)",
+      },
+      "Entertainment": {
+        returnPct: 2.66,
+        perkType: "reward_points",
+        description: "2X reward points + BOGO movie tickets on BookMyShow (up to ₹250)",
+      },
+      "Travel & Flights": {
+        returnPct: 6.67,
+        perkType: "reward_points",
+        description: "5X SmartBuy reward points on travel bookings",
+      },
+    },
+    defaultOnlineReturnPct: 1.33,
+    defaultOfflineReturnPct: 1.33,
+    specialPerks: [
+      "12 complimentary airport lounge visits worldwide per calendar year",
+      "Complimentary annual memberships (Swiggy One, Times Prime, Club Marriott) on milestone spends",
+      "Buy 1 Get 1 free ticket on BookMyShow twice a month",
+    ],
+  },
 
   // ── Axis Bank Cards
   {

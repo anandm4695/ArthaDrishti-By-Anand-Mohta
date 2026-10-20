@@ -857,4 +857,22 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       }
     );
   });
+
+  describe("Diners Club Brand & Variant Artwork", () => {
+    it("accurately matches HDFC Diners Club Privilege with dedicated preset and badge", () => {
+      const match = getMatchingCardPreset("HDFC Diners Club Privilege");
+      expect(match).toBeDefined();
+      expect(match?.id).toBe("hdfc-diners-privilege");
+      expect(match?.badgeText).toBe("DINERS CLUB PRIVILEGE");
+      expect(match?.network).toBe("Diners");
+    });
+
+    it("accurately matches HDFC Diners Club Black", () => {
+      const match = getMatchingCardPreset("HDFC Diners Club Black");
+      expect(match).toBeDefined();
+      expect(match?.id).toBe("hdfc-diners-black");
+      expect(match?.badgeText).toBe("DINERS CLUB BLACK");
+      expect(match?.network).toBe("Diners");
+    });
+  });
 });
