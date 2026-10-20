@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Plus,
   Pencil,
@@ -1860,6 +1860,35 @@ function CCPaymentModal({
   );
 }
 
+export type CreditCardSortOption =
+  | "due_soon"
+  | "util_desc"
+  | "outstanding_desc"
+  | "limit_desc"
+  | "name_asc";
+
+export const CC_SORT_STORAGE_KEY = "arthadrishti_cc_sort_by";
+export const VALID_CC_SORT_OPTIONS: CreditCardSortOption[] = [
+  "outstanding_desc",
+  "util_desc",
+  "due_soon",
+  "limit_desc",
+  "name_asc",
+];
+
+export function getSavedCreditCardSort(): CreditCardSortOption {
+  if (typeof window === "undefined") return "outstanding_desc";
+  try {
+    const saved = localStorage.getItem(CC_SORT_STORAGE_KEY);
+    if (saved && VALID_CC_SORT_OPTIONS.includes(saved as CreditCardSortOption)) {
+      return saved as CreditCardSortOption;
+    }
+  } catch (err) {
+    console.warn("Could not read credit card sort preference:", err);
+  }
+  return "outstanding_desc";
+}
+
 function CCList({
   items,
   onRemove,
@@ -1878,11 +1907,25 @@ function CCList({
   const [confirmDeleteCard, setConfirmDeleteCard] = useState<any>(null);
   const [copiedHelplineId, setCopiedHelplineId] = useState<string | null>(null);
 
-  // Search, Filter & Sort states
+  // Search, Filter & Sort states (with persistent sort preference)
   const [searchQuery, setSearchQuery] = useState("");
   const [networkFilter, setNetworkFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"due_soon" | "util_desc" | "outstanding_desc" | "limit_desc" | "name_asc">("outstanding_desc");
+  const [sortBy, setSortBy] = useState<CreditCardSortOption>(getSavedCreditCardSort);
+  const [sortSavedFeedback, setSortSavedFeedback] = useState(false);
+
+  const handleSortChange = (newSort: CreditCardSortOption) => {
+    setSortBy(newSort);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(CC_SORT_STORAGE_KEY, newSort);
+      } catch (err) {
+        console.warn("Could not persist credit card sort preference:", err);
+      }
+    }
+    setSortSavedFeedback(true);
+    setTimeout(() => setSortSavedFeedback(false), 2000);
+  };
 
   const { familyProfiles } = useMasterData();
 
@@ -2871,30 +2914,50 @@ function CCList({
             </select>
           )}
 
-          {/* Sort Dropdown */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <ArrowUpDown size={13} color={THEME.muted} />
-            <select
-              value={sortBy}
-              onChange={(e: any) => setSortBy(e.target.value)}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 8,
-                border: `1px solid ${THEME.line}`,
-                background: "var(--t-paper)",
-                color: THEME.ink,
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-              aria-label="Sort credit cards"
-            >
-              <option value="outstanding_desc">Outstanding: High to Low</option>
-              <option value="util_desc">Utilization %: High to Low</option>
-              <option value="due_soon">Due Date: Soonest First</option>
-              <option value="limit_desc">Credit Limit: High to Low</option>
-              <option value="name_asc">Card Name: A to Z</option>
-            </select>
+          {/* Sort Dropdown (Persistent view preference) */}
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+            title="Sort preference is saved automatically and persists across page reloads"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <ArrowUpDown size={13} color={THEME.muted} />
+              <select
+                value={sortBy}
+                onChange={(e: any) => handleSortChange(e.target.value as CreditCardSortOption)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: `1px solid ${THEME.line}`,
+                  background: "var(--t-paper)",
+                  color: THEME.ink,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+                aria-label="Sort credit cards"
+                title="Sort preference is saved automatically and persists across page reloads"
+              >
+                <option value="outstanding_desc">Outstanding: High to Low</option>
+                <option value="util_desc">Utilization %: High to Low</option>
+                <option value="due_soon">Due Date: Soonest First</option>
+                <option value="limit_desc">Credit Limit: High to Low</option>
+                <option value="name_asc">Card Name: A to Z</option>
+              </select>
+            </div>
+            {sortSavedFeedback && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.sage,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 3,
+                }}
+              >
+                <Check size={11} strokeWidth={3} /> Saved
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -4853,6 +4916,29 @@ function PrepaidQuickModal({ card, mode = "load", onClose, onSave }: any) {
   );
 }
 
+export type PrepaidCardSortOption = "name" | "balance-desc" | "balance-asc" | "expiry" | "tx-count";
+export const PREPAID_SORT_STORAGE_KEY = "arthadrishti_prepaid_sort_by";
+export const VALID_PREPAID_SORTS: PrepaidCardSortOption[] = [
+  "balance-desc",
+  "balance-asc",
+  "name",
+  "expiry",
+  "tx-count",
+];
+
+export function getSavedPrepaidCardSort(): PrepaidCardSortOption {
+  if (typeof window === "undefined") return "balance-desc";
+  try {
+    const saved = localStorage.getItem(PREPAID_SORT_STORAGE_KEY);
+    if (saved && VALID_PREPAID_SORTS.includes(saved as PrepaidCardSortOption)) {
+      return saved as PrepaidCardSortOption;
+    }
+  } catch {
+    // Ignore read errors
+  }
+  return "balance-desc";
+}
+
 function PrepaidList({ items, onRemove, onEdit, onUpdateCard, onAdd }: any) {
   const { familyProfiles, prepaidCardTypes } = useMasterData();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -4864,7 +4950,18 @@ function PrepaidList({ items, onRemove, onEdit, onUpdateCard, onAdd }: any) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProfile, setSelectedProfile] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
-  const [sortBy, setSortBy] = useState<"name" | "balance-desc" | "balance-asc" | "expiry" | "tx-count">("balance-desc");
+  const [sortBy, setSortBy] = useState<PrepaidCardSortOption>(getSavedPrepaidCardSort);
+
+  const handlePrepaidSortChange = (newSort: PrepaidCardSortOption) => {
+    setSortBy(newSort);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(PREPAID_SORT_STORAGE_KEY, newSort);
+      } catch {
+        // Ignore write errors
+      }
+    }
+  };
 
   const selected = items.find((c: any) => c.id === selectedId);
 
@@ -5182,12 +5279,15 @@ function PrepaidList({ items, onRemove, onEdit, onUpdateCard, onAdd }: any) {
             </div>
           )}
 
-          {/* Sort Dropdown */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+          {/* Sort Dropdown (Persistent view preference) */}
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}
+            title="Sort preference is saved automatically and persists across page reloads"
+          >
             <ArrowUpDown size={13} style={{ color: "var(--t-muted)" }} />
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => handlePrepaidSortChange(e.target.value as PrepaidCardSortOption)}
               style={{
                 padding: "5px 10px",
                 fontSize: 12,
@@ -5198,6 +5298,7 @@ function PrepaidList({ items, onRemove, onEdit, onUpdateCard, onAdd }: any) {
                 outline: "none",
                 cursor: "pointer",
               }}
+              title="Sort preference is saved automatically and persists across page reloads"
             >
               <option value="balance-desc">Balance (High to Low)</option>
               <option value="balance-asc">Balance (Low to High)</option>
