@@ -208,5 +208,52 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(movieResult.topCard?.cardName).toBe("SBI Aurum Metal Credit Card");
     expect(movieResult.topCard?.returnPct).toBe(15.0);
   });
+
+  it("enforces SBI Cashback 5% online return, ₹5,000/mo spend cap, and strict MCC exclusions", () => {
+    const portfolio = [
+      { id: "sbi-cb", issuer: "SBI Cashback Credit Card", limit: 300000, outstanding: 0, status: "active" },
+    ];
+
+    // 1. Online shopping gets 5% flat cashback
+    const amazonRes = rankCardsForPayment(portfolio, "Amazon", "Online Shopping", 10000);
+    expect(amazonRes.topCard?.returnPct).toBe(5.0);
+    expect(amazonRes.topCard?.savingsInINR).toBe(500);
+    expect(amazonRes.topCard?.maxCap).toBe("₹5,000/mo");
+
+    // 2. Spend cap enforcement: ₹1,50,000 spend at 5% = ₹7,500 raw, but capped at ₹5,000/mo
+    const largeSpendRes = rankCardsForPayment(portfolio, "Apple Store Online", "Online Shopping", 150000);
+    expect(largeSpendRes.topCard?.returnPct).toBe(5.0);
+    expect(largeSpendRes.topCard?.savingsInINR).toBe(5000); // Enforces ₹5,000 cap!
+
+    // 3. Strict Exclusions: Railways / IRCTC is 0%
+    const irctcRes = rankCardsForPayment(portfolio, "IRCTC", "Travel & Flights", 3000);
+    expect(irctcRes.topCard?.returnPct).toBe(0.0);
+    expect(irctcRes.topCard?.savingsInINR).toBe(0);
+
+    // 4. Strict Exclusions: Utilities & Electricity bills is 0%
+    const utilRes = rankCardsForPayment(portfolio, "Electricity Bill", "Utilities & Bills", 4000);
+    expect(utilRes.topCard?.returnPct).toBe(0.0);
+    expect(utilRes.topCard?.savingsInINR).toBe(0);
+
+    // 5. Strict Exclusions: Telecom bills (Airtel / Jio) is 0%
+    const telecomRes = rankCardsForPayment(portfolio, "Airtel Broadband", "Utilities & Bills", 1200);
+    expect(telecomRes.topCard?.returnPct).toBe(0.0);
+    expect(telecomRes.topCard?.savingsInINR).toBe(0);
+
+    // 6. Strict Exclusions: Fuel is 0%
+    const fuelRes = rankCardsForPayment(portfolio, "IndianOil Petrol Pump", "Fuel", 3000);
+    expect(fuelRes.topCard?.returnPct).toBe(0.0);
+    expect(fuelRes.topCard?.savingsInINR).toBe(0);
+
+    // 7. Strict Exclusions: Education fees is 0%
+    const eduRes = rankCardsForPayment(portfolio, "School Tuition", "Education", 25000);
+    expect(eduRes.topCard?.returnPct).toBe(0.0);
+    expect(eduRes.topCard?.savingsInINR).toBe(0);
+
+    // 8. Strict Exclusions: Rent payment is 0%
+    const rentRes = rankCardsForPayment(portfolio, "House Rent", "Rent Payments", 35000);
+    expect(rentRes.topCard?.returnPct).toBe(0.0);
+    expect(rentRes.topCard?.savingsInINR).toBe(0);
+  });
 });
 

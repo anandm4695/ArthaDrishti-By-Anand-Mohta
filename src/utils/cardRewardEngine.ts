@@ -660,35 +660,66 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
 
   // ── SBI Cards
   {
-    matchKeys: ["sbi cashback", "cashback sbi", "cashback"],
+    matchKeys: ["sbi cashback", "cashback sbi", "cashback", "sbi cash back", "cash back sbi"],
     cardDisplayName: "SBI Cashback Credit Card",
     merchantPerks: {
-      swiggy: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Swiggy (Food & Instamart)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      zomato: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Zomato orders", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      amazon: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Amazon Shopping", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      // 5% Online Cashback (Capped at ₹5,000/month = ₹1 Lakh online spend)
+      amazon: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback across Amazon India (Shopping, Pantry)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
       flipkart: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Flipkart", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      blinkit: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Blinkit quick delivery", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      zepto: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Zepto", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
       myntra: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Myntra fashion", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      makemytrip: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on travel tickets and hotel bookings", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      bookmyshow: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on BookMyShow", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      apple: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Apple online purchases", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      nykaa: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Nykaa beauty & cosmetics", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      tata_neu: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Tata Neu online purchases", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      apple: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Apple India online purchases", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      swiggy: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Swiggy (Food & Instamart)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      zomato: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Zomato food delivery", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      blinkit: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Blinkit quick delivery", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      zepto: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Zepto grocery orders", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      bigbasket: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on BigBasket essentials", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      bookmyshow: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on BookMyShow cinema & events", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      makemytrip: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on flights, hotels, and bus bookings (Note: Railways excluded)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      cleartrip: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Cleartrip flights & hotel stays", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      easemytrip: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on EaseMyTrip travel bookings", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      uber: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Uber & Ola cab bookings", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      streaming: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on digital subscriptions (Netflix, Spotify, Prime)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      eazydiner: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on EazyDiner PayEazy payments", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      mcdonalds: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on online app orders (Domino's, McDonald's)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+
+      // Strict Exclusions (0% Cashback per SBI Card Terms)
+      irctc: { returnPct: 0.0, perkType: "cashback", description: "Railways & IRCTC ticket bookings are strictly excluded from cashback", badge: "0% Excluded (Railways)" },
+      electricity_bills: { returnPct: 0.0, perkType: "cashback", description: "Utility bill payments (Electricity, Water, Gas) are excluded from cashback", badge: "0% Excluded (Utilities)" },
+      airtel: { returnPct: 0.0, perkType: "cashback", description: "Telecom & broadband bill payments are excluded from cashback", badge: "0% Excluded (Telecom)" },
+      jio: { returnPct: 0.0, perkType: "cashback", description: "Telecom recharges and mobile bills are excluded from cashback", badge: "0% Excluded (Telecom)" },
+      fuel_pumps: { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback (1% surcharge waiver on ₹500–₹3,000)", badge: "0% Excluded (Fuel)" },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 5.0, perkType: "cashback", description: "5% on all online food delivery and dining apps" },
-      "Online Shopping": { returnPct: 5.0, perkType: "cashback", description: "5% flat cashback on ANY online merchant across India" },
-      "Quick Commerce": { returnPct: 5.0, perkType: "cashback", description: "5% flat cashback on all quick commerce grocery platforms" },
-      "Travel & Flights": { returnPct: 5.0, perkType: "cashback", description: "5% on all online airline, train, and bus booking portals" },
-      "Entertainment": { returnPct: 5.0, perkType: "cashback", description: "5% on all online cinema and event booking websites" },
-      "Electronics": { returnPct: 5.0, perkType: "cashback", description: "5% on electronic gadgets bought online" },
-      "International Spends": { returnPct: 1.0, perkType: "cashback", description: "5% online cashback minus 3.5% international forex markup (net ~1.0% return)" },
-      "Fuel": { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback" },
+      "Online Shopping": { returnPct: 5.0, perkType: "cashback", description: "5% flat cashback on ANY online merchant across India (capped at ₹5,000/month)", maxCap: "₹5,000/mo" },
+      "Quick Commerce": { returnPct: 5.0, perkType: "cashback", description: "5% flat cashback on all quick commerce grocery platforms (capped at ₹5,000/month)", maxCap: "₹5,000/mo" },
+      "Food & Dining": { returnPct: 5.0, perkType: "cashback", description: "5% on online food delivery apps; 1% on offline restaurant POS dining", maxCap: "₹5,000/mo" },
+      "Entertainment": { returnPct: 5.0, perkType: "cashback", description: "5% on online cinema and event booking websites (capped at ₹5,000/month)", maxCap: "₹5,000/mo" },
+      "Electronics": { returnPct: 5.0, perkType: "cashback", description: "5% on electronic gadgets & appliances bought online", maxCap: "₹5,000/mo" },
+      "Travel & Flights": { returnPct: 5.0, perkType: "cashback", description: "5% on online airline tickets, hotel stays & cabs (Note: Railways/IRCTC is 0% excluded)", maxCap: "₹5,000/mo" },
+      "International Spends": { returnPct: 1.0, perkType: "cashback", description: "5% online cashback minus 3.5% foreign currency markup (net ~1.0% return)" },
+
+      // MCC Exclusions per official terms & conditions:
+      "Utilities & Bills": { returnPct: 0.0, perkType: "cashback", description: "Utility bill payments (Electricity, Water, Gas, Telecom) are completely excluded from cashback" },
+      "Government & Taxes": { returnPct: 0.0, perkType: "cashback", description: "Government payments, property taxes, and municipal charges earn 0% cashback" },
+      "Education": { returnPct: 0.0, perkType: "cashback", description: "School, college, and university tuition fees are completely excluded from cashback" },
+      "Rent Payments": { returnPct: 0.0, perkType: "cashback", description: "Rental transactions earn 0% cashback and incur SBI processing fee" },
+      "Wallet Reloads": { returnPct: 0.0, perkType: "cashback", description: "Prepaid wallet top-ups (Paytm, Mobikwik) earn 0% cashback" },
+      "Jewelry": { returnPct: 0.0, perkType: "cashback", description: "Jewelry, bullion, and precious metal purchases earn 0% cashback" },
+      "Fuel": { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback (1% surcharge waiver applies)" },
       "Fuel & Automotive": { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback" },
       "Fuel & Gas": { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback" },
     },
     defaultOnlineReturnPct: 5.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["5% flat cashback on nearly ALL online spends up to ₹5,000/month", "Auto-credited directly to card statement"],
+    specialPerks: [
+      "5% flat online cashback on nearly ALL eCommerce platforms up to ₹5,000 per statement cycle (₹1,00,000 spend)",
+      "1% flat cashback on offline retail POS spends (unlimited)",
+      "Cashback auto-credited directly to card statement within 2 working days of statement generation",
+      "Strictly excluded: Utilities, Insurance, Education/School fees, Rent, Wallet top-ups, Railways (IRCTC), Jewelry, and Fuel",
+      "Annual fee (₹999 + GST) reversed on crossing ₹2 Lakhs annual spends",
+    ],
   },
   {
     matchKeys: ["simplyclick", "sbi simplyclick"],
@@ -1523,7 +1554,13 @@ export function evaluateCardForPayment(
   }
 
   // Calculate savings in INR
-  const savingsInINR = Math.round(((amount * returnPct) / 100) * 100) / 100;
+  let savingsInINR = Math.round(((amount * returnPct) / 100) * 100) / 100;
+  if (maxCap && maxCap.includes("₹")) {
+    const numericCap = parseFloat(maxCap.replace(/[^0-9.]/g, ""));
+    if (!isNaN(numericCap) && numericCap > 0 && savingsInINR > numericCap) {
+      savingsInINR = numericCap;
+    }
+  }
   perkHeadline = `${returnPct}% ${perkType === "cashback" ? "Cashback" : perkType === "miles" ? "Travel Miles" : "Reward Value"} (₹${savingsInINR.toLocaleString("en-IN")})`;
 
   const limit = Number(card.limit || 0);

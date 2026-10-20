@@ -373,7 +373,7 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     bgGradient: "linear-gradient(135deg, #003366 0%, #0284c7 50%, #082f49 100%)",
     accentColor: "#38bdf8",
     textColor: "#ffffff",
-    badgeText: "CASHBACK 5%",
+    badgeText: "CASHBACK 5% (₹5K CAP)",
     patternType: "lines",
     imageUrl: "/cards/sbi-cashback.png",
     officialImageUrl: "https://www.sbicard.com/static-resources/img/card/card-face-assets/for-website/front/vertical/cashback-card-face-min.png",
