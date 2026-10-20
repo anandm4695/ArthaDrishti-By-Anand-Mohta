@@ -397,4 +397,147 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(uniCard?.returnPct).toBe(1.0);
     expect(uniCard?.savingsInINR).toBe(100);
   });
+
+  it("Standard Chartered Credit Cards Reward Engine (Phase 13)", () => {
+    const scPortfolio = [
+      {
+        id: "sc-ultimate",
+        issuer: "Standard Chartered Ultimate",
+        limit: 800000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-smart",
+        issuer: "Standard Chartered Smart",
+        limit: 250000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-manhattan",
+        issuer: "Standard Chartered Manhattan Platinum",
+        limit: 300000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-rewards",
+        issuer: "Standard Chartered Rewards",
+        limit: 350000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-easemytrip",
+        issuer: "Standard Chartered EaseMyTrip",
+        limit: 400000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-digismart",
+        issuer: "Standard Chartered DigiSmart",
+        limit: 200000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-super-value",
+        issuer: "Standard Chartered Super Value Titanium",
+        limit: 250000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-emirates",
+        issuer: "Standard Chartered Emirates World",
+        limit: 600000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "sc-platinum-rewards",
+        issuer: "Standard Chartered Platinum Rewards",
+        limit: 200000,
+        outstanding: 0,
+        status: "active",
+      },
+    ];
+
+    // 1. SC Ultimate gets 3.33% universal return on retail (5 RP per ₹150; 1 RP = ₹1)
+    const ultRes = rankCardsForPayment(scPortfolio, "Apple", "Electronics & Gadgets", 150000);
+    const ultCard = ultRes.rankedCards.find((c) => c.cardName === "Standard Chartered Ultimate");
+    expect(ultCard?.returnPct).toBe(3.33);
+    expect(ultCard?.savingsInINR).toBe(4995);
+
+    // 2. SC Smart gets 2.0% flat cashback on online spends
+    const smartRes = rankCardsForPayment(scPortfolio, "Amazon", "Online Shopping", 10000);
+    const smartCard = smartRes.rankedCards.find((c) => c.cardName === "Standard Chartered Smart");
+    expect(smartCard?.returnPct).toBe(2.0);
+    expect(smartCard?.savingsInINR).toBe(200);
+
+    // 3. SC Manhattan gets 5.0% cashback on groceries / supermarket
+    const dmartRes = rankCardsForPayment(scPortfolio, "DMart", "Groceries", 6000);
+    const manhattanCard = dmartRes.rankedCards.find(
+      (c) => c.cardName === "Standard Chartered Manhattan Platinum"
+    );
+    expect(manhattanCard?.returnPct).toBe(5.0);
+    expect(manhattanCard?.savingsInINR).toBe(300);
+
+    // 4. SC Rewards gets 4X points (2.67%) on retail shopping
+    const rewardsRes = rankCardsForPayment(scPortfolio, "Flipkart", "Online Shopping", 8000);
+    const rewardsCard = rewardsRes.rankedCards.find((c) => c.cardName === "Standard Chartered Rewards");
+    expect(rewardsCard?.returnPct).toBe(2.67);
+    expect(rewardsCard?.savingsInINR).toBe(213.6);
+
+    // 5. SC EaseMyTrip gets 20% on EaseMyTrip hotels
+    const emtRes = rankCardsForPayment(scPortfolio, "EaseMyTrip", "Travel & Flights", 10000);
+    const emtCard = emtRes.rankedCards.find((c) => c.cardName === "Standard Chartered EaseMyTrip");
+    expect(emtCard?.returnPct).toBe(20.0);
+    expect(emtCard?.savingsInINR).toBe(2000);
+
+    // 6. SC DigiSmart gets 20% on Myntra and 10% on Zomato
+    const myntraRes = rankCardsForPayment(scPortfolio, "Myntra", "Online Shopping", 3000);
+    const dsMyntra = myntraRes.rankedCards.find((c) => c.cardName === "Standard Chartered DigiSmart");
+    expect(dsMyntra?.returnPct).toBe(20.0);
+    expect(dsMyntra?.savingsInINR).toBe(600);
+
+    const zomatoRes = rankCardsForPayment(scPortfolio, "Zomato", "Food & Dining", 1000);
+    const dsZomato = zomatoRes.rankedCards.find((c) => c.cardName === "Standard Chartered DigiSmart");
+    expect(dsZomato?.returnPct).toBe(10.0);
+    expect(dsZomato?.savingsInINR).toBe(100);
+
+    // 7. SC Super Value Titanium gets 5% on fuel and phone bills
+    const fuelRes = rankCardsForPayment(scPortfolio, "HPCL", "Fuel", 2000);
+    const svFuel = fuelRes.rankedCards.find(
+      (c) => c.cardName === "Standard Chartered Super Value Titanium"
+    );
+    expect(svFuel?.returnPct).toBe(5.0);
+    expect(svFuel?.savingsInINR).toBe(100);
+
+    const airtelRes = rankCardsForPayment(scPortfolio, "Airtel", "Bills & Utilities", 1500);
+    const svAirtel = airtelRes.rankedCards.find(
+      (c) => c.cardName === "Standard Chartered Super Value Titanium"
+    );
+    expect(svAirtel?.returnPct).toBe(5.0);
+    expect(svAirtel?.savingsInINR).toBe(75);
+
+    // 8. SC Emirates World gets 4% (6 Skywards Miles per ₹150) on Emirates
+    const emiratesRes = rankCardsForPayment(scPortfolio, "Emirates", "Travel & Flights", 50000);
+    const emiratesCard = emiratesRes.rankedCards.find(
+      (c) => c.cardName === "Standard Chartered Emirates World"
+    );
+    expect(emiratesCard?.returnPct).toBe(4.0);
+    expect(emiratesCard?.savingsInINR).toBe(2000);
+
+    // 9. SC Platinum Rewards gets 1.25% (5 RP per ₹150) on Dining & Fuel
+    const prRes = rankCardsForPayment(scPortfolio, "Swiggy", "Food & Dining", 2000);
+    const prCard = prRes.rankedCards.find(
+      (c) => c.cardName === "Standard Chartered Platinum Rewards"
+    );
+    expect(prCard?.returnPct).toBe(1.25);
+    expect(prCard?.savingsInINR).toBe(25);
+  });
 });
+

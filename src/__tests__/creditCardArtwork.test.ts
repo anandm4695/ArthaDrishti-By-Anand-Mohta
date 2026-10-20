@@ -690,6 +690,51 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
         expectedId: "yes-popclub",
         expectedImage: "/cards/yes-popclub.png",
       },
+      {
+        query: "Standard Chartered Smart Credit Card",
+        expectedId: "sc-smart",
+        expectedImage: "/cards/sc-smart.png",
+      },
+      {
+        query: "Standard Chartered Rewards Credit Card",
+        expectedId: "sc-rewards",
+        expectedImage: "/cards/sc-rewards.png",
+      },
+      {
+        query: "Standard Chartered EaseMyTrip Credit Card",
+        expectedId: "sc-easemytrip",
+        expectedImage: "/cards/sc-easemytrip.png",
+      },
+      {
+        query: "Standard Chartered DigiSmart Credit Card",
+        expectedId: "sc-digismart",
+        expectedImage: "/cards/sc-digismart.png",
+      },
+      {
+        query: "Standard Chartered Super Value Titanium",
+        expectedId: "sc-super-value",
+        expectedImage: "/cards/sc-super-value.png",
+      },
+      {
+        query: "Standard Chartered Emirates World Credit Card",
+        expectedId: "sc-emirates",
+        expectedImage: "/cards/sc-emirates.png",
+      },
+      {
+        query: "Standard Chartered Platinum Rewards",
+        expectedId: "sc-platinum-rewards",
+        expectedImage: "/cards/sc-platinum-rewards.png",
+      },
+      {
+        query: "Standard Chartered Beyond Credit Card",
+        expectedId: "sc-beyond",
+        expectedImage: "/cards/sc-beyond.png",
+      },
+      {
+        query: "Standard Chartered Priority Visa Infinite",
+        expectedId: "sc-priority",
+        expectedImage: "/cards/sc-priority.png",
+      },
     ];
 
     it.each(requiredCards)(

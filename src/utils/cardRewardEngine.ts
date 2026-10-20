@@ -2548,7 +2548,7 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
 
   // ── Standard Chartered Cards
   {
-    matchKeys: ["ultimate", "standard chartered ultimate", "sc ultimate"],
+    matchKeys: ["sc-ultimate", "ultimate", "standard chartered ultimate", "sc ultimate"],
     cardDisplayName: "Standard Chartered Ultimate",
     merchantPerks: {
       swiggy: {
@@ -2614,35 +2614,34 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     ],
   },
   {
-    matchKeys: ["smart", "sc smart", "standard chartered smart", "digismart", "sc digismart"],
-    cardDisplayName: "Standard Chartered Smart / DigiSmart",
+    matchKeys: ["sc-smart", "smart", "sc smart", "standard chartered smart", "smart credit card"],
+    cardDisplayName: "Standard Chartered Smart",
     merchantPerks: {
-      myntra: {
-        returnPct: 20.0,
-        perkType: "discount",
-        description: "20% instant discount on Myntra up to ₹700 off monthly",
-        badge: "20% Myntra Discount",
+      amazon: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% flat cashback on all online spends (capped at ₹1,000/mo)",
+        badge: "2% Online Cashback",
       },
-      zomato: {
-        returnPct: 10.0,
-        perkType: "discount",
-        description: "10% instant discount on Zomato food orders up to ₹150 off 5 times a month",
-        badge: "10% Zomato Off",
+      flipkart: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% flat cashback on all online shopping",
       },
       swiggy: {
         returnPct: 2.0,
         perkType: "cashback",
-        description: "2% flat cashback on online spends",
+        description: "2% flat cashback on food delivery online",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% flat cashback on food orders online",
       },
       blinkit: {
-        returnPct: 10.0,
-        perkType: "discount",
-        description: "10% instant discount on Blinkit groceries up to ₹1,000 monthly",
-      },
-      bookmyshow: {
-        returnPct: 25.0,
-        perkType: "discount",
-        description: "Buy 1 Get 1 ticket discount on BookMyShow (up to ₹200 off)",
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% flat cashback on online grocery orders",
       },
     },
     categoryPerks: {
@@ -2652,21 +2651,137 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
         description: "2% cashback on online spends (capped at ₹1,000/mo)",
       },
       "Food & Dining": {
-        returnPct: 10.0,
-        perkType: "discount",
-        description: "10% discount on Zomato delivery",
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on online food delivery",
+      },
+      "Groceries": {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on quick commerce grocery apps",
       },
     },
     defaultOnlineReturnPct: 2.0,
     defaultOfflineReturnPct: 1.0,
     specialPerks: [
-      "2% flat cashback on all online spends",
-      "10% instant discount on Zomato and Blinkit",
-      "20% on Myntra",
+      "2% flat cashback on all online spends (up to ₹1,000/mo)",
+      "1% cashback on all offline spends",
+      "Special 0.84% per month interest on 3-month EMI",
     ],
   },
   {
-    matchKeys: ["sc easemytrip", "easemytrip standard chartered"],
+    matchKeys: [
+      "sc-manhattan",
+      "manhattan",
+      "sc manhattan",
+      "standard chartered manhattan",
+      "manhattan platinum",
+    ],
+    cardDisplayName: "Standard Chartered Manhattan Platinum",
+    merchantPerks: {
+      dmart: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on supermarket & grocery spends (up to ₹500/mo, min ₹1,000/txn)",
+        badge: "5% Supermarket",
+      },
+      reliance_retail: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Reliance Fresh / Supermarket purchases",
+      },
+      blinkit: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on grocery and supermarket spends",
+      },
+      zepto: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on grocery shopping",
+      },
+    },
+    categoryPerks: {
+      "Groceries": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback at all supermarkets and grocery stores (up to ₹500/mo)",
+      },
+      "Food & Dining": {
+        returnPct: 0.99,
+        perkType: "reward_points",
+        description: "3X reward points on dining and retail spends",
+      },
+      "Online Shopping": {
+        returnPct: 0.99,
+        perkType: "reward_points",
+        description: "3X reward points on other retail transactions",
+      },
+    },
+    defaultOnlineReturnPct: 0.99,
+    defaultOfflineReturnPct: 0.99,
+    specialPerks: [
+      "5% flat cashback on groceries and supermarkets (DMart, Reliance Fresh, More, Spencers)",
+      "3X reward points on all other spends",
+      "20% dining discount via Good Times",
+    ],
+  },
+  {
+    matchKeys: [
+      "sc-rewards",
+      "sc rewards",
+      "standard chartered rewards",
+      "standard chartered rewards credit card",
+      "rewards credit card",
+    ],
+    cardDisplayName: "Standard Chartered Rewards",
+    merchantPerks: {
+      amazon: {
+        returnPct: 2.67,
+        perkType: "reward_points",
+        description: "4X Reward Points per ₹150 on retail spends (approx 2.67% return, up to ₹20,000/mo)",
+        badge: "4X Rewards (2.67%)",
+      },
+      flipkart: {
+        returnPct: 2.67,
+        perkType: "reward_points",
+        description: "4X Reward Points per ₹150 on retail shopping",
+      },
+      myntra: {
+        returnPct: 2.67,
+        perkType: "reward_points",
+        description: "4X Reward Points per ₹150 on apparel and lifestyle",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 2.67,
+        perkType: "reward_points",
+        description: "4X points per ₹150 spent (up to ₹20,000 monthly retail spend cap)",
+      },
+      "Food & Dining": {
+        returnPct: 2.67,
+        perkType: "reward_points",
+        description: "4X points per ₹150 spent on dining out",
+      },
+    },
+    defaultOnlineReturnPct: 2.67,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "4X Reward Points per ₹150 on all retail spends (up to ₹20,000/mo)",
+      "1X base reward point per ₹150 elsewhere",
+      "4 complimentary domestic airport lounge visits per calendar year",
+    ],
+  },
+  {
+    matchKeys: [
+      "sc-easemytrip",
+      "standard chartered easemytrip",
+      "sc easemytrip",
+      "easemytrip standard chartered",
+      "easemytrip credit card",
+      "easemytrip",
+    ],
     cardDisplayName: "Standard Chartered EaseMyTrip",
     merchantPerks: {
       easemytrip: {
@@ -2677,9 +2792,9 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
         badge: "20% Hotel Discount",
       },
       makemytrip: {
-        returnPct: 2.0,
+        returnPct: 2.67,
         perkType: "reward_points",
-        description: "10X reward points on standalone hotel/airline websites",
+        description: "10X reward points on standalone hotel & airline booking portals",
       },
     },
     categoryPerks: {
@@ -2694,7 +2809,274 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     specialPerks: [
       "20% off on hotels via EaseMyTrip",
       "10% off on flight bookings",
-      "10X rewards on standalone ticket bookings",
+      "10X rewards on standalone airline & hotel bookings",
+    ],
+  },
+  {
+    matchKeys: [
+      "sc-digismart",
+      "digismart",
+      "sc digismart",
+      "standard chartered digismart",
+    ],
+    cardDisplayName: "Standard Chartered DigiSmart",
+    merchantPerks: {
+      myntra: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "20% instant discount on Myntra up to ₹700 off monthly",
+        badge: "20% Myntra Discount",
+      },
+      zomato: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on Zomato food orders up to ₹150 off 5 times a month",
+        badge: "10% Zomato Off",
+      },
+      blinkit: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on Blinkit groceries up to ₹1,000 monthly",
+        badge: "10% Blinkit Off",
+      },
+      bookmyshow: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "25% discount on INOX cinema tickets (up to ₹200 off)",
+      },
+      ola: {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "15% instant discount on Ola cabs (up to ₹600 monthly)",
+        badge: "15% Ola Off",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "20% off on Myntra (up to ₹700/mo)",
+      },
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on Zomato food delivery",
+      },
+      "Groceries": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on Blinkit grocery delivery",
+      },
+      "Travel & Flights": {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "15% discount on Ola ride hailing",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "20% discount on Myntra up to ₹700/mo",
+      "10% discount on Zomato food orders (5x/mo)",
+      "10% on Blinkit up to ₹1,000/mo",
+      "25% discount on INOX tickets",
+    ],
+  },
+  {
+    matchKeys: [
+      "sc-super-value",
+      "super value",
+      "sc super value",
+      "standard chartered super value",
+      "super value titanium",
+    ],
+    cardDisplayName: "Standard Chartered Super Value Titanium",
+    merchantPerks: {
+      hpcl: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on fuel purchases across all fuel stations in India",
+        badge: "5% Fuel Cashback",
+      },
+      bpcl: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on fuel at any BPCL pump",
+      },
+      ioc: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on fuel at any Indian Oil pump",
+      },
+      airtel: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on phone bills and telecom recharges",
+        badge: "5% Phone Bills",
+      },
+      jio: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on phone bills and postpaid recharge",
+      },
+    },
+    categoryPerks: {
+      "Fuel": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on fuel spends at all petrol pumps in India (min ₹750/txn, max ₹200/mo)",
+      },
+      "Bills & Utilities": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on phone, electricity, gas and water bills (max ₹100/mo each)",
+      },
+    },
+    defaultOnlineReturnPct: 0.67,
+    defaultOfflineReturnPct: 0.67,
+    specialPerks: [
+      "5% cashback on fuel purchases across India",
+      "5% cashback on phone & telecom bills",
+      "5% cashback on utility payments",
+    ],
+  },
+  {
+    matchKeys: [
+      "sc-emirates",
+      "emirates",
+      "sc emirates",
+      "standard chartered emirates",
+      "emirates world",
+    ],
+    cardDisplayName: "Standard Chartered Emirates World",
+    merchantPerks: {
+      emirates: {
+        returnPct: 4.0,
+        perkType: "miles",
+        description: "6 Skywards Miles per ₹150 on Emirates airline bookings (approx 4% return)",
+        badge: "6 Skywards Miles",
+      },
+    },
+    categoryPerks: {
+      "Travel & Flights": {
+        returnPct: 4.0,
+        perkType: "miles",
+        description: "6 Skywards Miles per ₹150 on Emirates flight bookings",
+      },
+      "International Spends": {
+        returnPct: 2.0,
+        perkType: "miles",
+        description: "3 Skywards Miles per ₹150 on international retail spends",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 2.0,
+    specialPerks: [
+      "6 Skywards Miles per ₹150 on Emirates bookings",
+      "3 Skywards Miles per ₹150 on all other retail",
+      "2 complimentary Priority Pass lounge visits per month",
+    ],
+  },
+  {
+    matchKeys: [
+      "sc-platinum-rewards",
+      "platinum rewards",
+      "sc platinum rewards",
+      "standard chartered platinum rewards",
+    ],
+    cardDisplayName: "Standard Chartered Platinum Rewards",
+    merchantPerks: {
+      swiggy: {
+        returnPct: 1.25,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 on dining & delivery (approx 1.25% return)",
+        badge: "5X Dining & Fuel",
+      },
+      zomato: {
+        returnPct: 1.25,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 on dining out",
+      },
+      hpcl: {
+        returnPct: 1.25,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 on fuel + 1% surcharge waiver",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 1.25,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 on dining without minimum spend restriction",
+      },
+      "Fuel": {
+        returnPct: 1.25,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 on fuel purchases + surcharge waiver",
+      },
+    },
+    defaultOnlineReturnPct: 0.67,
+    defaultOfflineReturnPct: 0.67,
+    specialPerks: [
+      "5 Reward Points per ₹150 on Dining and Fuel",
+      "1 Reward Point per ₹150 on other categories",
+      "1% fuel surcharge waiver across India",
+    ],
+  },
+  {
+    matchKeys: ["sc-beyond", "beyond", "sc beyond", "standard chartered beyond"],
+    cardDisplayName: "Standard Chartered Beyond",
+    merchantPerks: {
+      forex_international: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "3X points on international spends with industry-lowest 1.5% forex fee",
+        badge: "1.5% Forex VIP",
+      },
+    },
+    categoryPerks: {
+      "International Spends": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "Accelerated international rewards with ultra-low 1.5% forex fee",
+      },
+      "Travel & Flights": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "Unlimited domestic & international lounge access + airport VIP meet & assist",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 2.0,
+    specialPerks: [
+      "Invitation-only super-premium metal card",
+      "Ultra-low 1.5% forex markup",
+      "Unlimited lounge access worldwide + airport VIP meet & assist",
+    ],
+  },
+  {
+    matchKeys: ["sc-priority", "priority", "sc priority", "standard chartered priority"],
+    cardDisplayName: "Standard Chartered Priority Visa Infinite",
+    merchantPerks: {
+      forex_international: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "Comprehensive international wealth privileges & concierge",
+      },
+    },
+    categoryPerks: {
+      "Travel & Flights": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "Complimentary airport lounge access worldwide & golf privileges",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 2.0,
+    specialPerks: [
+      "Priority Banking wealth privileges",
+      "Complimentary LoungeKey airport access",
+      "4 complimentary golf games annually",
     ],
   },
 
@@ -3703,13 +4085,26 @@ function cleanKey(str: string): string {
 
 /** Matches a card entity to the best matching card perk rule */
 export function findCardPerkRule(card: any): CardPerkRule | null {
+  const cardId = cleanKey(card.id || "");
+  const cardIdWords = cardId.split(/\s+/);
   const cardName = cleanKey(card.issuer || card.cardName || card.name || card.bank || "");
+  const cardWords = cardName.split(/\s+/);
   const network = cleanKey(card.network || "");
 
   for (const rule of CARD_PERK_RULES) {
     for (const key of rule.matchKeys) {
       const cleanK = cleanKey(key);
-      if (cardName.includes(cleanK) || (cleanK.includes("rupay") && network.includes("rupay"))) {
+      const idMatch =
+        cardId &&
+        (cardId === cleanK ||
+          (cleanK.includes(" ") ? cardId.includes(cleanK) : cardIdWords.includes(cleanK)));
+      const nameMatch = cleanK.includes(" ")
+        ? cardName.includes(cleanK)
+        : cardWords.includes(cleanK);
+      const isMatch =
+        idMatch || nameMatch || (cleanK.includes("rupay") && network.includes("rupay"));
+
+      if (isMatch) {
         return rule;
       }
     }
