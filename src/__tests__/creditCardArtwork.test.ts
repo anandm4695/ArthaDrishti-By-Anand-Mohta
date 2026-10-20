@@ -206,8 +206,8 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
 
       expect(art.presetName).toBe("SBI Cashback Card");
       expect(art.hasCustomImage).toBe(false);
-      expect(art.bgGradient).toContain("#003366");
-      expect(art.accentColor).toBe("#38bdf8");
+      expect(art.bgGradient).toContain("#522f91");
+      expect(art.accentColor).toBe("#fedf00");
       expect(art.imageUrl).toMatch(/sbi-cashback|sbicard\.com/);
     });
 
