@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  rankCardsForPayment,
-  generateCategoryCardMatrix,
-} from "../utils/cardRewardEngine";
+import { rankCardsForPayment, generateCategoryCardMatrix } from "../utils/cardRewardEngine";
 
 describe("Smart Card Reward Engine - Which Card to Use?", () => {
   const samplePortfolio = [
@@ -68,7 +65,9 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(sbiCb?.returnPct).toBe(5.0);
     expect(sbiCb?.savingsInINR).toBe(75);
 
-    const scUlt = result.rankedCards.find((c) => c.cardName.includes("Standard Chartered Ultimate"));
+    const scUlt = result.rankedCards.find((c) =>
+      c.cardName.includes("Standard Chartered Ultimate")
+    );
     expect(scUlt?.returnPct).toBe(3.33);
   });
 
@@ -82,7 +81,12 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
   });
 
   it("ranks Federal Scapia as #1 for international forex spends", () => {
-    const result = rankCardsForPayment(samplePortfolio, "International Travel", "International Spends", 50000);
+    const result = rankCardsForPayment(
+      samplePortfolio,
+      "International Travel",
+      "International Spends",
+      50000
+    );
 
     expect(result.topCard).not.toBeNull();
     expect(result.topCard?.cardName).toContain("Federal Scapia");
@@ -124,15 +128,28 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
   it("identifies IndusInd Legend BookMyShow BOGO and IndusInd Avios travel benefits", () => {
     const indusindPortfolio = [
       { id: "c1", issuer: "IndusInd Legend", limit: 300000, outstanding: 0, status: "active" },
-      { id: "c2", issuer: "IndusInd Avios Visa Infinite", limit: 500000, outstanding: 0, status: "active" },
+      {
+        id: "c2",
+        issuer: "IndusInd Avios Visa Infinite",
+        limit: 500000,
+        outstanding: 0,
+        status: "active",
+      },
     ];
 
     const movieResult = rankCardsForPayment(indusindPortfolio, "BookMyShow", "Entertainment", 800);
     expect(movieResult.topCard).not.toBeNull();
-    expect(["IndusInd Legend", "IndusInd Avios Visa Infinite"]).toContain(movieResult.topCard?.cardName);
+    expect(["IndusInd Legend", "IndusInd Avios Visa Infinite"]).toContain(
+      movieResult.topCard?.cardName
+    );
     expect(movieResult.topCard?.returnPct).toBe(50.0);
 
-    const travelResult = rankCardsForPayment(indusindPortfolio, "International Travel", "International Spends", 25000);
+    const travelResult = rankCardsForPayment(
+      indusindPortfolio,
+      "International Travel",
+      "International Spends",
+      25000
+    );
     expect(travelResult.topCard).not.toBeNull();
     expect(travelResult.topCard?.cardName).toBe("IndusInd Avios Visa Infinite");
     expect(travelResult.topCard?.returnPct).toBe(6.0);
@@ -140,9 +157,27 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
 
   it("identifies IndusInd EazyDiner dining discount, Pinnacle e-commerce perks, and Platinum RuPay UPI", () => {
     const portfolio = [
-      { id: "c3", issuer: "IndusInd Bank EazyDiner Credit Card", limit: 200000, outstanding: 0, status: "active" },
-      { id: "c4", issuer: "IndusInd Bank Pinnacle Credit Card", limit: 500000, outstanding: 0, status: "active" },
-      { id: "c5", issuer: "IndusInd Platinum RuPay", limit: 150000, outstanding: 0, status: "active" },
+      {
+        id: "c3",
+        issuer: "IndusInd Bank EazyDiner Credit Card",
+        limit: 200000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "c4",
+        issuer: "IndusInd Bank Pinnacle Credit Card",
+        limit: 500000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "c5",
+        issuer: "IndusInd Platinum RuPay",
+        limit: 150000,
+        outstanding: 0,
+        status: "active",
+      },
     ];
 
     const diningResult = rankCardsForPayment(portfolio, "EazyDiner", "Food & Dining", 2000);
@@ -161,13 +196,24 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
 
   it("identifies Kotak IndianOil RuPay fuel savings, Mojo Platinum online rewards, and White Reserve luxury perks", () => {
     const kotakPortfolio = [
-      { id: "k1", issuer: "Kotak IndianOil RuPay", limit: 200000, outstanding: 0, status: "active" },
+      {
+        id: "k1",
+        issuer: "Kotak IndianOil RuPay",
+        limit: 200000,
+        outstanding: 0,
+        status: "active",
+      },
       { id: "k2", issuer: "Kotak Mojo Platinum", limit: 300000, outstanding: 0, status: "active" },
       { id: "k3", issuer: "Kotak Zen Signature", limit: 400000, outstanding: 0, status: "active" },
       { id: "k4", issuer: "Kotak White Reserve", limit: 800000, outstanding: 0, status: "active" },
     ];
 
-    const fuelResult = rankCardsForPayment(kotakPortfolio, "IndianOil Fuel Station", "Fuel & Gas", 3000);
+    const fuelResult = rankCardsForPayment(
+      kotakPortfolio,
+      "IndianOil Fuel Station",
+      "Fuel & Gas",
+      3000
+    );
     expect(fuelResult.topCard?.cardName).toBe("Kotak IndianOil RuPay");
     expect(fuelResult.topCard?.returnPct).toBe(5.0);
 
@@ -188,11 +234,28 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     const sbiPortfolio = [
       { id: "s1", issuer: "BPCL SBI Card Octane", limit: 250000, outstanding: 0, status: "active" },
       { id: "s2", issuer: "IRCTC SBI Card", limit: 200000, outstanding: 0, status: "active" },
-      { id: "s3", issuer: "SBI Cashback Credit Card", limit: 300000, outstanding: 0, status: "active" },
-      { id: "s4", issuer: "SBI Aurum Metal Credit Card", limit: 1000000, outstanding: 0, status: "active" },
+      {
+        id: "s3",
+        issuer: "SBI Cashback Credit Card",
+        limit: 300000,
+        outstanding: 0,
+        status: "active",
+      },
+      {
+        id: "s4",
+        issuer: "SBI Aurum Metal Credit Card",
+        limit: 1000000,
+        outstanding: 0,
+        status: "active",
+      },
     ];
 
-    const fuelResult = rankCardsForPayment(sbiPortfolio, "BPCL Petrol Pump", "Fuel & Automotive", 2000);
+    const fuelResult = rankCardsForPayment(
+      sbiPortfolio,
+      "BPCL Petrol Pump",
+      "Fuel & Automotive",
+      2000
+    );
     expect(fuelResult.topCard?.cardName).toBe("BPCL SBI Card Octane");
     expect(fuelResult.topCard?.returnPct).toBe(7.25);
 
@@ -211,7 +274,13 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
 
   it("enforces SBI Cashback 5% online return, ₹5,000/mo spend cap, and strict MCC exclusions", () => {
     const portfolio = [
-      { id: "sbi-cb", issuer: "SBI Cashback Credit Card", limit: 300000, outstanding: 0, status: "active" },
+      {
+        id: "sbi-cb",
+        issuer: "SBI Cashback Credit Card",
+        limit: 300000,
+        outstanding: 0,
+        status: "active",
+      },
     ];
 
     // 1. Online shopping gets 5% flat cashback
@@ -221,7 +290,12 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(amazonRes.topCard?.maxCap).toBe("₹5,000/mo");
 
     // 2. Spend cap enforcement: ₹1,50,000 spend at 5% = ₹7,500 raw, but capped at ₹5,000/mo
-    const largeSpendRes = rankCardsForPayment(portfolio, "Apple Store Online", "Online Shopping", 150000);
+    const largeSpendRes = rankCardsForPayment(
+      portfolio,
+      "Apple Store Online",
+      "Online Shopping",
+      150000
+    );
     expect(largeSpendRes.topCard?.returnPct).toBe(5.0);
     expect(largeSpendRes.topCard?.savingsInINR).toBe(5000); // Enforces ₹5,000 cap!
 
@@ -236,7 +310,12 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(utilRes.topCard?.savingsInINR).toBe(0);
 
     // 5. Strict Exclusions: Telecom bills (Airtel / Jio) is 0%
-    const telecomRes = rankCardsForPayment(portfolio, "Airtel Broadband", "Utilities & Bills", 1200);
+    const telecomRes = rankCardsForPayment(
+      portfolio,
+      "Airtel Broadband",
+      "Utilities & Bills",
+      1200
+    );
     expect(telecomRes.topCard?.returnPct).toBe(0.0);
     expect(telecomRes.topCard?.savingsInINR).toBe(0);
 
@@ -255,5 +334,67 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(rentRes.topCard?.returnPct).toBe(0.0);
     expect(rentRes.topCard?.savingsInINR).toBe(0);
   });
-});
 
+  it("correctly ranks and evaluates YES Bank credit cards portfolio", () => {
+    const yesPortfolio = [
+      {
+        id: "yes-mq",
+        issuer: "YES Bank Marquee",
+        limit: 1000000,
+        outstanding: 0,
+        status: "active",
+      },
+      { id: "yes-res", issuer: "YES Bank Reserv", limit: 500000, outstanding: 0, status: "active" },
+      {
+        id: "yes-kiwi",
+        issuer: "YES Bank Kiwi RuPay",
+        limit: 200000,
+        outstanding: 0,
+        status: "active",
+      },
+      { id: "yes-byoc", issuer: "YES Bank BYOC", limit: 300000, outstanding: 0, status: "active" },
+      {
+        id: "yes-uni",
+        issuer: "YES Bank Uni Credit Card",
+        limit: 150000,
+        outstanding: 0,
+        status: "active",
+      },
+    ];
+
+    // 1. Marquee gets 4.5% on online retail (36 RP per ₹200)
+    const onlineRes = rankCardsForPayment(yesPortfolio, "Amazon", "Online Shopping", 10000);
+    expect(onlineRes.topCard?.returnPct).toBeGreaterThanOrEqual(4.5);
+    const mqCard = onlineRes.rankedCards.find((c) => c.cardName === "YES Bank Marquee");
+    expect(mqCard?.returnPct).toBe(4.5);
+    expect(mqCard?.savingsInINR).toBe(450);
+
+    // 2. Marquee gets BookMyShow BOGO
+    const bmsRes = rankCardsForPayment(yesPortfolio, "BookMyShow", "Entertainment & Movies", 1600);
+    const bmsMq = bmsRes.rankedCards.find((c) => c.cardName === "YES Bank Marquee");
+    expect(bmsMq?.returnPct).toBe(4.5);
+    expect(bmsMq?.badge).toBe("BOGO ₹800 BMS");
+
+    // 3. Reserv gets 3.0% on online retail (24 RP per ₹200)
+    const reservCard = onlineRes.rankedCards.find((c) => c.cardName === "YES Bank Reserv");
+    expect(reservCard?.returnPct).toBe(3.0);
+    expect(reservCard?.savingsInINR).toBe(300);
+
+    // 4. Kiwi gets 2.0% on UPI / scan-and-pay
+    const kiwiRes = rankCardsForPayment(yesPortfolio, "Blinkit", "Groceries & Supermarket", 2000);
+    const kiwiCard = kiwiRes.rankedCards.find((c) => c.cardName === "YES Bank Kiwi RuPay");
+    expect(kiwiCard?.returnPct).toBe(2.0);
+    expect(kiwiCard?.savingsInINR).toBe(40);
+
+    // 5. BYOC gets 10% on chosen category
+    const byocRes = rankCardsForPayment(yesPortfolio, "Swiggy", "Food & Dining", 1000);
+    expect(byocRes.topCard?.cardName).toBe("YES Bank BYOC");
+    expect(byocRes.topCard?.returnPct).toBe(10.0);
+    expect(byocRes.topCard?.savingsInINR).toBe(100);
+
+    // 6. Uni gets 1.0% cashback
+    const uniCard = onlineRes.rankedCards.find((c) => c.cardName === "YES Bank Uni Credit Card");
+    expect(uniCard?.returnPct).toBe(1.0);
+    expect(uniCard?.savingsInINR).toBe(100);
+  });
+});

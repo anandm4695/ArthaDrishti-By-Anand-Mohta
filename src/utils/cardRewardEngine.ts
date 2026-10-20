@@ -285,7 +285,16 @@ export const POPULAR_MERCHANTS: MerchantInfo[] = [
     name: "Electricity & Gas Bills",
     category: "Utilities & Bills",
     brandName: "Electricity",
-    keywords: ["electricity", "power bill", "gas bill", "tata power", "bescom", "adani power", "mahadiscom", "cesc"],
+    keywords: [
+      "electricity",
+      "power bill",
+      "gas bill",
+      "tata power",
+      "bescom",
+      "adani power",
+      "mahadiscom",
+      "cesc",
+    ],
     typicalSpend: 2500,
     description: "Monthly municipal power supply and piped gas utility payments",
   },
@@ -315,7 +324,15 @@ export const POPULAR_MERCHANTS: MerchantInfo[] = [
     name: "Netflix / Prime / Hotstar",
     category: "Entertainment",
     brandName: "Netflix",
-    keywords: ["netflix", "spotify", "hotstar", "disney", "youtube premium", "prime video", "apple tv"],
+    keywords: [
+      "netflix",
+      "spotify",
+      "hotstar",
+      "disney",
+      "youtube premium",
+      "prime video",
+      "apple tv",
+    ],
     typicalSpend: 499,
     description: "Monthly video and music streaming subscriptions",
   },
@@ -326,7 +343,17 @@ export const POPULAR_MERCHANTS: MerchantInfo[] = [
     name: "Fuel (Petrol & Diesel)",
     category: "Fuel",
     brandName: "HPCL",
-    keywords: ["fuel", "petrol", "diesel", "hpcl", "iocl", "bpcl", "indian oil", "bharat petroleum", "shell"],
+    keywords: [
+      "fuel",
+      "petrol",
+      "diesel",
+      "hpcl",
+      "iocl",
+      "bpcl",
+      "indian oil",
+      "bharat petroleum",
+      "shell",
+    ],
     typicalSpend: 2000,
     description: "Petrol pumps (HPCL, BPCL, IndianOil, Shell) with fuel surcharge waiver",
   },
@@ -337,7 +364,16 @@ export const POPULAR_MERCHANTS: MerchantInfo[] = [
     name: "International & Forex Spends",
     category: "International Spends",
     brandName: "Forex",
-    keywords: ["forex", "international", "foreign currency", "usd", "eur", "gbp", "overseas", "international travel"],
+    keywords: [
+      "forex",
+      "international",
+      "foreign currency",
+      "usd",
+      "eur",
+      "gbp",
+      "overseas",
+      "international travel",
+    ],
     typicalSpend: 15000,
     description: "Zero forex markup cards for overseas travel and foreign website payments",
     badge: "Zero Forex Markup",
@@ -369,20 +405,78 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["swiggy", "hdfc swiggy"],
     cardDisplayName: "HDFC Swiggy Credit Card",
     merchantPerks: {
-      swiggy: { returnPct: 10.0, perkType: "cashback", description: "10% direct cashback on Swiggy (Food, Instamart, Dineout, Genie)", maxCap: "₹1,500/mo", badge: "10% Cashback" },
-      zomato: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on top online platforms", maxCap: "₹1,500/mo" },
-      amazon: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on online e-commerce shopping", maxCap: "₹1,500/mo" },
-      flipkart: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Flipkart", maxCap: "₹1,500/mo" },
-      blinkit: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on quick commerce apps", maxCap: "₹1,500/mo" },
-      zepto: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Zepto", maxCap: "₹1,500/mo" },
-      myntra: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on fashion platforms", maxCap: "₹1,500/mo" },
-      uber: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on cab rides", maxCap: "₹1,500/mo" },
-      bookmyshow: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on BookMyShow", maxCap: "₹1,500/mo" },
+      swiggy: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% direct cashback on Swiggy (Food, Instamart, Dineout, Genie)",
+        maxCap: "₹1,500/mo",
+        badge: "10% Cashback",
+      },
+      zomato: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on top online platforms",
+        maxCap: "₹1,500/mo",
+      },
+      amazon: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on online e-commerce shopping",
+        maxCap: "₹1,500/mo",
+      },
+      flipkart: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Flipkart",
+        maxCap: "₹1,500/mo",
+      },
+      blinkit: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on quick commerce apps",
+        maxCap: "₹1,500/mo",
+      },
+      zepto: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Zepto",
+        maxCap: "₹1,500/mo",
+      },
+      myntra: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on fashion platforms",
+        maxCap: "₹1,500/mo",
+      },
+      uber: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on cab rides",
+        maxCap: "₹1,500/mo",
+      },
+      bookmyshow: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on BookMyShow",
+        maxCap: "₹1,500/mo",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 10.0, perkType: "cashback", description: "10% on Swiggy & 5% on top dining platforms" },
-      "Quick Commerce": { returnPct: 10.0, perkType: "cashback", description: "10% on Instamart & 5% on Blinkit/Zepto" },
-      "Online Shopping": { returnPct: 5.0, perkType: "cashback", description: "5% cashback on 1000+ top online shopping platforms" },
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% on Swiggy & 5% on top dining platforms",
+      },
+      "Quick Commerce": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% on Instamart & 5% on Blinkit/Zepto",
+      },
+      "Online Shopping": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on 1000+ top online shopping platforms",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -392,77 +486,236 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["tata neu infinity", "neu infinity"],
     cardDisplayName: "HDFC Tata Neu Infinity",
     merchantPerks: {
-      tata_neu: { returnPct: 10.0, perkType: "reward_points", description: "10% NeuCoins on Tata Neu, Croma, 1mg, BigBasket", badge: "10% NeuCoins" },
-      bigbasket: { returnPct: 10.0, perkType: "reward_points", description: "10% NeuCoins on BigBasket groceries", badge: "10% NeuCoins" },
-      airtel: { returnPct: 5.0, perkType: "reward_points", description: "5% NeuCoins on utility bill payments via Tata Neu" },
-      electricity_bills: { returnPct: 5.0, perkType: "reward_points", description: "5% NeuCoins on electricity bill payments via Tata Neu" },
+      tata_neu: {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description: "10% NeuCoins on Tata Neu, Croma, 1mg, BigBasket",
+        badge: "10% NeuCoins",
+      },
+      bigbasket: {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description: "10% NeuCoins on BigBasket groceries",
+        badge: "10% NeuCoins",
+      },
+      airtel: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% NeuCoins on utility bill payments via Tata Neu",
+      },
+      electricity_bills: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% NeuCoins on electricity bill payments via Tata Neu",
+      },
     },
     categoryPerks: {
-      "Quick Commerce": { returnPct: 10.0, perkType: "reward_points", description: "10% on BigBasket / BBnow" },
-      "Online Shopping": { returnPct: 10.0, perkType: "reward_points", description: "10% on Tata Neu & Croma; 1.5% other UPI/non-Tata spends" },
-      "Utilities & Bills": { returnPct: 5.0, perkType: "reward_points", description: "5% on bill payments via Tata Neu App" },
+      "Quick Commerce": {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description: "10% on BigBasket / BBnow",
+      },
+      "Online Shopping": {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description: "10% on Tata Neu & Croma; 1.5% other UPI/non-Tata spends",
+      },
+      "Utilities & Bills": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5% on bill payments via Tata Neu App",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.5,
-    specialPerks: ["1.5% NeuCoins on RuPay UPI spends", "Complimentary domestic & international lounge access"],
+    specialPerks: [
+      "1.5% NeuCoins on RuPay UPI spends",
+      "Complimentary domestic & international lounge access",
+    ],
   },
   {
     matchKeys: ["millennia", "hdfc millennia"],
     cardDisplayName: "HDFC Millennia Credit Card",
     merchantPerks: {
-      swiggy: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Swiggy, Amazon, Flipkart, Myntra, Zomato", maxCap: "₹1,000/mo", badge: "5% Cashback" },
-      zomato: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Zomato food delivery", maxCap: "₹1,000/mo" },
-      amazon: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Amazon shopping", maxCap: "₹1,000/mo" },
-      flipkart: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Flipkart e-commerce", maxCap: "₹1,000/mo" },
-      myntra: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Myntra fashion", maxCap: "₹1,000/mo" },
-      uber: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Uber rides", maxCap: "₹1,000/mo" },
-      bookmyshow: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on BookMyShow movie tickets", maxCap: "₹1,000/mo" },
+      swiggy: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Swiggy, Amazon, Flipkart, Myntra, Zomato",
+        maxCap: "₹1,000/mo",
+        badge: "5% Cashback",
+      },
+      zomato: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Zomato food delivery",
+        maxCap: "₹1,000/mo",
+      },
+      amazon: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Amazon shopping",
+        maxCap: "₹1,000/mo",
+      },
+      flipkart: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Flipkart e-commerce",
+        maxCap: "₹1,000/mo",
+      },
+      myntra: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Myntra fashion",
+        maxCap: "₹1,000/mo",
+      },
+      uber: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Uber rides",
+        maxCap: "₹1,000/mo",
+      },
+      bookmyshow: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on BookMyShow movie tickets",
+        maxCap: "₹1,000/mo",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Swiggy, Zomato, Dineout" },
-      "Online Shopping": { returnPct: 5.0, perkType: "cashback", description: "5% cashback on Amazon, Flipkart, Myntra, Tata CLiQ" },
+      "Food & Dining": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Swiggy, Zomato, Dineout",
+      },
+      "Online Shopping": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Amazon, Flipkart, Myntra, Tata CLiQ",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["5% cashback on 10 partner merchants", "1% on all other spends", "₹1,000 quarterly spend milestone vouchers"],
+    specialPerks: [
+      "5% cashback on 10 partner merchants",
+      "1% on all other spends",
+      "₹1,000 quarterly spend milestone vouchers",
+    ],
   },
   {
     matchKeys: ["regalia", "regalia gold", "hdfc regalia"],
     cardDisplayName: "HDFC Regalia Gold",
     merchantPerks: {
-      nykaa: { returnPct: 6.6, perkType: "reward_points", description: "5X Reward Points (6.6% value) on Nykaa, Myntra, Marks & Spencer, Reliance Digital" },
-      myntra: { returnPct: 6.6, perkType: "reward_points", description: "5X Reward Points (6.6% value) on Myntra fashion" },
-      makemytrip: { returnPct: 6.6, perkType: "reward_points", description: "Accelerated SmartBuy points on flight & hotel bookings" },
-      easemytrip: { returnPct: 6.6, perkType: "reward_points", description: "SmartBuy voucher redemption value" },
+      nykaa: {
+        returnPct: 6.6,
+        perkType: "reward_points",
+        description:
+          "5X Reward Points (6.6% value) on Nykaa, Myntra, Marks & Spencer, Reliance Digital",
+      },
+      myntra: {
+        returnPct: 6.6,
+        perkType: "reward_points",
+        description: "5X Reward Points (6.6% value) on Myntra fashion",
+      },
+      makemytrip: {
+        returnPct: 6.6,
+        perkType: "reward_points",
+        description: "Accelerated SmartBuy points on flight & hotel bookings",
+      },
+      easemytrip: {
+        returnPct: 6.6,
+        perkType: "reward_points",
+        description: "SmartBuy voucher redemption value",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 6.6, perkType: "reward_points", description: "5X points on SmartBuy flights and hotels" },
-      "Online Shopping": { returnPct: 6.6, perkType: "reward_points", description: "5X points on partner retail brands" },
+      "Travel & Flights": {
+        returnPct: 6.6,
+        perkType: "reward_points",
+        description: "5X points on SmartBuy flights and hotels",
+      },
+      "Online Shopping": {
+        returnPct: 6.6,
+        perkType: "reward_points",
+        description: "5X points on partner retail brands",
+      },
     },
     defaultOnlineReturnPct: 1.33,
     defaultOfflineReturnPct: 1.33,
-    specialPerks: ["12 complimentary domestic airport lounges/yr", "6 international lounges via Priority Pass", "Flight vouchers on spend milestones"],
+    specialPerks: [
+      "12 complimentary domestic airport lounges/yr",
+      "6 international lounges via Priority Pass",
+      "Flight vouchers on spend milestones",
+    ],
   },
   {
     matchKeys: ["infinia", "hdfc infinia"],
     cardDisplayName: "HDFC Infinia Metal",
     merchantPerks: {
-      makemytrip: { returnPct: 33.3, perkType: "reward_points", description: "10X SmartBuy Points (33.3% value) on hotel bookings; 5X (16.6%) on flights", badge: "Up to 33.3% Value" },
-      swiggy: { returnPct: 16.6, perkType: "reward_points", description: "5X SmartBuy Gyftr voucher points (16.6% return on Swiggy)", badge: "16.6% via Gyftr" },
-      amazon: { returnPct: 16.6, perkType: "reward_points", description: "5X SmartBuy Gyftr voucher points (16.6% return on Amazon Shopping)", badge: "16.6% via Gyftr" },
-      zomato: { returnPct: 16.6, perkType: "reward_points", description: "5X SmartBuy Gyftr voucher points (16.6% return on Zomato)", badge: "16.6% via Gyftr" },
-      flipkart: { returnPct: 16.6, perkType: "reward_points", description: "5X SmartBuy Gyftr voucher points (16.6% return on Flipkart)", badge: "16.6% via Gyftr" },
-      apple: { returnPct: 16.6, perkType: "reward_points", description: "5X SmartBuy Gyftr vouchers or 10X hotel partner transfer" },
+      makemytrip: {
+        returnPct: 33.3,
+        perkType: "reward_points",
+        description: "10X SmartBuy Points (33.3% value) on hotel bookings; 5X (16.6%) on flights",
+        badge: "Up to 33.3% Value",
+      },
+      swiggy: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Swiggy)",
+        badge: "16.6% via Gyftr",
+      },
+      amazon: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Amazon Shopping)",
+        badge: "16.6% via Gyftr",
+      },
+      zomato: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Zomato)",
+        badge: "16.6% via Gyftr",
+      },
+      flipkart: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr voucher points (16.6% return on Flipkart)",
+        badge: "16.6% via Gyftr",
+      },
+      apple: {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "5X SmartBuy Gyftr vouchers or 10X hotel partner transfer",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 33.3, perkType: "reward_points", description: "Up to 33.3% value on SmartBuy hotels and 16.6% on flights (1 Point = ₹1)" },
-      "Food & Dining": { returnPct: 16.6, perkType: "reward_points", description: "16.6% return via SmartBuy Gyftr instant food vouchers, 3.33% base" },
-      "Online Shopping": { returnPct: 16.6, perkType: "reward_points", description: "16.6% return via SmartBuy e-vouchers, 3.33% base retail" },
-      "International Spends": { returnPct: 3.33, perkType: "reward_points", description: "3.33% base points with lowest 2.0% forex markup" },
+      "Travel & Flights": {
+        returnPct: 33.3,
+        perkType: "reward_points",
+        description: "Up to 33.3% value on SmartBuy hotels and 16.6% on flights (1 Point = ₹1)",
+      },
+      "Food & Dining": {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "16.6% return via SmartBuy Gyftr instant food vouchers, 3.33% base",
+      },
+      "Online Shopping": {
+        returnPct: 16.6,
+        perkType: "reward_points",
+        description: "16.6% return via SmartBuy e-vouchers, 3.33% base retail",
+      },
+      "International Spends": {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "3.33% base points with lowest 2.0% forex markup",
+      },
     },
     defaultOnlineReturnPct: 3.33,
     defaultOfflineReturnPct: 3.33,
-    specialPerks: ["1:1 Point conversion on flights and hotels", "Unlimited domestic & global lounge access with add-ons", "ITC 1+1 buffet dining"],
+    specialPerks: [
+      "1:1 Point conversion on flights and hotels",
+      "Unlimited domestic & global lounge access with add-ons",
+      "ITC 1+1 buffet dining",
+    ],
   },
 
   // ── Axis Bank Cards
@@ -470,75 +723,227 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["airtel axis", "axis airtel"],
     cardDisplayName: "Airtel Axis Bank Credit Card",
     merchantPerks: {
-      airtel: { returnPct: 25.0, perkType: "cashback", description: "25% direct cashback on Airtel Mobile, Broadband & DTH via Airtel Thanks App", maxCap: "₹250/mo", badge: "25% Cashback" },
-      electricity_bills: { returnPct: 10.0, perkType: "cashback", description: "10% cashback on Electricity, Gas & Water bill payments via Airtel Thanks", maxCap: "₹250/mo", badge: "10% Cashback" },
-      swiggy: { returnPct: 10.0, perkType: "cashback", description: "10% cashback on Swiggy food orders", maxCap: "₹500/mo", badge: "10% Cashback" },
-      zomato: { returnPct: 10.0, perkType: "cashback", description: "10% cashback on Zomato delivery", maxCap: "₹500/mo", badge: "10% Cashback" },
-      bigbasket: { returnPct: 10.0, perkType: "cashback", description: "10% cashback on BigBasket groceries", maxCap: "₹500/mo", badge: "10% Cashback" },
+      airtel: {
+        returnPct: 25.0,
+        perkType: "cashback",
+        description: "25% direct cashback on Airtel Mobile, Broadband & DTH via Airtel Thanks App",
+        maxCap: "₹250/mo",
+        badge: "25% Cashback",
+      },
+      electricity_bills: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Electricity, Gas & Water bill payments via Airtel Thanks",
+        maxCap: "₹250/mo",
+        badge: "10% Cashback",
+      },
+      swiggy: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Swiggy food orders",
+        maxCap: "₹500/mo",
+        badge: "10% Cashback",
+      },
+      zomato: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Zomato delivery",
+        maxCap: "₹500/mo",
+        badge: "10% Cashback",
+      },
+      bigbasket: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on BigBasket groceries",
+        maxCap: "₹500/mo",
+        badge: "10% Cashback",
+      },
     },
     categoryPerks: {
-      "Utilities & Bills": { returnPct: 25.0, perkType: "cashback", description: "25% on Airtel bills & 10% on electricity/gas via Airtel Thanks" },
-      "Food & Dining": { returnPct: 10.0, perkType: "cashback", description: "10% cashback on Swiggy and Zomato" },
-      "Quick Commerce": { returnPct: 10.0, perkType: "cashback", description: "10% cashback on BigBasket grocery orders" },
+      "Utilities & Bills": {
+        returnPct: 25.0,
+        perkType: "cashback",
+        description: "25% on Airtel bills & 10% on electricity/gas via Airtel Thanks",
+      },
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Swiggy and Zomato",
+      },
+      "Quick Commerce": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on BigBasket grocery orders",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["25% on Airtel ecosystem", "10% on utilities & Swiggy/Zomato/BigBasket", "4 complimentary domestic lounge visits/yr"],
+    specialPerks: [
+      "25% on Airtel ecosystem",
+      "10% on utilities & Swiggy/Zomato/BigBasket",
+      "4 complimentary domestic lounge visits/yr",
+    ],
   },
   {
     matchKeys: ["axis ace", "ace"],
     cardDisplayName: "Axis Bank ACE Credit Card",
     merchantPerks: {
-      electricity_bills: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on utility bills via Google Pay (Electricity, Gas, Internet)", maxCap: "₹500/mo", badge: "5% Cashback" },
-      swiggy: { returnPct: 4.0, perkType: "cashback", description: "4% cashback on Swiggy food delivery", maxCap: "₹500/mo" },
-      zomato: { returnPct: 4.0, perkType: "cashback", description: "4% cashback on Zomato food delivery", maxCap: "₹500/mo" },
-      uber: { returnPct: 4.0, perkType: "cashback", description: "4% cashback on Uber rides", maxCap: "₹500/mo" },
-      ola: { returnPct: 4.0, perkType: "cashback", description: "4% cashback on Ola cabs", maxCap: "₹500/mo" },
+      electricity_bills: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on utility bills via Google Pay (Electricity, Gas, Internet)",
+        maxCap: "₹500/mo",
+        badge: "5% Cashback",
+      },
+      swiggy: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% cashback on Swiggy food delivery",
+        maxCap: "₹500/mo",
+      },
+      zomato: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% cashback on Zomato food delivery",
+        maxCap: "₹500/mo",
+      },
+      uber: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% cashback on Uber rides",
+        maxCap: "₹500/mo",
+      },
+      ola: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% cashback on Ola cabs",
+        maxCap: "₹500/mo",
+      },
     },
     categoryPerks: {
-      "Utilities & Bills": { returnPct: 5.0, perkType: "cashback", description: "5% on Bill Payments via Google Pay" },
-      "Food & Dining": { returnPct: 4.0, perkType: "cashback", description: "4% on Swiggy and Zomato" },
-      "Travel & Flights": { returnPct: 4.0, perkType: "cashback", description: "4% on Uber & Ola commute" },
+      "Utilities & Bills": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% on Bill Payments via Google Pay",
+      },
+      "Food & Dining": {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% on Swiggy and Zomato",
+      },
+      "Travel & Flights": {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% on Uber & Ola commute",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.5,
-    specialPerks: ["5% on utility bills via GPay", "4% on Swiggy/Zomato/Uber", "1.5% flat unlimited cashback on all other spends"],
+    specialPerks: [
+      "5% on utility bills via GPay",
+      "4% on Swiggy/Zomato/Uber",
+      "1.5% flat unlimited cashback on all other spends",
+    ],
   },
   {
     matchKeys: ["flipkart axis", "axis flipkart"],
     cardDisplayName: "Flipkart Axis Bank Credit Card",
     merchantPerks: {
-      flipkart: { returnPct: 5.0, perkType: "cashback", description: "5% unlimited direct cashback on Flipkart shopping", badge: "5% Unlimited" },
-      cleartrip: { returnPct: 5.0, perkType: "cashback", description: "5% unlimited direct cashback on Cleartrip flights & hotels", badge: "5% Unlimited" },
-      swiggy: { returnPct: 4.0, perkType: "cashback", description: "4% cashback on Swiggy food orders" },
+      flipkart: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% unlimited direct cashback on Flipkart shopping",
+        badge: "5% Unlimited",
+      },
+      cleartrip: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% unlimited direct cashback on Cleartrip flights & hotels",
+        badge: "5% Unlimited",
+      },
+      swiggy: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% cashback on Swiggy food orders",
+      },
       uber: { returnPct: 4.0, perkType: "cashback", description: "4% cashback on Uber taxi rides" },
-      pvr: { returnPct: 4.0, perkType: "cashback", description: "4% cashback on PVR INOX cinema tickets" },
+      pvr: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% cashback on PVR INOX cinema tickets",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 5.0, perkType: "cashback", description: "5% unlimited cashback on Flipkart" },
-      "Travel & Flights": { returnPct: 5.0, perkType: "cashback", description: "5% on Cleartrip and 4% on Uber" },
-      "Food & Dining": { returnPct: 4.0, perkType: "cashback", description: "4% on Swiggy food orders" },
+      "Online Shopping": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% unlimited cashback on Flipkart",
+      },
+      "Travel & Flights": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% on Cleartrip and 4% on Uber",
+      },
+      "Food & Dining": {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "4% on Swiggy food orders",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["5% unlimited cashback on Flipkart & Cleartrip", "4% on Swiggy, Uber, PVR", "1% on all other transactions"],
+    specialPerks: [
+      "5% unlimited cashback on Flipkart & Cleartrip",
+      "4% on Swiggy, Uber, PVR",
+      "1% on all other transactions",
+    ],
   },
   {
     matchKeys: ["axis atlas", "atlas"],
     cardDisplayName: "Axis Bank Atlas",
     merchantPerks: {
-      makemytrip: { returnPct: 10.0, perkType: "miles", description: "5 EDGE Miles/₹100 (10% partner transfer value) on direct airline & hotel spends", badge: "10% Miles Value" },
-      easemytrip: { returnPct: 10.0, perkType: "miles", description: "5 EDGE Miles/₹100 (10% partner transfer value) on flights & hotels" },
-      cleartrip: { returnPct: 10.0, perkType: "miles", description: "5 EDGE Miles/₹100 on travel booking platforms" },
-      apple: { returnPct: 4.0, perkType: "miles", description: "2 EDGE Miles/₹100 (4% transfer value) on general retail" },
+      makemytrip: {
+        returnPct: 10.0,
+        perkType: "miles",
+        description:
+          "5 EDGE Miles/₹100 (10% partner transfer value) on direct airline & hotel spends",
+        badge: "10% Miles Value",
+      },
+      easemytrip: {
+        returnPct: 10.0,
+        perkType: "miles",
+        description: "5 EDGE Miles/₹100 (10% partner transfer value) on flights & hotels",
+      },
+      cleartrip: {
+        returnPct: 10.0,
+        perkType: "miles",
+        description: "5 EDGE Miles/₹100 on travel booking platforms",
+      },
+      apple: {
+        returnPct: 4.0,
+        perkType: "miles",
+        description: "2 EDGE Miles/₹100 (4% transfer value) on general retail",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 10.0, perkType: "miles", description: "5 EDGE Miles per ₹100 on Airlines & Hotels (1:2 transfer ratio to airline partners)" },
-      "International Spends": { returnPct: 4.0, perkType: "miles", description: "2 EDGE Miles per ₹100 on all foreign retail transactions" },
+      "Travel & Flights": {
+        returnPct: 10.0,
+        perkType: "miles",
+        description:
+          "5 EDGE Miles per ₹100 on Airlines & Hotels (1:2 transfer ratio to airline partners)",
+      },
+      "International Spends": {
+        returnPct: 4.0,
+        perkType: "miles",
+        description: "2 EDGE Miles per ₹100 on all foreign retail transactions",
+      },
     },
     defaultOnlineReturnPct: 4.0,
     defaultOfflineReturnPct: 4.0,
-    specialPerks: ["1 EDGE Mile = 2 Partner Points (Accor, Singapore Airlines, Qatar, Turkish)", "Up to 18 complimentary international & domestic lounges"],
+    specialPerks: [
+      "1 EDGE Mile = 2 Partner Points (Accor, Singapore Airlines, Qatar, Turkish)",
+      "Up to 18 complimentary international & domestic lounges",
+    ],
   },
 
   // ── ICICI Bank Cards
@@ -546,52 +951,149 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["amazon pay", "icici amazon", "amazon icici"],
     cardDisplayName: "ICICI Amazon Pay Credit Card",
     merchantPerks: {
-      amazon: { returnPct: 5.0, perkType: "cashback", description: "5% unlimited cashback for Amazon Prime members (3% for non-Prime)", badge: "5% Unlimited" },
-      swiggy: { returnPct: 2.0, perkType: "cashback", description: "2% cashback on 100+ Amazon Pay partner merchants (Swiggy, Zomato, Uber, BookMyShow)" },
-      zomato: { returnPct: 2.0, perkType: "cashback", description: "2% cashback on Zomato via Amazon Pay" },
+      amazon: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% unlimited cashback for Amazon Prime members (3% for non-Prime)",
+        badge: "5% Unlimited",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description:
+          "2% cashback on 100+ Amazon Pay partner merchants (Swiggy, Zomato, Uber, BookMyShow)",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on Zomato via Amazon Pay",
+      },
       uber: { returnPct: 2.0, perkType: "cashback", description: "2% cashback on Uber cabs" },
-      airtel: { returnPct: 2.0, perkType: "cashback", description: "2% cashback on mobile & broadband recharges via Amazon Pay" },
-      electricity_bills: { returnPct: 2.0, perkType: "cashback", description: "2% cashback on electricity & utility bills via Amazon Pay" },
-      bookmyshow: { returnPct: 2.0, perkType: "cashback", description: "2% cashback on BookMyShow movie tickets" },
+      airtel: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on mobile & broadband recharges via Amazon Pay",
+      },
+      electricity_bills: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on electricity & utility bills via Amazon Pay",
+      },
+      bookmyshow: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on BookMyShow movie tickets",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 5.0, perkType: "cashback", description: "5% unlimited cashback on Amazon India" },
-      "Utilities & Bills": { returnPct: 2.0, perkType: "cashback", description: "2% cashback on all recharges and bills via Amazon Pay" },
-      "Food & Dining": { returnPct: 2.0, perkType: "cashback", description: "2% cashback on food delivery partner platforms" },
+      "Online Shopping": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% unlimited cashback on Amazon India",
+      },
+      "Utilities & Bills": {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on all recharges and bills via Amazon Pay",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on food delivery partner platforms",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["Lifetime Free Card (LTF)", "No upper cap on cashback", "Auto-credited to Amazon Pay Balance on statement date"],
+    specialPerks: [
+      "Lifetime Free Card (LTF)",
+      "No upper cap on cashback",
+      "Auto-credited to Amazon Pay Balance on statement date",
+    ],
   },
   {
     matchKeys: ["sapphiro", "icici sapphiro"],
     cardDisplayName: "ICICI Sapphiro",
     merchantPerks: {
-      bookmyshow: { returnPct: 25.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to ₹500 off twice a month)", badge: "BOGO Movie Tickets" },
-      swiggy: { returnPct: 1.5, perkType: "reward_points", description: "ICICI Culinary Treats dining discount + 4 ICICI Rewards per ₹100" },
-      makemytrip: { returnPct: 2.0, perkType: "reward_points", description: "4 ICICI Rewards per ₹100 (₹1/100 value) + lounge access" },
+      bookmyshow: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 Free on BookMyShow (up to ₹500 off twice a month)",
+        badge: "BOGO Movie Tickets",
+      },
+      swiggy: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "ICICI Culinary Treats dining discount + 4 ICICI Rewards per ₹100",
+      },
+      makemytrip: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "4 ICICI Rewards per ₹100 (₹1/100 value) + lounge access",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 25.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹500 discount twice every month on BMS" },
-      "Food & Dining": { returnPct: 3.0, perkType: "discount", description: "Culinary Treats dining program discounts at premium restaurants" },
+      Entertainment: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹500 discount twice every month on BMS",
+      },
+      "Food & Dining": {
+        returnPct: 3.0,
+        perkType: "discount",
+        description: "Culinary Treats dining program discounts at premium restaurants",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 0.5,
-    specialPerks: ["DreamFolios DragonPass international lounge access", "Golf rounds quarterly", "Dual Mastercard + Amex companion cards"],
+    specialPerks: [
+      "DreamFolios DragonPass international lounge access",
+      "Golf rounds quarterly",
+      "Dual Mastercard + Amex companion cards",
+    ],
   },
   {
     matchKeys: ["emeralde", "icici emeralde"],
     cardDisplayName: "ICICI Emeralde Metal Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 30.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to ₹750 discount twice a month)", badge: "BOGO ₹750 Movies" },
-      taj: { returnPct: 4.0, perkType: "reward_points", description: "4 ICICI Reward Points per ₹100 (₹1/point value) on luxury stays" },
-      makemytrip: { returnPct: 4.0, perkType: "reward_points", description: "4 ICICI Reward Points per ₹100 on flight & luxury travel bookings" },
-      swiggy: { returnPct: 3.0, perkType: "reward_points", description: "Culinary Treats dining discount + accelerated points" },
+      bookmyshow: {
+        returnPct: 30.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 Free on BookMyShow (up to ₹750 discount twice a month)",
+        badge: "BOGO ₹750 Movies",
+      },
+      taj: {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "4 ICICI Reward Points per ₹100 (₹1/point value) on luxury stays",
+      },
+      makemytrip: {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "4 ICICI Reward Points per ₹100 on flight & luxury travel bookings",
+      },
+      swiggy: {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "Culinary Treats dining discount + accelerated points",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 30.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹750 discount twice every month on BookMyShow" },
-      "Travel": { returnPct: 4.0, perkType: "reward_points", description: "4 Reward Points per ₹100 (1:1 redemption ratio for air miles)" },
-      "Food & Dining": { returnPct: 3.0, perkType: "discount", description: "ICICI Culinary Treats fine dining discounts" },
+      Entertainment: {
+        returnPct: 30.0,
+        perkType: "discount",
+        description:
+          "Buy 1 Get 1 free movie ticket up to ₹750 discount twice every month on BookMyShow",
+      },
+      Travel: {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "4 Reward Points per ₹100 (1:1 redemption ratio for air miles)",
+      },
+      "Food & Dining": {
+        returnPct: 3.0,
+        perkType: "discount",
+        description: "ICICI Culinary Treats fine dining discounts",
+      },
     },
     defaultOnlineReturnPct: 4.0,
     defaultOfflineReturnPct: 4.0,
@@ -605,13 +1107,34 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["rubyx", "icici rubyx"],
     cardDisplayName: "ICICI Rubyx Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 20.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to ₹250 discount twice a month)", badge: "BOGO ₹250 Movies" },
-      swiggy: { returnPct: 1.5, perkType: "reward_points", description: "ICICI Culinary Treats dining discount + 4 ICICI Rewards per ₹100" },
-      makemytrip: { returnPct: 1.5, perkType: "reward_points", description: "2 ICICI Reward Points per ₹100 + complimentary lounge visits" },
+      bookmyshow: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 Free on BookMyShow (up to ₹250 discount twice a month)",
+        badge: "BOGO ₹250 Movies",
+      },
+      swiggy: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "ICICI Culinary Treats dining discount + 4 ICICI Rewards per ₹100",
+      },
+      makemytrip: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "2 ICICI Reward Points per ₹100 + complimentary lounge visits",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 20.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹250 discount twice every month on BMS" },
-      "Food & Dining": { returnPct: 2.5, perkType: "discount", description: "Culinary Treats dining privileges" },
+      Entertainment: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹250 discount twice every month on BMS",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "discount",
+        description: "Culinary Treats dining privileges",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 0.5,
@@ -624,12 +1147,29 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["coral", "icici coral"],
     cardDisplayName: "ICICI Coral Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 25.0, perkType: "discount", description: "25% discount up to ₹100 on BookMyShow twice a month", badge: "25% BMS Discount" },
-      swiggy: { returnPct: 1.0, perkType: "reward_points", description: "2 ICICI Reward Points per ₹100 on dining" },
+      bookmyshow: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "25% discount up to ₹100 on BookMyShow twice a month",
+        badge: "25% BMS Discount",
+      },
+      swiggy: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "2 ICICI Reward Points per ₹100 on dining",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 25.0, perkType: "discount", description: "25% off up to ₹100 on movie tickets on BookMyShow and Inox" },
-      "Utilities & Bills": { returnPct: 1.0, perkType: "reward_points", description: "2 Reward Points per ₹100 spent via RuPay UPI scan & pay" },
+      Entertainment: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "25% off up to ₹100 on movie tickets on BookMyShow and Inox",
+      },
+      "Utilities & Bills": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "2 Reward Points per ₹100 spent via RuPay UPI scan & pay",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 0.5,
@@ -643,12 +1183,29 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["icici makemytrip", "makemytrip icici", "mmt signature"],
     cardDisplayName: "ICICI MakeMyTrip Signature Card",
     merchantPerks: {
-      makemytrip: { returnPct: 4.0, perkType: "cashback", description: "₹4 My Cash per ₹200 on MakeMyTrip hotel & holiday bookings", badge: "4% My Cash" },
-      airindia: { returnPct: 2.0, perkType: "cashback", description: "₹2 My Cash per ₹200 on flight bookings" },
-      indigo: { returnPct: 2.0, perkType: "cashback", description: "₹2 My Cash per ₹200 on domestic flights" },
+      makemytrip: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "₹4 My Cash per ₹200 on MakeMyTrip hotel & holiday bookings",
+        badge: "4% My Cash",
+      },
+      airindia: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "₹2 My Cash per ₹200 on flight bookings",
+      },
+      indigo: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "₹2 My Cash per ₹200 on domestic flights",
+      },
     },
     categoryPerks: {
-      "Travel": { returnPct: 4.0, perkType: "cashback", description: "Accelerated My Cash on hotel bookings and vacation packages" },
+      Travel: {
+        returnPct: 4.0,
+        perkType: "cashback",
+        description: "Accelerated My Cash on hotel bookings and vacation packages",
+      },
     },
     defaultOnlineReturnPct: 1.25,
     defaultOfflineReturnPct: 1.0,
@@ -664,52 +1221,268 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     cardDisplayName: "SBI Cashback Credit Card",
     merchantPerks: {
       // 5% Online Cashback (Capped at ₹5,000/month = ₹1 Lakh online spend)
-      amazon: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback across Amazon India (Shopping, Pantry)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      flipkart: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Flipkart", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      myntra: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Myntra fashion", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      nykaa: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Nykaa beauty & cosmetics", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      tata_neu: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Tata Neu online purchases", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      apple: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Apple India online purchases", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      swiggy: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Swiggy (Food & Instamart)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      zomato: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Zomato food delivery", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      blinkit: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Blinkit quick delivery", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      zepto: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Zepto grocery orders", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      bigbasket: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on BigBasket essentials", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      bookmyshow: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on BookMyShow cinema & events", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      makemytrip: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on flights, hotels, and bus bookings (Note: Railways excluded)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      cleartrip: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Cleartrip flights & hotel stays", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      easemytrip: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on EaseMyTrip travel bookings", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      uber: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on Uber & Ola cab bookings", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      streaming: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on digital subscriptions (Netflix, Spotify, Prime)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      eazydiner: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on EazyDiner PayEazy payments", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
-      mcdonalds: { returnPct: 5.0, perkType: "cashback", description: "5% flat online cashback on online app orders (Domino's, McDonald's)", maxCap: "₹5,000/mo", badge: "5% Flat Cashback" },
+      amazon: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback across Amazon India (Shopping, Pantry)",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      flipkart: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Flipkart",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      myntra: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Myntra fashion",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      nykaa: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Nykaa beauty & cosmetics",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      tata_neu: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Tata Neu online purchases",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      apple: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Apple India online purchases",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      swiggy: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Swiggy (Food & Instamart)",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      zomato: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Zomato food delivery",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      blinkit: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Blinkit quick delivery",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      zepto: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Zepto grocery orders",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      bigbasket: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on BigBasket essentials",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      bookmyshow: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on BookMyShow cinema & events",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      makemytrip: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description:
+          "5% flat online cashback on flights, hotels, and bus bookings (Note: Railways excluded)",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      cleartrip: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Cleartrip flights & hotel stays",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      easemytrip: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on EaseMyTrip travel bookings",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      uber: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on Uber & Ola cab bookings",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      streaming: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on digital subscriptions (Netflix, Spotify, Prime)",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      eazydiner: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on EazyDiner PayEazy payments",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
+      mcdonalds: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% flat online cashback on online app orders (Domino's, McDonald's)",
+        maxCap: "₹5,000/mo",
+        badge: "5% Flat Cashback",
+      },
 
       // Strict Exclusions (0% Cashback per SBI Card Terms)
-      irctc: { returnPct: 0.0, perkType: "cashback", description: "Railways & IRCTC ticket bookings are strictly excluded from cashback", badge: "0% Excluded (Railways)" },
-      electricity_bills: { returnPct: 0.0, perkType: "cashback", description: "Utility bill payments (Electricity, Water, Gas) are excluded from cashback", badge: "0% Excluded (Utilities)" },
-      airtel: { returnPct: 0.0, perkType: "cashback", description: "Telecom & broadband bill payments are excluded from cashback", badge: "0% Excluded (Telecom)" },
-      jio: { returnPct: 0.0, perkType: "cashback", description: "Telecom recharges and mobile bills are excluded from cashback", badge: "0% Excluded (Telecom)" },
-      fuel_pumps: { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback (1% surcharge waiver on ₹500–₹3,000)", badge: "0% Excluded (Fuel)" },
+      irctc: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Railways & IRCTC ticket bookings are strictly excluded from cashback",
+        badge: "0% Excluded (Railways)",
+      },
+      electricity_bills: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Utility bill payments (Electricity, Water, Gas) are excluded from cashback",
+        badge: "0% Excluded (Utilities)",
+      },
+      airtel: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Telecom & broadband bill payments are excluded from cashback",
+        badge: "0% Excluded (Telecom)",
+      },
+      jio: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Telecom recharges and mobile bills are excluded from cashback",
+        badge: "0% Excluded (Telecom)",
+      },
+      fuel_pumps: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description:
+          "Fuel transactions are excluded from cashback (1% surcharge waiver on ₹500–₹3,000)",
+        badge: "0% Excluded (Fuel)",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 5.0, perkType: "cashback", description: "5% flat cashback on ANY online merchant across India (capped at ₹5,000/month)", maxCap: "₹5,000/mo" },
-      "Quick Commerce": { returnPct: 5.0, perkType: "cashback", description: "5% flat cashback on all quick commerce grocery platforms (capped at ₹5,000/month)", maxCap: "₹5,000/mo" },
-      "Food & Dining": { returnPct: 5.0, perkType: "cashback", description: "5% on online food delivery apps; 1% on offline restaurant POS dining", maxCap: "₹5,000/mo" },
-      "Entertainment": { returnPct: 5.0, perkType: "cashback", description: "5% on online cinema and event booking websites (capped at ₹5,000/month)", maxCap: "₹5,000/mo" },
-      "Electronics": { returnPct: 5.0, perkType: "cashback", description: "5% on electronic gadgets & appliances bought online", maxCap: "₹5,000/mo" },
-      "Travel & Flights": { returnPct: 5.0, perkType: "cashback", description: "5% on online airline tickets, hotel stays & cabs (Note: Railways/IRCTC is 0% excluded)", maxCap: "₹5,000/mo" },
-      "International Spends": { returnPct: 1.0, perkType: "cashback", description: "5% online cashback minus 3.5% foreign currency markup (net ~1.0% return)" },
+      "Online Shopping": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description:
+          "5% flat cashback on ANY online merchant across India (capped at ₹5,000/month)",
+        maxCap: "₹5,000/mo",
+      },
+      "Quick Commerce": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description:
+          "5% flat cashback on all quick commerce grocery platforms (capped at ₹5,000/month)",
+        maxCap: "₹5,000/mo",
+      },
+      "Food & Dining": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% on online food delivery apps; 1% on offline restaurant POS dining",
+        maxCap: "₹5,000/mo",
+      },
+      Entertainment: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% on online cinema and event booking websites (capped at ₹5,000/month)",
+        maxCap: "₹5,000/mo",
+      },
+      Electronics: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% on electronic gadgets & appliances bought online",
+        maxCap: "₹5,000/mo",
+      },
+      "Travel & Flights": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description:
+          "5% on online airline tickets, hotel stays & cabs (Note: Railways/IRCTC is 0% excluded)",
+        maxCap: "₹5,000/mo",
+      },
+      "International Spends": {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description: "5% online cashback minus 3.5% foreign currency markup (net ~1.0% return)",
+      },
 
       // MCC Exclusions per official terms & conditions:
-      "Utilities & Bills": { returnPct: 0.0, perkType: "cashback", description: "Utility bill payments (Electricity, Water, Gas, Telecom) are completely excluded from cashback" },
-      "Government & Taxes": { returnPct: 0.0, perkType: "cashback", description: "Government payments, property taxes, and municipal charges earn 0% cashback" },
-      "Education": { returnPct: 0.0, perkType: "cashback", description: "School, college, and university tuition fees are completely excluded from cashback" },
-      "Rent Payments": { returnPct: 0.0, perkType: "cashback", description: "Rental transactions earn 0% cashback and incur SBI processing fee" },
-      "Wallet Reloads": { returnPct: 0.0, perkType: "cashback", description: "Prepaid wallet top-ups (Paytm, Mobikwik) earn 0% cashback" },
-      "Jewelry": { returnPct: 0.0, perkType: "cashback", description: "Jewelry, bullion, and precious metal purchases earn 0% cashback" },
-      "Fuel": { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback (1% surcharge waiver applies)" },
-      "Fuel & Automotive": { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback" },
-      "Fuel & Gas": { returnPct: 0.0, perkType: "cashback", description: "Fuel transactions are excluded from cashback" },
+      "Utilities & Bills": {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description:
+          "Utility bill payments (Electricity, Water, Gas, Telecom) are completely excluded from cashback",
+      },
+      "Government & Taxes": {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Government payments, property taxes, and municipal charges earn 0% cashback",
+      },
+      Education: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description:
+          "School, college, and university tuition fees are completely excluded from cashback",
+      },
+      "Rent Payments": {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Rental transactions earn 0% cashback and incur SBI processing fee",
+      },
+      "Wallet Reloads": {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Prepaid wallet top-ups (Paytm, Mobikwik) earn 0% cashback",
+      },
+      Jewelry: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Jewelry, bullion, and precious metal purchases earn 0% cashback",
+      },
+      Fuel: {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Fuel transactions are excluded from cashback (1% surcharge waiver applies)",
+      },
+      "Fuel & Automotive": {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Fuel transactions are excluded from cashback",
+      },
+      "Fuel & Gas": {
+        returnPct: 0.0,
+        perkType: "cashback",
+        description: "Fuel transactions are excluded from cashback",
+      },
     },
     defaultOnlineReturnPct: 5.0,
     defaultOfflineReturnPct: 1.0,
@@ -725,53 +1498,155 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["simplyclick", "sbi simplyclick"],
     cardDisplayName: "SBI SimplyClick Credit Card",
     merchantPerks: {
-      amazon: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Amazon India", badge: "10X Points (2.5%)" },
-      bookmyshow: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on BookMyShow" },
-      cleartrip: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Cleartrip flight bookings" },
-      swiggy: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Swiggy orders" },
-      zomato: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Zomato delivery" },
+      amazon: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Amazon India",
+        badge: "10X Points (2.5%)",
+      },
+      bookmyshow: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on BookMyShow",
+      },
+      cleartrip: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Cleartrip flight bookings",
+      },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Swiggy orders",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Zomato delivery",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 2.5, perkType: "reward_points", description: "10X points (2.5%) on partner digital brands; 5X points (1.25%) on all other online spends" },
-      "Food & Dining": { returnPct: 2.5, perkType: "reward_points", description: "10X reward points on partner food delivery platforms" },
+      "Online Shopping": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description:
+          "10X points (2.5%) on partner digital brands; 5X points (1.25%) on all other online spends",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X reward points on partner food delivery platforms",
+      },
     },
     defaultOnlineReturnPct: 1.25,
     defaultOfflineReturnPct: 0.25,
-    specialPerks: ["10X points on Amazon, BookMyShow, Cleartrip, Lenskart, Netmeds, Swiggy", "₹2,000 Cleartrip e-voucher on 1L/2L spend milestone"],
+    specialPerks: [
+      "10X points on Amazon, BookMyShow, Cleartrip, Lenskart, Netmeds, Swiggy",
+      "₹2,000 Cleartrip e-voucher on 1L/2L spend milestone",
+    ],
   },
   {
     matchKeys: ["simplysave", "sbi simplysave", "simply save"],
     cardDisplayName: "SBI SimplySAVE Credit Card",
     merchantPerks: {
-      swiggy: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Dining", badge: "10X Points (2.5%)" },
-      zomato: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Dining" },
-      blinkit: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Grocery" },
-      zepto: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Grocery" },
-      bigbasket: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Grocery" },
-      bookmyshow: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Movies" },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Dining",
+        badge: "10X Points (2.5%)",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Dining",
+      },
+      blinkit: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Grocery",
+      },
+      zepto: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Grocery",
+      },
+      bigbasket: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Grocery",
+      },
+      bookmyshow: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Movies",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (10 pts per ₹150 = 2.5%) on Dining" },
-      "Quick Commerce": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points on Grocery & Departmental store spends" },
-      "Entertainment": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points on Movie ticket bookings" },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (10 pts per ₹150 = 2.5%) on Dining",
+      },
+      "Quick Commerce": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on Grocery & Departmental store spends",
+      },
+      Entertainment: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on Movie ticket bookings",
+      },
     },
     defaultOnlineReturnPct: 0.25,
     defaultOfflineReturnPct: 0.25,
-    specialPerks: ["10X Reward Points (2.5%) on Dining, Grocery, Departmental Store & Movies", "RuPay UPI integration enabled for contactless QR merchant payments"],
+    specialPerks: [
+      "10X Reward Points (2.5%) on Dining, Grocery, Departmental Store & Movies",
+      "RuPay UPI integration enabled for contactless QR merchant payments",
+    ],
   },
   {
     matchKeys: ["sbi prime", "prime sbi", "sbi card prime"],
     cardDisplayName: "SBI Card PRIME",
     merchantPerks: {
-      swiggy: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Dining", badge: "10X Points (2.5%)" },
-      zomato: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Dining" },
-      bigbasket: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Groceries" },
-      bookmyshow: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5% return) on Movies" },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Dining",
+        badge: "10X Points (2.5%)",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Dining",
+      },
+      bigbasket: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Groceries",
+      },
+      bookmyshow: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5% return) on Movies",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Dining & Groceries" },
-      "Entertainment": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Movies" },
-      "Travel & Flights": { returnPct: 2.0, perkType: "reward_points", description: "Complimentary Club Vistara & Trident privilege memberships" },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Dining & Groceries",
+      },
+      Entertainment: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Movies",
+      },
+      "Travel & Flights": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "Complimentary Club Vistara & Trident privilege memberships",
+      },
     },
     defaultOnlineReturnPct: 0.5,
     defaultOfflineReturnPct: 0.5,
@@ -786,14 +1661,40 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["sbi elite", "sbi card elite", "elite sbi"],
     cardDisplayName: "SBI Card ELITE",
     merchantPerks: {
-      bookmyshow: { returnPct: 10.0, perkType: "discount", description: "Free movie tickets worth ₹6,000/year (up to ₹250/ticket, max 2 tickets/month)", badge: "₹500/mo Free Movies" },
-      swiggy: { returnPct: 2.5, perkType: "reward_points", description: "5X Reward Points (2.5%) on Dining" },
-      zomato: { returnPct: 2.5, perkType: "reward_points", description: "5X Reward Points (2.5%) on Dining" },
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description:
+          "Free movie tickets worth ₹6,000/year (up to ₹250/ticket, max 2 tickets/month)",
+        badge: "₹500/mo Free Movies",
+      },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "5X Reward Points (2.5%) on Dining",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "5X Reward Points (2.5%) on Dining",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 10.0, perkType: "discount", description: "Complimentary movie tickets worth ₹500 every month on BookMyShow" },
-      "Food & Dining": { returnPct: 2.5, perkType: "reward_points", description: "5X Reward Points on Dining & Departmental stores" },
-      "International Spends": { returnPct: 2.0, perkType: "reward_points", description: "Low foreign currency markup fee of 1.99%" },
+      Entertainment: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "Complimentary movie tickets worth ₹500 every month on BookMyShow",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "5X Reward Points on Dining & Departmental stores",
+      },
+      "International Spends": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "Low foreign currency markup fee of 1.99%",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -808,13 +1709,34 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["aurum", "sbi aurum", "sbi card aurum"],
     cardDisplayName: "SBI Aurum Metal Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 15.0, perkType: "discount", description: "4 complimentary movie tickets every month (up to ₹250/ticket = ₹1,000/mo)", badge: "4 Free Tickets/mo" },
+      bookmyshow: {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "4 complimentary movie tickets every month (up to ₹250/ticket = ₹1,000/mo)",
+        badge: "4 Free Tickets/mo",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 15.0, perkType: "discount", description: "4 free movie tickets every month on BookMyShow (worth ₹12,000/year)" },
-      "Travel & Flights": { returnPct: 4.0, perkType: "reward_points", description: "Unlimited International & Domestic airport lounge access with DreamFolks" },
-      "International Spends": { returnPct: 4.0, perkType: "reward_points", description: "Zero forex markup on all international transactions" },
-      "Food & Dining": { returnPct: 4.0, perkType: "reward_points", description: "4 reward points per ₹100 on luxury dining (1 RP = ₹1)" },
+      Entertainment: {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "4 free movie tickets every month on BookMyShow (worth ₹12,000/year)",
+      },
+      "Travel & Flights": {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "Unlimited International & Domestic airport lounge access with DreamFolks",
+      },
+      "International Spends": {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "Zero forex markup on all international transactions",
+      },
+      "Food & Dining": {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "4 reward points per ₹100 on luxury dining (1 RP = ₹1)",
+      },
     },
     defaultOnlineReturnPct: 4.0,
     defaultOfflineReturnPct: 4.0,
@@ -829,22 +1751,84 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["sbi octane", "bpcl sbi octane", "octane", "bpcl octane"],
     cardDisplayName: "BPCL SBI Card Octane",
     merchantPerks: {
-      fuel_pumps: { returnPct: 7.25, perkType: "cashback", description: "7.25% valueback (25X points = 6.25% + 1% fuel surcharge waiver) at BPCL petrol pumps", badge: "7.25% Fuel Valueback" },
-      bpcl: { returnPct: 7.25, perkType: "cashback", description: "7.25% valueback (25X points = 6.25% + 1% fuel surcharge waiver) at BPCL petrol pumps", badge: "7.25% Fuel Valueback" },
-      bpcl_fuel: { returnPct: 7.25, perkType: "cashback", description: "7.25% valueback (25X points = 6.25% + 1% fuel surcharge waiver) at BPCL petrol pumps", badge: "7.25% Fuel Valueback" },
-      swiggy: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Dining" },
-      zomato: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Dining" },
-      blinkit: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Groceries" },
-      bigbasket: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Groceries" },
-      bookmyshow: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Movies" },
+      fuel_pumps: {
+        returnPct: 7.25,
+        perkType: "cashback",
+        description:
+          "7.25% valueback (25X points = 6.25% + 1% fuel surcharge waiver) at BPCL petrol pumps",
+        badge: "7.25% Fuel Valueback",
+      },
+      bpcl: {
+        returnPct: 7.25,
+        perkType: "cashback",
+        description:
+          "7.25% valueback (25X points = 6.25% + 1% fuel surcharge waiver) at BPCL petrol pumps",
+        badge: "7.25% Fuel Valueback",
+      },
+      bpcl_fuel: {
+        returnPct: 7.25,
+        perkType: "cashback",
+        description:
+          "7.25% valueback (25X points = 6.25% + 1% fuel surcharge waiver) at BPCL petrol pumps",
+        badge: "7.25% Fuel Valueback",
+      },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Dining",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Dining",
+      },
+      blinkit: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Groceries",
+      },
+      bigbasket: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Groceries",
+      },
+      bookmyshow: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Movies",
+      },
     },
     categoryPerks: {
-      "Fuel": { returnPct: 7.25, perkType: "cashback", description: "7.25% valueback on fuel & lubricants at BPCL pumps (up to ₹4,000/bill)" },
-      "Fuel & Automotive": { returnPct: 7.25, perkType: "cashback", description: "7.25% valueback on fuel & lubricants at BPCL pumps (up to ₹4,000/bill)" },
-      "Fuel & Gas": { returnPct: 7.25, perkType: "cashback", description: "7.25% valueback on fuel & lubricants at BPCL pumps (up to ₹4,000/bill)" },
-      "Food & Dining": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points on dining" },
-      "Quick Commerce": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points on groceries" },
-      "Entertainment": { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points on movies" },
+      Fuel: {
+        returnPct: 7.25,
+        perkType: "cashback",
+        description: "7.25% valueback on fuel & lubricants at BPCL pumps (up to ₹4,000/bill)",
+      },
+      "Fuel & Automotive": {
+        returnPct: 7.25,
+        perkType: "cashback",
+        description: "7.25% valueback on fuel & lubricants at BPCL pumps (up to ₹4,000/bill)",
+      },
+      "Fuel & Gas": {
+        returnPct: 7.25,
+        perkType: "cashback",
+        description: "7.25% valueback on fuel & lubricants at BPCL pumps (up to ₹4,000/bill)",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on dining",
+      },
+      "Quick Commerce": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on groceries",
+      },
+      Entertainment: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on movies",
+      },
     },
     defaultOnlineReturnPct: 0.25,
     defaultOfflineReturnPct: 0.25,
@@ -858,16 +1842,49 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["sbi pulse", "pulse sbi", "sbi card pulse"],
     cardDisplayName: "SBI Card PULSE",
     merchantPerks: {
-      netmeds: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on pharmacy spends", badge: "10X Health Points" },
-      pharmeasy: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on pharmacy orders" },
-      swiggy: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Dining" },
-      zomato: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Dining" },
-      bookmyshow: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points (2.5%) on Movies" },
+      netmeds: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on pharmacy spends",
+        badge: "10X Health Points",
+      },
+      pharmeasy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on pharmacy orders",
+      },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Dining",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Dining",
+      },
+      bookmyshow: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points (2.5%) on Movies",
+      },
     },
     categoryPerks: {
-      "Health & Wellness": { returnPct: 2.5, perkType: "reward_points", description: "10X reward points on Chemist, Pharmacy & Wellness spends" },
-      "Food & Dining": { returnPct: 2.5, perkType: "reward_points", description: "10X reward points on Dining" },
-      "Entertainment": { returnPct: 2.5, perkType: "reward_points", description: "10X reward points on Movies" },
+      "Health & Wellness": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X reward points on Chemist, Pharmacy & Wellness spends",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X reward points on Dining",
+      },
+      Entertainment: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X reward points on Movies",
+      },
     },
     defaultOnlineReturnPct: 0.5,
     defaultOfflineReturnPct: 0.5,
@@ -882,11 +1899,26 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["sbi irctc", "irctc sbi", "irctc rupay", "irctc sbi card"],
     cardDisplayName: "IRCTC SBI Card (RuPay)",
     merchantPerks: {
-      irctc: { returnPct: 10.0, perkType: "reward_points", description: "Up to 10% valueback as reward points on AC train tickets booked via irctc.co.in", badge: "10% IRCTC Valueback" },
+      irctc: {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description:
+          "Up to 10% valueback as reward points on AC train tickets booked via irctc.co.in",
+        badge: "10% IRCTC Valueback",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 10.0, perkType: "reward_points", description: "Up to 10% reward points valueback on AC train ticket bookings on IRCTC portal" },
-      "Fuel & Automotive": { returnPct: 1.0, perkType: "cashback", description: "1% fuel surcharge waiver across all petrol pumps" },
+      "Travel & Flights": {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description:
+          "Up to 10% reward points valueback on AC train ticket bookings on IRCTC portal",
+      },
+      "Fuel & Automotive": {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description: "1% fuel surcharge waiver across all petrol pumps",
+      },
     },
     defaultOnlineReturnPct: 0.33,
     defaultOfflineReturnPct: 0.33,
@@ -900,12 +1932,29 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["ola sbi", "ola money sbi", "ola credit card"],
     cardDisplayName: "OLA Money SBI Credit Card",
     merchantPerks: {
-      ola: { returnPct: 7.0, perkType: "cashback", description: "7% cashback as Ola Money on all Ola cab and auto rides", badge: "7% on Ola Rides" },
-      cleartrip: { returnPct: 5.0, perkType: "cashback", description: "5% cashback on domestic flight bookings, 12% on hotels" },
+      ola: {
+        returnPct: 7.0,
+        perkType: "cashback",
+        description: "7% cashback as Ola Money on all Ola cab and auto rides",
+        badge: "7% on Ola Rides",
+      },
+      cleartrip: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on domestic flight bookings, 12% on hotels",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 7.0, perkType: "cashback", description: "7% on Ola cabs and auto bookings" },
-      "Food & Dining": { returnPct: 5.0, perkType: "cashback", description: "5% on partner dining portals via Dineout" },
+      "Travel & Flights": {
+        returnPct: 7.0,
+        perkType: "cashback",
+        description: "7% on Ola cabs and auto bookings",
+      },
+      "Food & Dining": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% on partner dining portals via Dineout",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -921,33 +1970,105 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["hsbc live+", "live+", "live plus", "hsbc live"],
     cardDisplayName: "HSBC Live+ Credit Card",
     merchantPerks: {
-      swiggy: { returnPct: 10.0, perkType: "cashback", description: "10% accelerated cashback on Food Delivery & Dining", maxCap: "₹1,000/mo", badge: "10% Cashback" },
-      zomato: { returnPct: 10.0, perkType: "cashback", description: "10% accelerated cashback on Zomato food delivery", maxCap: "₹1,000/mo", badge: "10% Cashback" },
-      blinkit: { returnPct: 10.0, perkType: "cashback", description: "10% accelerated cashback on grocery delivery", maxCap: "₹1,000/mo", badge: "10% Cashback" },
-      zepto: { returnPct: 10.0, perkType: "cashback", description: "10% accelerated cashback on Zepto grocery orders", maxCap: "₹1,000/mo", badge: "10% Cashback" },
-      bigbasket: { returnPct: 10.0, perkType: "cashback", description: "10% accelerated cashback on BigBasket essentials", maxCap: "₹1,000/mo", badge: "10% Cashback" },
+      swiggy: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% accelerated cashback on Food Delivery & Dining",
+        maxCap: "₹1,000/mo",
+        badge: "10% Cashback",
+      },
+      zomato: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% accelerated cashback on Zomato food delivery",
+        maxCap: "₹1,000/mo",
+        badge: "10% Cashback",
+      },
+      blinkit: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% accelerated cashback on grocery delivery",
+        maxCap: "₹1,000/mo",
+        badge: "10% Cashback",
+      },
+      zepto: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% accelerated cashback on Zepto grocery orders",
+        maxCap: "₹1,000/mo",
+        badge: "10% Cashback",
+      },
+      bigbasket: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% accelerated cashback on BigBasket essentials",
+        maxCap: "₹1,000/mo",
+        badge: "10% Cashback",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 10.0, perkType: "cashback", description: "10% cashback on all dining, restaurants, and food delivery apps" },
-      "Quick Commerce": { returnPct: 10.0, perkType: "cashback", description: "10% cashback on all grocery stores and instant delivery apps" },
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on all dining, restaurants, and food delivery apps",
+      },
+      "Quick Commerce": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on all grocery stores and instant delivery apps",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.5,
-    specialPerks: ["10% cashback on Dining, Food Delivery & Groceries (capped at ₹1,000/billing cycle)", "1.5% unlimited cashback on all other spends"],
+    specialPerks: [
+      "10% cashback on Dining, Food Delivery & Groceries (capped at ₹1,000/billing cycle)",
+      "1.5% unlimited cashback on all other spends",
+    ],
   },
   {
     matchKeys: ["hsbc premier", "premier mastercard", "hsbc world elite"],
     cardDisplayName: "HSBC Premier Credit Card",
     merchantPerks: {
-      makemytrip: { returnPct: 3.0, perkType: "air_miles", description: "3 reward points per ₹100 (3% air miles transfer rate) on flights and hotels", badge: "3% Air Miles" },
-      taj: { returnPct: 4.0, perkType: "reward_points", description: "Accelerated points on luxury dining and Taj hotel bookings", badge: "4% Luxury" },
-      apple: { returnPct: 2.0, perkType: "reward_points", description: "2% rewards on electronics and Apple devices" },
-      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "2% rewards on gourmet dining & delivery" },
-      zomato: { returnPct: 2.0, perkType: "reward_points", description: "2% rewards on dining out & culinary experiences" },
+      makemytrip: {
+        returnPct: 3.0,
+        perkType: "air_miles",
+        description: "3 reward points per ₹100 (3% air miles transfer rate) on flights and hotels",
+        badge: "3% Air Miles",
+      },
+      taj: {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "Accelerated points on luxury dining and Taj hotel bookings",
+        badge: "4% Luxury",
+      },
+      apple: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% rewards on electronics and Apple devices",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% rewards on gourmet dining & delivery",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% rewards on dining out & culinary experiences",
+      },
     },
     categoryPerks: {
-      Travel: { returnPct: 3.0, perkType: "air_miles", description: "3% points transfer to Singapore Airlines, British Airways, and partner airlines" },
-      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "2% points on fine dining and restaurants" },
+      Travel: {
+        returnPct: 3.0,
+        perkType: "air_miles",
+        description:
+          "3% points transfer to Singapore Airlines, British Airways, and partner airlines",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% points on fine dining and restaurants",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.5,
@@ -962,14 +2083,39 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["hsbc travelone", "hsbc travel one", "travelone"],
     cardDisplayName: "HSBC TravelOne Credit Card",
     merchantPerks: {
-      makemytrip: { returnPct: 4.0, perkType: "air_miles", description: "4% rewards with instant transfer to 16+ airline/hotel partner programs", badge: "4% Travel" },
-      airindia: { returnPct: 4.0, perkType: "air_miles", description: "Instant 1:1 air miles redemption for flight bookings" },
-      indigo: { returnPct: 4.0, perkType: "air_miles", description: "4% miles on domestic and international travel" },
-      agoda: { returnPct: 4.0, perkType: "air_miles", description: "Accelerated points on worldwide hotel reservations" },
+      makemytrip: {
+        returnPct: 4.0,
+        perkType: "air_miles",
+        description: "4% rewards with instant transfer to 16+ airline/hotel partner programs",
+        badge: "4% Travel",
+      },
+      airindia: {
+        returnPct: 4.0,
+        perkType: "air_miles",
+        description: "Instant 1:1 air miles redemption for flight bookings",
+      },
+      indigo: {
+        returnPct: 4.0,
+        perkType: "air_miles",
+        description: "4% miles on domestic and international travel",
+      },
+      agoda: {
+        returnPct: 4.0,
+        perkType: "air_miles",
+        description: "Accelerated points on worldwide hotel reservations",
+      },
     },
     categoryPerks: {
-      Travel: { returnPct: 4.0, perkType: "air_miles", description: "Instant transfer to 16+ airline/hotel loyalty programs in the HSBC app" },
-      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "2% points on dining and culinary treats" },
+      Travel: {
+        returnPct: 4.0,
+        perkType: "air_miles",
+        description: "Instant transfer to 16+ airline/hotel loyalty programs in the HSBC app",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% points on dining and culinary treats",
+      },
     },
     defaultOnlineReturnPct: 1.2,
     defaultOfflineReturnPct: 1.2,
@@ -983,13 +2129,34 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["hsbc platinum", "hsbc visa platinum"],
     cardDisplayName: "HSBC Platinum Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 5.0, perkType: "cashback", description: "Buy 1 Get 1 free movie ticket discount on BookMyShow", badge: "BOGO Movies" },
-      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "2% reward rate on dining & food orders" },
-      zomato: { returnPct: 2.0, perkType: "reward_points", description: "2% reward rate on dining out" },
+      bookmyshow: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "Buy 1 Get 1 free movie ticket discount on BookMyShow",
+        badge: "BOGO Movies",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% reward rate on dining & food orders",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% reward rate on dining out",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "5X rewards on dining, hotels, and telecom during first 12 months" },
-      Entertainment: { returnPct: 5.0, perkType: "cashback", description: "BookMyShow movie ticket discounts and weekend privileges" },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5X rewards on dining, hotels, and telecom during first 12 months",
+      },
+      Entertainment: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "BookMyShow movie ticket discounts and weekend privileges",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -1005,15 +2172,44 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["idfc first wealth", "idfc wealth", "first wealth"],
     cardDisplayName: "IDFC FIRST Wealth Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to ₹500 off twice a month)", badge: "BOGO ₹500 Movies" },
-      makemytrip: { returnPct: 2.5, perkType: "reward_points", description: "10X Reward Points on monthly spends above ₹30,000" },
-      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "6X Reward Points on dining & food delivery" },
-      zomato: { returnPct: 2.0, perkType: "reward_points", description: "6X Reward Points on culinary experiences" },
+      bookmyshow: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 Free on BookMyShow (up to ₹500 off twice a month)",
+        badge: "BOGO ₹500 Movies",
+      },
+      makemytrip: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10X Reward Points on monthly spends above ₹30,000",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "6X Reward Points on dining & food delivery",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "6X Reward Points on culinary experiences",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹500 twice every month on BMS" },
-      "Travel": { returnPct: 2.5, perkType: "reward_points", description: "4 complimentary domestic and international airport & spa visits per quarter" },
-      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "6X reward points on all dining transactions" },
+      Entertainment: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹500 twice every month on BMS",
+      },
+      Travel: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "4 complimentary domestic and international airport & spa visits per quarter",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "6X reward points on all dining transactions",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.0,
@@ -1028,12 +2224,28 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["idfc first wow", "idfc wow", "first wow", "wow card"],
     cardDisplayName: "IDFC FIRST WOW! Credit Card",
     merchantPerks: {
-      makemytrip: { returnPct: 1.5, perkType: "reward_points", description: "Reward points on travel with 0% foreign exchange markup" },
-      amazon: { returnPct: 1.0, perkType: "reward_points", description: "Reward points that never expire on all retail spends" },
+      makemytrip: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "Reward points on travel with 0% foreign exchange markup",
+      },
+      amazon: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Reward points that never expire on all retail spends",
+      },
     },
     categoryPerks: {
-      "International Spends": { returnPct: 3.5, perkType: "cashback", description: "0% zero forex markup fee across all foreign currencies worldwide" },
-      "Travel": { returnPct: 3.5, perkType: "cashback", description: "Zero forex markup on all overseas travel bookings and merchant spends" },
+      "International Spends": {
+        returnPct: 3.5,
+        perkType: "cashback",
+        description: "0% zero forex markup fee across all foreign currencies worldwide",
+      },
+      Travel: {
+        returnPct: 3.5,
+        perkType: "cashback",
+        description: "Zero forex markup on all overseas travel bookings and merchant spends",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -1049,13 +2261,35 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["indusind legend", "legend credit card", "indusind legend visa", "legend"],
     cardDisplayName: "IndusInd Bank Legend Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to 3 free tickets per quarter, max ₹200 off per ticket)", badge: "BOGO BMS Movies" },
-      eazydiner: { returnPct: 20.0, perkType: "discount", description: "Complimentary dining discount privileges via EazyDiner" },
+      bookmyshow: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description:
+          "Buy 1 Get 1 Free on BookMyShow (up to 3 free tickets per quarter, max ₹200 off per ticket)",
+        badge: "BOGO BMS Movies",
+      },
+      eazydiner: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Complimentary dining discount privileges via EazyDiner",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie ticket up to ₹200 on BookMyShow up to 3 times/quarter" },
-      "Weekend Spends": { returnPct: 2.0, perkType: "reward_points", description: "2 Reward Points per ₹100 on weekend spends (double rewards)" },
-      "Weekday Spends": { returnPct: 1.0, perkType: "reward_points", description: "1 Reward Point per ₹100 on weekday spends" },
+      Entertainment: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹200 on BookMyShow up to 3 times/quarter",
+      },
+      "Weekend Spends": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2 Reward Points per ₹100 on weekend spends (double rewards)",
+      },
+      "Weekday Spends": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 on weekday spends",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -1067,16 +2301,46 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     ],
   },
   {
-    matchKeys: ["indusind avios", "indusind avios visa infinite", "avios visa infinite", "induslnd avios", "british airways avios", "qatar airways avios", "avios"],
+    matchKeys: [
+      "indusind avios",
+      "indusind avios visa infinite",
+      "avios visa infinite",
+      "induslnd avios",
+      "british airways avios",
+      "qatar airways avios",
+      "avios",
+    ],
     cardDisplayName: "IndusInd Bank Avios Visa Infinite Credit Card",
     merchantPerks: {
-      makemytrip: { returnPct: 4.0, perkType: "reward_points", description: "Accelerated Avios points on flight bookings and overseas hotels" },
-      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free movie ticket discounts on BookMyShow", badge: "BOGO Movies" },
+      makemytrip: {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "Accelerated Avios points on flight bookings and overseas hotels",
+      },
+      bookmyshow: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 Free movie ticket discounts on BookMyShow",
+        badge: "BOGO Movies",
+      },
     },
     categoryPerks: {
-      "Airlines & Flights": { returnPct: 5.0, perkType: "reward_points", description: "5 Avios per ₹200 spent on Qatar Airways & British Airways official channels" },
-      "International Spends": { returnPct: 6.0, perkType: "reward_points", description: "Up to 6 Avios per ₹200 at preferred international destinations with low 1.5% forex" },
-      "Travel": { returnPct: 3.0, perkType: "reward_points", description: "3 Avios per ₹200 on standard international and domestic travel spends" },
+      "Airlines & Flights": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5 Avios per ₹200 spent on Qatar Airways & British Airways official channels",
+      },
+      "International Spends": {
+        returnPct: 6.0,
+        perkType: "reward_points",
+        description:
+          "Up to 6 Avios per ₹200 at preferred international destinations with low 1.5% forex",
+      },
+      Travel: {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "3 Avios per ₹200 on standard international and domestic travel spends",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.5,
@@ -1091,13 +2355,35 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["indusind pinnacle", "pinnacle credit card", "pinnacle", "indusind bank pinnacle"],
     cardDisplayName: "IndusInd Bank Pinnacle Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to 3 free tickets per month, max ₹200 off per ticket)", badge: "BOGO BMS Movies" },
-      makemytrip: { returnPct: 2.5, perkType: "reward_points", description: "2.5 Reward Points per ₹100 on e-commerce travel bookings" },
+      bookmyshow: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description:
+          "Buy 1 Get 1 Free on BookMyShow (up to 3 free tickets per month, max ₹200 off per ticket)",
+        badge: "BOGO BMS Movies",
+      },
+      makemytrip: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "2.5 Reward Points per ₹100 on e-commerce travel bookings",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 2.5, perkType: "reward_points", description: "2.5 Reward Points per ₹100 on online travel bookings" },
-      "Online Shopping": { returnPct: 2.5, perkType: "reward_points", description: "2.5 Reward Points per ₹100 spent on e-commerce platforms" },
-      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie tickets on BookMyShow up to 3 times per month" },
+      "Travel & Flights": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "2.5 Reward Points per ₹100 on online travel bookings",
+      },
+      "Online Shopping": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "2.5 Reward Points per ₹100 spent on e-commerce platforms",
+      },
+      Entertainment: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie tickets on BookMyShow up to 3 times per month",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -1113,12 +2399,31 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["indusind eazydiner", "eazydiner credit card", "eazydiner indusind", "eazydiner"],
     cardDisplayName: "IndusInd Bank EazyDiner Credit Card",
     merchantPerks: {
-      eazydiner: { returnPct: 25.0, perkType: "discount", description: "Guaranteed extra 25% off up to ₹1,000 via PayEazy on EazyDiner", badge: "25% PayEazy Off" },
-      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free on BookMyShow (up to 2 tickets per month, max ₹200 off each)", badge: "BOGO BMS" },
+      eazydiner: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "Guaranteed extra 25% off up to ₹1,000 via PayEazy on EazyDiner",
+        badge: "25% PayEazy Off",
+      },
+      bookmyshow: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description:
+          "Buy 1 Get 1 Free on BookMyShow (up to 2 tickets per month, max ₹200 off each)",
+        badge: "BOGO BMS",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 10.0, perkType: "reward_points", description: "10 Reward Points per ₹100 on dining, shopping, and entertainment spends" },
-      "Entertainment": { returnPct: 10.0, perkType: "reward_points", description: "10 Reward Points per ₹100 on entertainment spends" },
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 on dining, shopping, and entertainment spends",
+      },
+      Entertainment: {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 on entertainment spends",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -1134,11 +2439,23 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["indusind platinum rupay", "platinum rupay", "indusind rupay", "indusind platinum"],
     cardDisplayName: "IndusInd Bank Platinum RuPay Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 20.0, perkType: "discount", description: "Special BookMyShow movie discounts" },
+      bookmyshow: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "Special BookMyShow movie discounts",
+      },
     },
     categoryPerks: {
-      "UPI Payments": { returnPct: 2.0, perkType: "reward_points", description: "2 Reward Points per ₹100 on UPI merchant QR transactions" },
-      "Online Shopping": { returnPct: 1.0, perkType: "reward_points", description: "1 Reward Point per ₹100 on online merchant spends" },
+      "UPI Payments": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2 Reward Points per ₹100 on UPI merchant QR transactions",
+      },
+      "Online Shopping": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 on online merchant spends",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 0.7,
@@ -1153,11 +2470,24 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["indusind tiger", "tiger credit card", "tiger card"],
     cardDisplayName: "IndusInd Bank Tiger Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free movie tickets on BookMyShow (twice per quarter)", badge: "BOGO BMS" },
+      bookmyshow: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 Free movie tickets on BookMyShow (twice per quarter)",
+        badge: "BOGO BMS",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 3.0, perkType: "reward_points", description: "6 Accelerated Reward Points per ₹100 on dining spends" },
-      "Travel & Flights": { returnPct: 3.0, perkType: "reward_points", description: "6 Accelerated Reward Points per ₹100 on travel bookings" },
+      "Food & Dining": {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "6 Accelerated Reward Points per ₹100 on dining spends",
+      },
+      "Travel & Flights": {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "6 Accelerated Reward Points per ₹100 on travel bookings",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.0,
@@ -1172,10 +2502,19 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["indusind nexxt", "nexxt credit card", "nexxt"],
     cardDisplayName: "IndusInd Bank Nexxt Credit Card",
     merchantPerks: {
-      bookmyshow: { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 Free movie tickets on BookMyShow up to 2 tickets per month", badge: "BOGO BMS" },
+      bookmyshow: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 Free movie tickets on BookMyShow up to 2 tickets per month",
+        badge: "BOGO BMS",
+      },
     },
     categoryPerks: {
-      "Entertainment": { returnPct: 50.0, perkType: "discount", description: "Buy 1 Get 1 free movie tickets on BookMyShow" },
+      Entertainment: {
+        returnPct: 50.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie tickets on BookMyShow",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
@@ -1191,7 +2530,11 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     cardDisplayName: "IndusInd Bank Samman RuPay Credit Card",
     merchantPerks: {},
     categoryPerks: {
-      "UPI Payments": { returnPct: 1.5, perkType: "reward_points", description: "Reward points on UPI QR merchant transactions" },
+      "UPI Payments": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "Reward points on UPI QR merchant transactions",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 0.7,
@@ -1208,54 +2551,151 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["ultimate", "standard chartered ultimate", "sc ultimate"],
     cardDisplayName: "Standard Chartered Ultimate",
     merchantPerks: {
-      swiggy: { returnPct: 3.33, perkType: "reward_points", description: "5 Reward Points per ₹150 (3.33% real cash value) on all retail & dining", badge: "3.33% Universal" },
-      zomato: { returnPct: 3.33, perkType: "reward_points", description: "5 Reward Points per ₹150 (3.33% reward rate) on dining out & delivery" },
-      amazon: { returnPct: 3.33, perkType: "reward_points", description: "5 Reward Points per ₹150 (3.33% reward rate) on all e-commerce purchases" },
-      apple: { returnPct: 3.33, perkType: "reward_points", description: "5 Reward Points per ₹150 on electronics and Apple devices" },
-      makemytrip: { returnPct: 3.33, perkType: "reward_points", description: "5 Reward Points per ₹150 on flight & travel bookings" },
-      forex_international: { returnPct: 3.33, perkType: "reward_points", description: "5 Points per ₹150 with industry-lowest 2.0% forex fee" },
+      swiggy: {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 (3.33% real cash value) on all retail & dining",
+        badge: "3.33% Universal",
+      },
+      zomato: {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 (3.33% reward rate) on dining out & delivery",
+      },
+      amazon: {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 (3.33% reward rate) on all e-commerce purchases",
+      },
+      apple: {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 on electronics and Apple devices",
+      },
+      makemytrip: {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹150 on flight & travel bookings",
+      },
+      forex_international: {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 Points per ₹150 with industry-lowest 2.0% forex fee",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 3.33, perkType: "reward_points", description: "5 points per ₹150 (1 Point = ₹1 on catalog vouchers)" },
-      "Online Shopping": { returnPct: 3.33, perkType: "reward_points", description: "5 points per ₹150 across ALL retail shopping without merchant restrictions" },
-      "International Spends": { returnPct: 3.33, perkType: "reward_points", description: "5 points per ₹150 with lowest 2.0% foreign exchange fee" },
-      "Travel & Flights": { returnPct: 3.33, perkType: "reward_points", description: "5 points per ₹150 + comprehensive travel & golf privileges" },
+      "Food & Dining": {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 points per ₹150 (1 Point = ₹1 on catalog vouchers)",
+      },
+      "Online Shopping": {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 points per ₹150 across ALL retail shopping without merchant restrictions",
+      },
+      "International Spends": {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 points per ₹150 with lowest 2.0% foreign exchange fee",
+      },
+      "Travel & Flights": {
+        returnPct: 3.33,
+        perkType: "reward_points",
+        description: "5 points per ₹150 + comprehensive travel & golf privileges",
+      },
     },
     defaultOnlineReturnPct: 3.33,
     defaultOfflineReturnPct: 3.33,
-    specialPerks: ["1 Reward Point = ₹1 cash voucher value", "Flat 3.33% return on almost all offline and online spends", "4 complimentary golf games/quarter"],
+    specialPerks: [
+      "1 Reward Point = ₹1 cash voucher value",
+      "Flat 3.33% return on almost all offline and online spends",
+      "4 complimentary golf games/quarter",
+    ],
   },
   {
     matchKeys: ["smart", "sc smart", "standard chartered smart", "digismart", "sc digismart"],
     cardDisplayName: "Standard Chartered Smart / DigiSmart",
     merchantPerks: {
-      myntra: { returnPct: 20.0, perkType: "discount", description: "20% instant discount on Myntra up to ₹700 off monthly", badge: "20% Myntra Discount" },
-      zomato: { returnPct: 10.0, perkType: "discount", description: "10% instant discount on Zomato food orders up to ₹150 off 5 times a month", badge: "10% Zomato Off" },
-      swiggy: { returnPct: 2.0, perkType: "cashback", description: "2% flat cashback on online spends" },
-      blinkit: { returnPct: 10.0, perkType: "discount", description: "10% instant discount on Blinkit groceries up to ₹1,000 monthly" },
-      bookmyshow: { returnPct: 25.0, perkType: "discount", description: "Buy 1 Get 1 ticket discount on BookMyShow (up to ₹200 off)" },
+      myntra: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "20% instant discount on Myntra up to ₹700 off monthly",
+        badge: "20% Myntra Discount",
+      },
+      zomato: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on Zomato food orders up to ₹150 off 5 times a month",
+        badge: "10% Zomato Off",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% flat cashback on online spends",
+      },
+      blinkit: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on Blinkit groceries up to ₹1,000 monthly",
+      },
+      bookmyshow: {
+        returnPct: 25.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 ticket discount on BookMyShow (up to ₹200 off)",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 2.0, perkType: "cashback", description: "2% cashback on online spends (capped at ₹1,000/mo)" },
-      "Food & Dining": { returnPct: 10.0, perkType: "discount", description: "10% discount on Zomato delivery" },
+      "Online Shopping": {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2% cashback on online spends (capped at ₹1,000/mo)",
+      },
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% discount on Zomato delivery",
+      },
     },
     defaultOnlineReturnPct: 2.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["2% flat cashback on all online spends", "10% instant discount on Zomato and Blinkit", "20% on Myntra"],
+    specialPerks: [
+      "2% flat cashback on all online spends",
+      "10% instant discount on Zomato and Blinkit",
+      "20% on Myntra",
+    ],
   },
   {
     matchKeys: ["sc easemytrip", "easemytrip standard chartered"],
     cardDisplayName: "Standard Chartered EaseMyTrip",
     merchantPerks: {
-      easemytrip: { returnPct: 20.0, perkType: "discount", description: "20% instant discount on domestic & international hotels, 10% on flights via EaseMyTrip", badge: "20% Hotel Discount" },
-      makemytrip: { returnPct: 2.0, perkType: "reward_points", description: "10X reward points on standalone hotel/airline websites" },
+      easemytrip: {
+        returnPct: 20.0,
+        perkType: "discount",
+        description:
+          "20% instant discount on domestic & international hotels, 10% on flights via EaseMyTrip",
+        badge: "20% Hotel Discount",
+      },
+      makemytrip: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "10X reward points on standalone hotel/airline websites",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 20.0, perkType: "discount", description: "20% discount on hotel bookings and 10% on flight tickets via EaseMyTrip" },
+      "Travel & Flights": {
+        returnPct: 20.0,
+        perkType: "discount",
+        description: "20% discount on hotel bookings and 10% on flight tickets via EaseMyTrip",
+      },
     },
     defaultOnlineReturnPct: 2.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["20% off on hotels via EaseMyTrip", "10% off on flight bookings", "10X rewards on standalone ticket bookings"],
+    specialPerks: [
+      "20% off on hotels via EaseMyTrip",
+      "10% off on flight bookings",
+      "10X rewards on standalone ticket bookings",
+    ],
   },
 
   // ── Federal Bank / Scapia
@@ -1263,20 +2703,55 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["scapia", "federal scapia"],
     cardDisplayName: "Federal Bank Scapia",
     merchantPerks: {
-      makemytrip: { returnPct: 4.0, perkType: "reward_points", description: "20% Scapia Coins (4% real value) on in-app travel bookings, 10% Scapia Coins (2% value) elsewhere" },
-      easemytrip: { returnPct: 4.0, perkType: "reward_points", description: "20% Scapia Coins on travel reservations" },
-      forex_international: { returnPct: 5.5, perkType: "reward_points", description: "Zero Forex markup (saves 3.5% FX fee) + 10% Scapia Coins (2% value) on international spends", badge: "0% Forex + 2% Coins" },
-      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "10% Scapia Coins (2% value, 5 Coins = ₹1) on domestic shopping" },
-      zomato: { returnPct: 2.0, perkType: "reward_points", description: "10% Scapia Coins on dining spends" },
+      makemytrip: {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description:
+          "20% Scapia Coins (4% real value) on in-app travel bookings, 10% Scapia Coins (2% value) elsewhere",
+      },
+      easemytrip: {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "20% Scapia Coins on travel reservations",
+      },
+      forex_international: {
+        returnPct: 5.5,
+        perkType: "reward_points",
+        description:
+          "Zero Forex markup (saves 3.5% FX fee) + 10% Scapia Coins (2% value) on international spends",
+        badge: "0% Forex + 2% Coins",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "10% Scapia Coins (2% value, 5 Coins = ₹1) on domestic shopping",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "10% Scapia Coins on dining spends",
+      },
     },
     categoryPerks: {
-      "International Spends": { returnPct: 5.5, perkType: "reward_points", description: "Zero Forex markup saves 3.5% FX fee + 2% Scapia Coins value back" },
-      "Travel & Flights": { returnPct: 4.0, perkType: "reward_points", description: "20% Scapia Coins on travel bookings (5 Coins = ₹1 on flights & hotels)" },
+      "International Spends": {
+        returnPct: 5.5,
+        perkType: "reward_points",
+        description: "Zero Forex markup saves 3.5% FX fee + 2% Scapia Coins value back",
+      },
+      "Travel & Flights": {
+        returnPct: 4.0,
+        perkType: "reward_points",
+        description: "20% Scapia Coins on travel bookings (5 Coins = ₹1 on flights & hotels)",
+      },
     },
     defaultOnlineReturnPct: 2.0,
     defaultOfflineReturnPct: 2.0,
     forexMarkupPct: 0.0,
-    specialPerks: ["0% Forex Markup fee on all international payments", "Unlimited domestic lounge access on ₹5k spend/mo", "Instant coin redemption 5 Coins = ₹1"],
+    specialPerks: [
+      "0% Forex Markup fee on all international payments",
+      "Unlimited domestic lounge access on ₹5k spend/mo",
+      "Instant coin redemption 5 Coins = ₹1",
+    ],
   },
 
   // ── OneCard
@@ -1284,18 +2759,44 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["onecard", "one card"],
     cardDisplayName: "OneCard Metal",
     merchantPerks: {
-      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "5X Rewards (1% - 2% value) on top 2 spend categories of the month + Around You merchant offers" },
-      zomato: { returnPct: 2.0, perkType: "reward_points", description: "5X points in top monthly dining category" },
-      forex_international: { returnPct: 2.5, perkType: "reward_points", description: "Low 1% Forex markup fee with instant reward points", badge: "1% Low Forex" },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description:
+          "5X Rewards (1% - 2% value) on top 2 spend categories of the month + Around You merchant offers",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5X points in top monthly dining category",
+      },
+      forex_international: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "Low 1% Forex markup fee with instant reward points",
+        badge: "1% Low Forex",
+      },
     },
     categoryPerks: {
-      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "5X points in your top category for the month" },
-      "International Spends": { returnPct: 2.5, perkType: "reward_points", description: "Lowest 1.0% forex fee vs 3.5% standard bank fee" },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5X points in your top category for the month",
+      },
+      "International Spends": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "Lowest 1.0% forex fee vs 3.5% standard bank fee",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 1.0,
     forexMarkupPct: 1.0,
-    specialPerks: ["5X points on top 2 spend categories", "1% low forex markup", "Around You instant local discounts"],
+    specialPerks: [
+      "5X points on top 2 spend categories",
+      "1% low forex markup",
+      "Around You instant local discounts",
+    ],
   },
 
   // ── Amex Cards
@@ -1303,33 +2804,86 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["mrcc", "membership rewards", "amex mrcc"],
     cardDisplayName: "American Express MRCC",
     merchantPerks: {
-      amazon: { returnPct: 6.0, perkType: "reward_points", description: "4 monthly transactions of ₹1,500 yield 1,000 bonus points (up to 6% return)", badge: "Milestone Multiplier" },
-      swiggy: { returnPct: 6.0, perkType: "reward_points", description: "Use towards 4 × ₹1,500 monthly transactions for 1,000 bonus MR points" },
-      zomato: { returnPct: 6.0, perkType: "reward_points", description: "Monthly ₹1,500 milestone bonus qualification" },
-      electricity_bills: { returnPct: 6.0, perkType: "reward_points", description: "Utility payments qualify for monthly milestone bonus" },
+      amazon: {
+        returnPct: 6.0,
+        perkType: "reward_points",
+        description: "4 monthly transactions of ₹1,500 yield 1,000 bonus points (up to 6% return)",
+        badge: "Milestone Multiplier",
+      },
+      swiggy: {
+        returnPct: 6.0,
+        perkType: "reward_points",
+        description: "Use towards 4 × ₹1,500 monthly transactions for 1,000 bonus MR points",
+      },
+      zomato: {
+        returnPct: 6.0,
+        perkType: "reward_points",
+        description: "Monthly ₹1,500 milestone bonus qualification",
+      },
+      electricity_bills: {
+        returnPct: 6.0,
+        perkType: "reward_points",
+        description: "Utility payments qualify for monthly milestone bonus",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 6.0, perkType: "reward_points", description: "Up to 6% return via 1,000 bonus points on 4 × ₹1,500 monthly transactions and 20k spend milestone" },
-      "Utilities & Bills": { returnPct: 6.0, perkType: "reward_points", description: "Earn milestone bonus points on utility bill transactions" },
+      "Online Shopping": {
+        returnPct: 6.0,
+        perkType: "reward_points",
+        description:
+          "Up to 6% return via 1,000 bonus points on 4 × ₹1,500 monthly transactions and 20k spend milestone",
+      },
+      "Utilities & Bills": {
+        returnPct: 6.0,
+        perkType: "reward_points",
+        description: "Earn milestone bonus points on utility bill transactions",
+      },
     },
     defaultOnlineReturnPct: 2.0,
     defaultOfflineReturnPct: 2.0,
-    specialPerks: ["1,000 bonus points on 4 × ₹1,500 txns/month", "1,000 bonus points on ₹20k monthly spend", "Redeem for 18k / 24k Gold Collection vouchers"],
+    specialPerks: [
+      "1,000 bonus points on 4 × ₹1,500 txns/month",
+      "1,000 bonus points on ₹20k monthly spend",
+      "Redeem for 18k / 24k Gold Collection vouchers",
+    ],
   },
   {
     matchKeys: ["amex platinum", "platinum travel"],
     cardDisplayName: "American Express Platinum Travel",
     merchantPerks: {
-      makemytrip: { returnPct: 8.0, perkType: "reward_points", description: "Accelerated milestone yield: ₹4L annual spend gives 48,000 points + ₹10,000 Taj voucher (~8% net return)", badge: "8% Milestone Yield" },
-      easemytrip: { returnPct: 8.0, perkType: "reward_points", description: "Milestone points convertible 1:1 to Marriott Bonvoy or Taj vouchers" },
-      apple: { returnPct: 8.0, perkType: "reward_points", description: "Qualifies toward ₹1.9L and ₹4L annual spend milestone rewards" },
+      makemytrip: {
+        returnPct: 8.0,
+        perkType: "reward_points",
+        description:
+          "Accelerated milestone yield: ₹4L annual spend gives 48,000 points + ₹10,000 Taj voucher (~8% net return)",
+        badge: "8% Milestone Yield",
+      },
+      easemytrip: {
+        returnPct: 8.0,
+        perkType: "reward_points",
+        description: "Milestone points convertible 1:1 to Marriott Bonvoy or Taj vouchers",
+      },
+      apple: {
+        returnPct: 8.0,
+        perkType: "reward_points",
+        description: "Qualifies toward ₹1.9L and ₹4L annual spend milestone rewards",
+      },
     },
     categoryPerks: {
-      "Travel & Flights": { returnPct: 8.0, perkType: "reward_points", description: "₹4L milestone gives ~₹32,000 worth of travel and Taj hotel vouchers (8% return)" },
+      "Travel & Flights": {
+        returnPct: 8.0,
+        perkType: "reward_points",
+        description:
+          "₹4L milestone gives ~₹32,000 worth of travel and Taj hotel vouchers (8% return)",
+      },
     },
     defaultOnlineReturnPct: 2.0,
     defaultOfflineReturnPct: 2.0,
-    specialPerks: ["₹10,000 Taj voucher on ₹4L spend", "48,000 MR points convertible to Marriott Bonvoy", "8 complimentary domestic lounge visits"],
+    specialPerks: [
+      "₹10,000 Taj voucher on ₹4L spend",
+      "48,000 MR points convertible to Marriott Bonvoy",
+      "8 complimentary domestic lounge visits",
+    ],
   },
 
   // ── Kotak Mahindra Bank Cards ──────────────────────────────────────────────
@@ -1337,102 +2891,801 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     matchKeys: ["kotak white", "white reserve", "kotak white reserve"],
     cardDisplayName: "Kotak White Reserve",
     merchantPerks: {
-      apple: { returnPct: 3.5, perkType: "reward_points", description: "White Pass value unlocked upon luxury milestone spends (₹1.5L - ₹12L yields up to ₹27,000 White Pass)", badge: "White Pass Luxury" },
-      taj: { returnPct: 3.5, perkType: "reward_points", description: "Direct redemption of White Pass currency at luxury brands and Taj hotels" },
-      forex_international: { returnPct: 2.0, perkType: "reward_points", description: "Reduced 2.0% forex markup + White Pass milestone accrual" },
+      apple: {
+        returnPct: 3.5,
+        perkType: "reward_points",
+        description:
+          "White Pass value unlocked upon luxury milestone spends (₹1.5L - ₹12L yields up to ₹27,000 White Pass)",
+        badge: "White Pass Luxury",
+      },
+      taj: {
+        returnPct: 3.5,
+        perkType: "reward_points",
+        description: "Direct redemption of White Pass currency at luxury brands and Taj hotels",
+      },
+      forex_international: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "Reduced 2.0% forex markup + White Pass milestone accrual",
+      },
     },
     categoryPerks: {
-      "Luxury & Shopping": { returnPct: 3.5, perkType: "reward_points", description: "White Pass milestone program providing up to 3.5% effective value on curated luxury brands" },
-      "Travel & Flights": { returnPct: 3.0, perkType: "reward_points", description: "Unlimited domestic and international airport lounge access + White Pass flight redemptions" },
+      "Luxury & Shopping": {
+        returnPct: 3.5,
+        perkType: "reward_points",
+        description:
+          "White Pass milestone program providing up to 3.5% effective value on curated luxury brands",
+      },
+      "Travel & Flights": {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description:
+          "Unlimited domestic and international airport lounge access + White Pass flight redemptions",
+      },
     },
     defaultOnlineReturnPct: 1.5,
     defaultOfflineReturnPct: 1.5,
     forexMarkupPct: 2.0,
-    specialPerks: ["White Pass currency with up to ₹27,000 vouchers per year", "Unlimited domestic & international lounge access", "Low 2.0% forex markup"],
+    specialPerks: [
+      "White Pass currency with up to ₹27,000 vouchers per year",
+      "Unlimited domestic & international lounge access",
+      "Low 2.0% forex markup",
+    ],
   },
   {
     matchKeys: ["kotak zen", "zen signature", "zen credit card"],
     cardDisplayName: "Kotak Zen Signature",
     merchantPerks: {
-      myntra: { returnPct: 2.5, perkType: "reward_points", description: "10 Zen Points per ₹150 on apparel & lifestyle purchases with milestone accelerator (up to 2.5% effective return)", badge: "10X Zen Points" },
-      zara: { returnPct: 2.5, perkType: "reward_points", description: "10 Zen Points per ₹150 on fashion retail" },
-      zomato: { returnPct: 2.0, perkType: "reward_points", description: "10 Zen Points per ₹150 on dining and food delivery" },
-      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "10 Zen Points per ₹150 on food and dining orders" },
+      myntra: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description:
+          "10 Zen Points per ₹150 on apparel & lifestyle purchases with milestone accelerator (up to 2.5% effective return)",
+        badge: "10X Zen Points",
+      },
+      zara: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Zen Points per ₹150 on fashion retail",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "10 Zen Points per ₹150 on dining and food delivery",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "10 Zen Points per ₹150 on food and dining orders",
+      },
     },
     categoryPerks: {
-      "Shopping & Fashion": { returnPct: 2.5, perkType: "reward_points", description: "10 Zen Points per ₹150 on Apparel, Lifestyle & Departmental stores (up to 2.5% return)" },
-      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "10 Zen Points per ₹150 on dining & restaurants" },
+      "Shopping & Fashion": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description:
+          "10 Zen Points per ₹150 on Apparel, Lifestyle & Departmental stores (up to 2.5% return)",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "10 Zen Points per ₹150 on dining & restaurants",
+      },
     },
     defaultOnlineReturnPct: 0.83,
     defaultOfflineReturnPct: 0.83,
-    specialPerks: ["10 Zen Points per ₹150 on Apparel, Lifestyle & Dining", "8 complimentary airport lounge visits/yr", "₹7,500 milestone shopping voucher on ₹6L annual spend"],
+    specialPerks: [
+      "10 Zen Points per ₹150 on Apparel, Lifestyle & Dining",
+      "8 complimentary airport lounge visits/yr",
+      "₹7,500 milestone shopping voucher on ₹6L annual spend",
+    ],
   },
   {
     matchKeys: ["kotak mojo", "mojo platinum", "mojo credit card"],
     cardDisplayName: "Kotak Mojo Platinum",
     merchantPerks: {
-      amazon: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on all online purchases (1 Mojo Point = ₹0.40, 2.0% net return)", badge: "5 Mojo Pts (2%)" },
-      flipkart: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on e-commerce spends" },
-      swiggy: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on online food ordering" },
-      zomato: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on online orders" },
-      bookmyshow: { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on ticket bookings" },
+      amazon: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description:
+          "5 Mojo Points per ₹100 on all online purchases (1 Mojo Point = ₹0.40, 2.0% net return)",
+        badge: "5 Mojo Pts (2%)",
+      },
+      flipkart: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5 Mojo Points per ₹100 on e-commerce spends",
+      },
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5 Mojo Points per ₹100 on online food ordering",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5 Mojo Points per ₹100 on online orders",
+      },
+      bookmyshow: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5 Mojo Points per ₹100 on ticket bookings",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on all online transactions (2.0% return rate)" },
-      "Food & Dining": { returnPct: 2.0, perkType: "reward_points", description: "5 Mojo Points per ₹100 on food delivery apps" },
+      "Online Shopping": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5 Mojo Points per ₹100 on all online transactions (2.0% return rate)",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "5 Mojo Points per ₹100 on food delivery apps",
+      },
     },
     defaultOnlineReturnPct: 2.0,
     defaultOfflineReturnPct: 1.0,
-    specialPerks: ["5 Mojo Points per ₹100 on all online spends (2% value)", "2.5 Mojo Points per ₹100 on offline spends", "8 complimentary domestic airport lounge visits"],
+    specialPerks: [
+      "5 Mojo Points per ₹100 on all online spends (2% value)",
+      "2.5 Mojo Points per ₹100 on offline spends",
+      "8 complimentary domestic airport lounge visits",
+    ],
   },
   {
     matchKeys: ["kotak league", "league platinum", "kotak league platinum"],
     cardDisplayName: "Kotak League Platinum",
     merchantPerks: {
-      myntra: { returnPct: 1.33, perkType: "reward_points", description: "8X Reward Points per ₹150 on apparel and lifestyle spends (1.33% return)" },
-      bookmyshow: { returnPct: 3.0, perkType: "discount", description: "4 free PVR movie tickets or 10,000 reward points on ₹1.25L spend every 6 months", badge: "Free Movie Tickets" },
+      myntra: {
+        returnPct: 1.33,
+        perkType: "reward_points",
+        description: "8X Reward Points per ₹150 on apparel and lifestyle spends (1.33% return)",
+      },
+      bookmyshow: {
+        returnPct: 3.0,
+        perkType: "discount",
+        description:
+          "4 free PVR movie tickets or 10,000 reward points on ₹1.25L spend every 6 months",
+        badge: "Free Movie Tickets",
+      },
     },
     categoryPerks: {
-      "Shopping & Fashion": { returnPct: 1.33, perkType: "reward_points", description: "8X Reward Points per ₹150 on Apparel, Luxury, Travel & Airlines" },
-      "Entertainment & Movies": { returnPct: 3.0, perkType: "discount", description: "PVR movie tickets milestone benefit on ₹1.25L semi-annual spend" },
+      "Shopping & Fashion": {
+        returnPct: 1.33,
+        perkType: "reward_points",
+        description: "8X Reward Points per ₹150 on Apparel, Luxury, Travel & Airlines",
+      },
+      "Entertainment & Movies": {
+        returnPct: 3.0,
+        perkType: "discount",
+        description: "PVR movie tickets milestone benefit on ₹1.25L semi-annual spend",
+      },
     },
     defaultOnlineReturnPct: 0.67,
     defaultOfflineReturnPct: 0.67,
-    specialPerks: ["8X Reward Points on apparel, luxury goods and departmental stores", "4 free PVR movie tickets every 6 months on ₹1.25L spend", "Fuel surcharge waiver"],
+    specialPerks: [
+      "8X Reward Points on apparel, luxury goods and departmental stores",
+      "4 free PVR movie tickets every 6 months on ₹1.25L spend",
+      "Fuel surcharge waiver",
+    ],
   },
   {
     matchKeys: ["kotak indianoil", "kotak iocl", "indianoil rupay", "kotak indianoil rupay"],
     cardDisplayName: "Kotak IndianOil RuPay",
     merchantPerks: {
-      fuel_pumps: { returnPct: 5.0, perkType: "reward_points", description: "4% back in reward points (24 points per ₹150) at IndianOil fuel outlets + 1% fuel surcharge waiver", badge: "5% Fuel Savings" },
-      indianoil_fuel: { returnPct: 5.0, perkType: "reward_points", description: "4% back in reward points (24 points per ₹150) at IndianOil fuel outlets + 1% fuel surcharge waiver", badge: "5% Fuel Savings" },
-      hpcl_fuel: { returnPct: 1.0, perkType: "cashback", description: "1% fuel surcharge waiver on transactions between ₹500 and ₹3,000" },
+      fuel_pumps: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description:
+          "4% back in reward points (24 points per ₹150) at IndianOil fuel outlets + 1% fuel surcharge waiver",
+        badge: "5% Fuel Savings",
+      },
+      indianoil_fuel: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description:
+          "4% back in reward points (24 points per ₹150) at IndianOil fuel outlets + 1% fuel surcharge waiver",
+        badge: "5% Fuel Savings",
+      },
+      hpcl_fuel: {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description: "1% fuel surcharge waiver on transactions between ₹500 and ₹3,000",
+      },
       bpcl_fuel: { returnPct: 1.0, perkType: "cashback", description: "1% fuel surcharge waiver" },
     },
     categoryPerks: {
-      "Fuel": { returnPct: 5.0, perkType: "reward_points", description: "5% total savings (4% rewards + 1% surcharge waiver) at IndianOil fuel stations" },
-      "Fuel & Gas": { returnPct: 5.0, perkType: "reward_points", description: "5% total savings (4% rewards + 1% surcharge waiver) at IndianOil fuel stations" },
-      "Groceries & Supermarket": { returnPct: 2.0, perkType: "reward_points", description: "2% back (12 reward points per ₹150) on grocery purchases" },
-      "Dining & Food Delivery": { returnPct: 2.0, perkType: "reward_points", description: "2% back in reward points on dining spends" },
+      Fuel: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description:
+          "5% total savings (4% rewards + 1% surcharge waiver) at IndianOil fuel stations",
+      },
+      "Fuel & Gas": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description:
+          "5% total savings (4% rewards + 1% surcharge waiver) at IndianOil fuel stations",
+      },
+      "Groceries & Supermarket": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% back (12 reward points per ₹150) on grocery purchases",
+      },
+      "Dining & Food Delivery": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2% back in reward points on dining spends",
+      },
     },
     defaultOnlineReturnPct: 0.5,
     defaultOfflineReturnPct: 0.5,
-    specialPerks: ["5% total savings on IndianOil fuel purchases", "UPI on Credit Card linked with BHIM, PhonePe, Google Pay", "2% back on groceries and dining"],
+    specialPerks: [
+      "5% total savings on IndianOil fuel purchases",
+      "UPI on Credit Card linked with BHIM, PhonePe, Google Pay",
+      "2% back on groceries and dining",
+    ],
   },
   {
     matchKeys: ["kotak 811", "dream different", "kotak dream different"],
     cardDisplayName: "Kotak 811 #DreamDifferent",
     merchantPerks: {
-      amazon: { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on online shopping (2 pts per ₹100, 1.0% return)", badge: "2X Online Pts" },
-      flipkart: { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on online purchases" },
-      swiggy: { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on online ordering" },
+      amazon: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "2X Reward Points on online shopping (2 pts per ₹100, 1.0% return)",
+        badge: "2X Online Pts",
+      },
+      flipkart: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "2X Reward Points on online purchases",
+      },
+      swiggy: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "2X Reward Points on online ordering",
+      },
     },
     categoryPerks: {
-      "Online Shopping": { returnPct: 1.0, perkType: "reward_points", description: "2X Reward Points on all online shopping portals" },
+      "Online Shopping": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "2X Reward Points on all online shopping portals",
+      },
     },
     defaultOnlineReturnPct: 1.0,
     defaultOfflineReturnPct: 0.5,
-    specialPerks: ["Zero joining fee and lifetime free credit card against FD", "2X rewards on all online spends", "90% cash withdrawal of FD amount with 48 days interest-free"],
+    specialPerks: [
+      "Zero joining fee and lifetime free credit card against FD",
+      "2X rewards on all online spends",
+      "90% cash withdrawal of FD amount with 48 days interest-free",
+    ],
+  },
+
+  // ── YES Bank Cards ─────────────────────────────────────────────────────────
+  {
+    matchKeys: ["yes bank marquee", "yes marquee", "marquee metal", "marquee credit card"],
+    cardDisplayName: "YES Bank Marquee",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 4.5,
+        perkType: "discount",
+        description:
+          "Buy 1 Get 1 free movie ticket up to ₹800 discount on BookMyShow (up to 3 times per month)",
+        badge: "BOGO ₹800 BMS",
+      },
+      amazon: {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description:
+          "36 Reward Points per ₹200 on all online retail shopping (4.5% return value, 1 RP = ₹0.25)",
+        badge: "4.5% Online (36 RP)",
+      },
+      flipkart: {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description: "36 Reward Points per ₹200 on online purchases (4.5% value)",
+      },
+      swiggy: {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description: "36 Reward Points per ₹200 on food delivery (4.5% value)",
+      },
+      zomato: {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description: "36 Reward Points per ₹200 on dining and food delivery (4.5% value)",
+      },
+      myntra: {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description: "36 Reward Points per ₹200 on fashion retail (4.5% value)",
+      },
+      eazydiner: {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description:
+          "36 Reward Points per ₹200 on online table reservations and dining (4.5% value)",
+      },
+      forex_international: {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description:
+          "Low 1% foreign currency markup + 36 Reward Points per ₹200 on online international spends",
+        badge: "1% Low Forex",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description: "36 Reward Points per ₹200 on all online spends (4.5% return)",
+      },
+      "Food & Dining": {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description: "36 Reward Points per ₹200 on online dining & food apps",
+      },
+      "Entertainment & Movies": {
+        returnPct: 4.5,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹800 on BookMyShow",
+      },
+      "Travel & Flights": {
+        returnPct: 4.5,
+        perkType: "reward_points",
+        description:
+          "Unlimited international airport lounge access via Priority Pass (guest included) + 6 domestic lounge visits/quarter",
+      },
+    },
+    defaultOnlineReturnPct: 4.5,
+    defaultOfflineReturnPct: 2.25,
+    forexMarkupPct: 1.0,
+    specialPerks: [
+      "36 Reward Points per ₹200 on online spends (4.5% return)",
+      "18 Reward Points per ₹200 on offline retail (2.25% return)",
+      "Unlimited international lounge access via Priority Pass with guest access",
+      "6 complimentary domestic airport lounge visits per quarter",
+      "Low 1% foreign currency markup",
+      "Buy 1 Get 1 movie tickets up to ₹800 on BookMyShow (3x/month)",
+    ],
+  },
+  {
+    matchKeys: ["yes bank reserv", "yes reserv", "reserv credit card"],
+    cardDisplayName: "YES Bank Reserv",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 3.0,
+        perkType: "discount",
+        description:
+          "Buy 1 Get 1 free movie ticket up to ₹400 discount on BookMyShow (up to 2 times per month)",
+        badge: "BOGO ₹400 BMS",
+      },
+      amazon: {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description:
+          "24 Reward Points per ₹200 on online shopping (3.0% return rate, 1 RP = ₹0.25)",
+        badge: "3% Online (24 RP)",
+      },
+      flipkart: {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "24 Reward Points per ₹200 on online shopping (3.0% value)",
+      },
+      swiggy: {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "24 Reward Points per ₹200 on online food delivery (3.0% value)",
+      },
+      zomato: {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "24 Reward Points per ₹200 on dining (3.0% value)",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "24 Reward Points per ₹200 on online spends (3.0% value)",
+      },
+      "Food & Dining": {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description: "24 Reward Points per ₹200 on dining & food apps",
+      },
+      "Entertainment & Movies": {
+        returnPct: 3.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹400 on BookMyShow",
+      },
+      "Travel & Flights": {
+        returnPct: 3.0,
+        perkType: "reward_points",
+        description:
+          "3 complimentary domestic lounge visits per quarter + Priority Pass membership",
+      },
+    },
+    defaultOnlineReturnPct: 3.0,
+    defaultOfflineReturnPct: 1.5,
+    forexMarkupPct: 1.75,
+    specialPerks: [
+      "24 Reward Points per ₹200 on online spends (3.0% value)",
+      "12 Reward Points per ₹200 on offline retail (1.5% value)",
+      "3 complimentary domestic lounge visits per quarter",
+      "Low 1.75% foreign currency markup",
+      "Buy 1 Get 1 movie tickets up to ₹400 on BookMyShow (2x/month)",
+    ],
+  },
+  {
+    matchKeys: [
+      "yes bank elite",
+      "yes elite",
+      "elite+",
+      "yes premia elite",
+      "yes bank elite credit card",
+    ],
+    cardDisplayName: "YES Bank Elite+",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 1.5,
+        perkType: "discount",
+        description: "25% discount up to ₹250 on movie tickets via BookMyShow",
+        badge: "25% Off BMS",
+      },
+      amazon: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "12 Reward Points per ₹200 on online shopping (1.5% return value)",
+      },
+      flipkart: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "12 Reward Points per ₹200 on online orders",
+      },
+      swiggy: {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "12 Reward Points per ₹200 on food delivery",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "12 Reward Points per ₹200 on online retail (1.5% value)",
+      },
+      "Entertainment & Movies": {
+        returnPct: 1.5,
+        perkType: "discount",
+        description: "25% discount on BookMyShow movie tickets",
+      },
+      "Travel & Flights": {
+        returnPct: 1.5,
+        perkType: "reward_points",
+        description: "2 complimentary domestic airport lounge visits per calendar quarter",
+      },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 0.75,
+    specialPerks: [
+      "12 Reward Points per ₹200 on online spends (1.5% return)",
+      "6 Reward Points per ₹200 on offline retail (0.75% return)",
+      "2 complimentary domestic airport lounge visits per quarter",
+      "25% discount on BookMyShow movie tickets",
+    ],
+  },
+  {
+    matchKeys: [
+      "yes bank select",
+      "yes select",
+      "prosperity edge select",
+      "yes bank select credit card",
+    ],
+    cardDisplayName: "YES Bank Select",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 1.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹200 on BookMyShow",
+      },
+      amazon: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "8 Reward Points per ₹200 on online purchases (1.0% return)",
+      },
+      flipkart: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "8 Reward Points per ₹200 on online shopping",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "8 Reward Points per ₹200 on online transactions (1.0% return)",
+      },
+      "Travel & Flights": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 complimentary domestic airport lounge access per quarter",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "8 Reward Points per ₹200 on online shopping (1.0% value)",
+      "4 Reward Points per ₹200 on offline spends (0.5% value)",
+      "1 complimentary domestic airport lounge visit per quarter",
+      "Buy 1 Get 1 free movie ticket on BookMyShow",
+    ],
+  },
+  {
+    matchKeys: ["yes bank ace", "yes ace", "rewards plus ace", "yes bank ace credit card"],
+    cardDisplayName: "YES Bank ACE",
+    merchantPerks: {
+      blinkit: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Accelerated 4X Reward Points on grocery & supermarket orders (1.0% return)",
+      },
+      instamart: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Accelerated 4X Reward Points on grocery orders (1.0% return)",
+      },
+      zepto: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Accelerated 4X Reward Points on quick grocery delivery",
+      },
+      bigbasket: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Accelerated 4X Reward Points on grocery orders",
+      },
+    },
+    categoryPerks: {
+      "Groceries & Supermarket": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Accelerated 4X Reward Points per ₹100 on grocery and departmental stores",
+      },
+      "Online Shopping": {
+        returnPct: 0.5,
+        perkType: "reward_points",
+        description: "2 Reward Points per ₹100 on retail purchases",
+      },
+    },
+    defaultOnlineReturnPct: 0.5,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "Accelerated rewards on grocery and departmental store spends",
+      "Fuel surcharge waiver across all fuel stations",
+      "Lifetime free card option with annual spend waiver",
+    ],
+  },
+  {
+    matchKeys: ["yes first preferred", "yes first", "first preferred", "yes bank first preferred"],
+    cardDisplayName: "YES FIRST Preferred",
+    merchantPerks: {
+      makemytrip: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description:
+          "16 Reward Points per ₹200 on domestic & international flight/hotel bookings (2.0% value)",
+      },
+      easemytrip: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "16 Reward Points per ₹200 on travel bookings",
+      },
+      taj: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "16 Reward Points per ₹200 on luxury hotel stays & dining",
+      },
+    },
+    categoryPerks: {
+      "Travel & Flights": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description:
+          "16 Reward Points per ₹200 on airlines, travel & luxury hotels + 2 domestic & 4 international lounge visits",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "16 Reward Points per ₹200 on standalone dining restaurants",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    forexMarkupPct: 1.75,
+    specialPerks: [
+      "16 Reward Points per ₹200 on travel and dining (2.0% value)",
+      "8 Reward Points per ₹200 on all other retail transactions (1.0% value)",
+      "2 complimentary domestic lounge visits per quarter",
+      "4 complimentary international lounge visits per year via Priority Pass",
+      "Reduced 1.75% foreign currency markup",
+    ],
+  },
+  {
+    matchKeys: ["yes bank byoc", "byoc", "build your own card", "yes byoc"],
+    cardDisplayName: "YES Bank BYOC",
+    merchantPerks: {
+      swiggy: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description:
+          "Up to 10% customizable cashback on selected merchant tier package (Food & Dining plan)",
+        badge: "Up to 10% BYOC",
+      },
+      zomato: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "Up to 10% cashback on chosen dining merchant plan",
+      },
+      amazon: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "Up to 10% cashback on selected e-commerce shopping plan",
+      },
+      blinkit: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "Up to 10% cashback on chosen grocery package",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on chosen subscription merchants (up to ₹1,000/mo cap)",
+      },
+      "Online Shopping": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on chosen shopping category",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "Fully customizable card with 10% cashback on chosen merchant bundles",
+      "Flexible monthly subscription packages tailored to your lifestyle",
+      "1% fuel surcharge waiver",
+    ],
+  },
+  {
+    matchKeys: ["yes bank kiwi", "kiwi rupay", "kiwi credit card", "gokiwi"],
+    cardDisplayName: "YES Bank Kiwi RuPay",
+    merchantPerks: {
+      swiggy: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description:
+          "Flat 2.0% cashback on UPI Scan & Pay merchant transactions via Kiwi app (2 Kiwis per ₹50)",
+        badge: "2% UPI Cashback",
+      },
+      zomato: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "Flat 2.0% cashback via Kiwi UPI on credit card",
+      },
+      blinkit: {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "Flat 2.0% cashback on merchant QR payment",
+      },
+    },
+    categoryPerks: {
+      "UPI & Scan to Pay": {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description:
+          "Flat 2.0% cashback on all merchant UPI QR code payments via Kiwi (1 Kiwi = ₹0.50)",
+      },
+      "Food & Dining": {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2.0% cashback on UPI food delivery and dining out payments",
+      },
+      "Groceries & Supermarket": {
+        returnPct: 2.0,
+        perkType: "cashback",
+        description: "2.0% cashback on UPI grocery payments",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 2.0,
+    specialPerks: [
+      "Virtual RuPay Credit Card on UPI with zero joining or annual fees",
+      "Flat 2.0% cashback on all UPI merchant QR scan & pay transactions",
+      "Direct redemption of Kiwis as cashback into bank account",
+    ],
+  },
+  {
+    matchKeys: ["yes bank popclub", "popclub", "pop club", "yes popclub"],
+    cardDisplayName: "YES Bank Popclub RuPay",
+    merchantPerks: {
+      myntra: {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description:
+          "Up to 10% value back in Popcoins on curated D2C and lifestyle brands on the Pop network",
+        badge: "10% Popcoins",
+      },
+      nykaa: {
+        returnPct: 10.0,
+        perkType: "reward_points",
+        description: "10% value back in Popcoins on beauty and wellness partner network",
+      },
+    },
+    categoryPerks: {
+      "Shopping & Fashion": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "Accelerated Popcoins on e-commerce network transactions",
+      },
+      "Online Shopping": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "Up to 10% Popcoins on Popclub network + 2% on other online spends",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "10% Popcoins on 500+ D2C and partner lifestyle brands",
+      "RuPay credit card on UPI for seamless merchant QR payments",
+      "2% rewards on other non-partner retail spends",
+    ],
+  },
+  {
+    matchKeys: ["yes bank uni", "uni credit card", "uni card", "yes uni", "uni nx wave"],
+    cardDisplayName: "YES Bank Uni Credit Card",
+    merchantPerks: {
+      amazon: {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description:
+          "Flat 1.0% cashback on full bill payment or split 1/3rd over 3 months at zero extra cost",
+        badge: "1% / Pay 1/3rd",
+      },
+      flipkart: {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description: "Flat 1.0% cashback on e-commerce transactions",
+      },
+      swiggy: {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description: "Flat 1.0% cashback on food delivery",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description: "Flat 1.0% upfront cashback on 30-day bill payment",
+      },
+      "Food & Dining": {
+        returnPct: 1.0,
+        perkType: "cashback",
+        description: "1.0% cashback on dining and food delivery",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Unique 1/3rd split: Pay in 3 parts over 3 months at zero extra interest",
+      "Flat 1.0% cashback on all transactions when paid in full within 30 days",
+      "Zero joining fee and lifetime free privileges",
+    ],
   },
 ];
 
@@ -1441,7 +3694,11 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 function cleanKey(str: string): string {
-  return (str || "").toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+  return (str || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Matches a card entity to the best matching card perk rule */
@@ -1501,15 +3758,16 @@ export function evaluateCardForPayment(
   const rule = findCardPerkRule(card);
   const resolvedMerchant = resolveMerchant(merchantQuery, category);
 
-  let returnPct = 1.0; // fallback base return
+  let returnPct: number;
   let perkType: "cashback" | "reward_points" | "discount" | "miles" = "cashback";
-  let perkHeadline = "Standard Return";
-  let perkReason = "Standard retail reward points accrued on card";
+  let perkReason: string;
   let maxCap: string | undefined = undefined;
-  let badge: string | undefined = undefined;
+  let badge: string | undefined;
   let isCoBrandedMatch = false;
 
-  const targetCategory = resolvedMerchant ? resolvedMerchant.category : category || "General Spends";
+  const targetCategory = resolvedMerchant
+    ? resolvedMerchant.category
+    : category || "General Spends";
 
   if (rule) {
     // 1. Direct Merchant Specific Match (e.g. Swiggy card on Swiggy -> 10%)
@@ -1520,7 +3778,10 @@ export function evaluateCardForPayment(
       perkReason = p.description;
       maxCap = p.maxCap;
       badge = p.badge || `${p.returnPct}% ${p.perkType === "cashback" ? "Cashback" : "Return"}`;
-      isCoBrandedMatch = resolvedMerchant ? rule.matchKeys.some(k => k.includes(resolvedMerchant.id)) || cleanCardName.toLowerCase().includes(resolvedMerchant.id) : false;
+      isCoBrandedMatch = resolvedMerchant
+        ? rule.matchKeys.some((k) => k.includes(resolvedMerchant.id)) ||
+          cleanCardName.toLowerCase().includes(resolvedMerchant.id)
+        : false;
     }
     // 2. Category Level Match (e.g. HSBC Live+ on Food & Dining -> 10%)
     else if (rule.categoryPerks && rule.categoryPerks[targetCategory]) {
@@ -1561,7 +3822,7 @@ export function evaluateCardForPayment(
       savingsInINR = numericCap;
     }
   }
-  perkHeadline = `${returnPct}% ${perkType === "cashback" ? "Cashback" : perkType === "miles" ? "Travel Miles" : "Reward Value"} (₹${savingsInINR.toLocaleString("en-IN")})`;
+  const perkHeadline = `${returnPct}% ${perkType === "cashback" ? "Cashback" : perkType === "miles" ? "Travel Miles" : "Reward Value"} (₹${savingsInINR.toLocaleString("en-IN")})`;
 
   const limit = Number(card.limit || 0);
   const outstanding = Number(card.outstanding || 0);
@@ -1610,7 +3871,9 @@ export function findBestMarketAlternative(
   ownedCards: any[]
 ): BestMarketAlternative | null {
   const resolvedMerchant = resolveMerchant(merchantQuery, category);
-  const targetCategory = resolvedMerchant ? resolvedMerchant.category : category || "General Spends";
+  const targetCategory = resolvedMerchant
+    ? resolvedMerchant.category
+    : category || "General Spends";
 
   let bestRule: CardPerkRule | null = null;
   let bestPerk: CardRewardPerk | null = null;
@@ -1666,7 +3929,9 @@ export function rankCardsForPayment(
   const validAmount = Math.max(1, Number(amount) || 1000);
   const resolvedMerchant = resolveMerchant(merchantQuery, category);
   const targetMerchantName = resolvedMerchant ? resolvedMerchant.name : merchantQuery || "Merchant";
-  const targetCategory = resolvedMerchant ? resolvedMerchant.category : category || "Online Shopping";
+  const targetCategory = resolvedMerchant
+    ? resolvedMerchant.category
+    : category || "Online Shopping";
 
   const activeCards = portfolioCards.filter(
     (c) => (c.status || "active").toLowerCase() === "active"
@@ -1713,9 +3978,7 @@ export function rankCardsForPayment(
     topCard,
     rankedCards: evaluated,
     bestMarketAlternative:
-      marketAlternative && marketAlternative.extraSavingsVsTopOwned > 0
-        ? marketAlternative
-        : null,
+      marketAlternative && marketAlternative.extraSavingsVsTopOwned > 0 ? marketAlternative : null,
     totalCardsEvaluated: evaluated.length,
   };
 }
@@ -1747,13 +4010,7 @@ export function generateCategoryCardMatrix(
   ];
 
   return categories.map((cat) => {
-    const result = rankCardsForPayment(
-      portfolioCards,
-      "",
-      cat.name,
-      2000,
-      rankedCardsForSwipeMap
-    );
+    const result = rankCardsForPayment(portfolioCards, "", cat.name, 2000, rankedCardsForSwipeMap);
 
     const bestCard = result.rankedCards[0] || null;
     const runnerUpCard = result.rankedCards[1] || null;

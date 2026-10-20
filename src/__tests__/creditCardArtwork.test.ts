@@ -321,7 +321,9 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
       };
 
       expect(primaryCard.cardImageUrl).toBe("https://images.unsplash.com/scapia-visa.png");
-      expect(primaryCard.variants?.[0]?.cardImageUrl).toBe("https://images.unsplash.com/scapia-rupay.png");
+      expect(primaryCard.variants?.[0]?.cardImageUrl).toBe(
+        "https://images.unsplash.com/scapia-rupay.png"
+      );
 
       // Resolve primary art
       const primaryArt = resolveCardArtwork({
@@ -344,76 +346,360 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
 
   describe("User Requested 30 Specific Indian & Global Credit Cards", () => {
     const requiredCards: Array<{ query: string; expectedId: string; expectedImage: string }> = [
-      { query: "HDFC Diners Club Credit Card", expectedId: "hdfc-diners-black", expectedImage: "/cards/hdfc-diners-black.png" },
-      { query: "HDFC Swiggy Credit Card", expectedId: "hdfc-swiggy", expectedImage: "/cards/hdfc-swiggy.png" },
-      { query: "ICICI Amazon Pay Credit Card", expectedId: "icici-amazon-pay", expectedImage: "/cards/icici-amazon-pay.png" },
-      { query: "ICICI Sapphiro Amex Credit Card", expectedId: "icici-sapphiro-amex", expectedImage: "/cards/icici-sapphiro-amex.png" },
-      { query: "ICICI Sapphiro Master Credit Card", expectedId: "icici-sapphiro", expectedImage: "/cards/icici-sapphiro.png" },
-      { query: "Kotak Air + Credit Card", expectedId: "kotak-air-plus", expectedImage: "/cards/kotak-air-plus.png" },
-      { query: "IDFC First Wealth Card", expectedId: "idfc-wealth", expectedImage: "/cards/idfc-wealth.png" },
-      { query: "IDFC FIRST WOW Credit Card", expectedId: "idfc-wow", expectedImage: "/cards/idfc-wow.png" },
-      { query: "Federal Scapia Credit Card", expectedId: "federal-scapia", expectedImage: "/cards/federal-scapia.png" },
-      { query: "Axis Bank Airtel Credit Card", expectedId: "axis-airtel", expectedImage: "/cards/axis-airtel.png" },
-      { query: "Axis Bank Atlas Credit Card", expectedId: "axis-atlas", expectedImage: "/cards/axis-atlas.png" },
-      { query: "Induslnd Avios Credit Card", expectedId: "indusind-avios", expectedImage: "/cards/indusind-avios.png" },
-      { query: "Standered Charted Ultimate Credit Card", expectedId: "sc-ultimate", expectedImage: "/cards/sc-ultimate.png" },
-      { query: "Amex Rewards Credit Card", expectedId: "amex-mrcc", expectedImage: "/cards/amex-mrcc.png" },
-      { query: "RBL World Safari Credit Card", expectedId: "rbl-world-safari", expectedImage: "/cards/rbl-world-safari.png" },
-      { query: "SBI Cash Back Credit Card", expectedId: "sbi-cashback", expectedImage: "/cards/sbi-cashback.png" },
-      { query: "Amex Reserve Credt Card", expectedId: "amex-reserve", expectedImage: "/cards/amex-reserve.png" },
-      { query: "Yes Bank Uni Credit Card", expectedId: "yes-uni", expectedImage: "/cards/yes-uni.png" },
-      { query: "Axis Bank Magnus Credit Card", expectedId: "axis-magnus", expectedImage: "/cards/axis-magnus.png" },
-      { query: "Federal Bank One Metal Credit Card", expectedId: "federal-one-metal", expectedImage: "/cards/federal-one-metal.png" },
-      { query: "Axis Bank ACE Credit Card", expectedId: "axis-ace", expectedImage: "/cards/axis-ace.png" },
-      { query: "SBI Octane Credit Card", expectedId: "sbi-octane", expectedImage: "/cards/sbi-octane.png" },
-      { query: "HSBC Credit Card", expectedId: "hsbc-live-plus", expectedImage: "/cards/hsbc-live-plus.png" },
-      { query: "HSBC Live+ Credit Card", expectedId: "hsbc-live-plus", expectedImage: "/cards/hsbc-live-plus.png" },
-      { query: "HSBC Premier Credit Card", expectedId: "hsbc-premier", expectedImage: "/cards/hsbc-premier.png" },
-      { query: "HSBC Platinum Credit Card", expectedId: "hsbc-platinum", expectedImage: "/cards/hsbc-platinum.png" },
-      { query: "HSBC TravelOne Credit Card", expectedId: "hsbc-travel-one", expectedImage: "/cards/hsbc-travel-one.png" },
-      { query: "OLA Money SBI Credit Card", expectedId: "ola-sbi", expectedImage: "/cards/ola-sbi.png" },
-      { query: "RBL Zomato Credit Card", expectedId: "rbl-zomato", expectedImage: "/cards/rbl-zomato.png" },
-      { query: "Kotak Zen Credit Card", expectedId: "kotak-zen", expectedImage: "/cards/kotak-zen.png" },
-      { query: "CITI Rewards Credit Card", expectedId: "citi-rewards", expectedImage: "/cards/citi-rewards.png" },
-      { query: "Citi PremierMiles Credit Card", expectedId: "citi-premiermiles", expectedImage: "/cards/citi-premiermiles.png" },
-      { query: "Citi Prestige Credit Card", expectedId: "citi-prestige", expectedImage: "/cards/citi-prestige.png" },
-      { query: "Citi Cash Back Credit Card", expectedId: "citi-cashback", expectedImage: "/cards/citi-cashback.png" },
-      { query: "Standered Charted Manhattan Credit Card", expectedId: "sc-manhattan", expectedImage: "/cards/sc-manhattan.png" },
-      { query: "Axis Bank Flipkart Credit Card", expectedId: "axis-flipkart", expectedImage: "/cards/axis-flipkart.png" },
-      { query: "ICICI Platinum  Credit Card", expectedId: "icici-platinum", expectedImage: "/cards/icici-platinum.png" },
-      { query: "ICICI Emeralde Credit Card", expectedId: "icici-emeralde", expectedImage: "/cards/icici-emeralde.png" },
-      { query: "ICICI Rubyx Credit Card", expectedId: "icici-rubyx", expectedImage: "/cards/icici-rubyx.png" },
-      { query: "ICICI Coral Credit Card", expectedId: "icici-coral-rupay", expectedImage: "/cards/icici-coral.png" },
-      { query: "ICICI MakeMyTrip Credit Card", expectedId: "icici-makemytrip", expectedImage: "/cards/icici-makemytrip.png" },
-      { query: "HDFC Times Credit Card", expectedId: "hdfc-times", expectedImage: "/cards/hdfc-times.png" },
-      { query: "IndusInd Bank Legend Credit Card", expectedId: "indusind-legend", expectedImage: "/cards/indusind-legend.png" },
-      { query: "IndusInd Pinnacle Credit Card", expectedId: "indusind-pinnacle", expectedImage: "/cards/indusind-pinnacle.png" },
-      { query: "IndusInd EazyDiner Credit Card", expectedId: "indusind-eazydiner", expectedImage: "/cards/indusind-eazydiner.png" },
-      { query: "IndusInd Platinum RuPay Credit Card", expectedId: "indusind-platinum-rupay", expectedImage: "/cards/indusind-platinum-rupay.png" },
-      { query: "IndusInd Tiger Credit Card", expectedId: "indusind-tiger", expectedImage: "/cards/indusind-tiger.png" },
-      { query: "IndusInd Samman RuPay Credit Card", expectedId: "indusind-samman", expectedImage: "/cards/indusind-samman.png" },
-      { query: "IndusInd Nexxt Credit Card", expectedId: "indusind-nexxt", expectedImage: "/cards/indusind-nexxt.png" },
-      { query: "Kotak White Credit Card", expectedId: "kotak-white", expectedImage: "/cards/kotak-white.png" },
-      { query: "Kotak League Platinum Credit Card", expectedId: "kotak-league", expectedImage: "/cards/kotak-league.png" },
-      { query: "Kotak Mojo Platinum Credit Card", expectedId: "kotak-mojo", expectedImage: "/cards/kotak-mojo.png" },
-      { query: "Kotak 811 Dream Different Credit Card", expectedId: "kotak-811", expectedImage: "/cards/kotak-811.png" },
-      { query: "Kotak Royale Signature Credit Card", expectedId: "kotak-royale", expectedImage: "/cards/kotak-royale.png" },
-      { query: "Kotak Privy League Signature Credit Card", expectedId: "kotak-privy-league", expectedImage: "/cards/kotak-privy-league.png" },
-      { query: "Kotak IndianOil RuPay Credit Card", expectedId: "kotak-iocl", expectedImage: "/cards/kotak-iocl.png" },
-      { query: "SBI SimplyClick Credit Card", expectedId: "sbi-simplyclick", expectedImage: "/cards/sbi-simplyclick.png" },
-      { query: "SBI SimplySAVE RuPay Credit Card", expectedId: "sbi-simplysave", expectedImage: "/cards/sbi-simplysave.png" },
+      {
+        query: "HDFC Diners Club Credit Card",
+        expectedId: "hdfc-diners-black",
+        expectedImage: "/cards/hdfc-diners-black.png",
+      },
+      {
+        query: "HDFC Swiggy Credit Card",
+        expectedId: "hdfc-swiggy",
+        expectedImage: "/cards/hdfc-swiggy.png",
+      },
+      {
+        query: "ICICI Amazon Pay Credit Card",
+        expectedId: "icici-amazon-pay",
+        expectedImage: "/cards/icici-amazon-pay.png",
+      },
+      {
+        query: "ICICI Sapphiro Amex Credit Card",
+        expectedId: "icici-sapphiro-amex",
+        expectedImage: "/cards/icici-sapphiro-amex.png",
+      },
+      {
+        query: "ICICI Sapphiro Master Credit Card",
+        expectedId: "icici-sapphiro",
+        expectedImage: "/cards/icici-sapphiro.png",
+      },
+      {
+        query: "Kotak Air + Credit Card",
+        expectedId: "kotak-air-plus",
+        expectedImage: "/cards/kotak-air-plus.png",
+      },
+      {
+        query: "IDFC First Wealth Card",
+        expectedId: "idfc-wealth",
+        expectedImage: "/cards/idfc-wealth.png",
+      },
+      {
+        query: "IDFC FIRST WOW Credit Card",
+        expectedId: "idfc-wow",
+        expectedImage: "/cards/idfc-wow.png",
+      },
+      {
+        query: "Federal Scapia Credit Card",
+        expectedId: "federal-scapia",
+        expectedImage: "/cards/federal-scapia.png",
+      },
+      {
+        query: "Axis Bank Airtel Credit Card",
+        expectedId: "axis-airtel",
+        expectedImage: "/cards/axis-airtel.png",
+      },
+      {
+        query: "Axis Bank Atlas Credit Card",
+        expectedId: "axis-atlas",
+        expectedImage: "/cards/axis-atlas.png",
+      },
+      {
+        query: "Induslnd Avios Credit Card",
+        expectedId: "indusind-avios",
+        expectedImage: "/cards/indusind-avios.png",
+      },
+      {
+        query: "Standered Charted Ultimate Credit Card",
+        expectedId: "sc-ultimate",
+        expectedImage: "/cards/sc-ultimate.png",
+      },
+      {
+        query: "Amex Rewards Credit Card",
+        expectedId: "amex-mrcc",
+        expectedImage: "/cards/amex-mrcc.png",
+      },
+      {
+        query: "RBL World Safari Credit Card",
+        expectedId: "rbl-world-safari",
+        expectedImage: "/cards/rbl-world-safari.png",
+      },
+      {
+        query: "SBI Cash Back Credit Card",
+        expectedId: "sbi-cashback",
+        expectedImage: "/cards/sbi-cashback.png",
+      },
+      {
+        query: "Amex Reserve Credt Card",
+        expectedId: "amex-reserve",
+        expectedImage: "/cards/amex-reserve.png",
+      },
+      {
+        query: "Yes Bank Uni Credit Card",
+        expectedId: "yes-uni",
+        expectedImage: "/cards/yes-uni.png",
+      },
+      {
+        query: "Axis Bank Magnus Credit Card",
+        expectedId: "axis-magnus",
+        expectedImage: "/cards/axis-magnus.png",
+      },
+      {
+        query: "Federal Bank One Metal Credit Card",
+        expectedId: "federal-one-metal",
+        expectedImage: "/cards/federal-one-metal.png",
+      },
+      {
+        query: "Axis Bank ACE Credit Card",
+        expectedId: "axis-ace",
+        expectedImage: "/cards/axis-ace.png",
+      },
+      {
+        query: "SBI Octane Credit Card",
+        expectedId: "sbi-octane",
+        expectedImage: "/cards/sbi-octane.png",
+      },
+      {
+        query: "HSBC Credit Card",
+        expectedId: "hsbc-live-plus",
+        expectedImage: "/cards/hsbc-live-plus.png",
+      },
+      {
+        query: "HSBC Live+ Credit Card",
+        expectedId: "hsbc-live-plus",
+        expectedImage: "/cards/hsbc-live-plus.png",
+      },
+      {
+        query: "HSBC Premier Credit Card",
+        expectedId: "hsbc-premier",
+        expectedImage: "/cards/hsbc-premier.png",
+      },
+      {
+        query: "HSBC Platinum Credit Card",
+        expectedId: "hsbc-platinum",
+        expectedImage: "/cards/hsbc-platinum.png",
+      },
+      {
+        query: "HSBC TravelOne Credit Card",
+        expectedId: "hsbc-travel-one",
+        expectedImage: "/cards/hsbc-travel-one.png",
+      },
+      {
+        query: "OLA Money SBI Credit Card",
+        expectedId: "ola-sbi",
+        expectedImage: "/cards/ola-sbi.png",
+      },
+      {
+        query: "RBL Zomato Credit Card",
+        expectedId: "rbl-zomato",
+        expectedImage: "/cards/rbl-zomato.png",
+      },
+      {
+        query: "Kotak Zen Credit Card",
+        expectedId: "kotak-zen",
+        expectedImage: "/cards/kotak-zen.png",
+      },
+      {
+        query: "CITI Rewards Credit Card",
+        expectedId: "citi-rewards",
+        expectedImage: "/cards/citi-rewards.png",
+      },
+      {
+        query: "Citi PremierMiles Credit Card",
+        expectedId: "citi-premiermiles",
+        expectedImage: "/cards/citi-premiermiles.png",
+      },
+      {
+        query: "Citi Prestige Credit Card",
+        expectedId: "citi-prestige",
+        expectedImage: "/cards/citi-prestige.png",
+      },
+      {
+        query: "Citi Cash Back Credit Card",
+        expectedId: "citi-cashback",
+        expectedImage: "/cards/citi-cashback.png",
+      },
+      {
+        query: "Standered Charted Manhattan Credit Card",
+        expectedId: "sc-manhattan",
+        expectedImage: "/cards/sc-manhattan.png",
+      },
+      {
+        query: "Axis Bank Flipkart Credit Card",
+        expectedId: "axis-flipkart",
+        expectedImage: "/cards/axis-flipkart.png",
+      },
+      {
+        query: "ICICI Platinum  Credit Card",
+        expectedId: "icici-platinum",
+        expectedImage: "/cards/icici-platinum.png",
+      },
+      {
+        query: "ICICI Emeralde Credit Card",
+        expectedId: "icici-emeralde",
+        expectedImage: "/cards/icici-emeralde.png",
+      },
+      {
+        query: "ICICI Rubyx Credit Card",
+        expectedId: "icici-rubyx",
+        expectedImage: "/cards/icici-rubyx.png",
+      },
+      {
+        query: "ICICI Coral Credit Card",
+        expectedId: "icici-coral-rupay",
+        expectedImage: "/cards/icici-coral.png",
+      },
+      {
+        query: "ICICI MakeMyTrip Credit Card",
+        expectedId: "icici-makemytrip",
+        expectedImage: "/cards/icici-makemytrip.png",
+      },
+      {
+        query: "HDFC Times Credit Card",
+        expectedId: "hdfc-times",
+        expectedImage: "/cards/hdfc-times.png",
+      },
+      {
+        query: "IndusInd Bank Legend Credit Card",
+        expectedId: "indusind-legend",
+        expectedImage: "/cards/indusind-legend.png",
+      },
+      {
+        query: "IndusInd Pinnacle Credit Card",
+        expectedId: "indusind-pinnacle",
+        expectedImage: "/cards/indusind-pinnacle.png",
+      },
+      {
+        query: "IndusInd EazyDiner Credit Card",
+        expectedId: "indusind-eazydiner",
+        expectedImage: "/cards/indusind-eazydiner.png",
+      },
+      {
+        query: "IndusInd Platinum RuPay Credit Card",
+        expectedId: "indusind-platinum-rupay",
+        expectedImage: "/cards/indusind-platinum-rupay.png",
+      },
+      {
+        query: "IndusInd Tiger Credit Card",
+        expectedId: "indusind-tiger",
+        expectedImage: "/cards/indusind-tiger.png",
+      },
+      {
+        query: "IndusInd Samman RuPay Credit Card",
+        expectedId: "indusind-samman",
+        expectedImage: "/cards/indusind-samman.png",
+      },
+      {
+        query: "IndusInd Nexxt Credit Card",
+        expectedId: "indusind-nexxt",
+        expectedImage: "/cards/indusind-nexxt.png",
+      },
+      {
+        query: "Kotak White Credit Card",
+        expectedId: "kotak-white",
+        expectedImage: "/cards/kotak-white.png",
+      },
+      {
+        query: "Kotak League Platinum Credit Card",
+        expectedId: "kotak-league",
+        expectedImage: "/cards/kotak-league.png",
+      },
+      {
+        query: "Kotak Mojo Platinum Credit Card",
+        expectedId: "kotak-mojo",
+        expectedImage: "/cards/kotak-mojo.png",
+      },
+      {
+        query: "Kotak 811 Dream Different Credit Card",
+        expectedId: "kotak-811",
+        expectedImage: "/cards/kotak-811.png",
+      },
+      {
+        query: "Kotak Royale Signature Credit Card",
+        expectedId: "kotak-royale",
+        expectedImage: "/cards/kotak-royale.png",
+      },
+      {
+        query: "Kotak Privy League Signature Credit Card",
+        expectedId: "kotak-privy-league",
+        expectedImage: "/cards/kotak-privy-league.png",
+      },
+      {
+        query: "Kotak IndianOil RuPay Credit Card",
+        expectedId: "kotak-iocl",
+        expectedImage: "/cards/kotak-iocl.png",
+      },
+      {
+        query: "SBI SimplyClick Credit Card",
+        expectedId: "sbi-simplyclick",
+        expectedImage: "/cards/sbi-simplyclick.png",
+      },
+      {
+        query: "SBI SimplySAVE RuPay Credit Card",
+        expectedId: "sbi-simplysave",
+        expectedImage: "/cards/sbi-simplysave.png",
+      },
       { query: "SBI Card PRIME", expectedId: "sbi-prime", expectedImage: "/cards/sbi-prime.png" },
       { query: "SBI Card ELITE", expectedId: "sbi-elite", expectedImage: "/cards/sbi-elite.png" },
-      { query: "SBI Aurum Metal Credit Card", expectedId: "sbi-aurum", expectedImage: "/cards/sbi-aurum.png" },
+      {
+        query: "SBI Aurum Metal Credit Card",
+        expectedId: "sbi-aurum",
+        expectedImage: "/cards/sbi-aurum.png",
+      },
       { query: "SBI Card PULSE", expectedId: "sbi-pulse", expectedImage: "/cards/sbi-pulse.png" },
       { query: "IRCTC SBI Card", expectedId: "sbi-irctc", expectedImage: "/cards/sbi-irctc.png" },
+      {
+        query: "YES Bank Marquee Credit Card",
+        expectedId: "yes-marquee",
+        expectedImage: "/cards/yes-marquee.png",
+      },
+      {
+        query: "YES Bank Reserv Credit Card",
+        expectedId: "yes-reserv",
+        expectedImage: "/cards/yes-reserv.png",
+      },
+      {
+        query: "YES Bank Elite+ Credit Card",
+        expectedId: "yes-elite",
+        expectedImage: "/cards/yes-elite.png",
+      },
+      {
+        query: "YES Bank Select Credit Card",
+        expectedId: "yes-select",
+        expectedImage: "/cards/yes-select.png",
+      },
+      {
+        query: "YES Bank ACE Credit Card",
+        expectedId: "yes-ace",
+        expectedImage: "/cards/yes-ace.png",
+      },
+      {
+        query: "YES FIRST Preferred Credit Card",
+        expectedId: "yes-first-preferred",
+        expectedImage: "/cards/yes-first-preferred.png",
+      },
+      {
+        query: "YES Bank BYOC Credit Card",
+        expectedId: "yes-byoc",
+        expectedImage: "/cards/yes-byoc.png",
+      },
+      {
+        query: "YES Bank Kiwi RuPay Credit Card",
+        expectedId: "yes-kiwi",
+        expectedImage: "/cards/yes-kiwi.png",
+      },
+      {
+        query: "YES Bank Popclub Credit Card",
+        expectedId: "yes-popclub",
+        expectedImage: "/cards/yes-popclub.png",
+      },
     ];
 
-    it.each(requiredCards)("accurately matches query '$query' to preset $expectedId with image $expectedImage", ({ query, expectedId, expectedImage }) => {
-      const match = getMatchingCardPreset(query);
-      expect(match).toBeDefined();
-      expect(match?.id).toBe(expectedId);
-      expect(match?.imageUrl).toBe(expectedImage);
-    });
+    it.each(requiredCards)(
+      "accurately matches query '$query' to preset $expectedId with image $expectedImage",
+      ({ query, expectedId, expectedImage }) => {
+        const match = getMatchingCardPreset(query);
+        expect(match).toBeDefined();
+        expect(match?.id).toBe(expectedId);
+        expect(match?.imageUrl).toBe(expectedImage);
+      }
+    );
   });
 });

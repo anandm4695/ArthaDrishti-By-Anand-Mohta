@@ -1,4 +1,3 @@
-/* eslint-disable */
 /**
  * Card Visual & Artwork Engine for Credit Cards & Card Variants
  * Provides an authentic, high-fidelity gallery of Indian & Global credit card designs,
@@ -10,7 +9,16 @@ export interface CardArtPreset {
   name: string;
   bankName: string;
   network: "Visa" | "Mastercard" | "RuPay" | "Amex" | "Diners";
-  category: "metal" | "travel" | "cashback" | "rewards" | "shopping" | "lifestyle" | "co-brand" | "virtual" | "standard";
+  category:
+    | "metal"
+    | "travel"
+    | "cashback"
+    | "rewards"
+    | "shopping"
+    | "lifestyle"
+    | "co-brand"
+    | "virtual"
+    | "standard";
   tags: string[];
   bgGradient: string;
   accentColor: string;
@@ -91,7 +99,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "SWIGGY 10%",
     patternType: "wave",
     imageUrl: "/cards/hdfc-swiggy.png",
-    officialImageUrl: "https://s7ap1.scene7.com/is/image/hdfcbankPWS/pws-extra-4326-swiggy-black-1920-x-500?fmt=webp",
+    officialImageUrl:
+      "https://s7ap1.scene7.com/is/image/hdfcbankPWS/pws-extra-4326-swiggy-black-1920-x-500?fmt=webp",
   },
   {
     id: "hdfc-tata-neu-infinity",
@@ -108,7 +117,12 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     imageUrl: "/cards/hdfc-tata-neu.png",
     officialImageUrl: "https://s7ap1.scene7.com/is/image/hdfcbankPWS/Tata-Neu-Infinity1?fmt=webp",
     suggestedVariants: [
-      { name: "Tata Neu RuPay UPI (Virtual)", network: "RuPay", cardType: "virtual", cardImageUrl: "/cards/hdfc-tata-neu.png" },
+      {
+        name: "Tata Neu RuPay UPI (Virtual)",
+        network: "RuPay",
+        cardType: "virtual",
+        cardImageUrl: "/cards/hdfc-tata-neu.png",
+      },
       { name: "Tata Neu Companion (Visa)", network: "Visa", cardType: "physical" },
     ],
   },
@@ -192,7 +206,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "AMAZON PAY · PRIME",
     patternType: "swoosh",
     imageUrl: "/cards/icici-amazon-pay.png",
-    officialImageUrl: "https://www.icicibank.com/content/dam/icicibank/india/managed-assets/revamp-page-images/cards/amazon/amazon-card-banner.webp",
+    officialImageUrl:
+      "https://www.icicibank.com/content/dam/icicibank/india/managed-assets/revamp-page-images/cards/amazon/amazon-card-banner.webp",
   },
   {
     id: "icici-sapphiro",
@@ -215,10 +230,21 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "SAPPHIRO WORLD",
     patternType: "mesh",
     imageUrl: "/cards/icici-sapphiro.png",
-    officialImageUrl: "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/sapphiro.webp",
+    officialImageUrl:
+      "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/sapphiro.webp",
     suggestedVariants: [
-      { name: "Sapphiro Amex (Companion)", network: "Amex", cardType: "physical", cardImageUrl: "/cards/icici-sapphiro-amex.png" },
-      { name: "Sapphiro RuPay UPI", network: "RuPay", cardType: "virtual", cardImageUrl: "/cards/icici-coral.png" },
+      {
+        name: "Sapphiro Amex (Companion)",
+        network: "Amex",
+        cardType: "physical",
+        cardImageUrl: "/cards/icici-sapphiro-amex.png",
+      },
+      {
+        name: "Sapphiro RuPay UPI",
+        network: "RuPay",
+        cardType: "virtual",
+        cardImageUrl: "/cards/icici-coral.png",
+      },
     ],
   },
   {
@@ -241,7 +267,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "SAPPHIRO · AMEX",
     patternType: "lines",
     imageUrl: "/cards/icici-sapphiro-amex.png",
-    officialImageUrl: "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/sapphiro.webp",
+    officialImageUrl:
+      "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/sapphiro.webp",
   },
   {
     id: "icici-platinum",
@@ -284,7 +311,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "CORAL · RUPAY UPI",
     patternType: "wave",
     imageUrl: "/cards/icici-coral.png",
-    officialImageUrl: "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/coral.webp",
+    officialImageUrl:
+      "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/coral.webp",
   },
   {
     id: "icici-emeralde",
@@ -307,7 +335,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "EMERALDE METAL",
     patternType: "filigree",
     imageUrl: "/cards/icici-emeralde.png",
-    officialImageUrl: "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/emeralde.webp",
+    officialImageUrl:
+      "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/emeralde.webp",
   },
   {
     id: "icici-rubyx",
@@ -329,7 +358,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "RUBYX LUXURY",
     patternType: "mesh",
     imageUrl: "/cards/icici-rubyx.png",
-    officialImageUrl: "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/rubyx.webp",
+    officialImageUrl:
+      "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/rubyx.webp",
   },
   {
     id: "icici-makemytrip",
@@ -351,7 +381,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "MMT SIGNATURE",
     patternType: "lines",
     imageUrl: "/cards/icici-makemytrip.png",
-    officialImageUrl: "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/makemytrip-signature.webp",
+    officialImageUrl:
+      "https://www.icicibank.com/content/dam/icicibank-revamp/credit-card/pdp/makemytrip-signature.webp",
   },
 
   // ── State Bank of India (SBI) ──────────────────────────────────────────────
@@ -376,7 +407,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "CASHBACK 5% (₹5K CAP)",
     patternType: "swoosh",
     imageUrl: "/cards/sbi-cashback.png",
-    officialImageUrl: "https://www.sbicard.com/static-resources/img/card/card-face-assets/for-website/front/vertical/cashback-card-face-min.png",
+    officialImageUrl:
+      "https://www.sbicard.com/static-resources/img/card/card-face-assets/for-website/front/vertical/cashback-card-face-min.png",
   },
   {
     id: "sbi-simplyclick",
@@ -391,7 +423,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "SIMPLY CLICK 10X",
     patternType: "filigree",
     imageUrl: "/cards/sbi-simplyclick.png",
-    officialImageUrl: "https://www.sbicard.com/static-resources/img/card/product-detail-assets/core-cards/simply-click/left-banner/simply-click-card-face.png",
+    officialImageUrl:
+      "https://www.sbicard.com/static-resources/img/card/product-detail-assets/core-cards/simply-click/left-banner/simply-click-card-face.png",
   },
   {
     id: "sbi-prime",
@@ -406,7 +439,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "SBI PRIME",
     patternType: "mesh",
     imageUrl: "/cards/sbi-prime.png",
-    officialImageUrl: "https://www.sbicard.com/static-resources/img/card/card-face-assets/for-website/front/horizontal/prime-sbi-card.png",
+    officialImageUrl:
+      "https://www.sbicard.com/static-resources/img/card/card-face-assets/for-website/front/horizontal/prime-sbi-card.png",
   },
   {
     id: "sbi-aurum",
@@ -421,7 +455,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "AURUM BESPOKE",
     patternType: "filigree",
     imageUrl: "/cards/sbi-aurum.png",
-    officialImageUrl: "https://www.sbicard.com/static-resources/img/card/card-face-assets/aurum-card/for-website/horizontal/aurum-card.png",
+    officialImageUrl:
+      "https://www.sbicard.com/static-resources/img/card/card-face-assets/aurum-card/for-website/horizontal/aurum-card.png",
   },
   {
     id: "sbi-simplysave",
@@ -559,7 +594,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "MAGNUS BURGUNDY",
     patternType: "filigree",
     imageUrl: "/cards/axis-magnus.png",
-    officialImageUrl: "https://www.axis.bank.in/images/default-source/magnus/webp/magnus-credit-card-banner-1920x665.webp",
+    officialImageUrl:
+      "https://www.axis.bank.in/images/default-source/magnus/webp/magnus-credit-card-banner-1920x665.webp",
   },
   {
     id: "axis-atlas",
@@ -626,7 +662,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "AXIS ACE 5%",
     patternType: "lines",
     imageUrl: "/cards/axis-ace.png",
-    officialImageUrl: "https://www.axis.bank.in/images/default-source/l4-banner/credit-card/ace-credit-card-mob-banner-1366x400.jpg",
+    officialImageUrl:
+      "https://www.axis.bank.in/images/default-source/l4-banner/credit-card/ace-credit-card-mob-banner-1366x400.jpg",
   },
   {
     id: "axis-flipkart",
@@ -649,7 +686,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "FLIPKART 5%",
     patternType: "swoosh",
     imageUrl: "/cards/axis-flipkart.png",
-    officialImageUrl: "https://www.axis.bank.in/images/default-source/l4-banner/credit-card/flipkart-credit-card-n-1366x400.jpg",
+    officialImageUrl:
+      "https://www.axis.bank.in/images/default-source/l4-banner/credit-card/flipkart-credit-card-n-1366x400.jpg",
   },
 
   // ── Federal Bank ────────────────────────────────────────────────────────────
@@ -674,7 +712,12 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     imageUrl: "/cards/federal-scapia.png",
     officialImageUrl: "https://www.scapia.cards/home/images/mYlN5AWxS0UVTPRRE4dtSlVSGCw.webp",
     suggestedVariants: [
-      { name: "Scapia RuPay UPI (Virtual)", network: "RuPay", cardType: "virtual", cardImageUrl: "/cards/federal-scapia.png" },
+      {
+        name: "Scapia RuPay UPI (Virtual)",
+        network: "RuPay",
+        cardType: "virtual",
+        cardImageUrl: "/cards/federal-scapia.png",
+      },
       { name: "Scapia Add-on Card", network: "Visa", cardType: "addon" },
     ],
   },
@@ -715,7 +758,11 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     imageUrl: "/cards/federal-celesta.png",
     officialImageUrl: "https://www.federalbank.co.in/documents/10180/77651086/Celesta+Visa.webp",
     suggestedVariants: [
-      { name: "Federal Celesta Mastercard World", network: "Mastercard", cardImageUrl: "/cards/federal-celesta.png" },
+      {
+        name: "Federal Celesta Mastercard World",
+        network: "Mastercard",
+        cardImageUrl: "/cards/federal-celesta.png",
+      },
     ],
   },
   {
@@ -740,7 +787,11 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     imageUrl: "/cards/federal-imperio.png",
     officialImageUrl: "https://www.federalbank.co.in/documents/10180/77651086/Imperio+Visa.webp",
     suggestedVariants: [
-      { name: "Federal Imperio Mastercard", network: "Mastercard", cardImageUrl: "/cards/federal-imperio.png" },
+      {
+        name: "Federal Imperio Mastercard",
+        network: "Mastercard",
+        cardImageUrl: "/cards/federal-imperio.png",
+      },
     ],
   },
   {
@@ -807,7 +858,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "AMEX PLATINUM",
     patternType: "filigree",
     imageUrl: "/cards/amex-platinum.png",
-    officialImageUrl: "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/platinumCarddec.png",
+    officialImageUrl:
+      "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/platinumCarddec.png",
   },
   {
     id: "amex-mrcc",
@@ -829,7 +881,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "MEMBERSHIP REWARDS",
     patternType: "mesh",
     imageUrl: "/cards/amex-mrcc.png",
-    officialImageUrl: "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/Membership_Rewards_Card.png",
+    officialImageUrl:
+      "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/Membership_Rewards_Card.png",
   },
   {
     id: "amex-reserve",
@@ -851,7 +904,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "PLATINUM RESERVE",
     patternType: "filigree",
     imageUrl: "/cards/amex-reserve.png",
-    officialImageUrl: "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/bold_reserve_in_960x608.png",
+    officialImageUrl:
+      "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/bold_reserve_in_960x608.png",
   },
   {
     id: "amex-gold",
@@ -866,7 +920,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "AMEX GOLD",
     patternType: "filigree",
     imageUrl: "/cards/amex-gold.png",
-    officialImageUrl: "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/Gold_Card.png",
+    officialImageUrl:
+      "https://icm.aexp-static.com/Internet/internationalcardshop/en_in/images/cards/Gold_Card.png",
   },
 
   // ── OneCard ─────────────────────────────────────────────────────────────────
@@ -930,7 +985,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "KOTAK WHITE RESERVE",
     patternType: "minimal",
     imageUrl: "/cards/kotak-white.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/herosliderbanner/White-Reserve-Card_360x216.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/herosliderbanner/White-Reserve-Card_360x216.jpg",
   },
   {
     id: "kotak-zen",
@@ -952,7 +1008,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "ZEN SIGNATURE",
     patternType: "filigree",
     imageUrl: "/cards/kotak-zen.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-Zen-t.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-Zen-t.jpg",
   },
   {
     id: "kotak-league",
@@ -975,7 +1032,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "LEAGUE PLATINUM",
     patternType: "mesh",
     imageUrl: "/cards/kotak-league.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-league-t.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-league-t.jpg",
   },
   {
     id: "kotak-air-plus",
@@ -1001,7 +1059,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "KOTAK AIR+ TRAVEL",
     patternType: "lines",
     imageUrl: "/cards/kotak-air-plus.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-air-t.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-air-t.jpg",
   },
   {
     id: "kotak-mojo",
@@ -1025,7 +1084,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "MOJO PLATINUM",
     patternType: "mesh",
     imageUrl: "/cards/kotak-mojo.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/herosliderbanner/MojoCC(CardMobile358x201)_V1.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/herosliderbanner/MojoCC(CardMobile358x201)_V1.jpg",
   },
   {
     id: "kotak-811",
@@ -1049,7 +1109,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "811 #DREAMDIFFERENT",
     patternType: "geometric",
     imageUrl: "/cards/kotak-811.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/811-dream-different-credit-card-t.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/811-dream-different-credit-card-t.jpg",
   },
   {
     id: "kotak-royale",
@@ -1071,7 +1132,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "ROYALE SIGNATURE",
     patternType: "filigree",
     imageUrl: "/cards/kotak-royale.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/Product-Card-Images-Mobile/royale-signature-credit-card.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/Product-Card-Images-Mobile/royale-signature-credit-card.jpg",
   },
   {
     id: "kotak-privy-league",
@@ -1093,7 +1155,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "PRIVY LEAGUE SIGNATURE",
     patternType: "filigree",
     imageUrl: "/cards/kotak-privy-league.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/Product-Card-Images-Mobile/privy-league-signature-credit-card.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/Product-Card-Images-Mobile/privy-league-signature-credit-card.jpg",
   },
   {
     id: "kotak-iocl",
@@ -1115,7 +1178,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "INDIANOIL RUPAY",
     patternType: "lines",
     imageUrl: "/cards/kotak-iocl.png",
-    officialImageUrl: "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-IOCL-t.jpg",
+    officialImageUrl:
+      "https://www.kotak.bank.in/content/dam/Kotak/product_card_images/Thumbnail-Banners-for-IOCL-t.jpg",
   },
 
   // ── IndusInd Bank ───────────────────────────────────────────────────────────
@@ -1143,7 +1207,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "AVIOS INFINITE",
     patternType: "lines",
     imageUrl: "/cards/indusind-avios.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Avios-Visa-BG-Card.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Avios-Visa-BG-Card.webp",
   },
   {
     id: "indusind-legend",
@@ -1164,7 +1229,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "LEGEND SIGNATURE",
     patternType: "lines",
     imageUrl: "/cards/indusind-legend.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Legend_card-image_396x257px.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Legend_card-image_396x257px.webp",
   },
   {
     id: "indusind-pinnacle",
@@ -1179,7 +1245,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "PINNACLE LUXURY",
     patternType: "filigree",
     imageUrl: "/cards/indusind-pinnacle.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/IB_Pinnacle-Card_397x257.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/IB_Pinnacle-Card_397x257.webp",
   },
   {
     id: "indusind-platinum-rupay",
@@ -1194,7 +1261,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "PLATINUM RUPAY",
     patternType: "lines",
     imageUrl: "/cards/indusind-platinum-rupay.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/IndusInd-Platinum-Rupay-Credit-Card-397x257.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/IndusInd-Platinum-Rupay-Credit-Card-397x257.webp",
   },
   {
     id: "indusind-eazydiner",
@@ -1209,7 +1277,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "EAZYDINER DINING",
     patternType: "lines",
     imageUrl: "/cards/indusind-eazydiner.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Easydiner_No-Network.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Easydiner_No-Network.webp",
   },
   {
     id: "indusind-tiger",
@@ -1224,7 +1293,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "TIGER SIGNATURE",
     patternType: "lines",
     imageUrl: "/cards/indusind-tiger.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Card-Tiger-CC.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Card-Tiger-CC.webp",
   },
   {
     id: "indusind-samman",
@@ -1232,14 +1302,21 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     bankName: "IndusInd Bank",
     network: "RuPay",
     category: "rewards",
-    tags: ["indusind samman rupay", "indusind samman", "samman rupay", "samman credit card", "samman"],
+    tags: [
+      "indusind samman rupay",
+      "indusind samman",
+      "samman rupay",
+      "samman credit card",
+      "samman",
+    ],
     bgGradient: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0f172a 100%)",
     accentColor: "#60a5fa",
     textColor: "#ffffff",
     badgeText: "SAMMAN RUPAY",
     patternType: "lines",
     imageUrl: "/cards/indusind-samman.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Samman-card-img-397x257px.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/Samman-card-img-397x257px.webp",
   },
   {
     id: "indusind-nexxt",
@@ -1254,7 +1331,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "NEXXT INTERACTIVE",
     patternType: "lines",
     imageUrl: "/cards/indusind-nexxt.png",
-    officialImageUrl: "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/nexxt-credit-card.webp",
+    officialImageUrl:
+      "https://www.indusind.bank.in/content/dam/indusind-platform-images/carousal-banner-images/credit-card/new-webp-cc-/cards-th-image/nexxt-credit-card.webp",
   },
 
   // ── IDFC FIRST Bank ─────────────────────────────────────────────────────────
@@ -1282,7 +1360,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "FIRST WEALTH",
     patternType: "lines",
     imageUrl: "/cards/idfc-wealth.png",
-    officialImageUrl: "https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/images/first-cc-rewamp/first-wealth/3-m-01.webp",
+    officialImageUrl:
+      "https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/images/first-cc-rewamp/first-wealth/3-m-01.webp",
   },
   {
     id: "idfc-wow",
@@ -1307,7 +1386,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "FIRST WOW · 0% FOREX",
     patternType: "lines",
     imageUrl: "/cards/idfc-wow.png",
-    officialImageUrl: "https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/images/wow-rewamp/Banner-Desktop-002-new-updated.webp",
+    officialImageUrl:
+      "https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/images/wow-rewamp/Banner-Desktop-002-new-updated.webp",
   },
 
   // ── AU Small Finance Bank ───────────────────────────────────────────────────
@@ -1324,7 +1404,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "ZENITH+ METAL",
     patternType: "mesh",
     imageUrl: "/cards/au-zenith.png",
-    officialImageUrl: "https://aemassets.au.bank.in/is/image/aubank/pb-cc-zpcc-masthead-11Feb26?fmt=webp",
+    officialImageUrl:
+      "https://aemassets.au.bank.in/is/image/aubank/pb-cc-zpcc-masthead-11Feb26?fmt=webp",
   },
 
   // ── Standard Chartered ──────────────────────────────────────────────────────
@@ -1412,7 +1493,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "HSBC LIVE+ 10%",
     patternType: "lines",
     imageUrl: "/cards/hsbc-live-plus.png",
-    officialImageUrl: "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/live-plus-card.png",
+    officialImageUrl:
+      "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/live-plus-card.png",
   },
   {
     id: "hsbc-premier",
@@ -1434,7 +1516,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "HSBC PREMIER",
     patternType: "lines",
     imageUrl: "/cards/hsbc-premier.png",
-    officialImageUrl: "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/hsbc-premier-credit-card.png",
+    officialImageUrl:
+      "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/hsbc-premier-credit-card.png",
   },
   {
     id: "hsbc-platinum",
@@ -1454,7 +1537,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "HSBC PLATINUM",
     patternType: "lines",
     imageUrl: "/cards/hsbc-platinum.png",
-    officialImageUrl: "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/hsbc-visa-platinum-credit-card.png",
+    officialImageUrl:
+      "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/hsbc-visa-platinum-credit-card.png",
   },
   {
     id: "hsbc-travel-one",
@@ -1477,7 +1561,8 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
     badgeText: "HSBC TRAVELONE",
     patternType: "lines",
     imageUrl: "/cards/hsbc-travel-one.png",
-    officialImageUrl: "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/hsbc-travelone-credit-card.png",
+    officialImageUrl:
+      "https://www.hsbc.co.in/content/dam/hsbc/in/images/credit-cards/hsbc-travelone-credit-card.png",
   },
 
   // ── RBL Bank ────────────────────────────────────────────────────────────────
@@ -1528,6 +1613,191 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
 
   // ── YES Bank ────────────────────────────────────────────────────────────────
   {
+    id: "yes-marquee",
+    name: "YES Bank Marquee",
+    bankName: "YES Bank",
+    network: "Visa",
+    category: "metal",
+    tags: [
+      "yes bank marquee",
+      "yes marquee",
+      "marquee",
+      "marquee metal",
+      "yes bank marquee credit card",
+      "yes bank metal",
+      "marquee credit card",
+    ],
+    bgGradient: "linear-gradient(135deg, #090a0f 0%, #171922 50%, #090a0f 100%)",
+    accentColor: "#e2e8f0",
+    textColor: "#f8fafc",
+    badgeText: "MARQUÉE METAL 4.5%",
+    patternType: "wave",
+    imageUrl: "/cards/yes-marquee.png",
+  },
+  {
+    id: "yes-reserv",
+    name: "YES Bank Reserv Credit Card",
+    bankName: "YES Bank",
+    network: "Visa",
+    category: "premium",
+    tags: [
+      "yes bank reserv",
+      "yes reserv",
+      "reserv",
+      "reserv credit card",
+      "yes bank reserv credit card",
+      "yes reserv credit card",
+    ],
+    bgGradient: "linear-gradient(135deg, #071530 0%, #0f2c6b 50%, #081636 100%)",
+    accentColor: "#93c5fd",
+    textColor: "#ffffff",
+    badgeText: "RESERV LUXURY 3%",
+    patternType: "wave",
+    imageUrl: "/cards/yes-reserv.png",
+  },
+  {
+    id: "yes-elite",
+    name: "YES Bank Elite+ Credit Card",
+    bankName: "YES Bank",
+    network: "Visa",
+    category: "rewards",
+    tags: [
+      "yes bank elite",
+      "yes bank elite+",
+      "yes elite",
+      "elite+",
+      "yes bank elite plus",
+      "yes bank elite credit card",
+      "yes premia elite",
+    ],
+    bgGradient: "linear-gradient(135deg, #0a2560 0%, #134db2 50%, #092154 100%)",
+    accentColor: "#60a5fa",
+    textColor: "#ffffff",
+    badgeText: "ELITE+ REWARDS",
+    patternType: "wave",
+    imageUrl: "/cards/yes-elite.png",
+  },
+  {
+    id: "yes-select",
+    name: "YES Bank Select Credit Card",
+    bankName: "YES Bank",
+    network: "Visa",
+    category: "rewards",
+    tags: [
+      "yes bank select",
+      "yes select",
+      "select",
+      "yes bank select credit card",
+      "yes prosperity edge select",
+      "edge select",
+    ],
+    bgGradient: "linear-gradient(135deg, #06394c 0%, #0b728c 50%, #074558 100%)",
+    accentColor: "#38bdf8",
+    textColor: "#ffffff",
+    badgeText: "SELECT SHOPPING",
+    patternType: "wave",
+    imageUrl: "/cards/yes-select.png",
+  },
+  {
+    id: "yes-ace",
+    name: "YES Bank ACE Credit Card",
+    bankName: "YES Bank",
+    network: "Visa",
+    category: "rewards",
+    tags: [
+      "yes bank ace",
+      "yes ace",
+      "ace",
+      "yes bank ace credit card",
+      "yes prosperity rewards plus ace",
+      "rewards plus ace",
+    ],
+    bgGradient: "linear-gradient(135deg, #1e293b 0%, #334155 50%, #0f172a 100%)",
+    accentColor: "#cbd5e1",
+    textColor: "#ffffff",
+    badgeText: "ACE ACCELERATED",
+    patternType: "dots",
+    imageUrl: "/cards/yes-ace.png",
+  },
+  {
+    id: "yes-first-preferred",
+    name: "YES FIRST Preferred Credit Card",
+    bankName: "YES Bank",
+    network: "Visa",
+    category: "travel",
+    tags: [
+      "yes first preferred",
+      "yes first",
+      "first preferred",
+      "yes bank first preferred",
+      "yes first preferred credit card",
+      "yes bank first preferred credit card",
+    ],
+    bgGradient: "linear-gradient(135deg, #0c1427 0%, #162344 50%, #0a0f1d 100%)",
+    accentColor: "#fbbf24",
+    textColor: "#fef3c7",
+    badgeText: "FIRST PREFERRED TRAVEL",
+    patternType: "filigree",
+    imageUrl: "/cards/yes-first-preferred.png",
+  },
+  {
+    id: "yes-byoc",
+    name: "YES Bank BYOC Credit Card",
+    bankName: "YES Bank",
+    network: "Visa",
+    category: "custom",
+    tags: ["yes bank byoc", "byoc", "build your own card", "yes byoc", "yes bank byoc credit card"],
+    bgGradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #022c22 100%)",
+    accentColor: "#4ade80",
+    textColor: "#ffffff",
+    badgeText: "BYOC 10% CASHBACK",
+    patternType: "circuit",
+    imageUrl: "/cards/yes-byoc.png",
+  },
+  {
+    id: "yes-kiwi",
+    name: "YES Bank Kiwi RuPay Credit Card",
+    bankName: "YES Bank",
+    network: "RuPay",
+    category: "upi",
+    tags: [
+      "yes bank kiwi",
+      "kiwi rupay",
+      "kiwi yes bank",
+      "kiwi credit card",
+      "yes bank kiwi credit card",
+      "gokiwi",
+      "kiwi",
+    ],
+    bgGradient: "linear-gradient(135deg, #18191c 0%, #27272a 50%, #14532d 100%)",
+    accentColor: "#a3e635",
+    textColor: "#ffffff",
+    badgeText: "KIWI 2% UPI CASHBACK",
+    patternType: "stripes",
+    imageUrl: "/cards/yes-kiwi.png",
+  },
+  {
+    id: "yes-popclub",
+    name: "YES Bank Popclub RuPay Credit Card",
+    bankName: "YES Bank",
+    network: "RuPay",
+    category: "co-brand",
+    tags: [
+      "yes bank popclub",
+      "popclub",
+      "pop-club",
+      "yes popclub",
+      "yes bank pop club",
+      "pop club credit card",
+    ],
+    bgGradient: "linear-gradient(135deg, #3b0764 0%, #701a75 50%, #be185d 100%)",
+    accentColor: "#f472b6",
+    textColor: "#ffffff",
+    badgeText: "POP-CLUB 10% COINS",
+    patternType: "wave",
+    imageUrl: "/cards/yes-popclub.png",
+  },
+  {
     id: "yes-uni",
     name: "YES Bank Uni Credit Card",
     bankName: "YES Bank",
@@ -1541,27 +1811,14 @@ export const CARD_ART_PRESETS: CardArtPreset[] = [
       "uni carbon",
       "yes uni",
       "uni",
+      "uni nx wave",
     ],
-    bgGradient: "linear-gradient(135deg, #18181b 0%, #2e1065 50%, #09090b 100%)",
-    accentColor: "#a855f7",
-    textColor: "#ffffff",
-    badgeText: "UNI 1/3RD CARD",
-    patternType: "wave",
+    bgGradient: "linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%)",
+    accentColor: "#06b6d4",
+    textColor: "#0f172a",
+    badgeText: "UNI 1/3RD 1% CASHBACK",
+    patternType: "minimal",
     imageUrl: "/cards/yes-uni.png",
-  },
-  {
-    id: "yes-marquee",
-    name: "YES Bank Marquee",
-    bankName: "YES Bank",
-    network: "Visa",
-    category: "metal",
-    tags: ["yes bank", "marquee", "yes marquee"],
-    bgGradient: "linear-gradient(135deg, #18181b 0%, #27272a 50%, #09090b 100%)",
-    accentColor: "#fbbf24",
-    textColor: "#fef3c7",
-    badgeText: "MARQUEE METAL",
-    patternType: "filigree",
-    imageUrl: "/cards/yes-marquee.png",
   },
 
   // ── Citibank ────────────────────────────────────────────────────────────────
@@ -1761,10 +2018,7 @@ export function getMatchingCardPreset(
   return null;
 }
 
-export function searchCardPresets(
-  query: string,
-  category = "all"
-): CardArtPreset[] {
+export function searchCardPresets(query: string, category = "all"): CardArtPreset[] {
   const q = (query || "").toLowerCase().trim();
   return CARD_ART_PRESETS.filter((p) => {
     const matchesCat = category === "all" || p.category === category;
@@ -1829,7 +2083,9 @@ export function resolveCardArtwork(item: {
   if (matched) {
     return {
       hasCustomImage: hasCustom,
-      imageUrl: hasCustom ? (item.cardImageUrl || "") : (matched.imageUrl || matched.officialImageUrl || ""),
+      imageUrl: hasCustom
+        ? item.cardImageUrl || ""
+        : matched.imageUrl || matched.officialImageUrl || "",
       bgGradient: matched.bgGradient,
       accentColor: matched.accentColor,
       textColor: matched.textColor,
@@ -1843,7 +2099,7 @@ export function resolveCardArtwork(item: {
   // Default fallback
   return {
     hasCustomImage: hasCustom,
-    imageUrl: hasCustom ? (item.cardImageUrl || "") : "",
+    imageUrl: hasCustom ? item.cardImageUrl || "" : "",
     bgGradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #020617 100%)",
     accentColor: "#38bdf8",
     textColor: "#ffffff",
