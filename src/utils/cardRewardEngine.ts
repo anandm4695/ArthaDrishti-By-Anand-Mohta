@@ -3452,7 +3452,7 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
     ],
   },
   {
-    matchKeys: ["kotak indianoil", "kotak iocl", "indianoil rupay", "kotak indianoil rupay"],
+    matchKeys: ["kotak-iocl", "kotak indianoil", "kotak iocl", "kotak indianoil rupay"],
     cardDisplayName: "Kotak IndianOil RuPay",
     merchantPerks: {
       fuel_pumps: {
@@ -4069,6 +4069,733 @@ export const CARD_PERK_RULES: CardPerkRule[] = [
       "Zero joining fee and lifetime free privileges",
     ],
   },
+
+  // ── RBL Bank Cards (Phase 14) ────────────────────────────────────────────────
+  {
+    matchKeys: [
+      "rbl-world-safari",
+      "world safari",
+      "rbl world safari",
+      "safari",
+      "rbl safari",
+      "world safari credit card",
+    ],
+    cardDisplayName: "RBL World Safari",
+    merchantPerks: {
+      makemytrip: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5 Travel Points per ₹100 spent on travel reservations (1 TP = ₹1 on travel redemptions)",
+        badge: "5% Travel Points",
+      },
+      easemytrip: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5 Travel Points per ₹100 spent on travel tickets",
+      },
+      cleartrip: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5 Travel Points per ₹100 on flight & hotel bookings",
+      },
+      yatra: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5 Travel Points per ₹100 on travel reservations",
+      },
+      forex_international: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "0% foreign currency markup fee across all global spends + 2 Travel Points/₹100 (total ~5.85% value savings)",
+        badge: "0% Forex Markup",
+      },
+      irctc: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2 Travel Points per ₹100 on train tickets",
+      },
+    },
+    categoryPerks: {
+      "Travel & Flights": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "5 Travel Points per ₹100 spent on travel bookings (1 TP = ₹1 on travel redemptions)",
+      },
+      International: {
+        returnPct: 5.85,
+        perkType: "cashback",
+        description: "Zero (0%) forex markup fee on all foreign currency transactions + 2 Travel Points/₹100",
+      },
+      Entertainment: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2 Travel Points per ₹100 spent",
+      },
+      "Online Shopping": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2 Travel Points per ₹100 spent on all regular retail transactions",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 2.0,
+    specialPerks: [
+      "Zero (0%) foreign currency markup fee on international transactions",
+      "5 Travel Points per ₹100 spent on Travel (1 Travel Point = ₹1.00 on travel redemptions)",
+      "2 complimentary domestic airport lounge visits per calendar quarter",
+      "Complimentary Priority Pass membership with 2 free international lounge visits",
+      "Milestone bonus: 10,000 Travel Points on ₹2.5L spend, 15,000 TP on ₹5L annual spend",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-insignia",
+      "insignia",
+      "rbl insignia",
+      "insignia preferred",
+      "rbl insignia preferred banking",
+      "insignia world",
+    ],
+    cardDisplayName: "RBL Insignia Preferred Banking",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "Buy one get one free movie ticket up to ₹500 off, up to 4 free tickets monthly (₹2,000/mo savings)",
+        badge: "4 Free Tickets/mo",
+      },
+      forex_international: {
+        returnPct: 3.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 on foreign spends with low 1.5% forex markup fee",
+        badge: "1.5% Low Forex",
+      },
+      taj: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹100 on luxury dining and Taj Epicure privileges",
+      },
+      eazydiner: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "Dining concierge reservations with accelerated reward points",
+      },
+    },
+    categoryPerks: {
+      "Movies & Cinema": {
+        returnPct: 15.0,
+        perkType: "discount",
+        description: "4 complimentary movie tickets every month on BookMyShow (BOGO up to ₹500 per ticket)",
+      },
+      International: {
+        returnPct: 3.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 on foreign spends with low 1.5% forex markup fee",
+      },
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹100 spent on dining across premium restaurants",
+      },
+      "Travel & Flights": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "Unlimited domestic and international airport lounge access via Priority Pass",
+      },
+    },
+    defaultOnlineReturnPct: 1.25,
+    defaultOfflineReturnPct: 1.25,
+    specialPerks: [
+      "Unlimited complimentary domestic and international airport lounge visits",
+      "4 complimentary BookMyShow movie tickets every month (BOGO up to ₹500 per ticket)",
+      "2 complimentary golf rounds and 2 golf lessons per month at premier golf courses",
+      "Low foreign exchange markup fee of 1.5%",
+      "24/7 dedicated Insignia lifestyle concierge & master butler service",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-icon",
+      "icon",
+      "rbl icon",
+      "rbl icon world",
+      "icon credit card",
+    ],
+    cardDisplayName: "RBL Icon",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "Buy one get one free movie ticket up to ₹200 off, up to 2 free tickets per month",
+        badge: "BOGO BMS ₹200",
+      },
+      zomato: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 on dining and food orders (5% value back)",
+        badge: "20 RP / ₹100",
+      },
+      swiggy: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 on dining & food delivery",
+      },
+      makemytrip: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 on international travel & hotel reservations",
+      },
+      forex_international: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 spent on all international transactions",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 spent on dining (1 RP = ₹0.25)",
+      },
+      International: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 spent on all international transactions",
+      },
+      "Movies & Cinema": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "BOGO BookMyShow movie tickets up to ₹200/ticket, 2 free tickets per month",
+      },
+      "Travel & Flights": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "2 complimentary domestic lounge visits per calendar quarter",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "20 Reward Points per ₹100 spent on Dining, International, and Hotels (5% value back)",
+      "Buy 1 Get 1 free movie ticket up to ₹200 every month on BookMyShow (2 tickets/month)",
+      "2 complimentary domestic airport lounge visits per calendar quarter",
+      "Complimentary golf privileges: access to leading courses across India",
+      "Annual milestone bonus: 10,000 RP on ₹3L spend, additional 15,000 RP on ₹5L spend",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-shoprite",
+      "shoprite",
+      "rbl shoprite",
+      "rbl shop rite",
+      "shop rite",
+    ],
+    cardDisplayName: "RBL ShopRite",
+    merchantPerks: {
+      blinkit: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 (5% value back) on groceries & superstores",
+        badge: "5% Groceries",
+      },
+      zepto: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 on quick commerce groceries",
+      },
+      instamart: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 on Swiggy Instamart groceries",
+      },
+      bigbasket: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 on grocery shopping",
+      },
+      dmart: {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 at grocery supermarkets",
+      },
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on BookMyShow movie tickets (up to ₹100/order, 15 times/year)",
+      },
+      fuel_surcharge: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (2.5%) on fuel + 1% fuel surcharge waiver",
+      },
+    },
+    categoryPerks: {
+      "Groceries & Essentials": {
+        returnPct: 5.0,
+        perkType: "reward_points",
+        description: "20 Reward Points per ₹100 spent on groceries (up to 1,000 points/month)",
+      },
+      Fuel: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 spent on fuel purchases + 1% surcharge waiver",
+      },
+      "Movies & Cinema": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "10% instant discount on BookMyShow tickets (up to ₹100 per transaction)",
+      },
+    },
+    defaultOnlineReturnPct: 0.25,
+    defaultOfflineReturnPct: 0.25,
+    specialPerks: [
+      "20 Reward Points per ₹100 on Grocery shopping (5% value back, capped at 1,000 RP/mo)",
+      "10 Reward Points per ₹100 on Fuel purchases (2.5% value back, capped at 1,000 RP/mo)",
+      "10% discount on BookMyShow movie tickets (up to ₹100 discount, 15 times/yr)",
+      "Fuel surcharge waiver up to ₹100 per month across all fuel stations",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-play",
+      "rbl play",
+      "rbl play bookmyshow",
+      "rbl bms",
+      "play bookmyshow",
+      "play credit card",
+    ],
+    cardDisplayName: "RBL Play BookMyShow",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "2 complimentary movie tickets up to ₹250 each per month on ₹5,000 spend + ₹100 F&B discount",
+        badge: "2 Free BMS Tickets",
+      },
+      zomato: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 on dining",
+      },
+      swiggy: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 on food delivery",
+      },
+    },
+    categoryPerks: {
+      "Movies & Cinema": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "2 free movie tickets up to ₹250 each every month on monthly spend of ₹5,000 (₹500/month benefit)",
+      },
+      "Food & Dining": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 spent",
+      },
+      "Online Shopping": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 spent",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "2 free movie tickets up to ₹250 per ticket on BookMyShow every month on spending ₹5,000",
+      "₹100 off on food & beverage purchases on BookMyShow tickets",
+      "Welcome benefit: ₹500 BookMyShow voucher on card setup",
+      "Fuel surcharge waiver at all petrol pumps for transactions between ₹500 and ₹4,000",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-cookies",
+      "cookies",
+      "rbl cookie",
+      "rbl cookies",
+      "cookies credit card",
+    ],
+    cardDisplayName: "RBL Cookies",
+    merchantPerks: {
+      zomato: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Zomato food delivery (up to ₹300 per month)",
+        badge: "10% Cashback",
+      },
+      swiggy: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Swiggy dining & food orders (up to ₹300 per month)",
+        badge: "10% Cashback",
+      },
+      blinkit: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Blinkit grocery delivery (up to ₹300 per month)",
+        badge: "10% Cashback",
+      },
+      uber: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on Uber cab rides (up to ₹300 per month)",
+        badge: "10% Cashback",
+      },
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% cashback on BookMyShow movie bookings (up to ₹300 per month)",
+        badge: "10% Cashback",
+      },
+      myntra: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹100 on online apparel shopping",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% instant cashback on Zomato & Swiggy orders (up to ₹300/month each)",
+      },
+      "Groceries & Essentials": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% instant cashback on Blinkit quick commerce (up to ₹300/month)",
+      },
+      "Cabs & Commute": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% instant cashback on Uber rides (up to ₹300/month)",
+      },
+      "Movies & Cinema": {
+        returnPct: 10.0,
+        perkType: "cashback",
+        description: "10% instant cashback on BookMyShow movie tickets (up to ₹300/month)",
+      },
+      "Online Shopping": {
+        returnPct: 1.25,
+        perkType: "reward_points",
+        description: "5 Reward Points per ₹100 on all online spends (₹0.25/point)",
+      },
+    },
+    defaultOnlineReturnPct: 1.25,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "10% cashback on Zomato, Swiggy, Blinkit, Uber, and BookMyShow (up to ₹300/merchant/month)",
+      "5 Reward Points per ₹100 on all online shopping transactions",
+      "2 Reward Points per ₹100 on all offline retail spends",
+      "Welcome gift voucher worth ₹1,000 on spending ₹10,000 within first 30 days",
+      "Annual fee waiver on spending ₹1.5 Lakhs in preceding year",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-popcorn",
+      "popcorn",
+      "rbl popcorn",
+      "rbl popcorn movie",
+    ],
+    cardDisplayName: "RBL Popcorn",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 12.0,
+        perkType: "discount",
+        description: "Up to 4 free movie tickets every month (up to 24 free tickets/yr, ₹250/ticket on BMS)",
+        badge: "24 Movies/Yr",
+      },
+      pvr: {
+        returnPct: 12.0,
+        perkType: "discount",
+        description: "BookMyShow movie ticket redemption across PVR / INOX screens",
+      },
+    },
+    categoryPerks: {
+      "Movies & Cinema": {
+        returnPct: 12.0,
+        perkType: "discount",
+        description: "Up to 4 free movie tickets/month worth up to ₹250 each on ₹5,000 monthly spend (up to 24 tickets/year)",
+      },
+      "Food & Dining": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 spent",
+      },
+      "Online Shopping": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 spent",
+      },
+    },
+    defaultOnlineReturnPct: 1.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "Up to 24 free BookMyShow movie tickets per year (4 tickets/month up to ₹250 each on ₹5k spend)",
+      "Complimentary ₹100 F&B discount on movie ticket bookings",
+      "Fuel surcharge waiver for fuel transactions between ₹500 and ₹4,000 (up to ₹100/mo)",
+      "1 Reward Point per ₹100 spent on all regular retail purchases",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-platinum-maxima",
+      "platinum maxima",
+      "rbl platinum maxima",
+      "rbl maxima",
+      "maxima",
+    ],
+    cardDisplayName: "RBL Platinum Maxima",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "1 free BookMyShow movie ticket per month up to ₹200 on buying 2 or more tickets",
+        badge: "Free BMS Ticket",
+      },
+      zomato: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards = 2.5% value) on dining",
+        badge: "5X Rewards",
+      },
+      swiggy: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards) on dining & food delivery",
+      },
+      forex_international: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards) on international spends",
+      },
+      fuel_surcharge: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards) on fuel purchases",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards, 2.5% value) on Dining",
+      },
+      Entertainment: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards) on Entertainment & Movies",
+      },
+      Fuel: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards) on Fuel purchases",
+      },
+      International: {
+        returnPct: 2.5,
+        perkType: "reward_points",
+        description: "10 Reward Points per ₹100 (5X rewards) on International spends",
+      },
+      "Travel & Flights": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2 complimentary domestic airport lounge visits per calendar quarter",
+      },
+    },
+    defaultOnlineReturnPct: 0.5,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "5X Rewards (10 Reward Points per ₹100) on Dining, Entertainment, Fuel, and International spends",
+      "2 Reward Points per ₹100 on all other regular retail purchases",
+      "1 complimentary BookMyShow movie ticket every month up to ₹200 on buying 2+ tickets",
+      "2 complimentary domestic airport lounge visits per calendar quarter",
+      "Milestone bonus: 10,000 RP on ₹2L spend + 10,000 RP on ₹3.5L annual spend",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-bfl-supercard",
+      "supercard",
+      "rbl bfl supercard",
+      "bajaj supercard",
+      "bajaj finserv supercard",
+      "bfl supercard",
+    ],
+    cardDisplayName: "RBL Bajaj Finserv SuperCard",
+    merchantPerks: {
+      bookmyshow: {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "Buy 1 Get 1 free movie ticket up to ₹200 on BookMyShow (1 ticket per month)",
+        badge: "1+1 BMS Ticket",
+      },
+      amazon: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2X Reward Points on all online shopping purchases (2% return)",
+        badge: "2X Online RP",
+      },
+      flipkart: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2X Reward Points on online marketplace orders",
+      },
+      myntra: {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2X Reward Points on online fashion",
+      },
+    },
+    categoryPerks: {
+      "Online Shopping": {
+        returnPct: 2.0,
+        perkType: "reward_points",
+        description: "2X Reward Points (2 RP per ₹100) on online spends",
+      },
+      "Movies & Cinema": {
+        returnPct: 10.0,
+        perkType: "discount",
+        description: "1+1 free BookMyShow movie ticket per month (up to ₹200 off)",
+      },
+      "Emergency & Cash": {
+        returnPct: 3.0,
+        perkType: "cashback",
+        description: "50-day interest-free emergency ATM cash withdrawal facility",
+      },
+    },
+    defaultOnlineReturnPct: 2.0,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "4-in-1 card: Credit Card, Cash Card, Loan Card, and EMI Network Card in one",
+      "50 days interest-free emergency ATM cash withdrawal without processing charges",
+      "Convert transactions of ₹2,500+ into easy EMIs at 0% or low interest rates",
+      "Buy 1 Get 1 free BookMyShow movie ticket every month up to ₹200 off",
+      "Fuel surcharge waiver up to ₹100 per month across all fuel outlets",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-indianoil",
+      "rbl indianoil",
+      "rbl indian oil",
+      "iocl rbl",
+      "rbl iocl",
+      "rbl indianoil rupay",
+    ],
+    cardDisplayName: "RBL IndianOil RuPay",
+    merchantPerks: {
+      indianoil: {
+        returnPct: 8.5,
+        perkType: "reward_points",
+        description: "Up to 8.5% savings on fuel at IndianOil pumps (30 RP / ₹100 = 7.5% + 1% surcharge waiver)",
+        badge: "8.5% Fuel Savings",
+      },
+      hpcl: {
+        returnPct: 1.0,
+        perkType: "waiver",
+        description: "1% fuel surcharge waiver",
+      },
+      bpcl: {
+        returnPct: 1.0,
+        perkType: "waiver",
+        description: "1% fuel surcharge waiver",
+      },
+      upi: {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "1 Reward Point per ₹100 on UPI merchant QR payments via RuPay",
+      },
+    },
+    categoryPerks: {
+      Fuel: {
+        returnPct: 8.5,
+        perkType: "reward_points",
+        description: "30 Reward Points per ₹100 (7.5% value) on IndianOil fuel purchases + 1% fuel surcharge waiver",
+      },
+      "UPI Payments": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "Seamless RuPay UPI payments at merchant QR codes with reward points",
+      },
+      "Groceries & Essentials": {
+        returnPct: 1.0,
+        perkType: "reward_points",
+        description: "4 Reward Points per ₹100 spent",
+      },
+    },
+    defaultOnlineReturnPct: 0.75,
+    defaultOfflineReturnPct: 0.5,
+    specialPerks: [
+      "Up to 8.5% total fuel savings at IndianOil pumps (30 RP / ₹100 + 1% surcharge waiver)",
+      "RuPay credit card on UPI: Scan and pay at merchant QR codes seamlessly via any UPI app",
+      "4 Reward Points per ₹100 spent on Groceries & Supermarkets",
+      "Welcome benefit: Up to 1,000 Reward Points on making first fuel transaction within 30 days",
+      "Annual fee waiver on spending ₹50,000 in previous calendar year",
+    ],
+  },
+  {
+    matchKeys: [
+      "rbl-zomato",
+      "zomato edition",
+      "rbl zomato",
+      "zomato credit card",
+      "zomato edition classic",
+    ],
+    cardDisplayName: "RBL Zomato Edition",
+    merchantPerks: {
+      zomato: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback as Edition Classic Cash on all Zomato restaurant dining and food delivery",
+        badge: "5% Zomato Cash",
+      },
+      blinkit: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback as Edition Cash on all Blinkit grocery delivery orders",
+        badge: "5% Blinkit",
+      },
+      swiggy: {
+        returnPct: 1.5,
+        perkType: "cashback",
+        description: "1.5% cashback on online food delivery orders",
+      },
+      eazydiner: {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on dining reservations and bills",
+      },
+    },
+    categoryPerks: {
+      "Food & Dining": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on all Zomato orders & restaurant dining (1 Edition Cash = ₹1)",
+      },
+      "Groceries & Essentials": {
+        returnPct: 5.0,
+        perkType: "cashback",
+        description: "5% cashback on Blinkit quick commerce orders",
+      },
+      "Online Shopping": {
+        returnPct: 1.5,
+        perkType: "cashback",
+        description: "1.5% cashback on all other online purchases",
+      },
+    },
+    defaultOnlineReturnPct: 1.5,
+    defaultOfflineReturnPct: 1.0,
+    specialPerks: [
+      "5% cashback on Zomato food delivery and restaurant dining bills (1 Edition Cash = ₹1)",
+      "5% cashback on Blinkit grocery and essentials delivery",
+      "1.5% cashback on all other online spends across merchants",
+      "1.0% cashback on all offline retail transactions",
+      "Complimentary Zomato Pro / Gold membership privileges",
+    ],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4091,6 +4818,18 @@ export function findCardPerkRule(card: any): CardPerkRule | null {
   const cardWords = cardName.split(/\s+/);
   const network = cleanKey(card.network || "");
 
+  // Pass 1: Exact ID matching
+  if (cardId) {
+    for (const rule of CARD_PERK_RULES) {
+      for (const key of rule.matchKeys) {
+        if (cleanKey(key) === cardId) {
+          return rule;
+        }
+      }
+    }
+  }
+
+  // Pass 2: Keyword and name matching
   for (const rule of CARD_PERK_RULES) {
     for (const key of rule.matchKeys) {
       const cleanK = cleanKey(key);
@@ -4102,7 +4841,7 @@ export function findCardPerkRule(card: any): CardPerkRule | null {
         ? cardName.includes(cleanK)
         : cardWords.includes(cleanK);
       const isMatch =
-        idMatch || nameMatch || (cleanK.includes("rupay") && network.includes("rupay"));
+        idMatch || nameMatch || (cleanK === "rupay" && network.includes("rupay"));
 
       if (isMatch) {
         return rule;

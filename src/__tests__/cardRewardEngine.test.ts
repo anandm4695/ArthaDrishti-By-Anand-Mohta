@@ -539,5 +539,183 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
     expect(prCard?.returnPct).toBe(1.25);
     expect(prCard?.savingsInINR).toBe(25);
   });
+
+  it("RBL Bank Credit Cards Reward Engine (Phase 14)", () => {
+    const rblPortfolio: StoredCard[] = [
+      {
+        id: "rbl-world-safari",
+        issuer: "RBL World Safari",
+        cardName: "RBL World Safari",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-insignia",
+        issuer: "RBL Insignia Preferred Banking",
+        cardName: "RBL Insignia Preferred Banking",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-icon",
+        issuer: "RBL Icon",
+        cardName: "RBL Icon",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-shoprite",
+        issuer: "RBL ShopRite",
+        cardName: "RBL ShopRite",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-play",
+        issuer: "RBL Play BookMyShow",
+        cardName: "RBL Play BookMyShow",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-cookies",
+        issuer: "RBL Cookies",
+        cardName: "RBL Cookies",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-popcorn",
+        issuer: "RBL Popcorn",
+        cardName: "RBL Popcorn",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-platinum-maxima",
+        issuer: "RBL Platinum Maxima",
+        cardName: "RBL Platinum Maxima",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-bfl-supercard",
+        issuer: "RBL Bajaj Finserv SuperCard",
+        cardName: "RBL Bajaj Finserv SuperCard",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-indianoil",
+        issuer: "RBL IndianOil RuPay",
+        cardName: "RBL IndianOil RuPay",
+        network: "RuPay",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+      {
+        id: "rbl-zomato",
+        issuer: "RBL Zomato Edition",
+        cardName: "RBL Zomato Edition",
+        network: "Mastercard",
+        billingCycleDay: 1,
+        paymentDueDays: 20,
+      },
+    ];
+
+    // 1. RBL World Safari gets 5% on MakeMyTrip / Travel and 5.85% on International
+    const mmtRes = rankCardsForPayment(rblPortfolio, "MakeMyTrip", "Travel & Flights", 10000);
+    const safariMmt = mmtRes.rankedCards.find((c) => c.cardName === "RBL World Safari");
+    expect(safariMmt?.returnPct).toBe(5.0);
+    expect(safariMmt?.savingsInINR).toBe(500);
+
+    const intlRes = rankCardsForPayment(rblPortfolio, "Forex_International", "International", 10000);
+    const safariIntl = intlRes.rankedCards.find((c) => c.cardName === "RBL World Safari");
+    expect(safariIntl?.returnPct).toBe(5.85);
+    expect(safariIntl?.savingsInINR).toBe(585);
+
+    // 2. RBL Insignia Preferred gets 15% on BookMyShow (BOGO up to ₹500) and 3.5% on International
+    const bmsRes = rankCardsForPayment(rblPortfolio, "BookMyShow", "Movies & Cinema", 2000);
+    const insigniaBms = bmsRes.rankedCards.find((c) => c.cardName === "RBL Insignia Preferred Banking");
+    expect(insigniaBms?.returnPct).toBe(15.0);
+    expect(insigniaBms?.savingsInINR).toBe(300);
+
+    const insIntl = intlRes.rankedCards.find((c) => c.cardName === "RBL Insignia Preferred Banking");
+    expect(insIntl?.returnPct).toBe(3.5);
+    expect(insIntl?.savingsInINR).toBe(350);
+
+    // 3. RBL Icon gets 5% on Dining (Zomato) and 10% on BookMyShow
+    const iconBms = bmsRes.rankedCards.find((c) => c.cardName === "RBL Icon");
+    expect(iconBms?.returnPct).toBe(10.0);
+    expect(iconBms?.savingsInINR).toBe(200);
+
+    const zomatoRes = rankCardsForPayment(rblPortfolio, "Zomato", "Food & Dining", 2000);
+    const iconZomato = zomatoRes.rankedCards.find((c) => c.cardName === "RBL Icon");
+    expect(iconZomato?.returnPct).toBe(5.0);
+    expect(iconZomato?.savingsInINR).toBe(100);
+
+    // 4. RBL ShopRite gets 5% on Blinkit / Groceries and 2.5% on Fuel
+    const blinkitRes = rankCardsForPayment(rblPortfolio, "Blinkit", "Groceries & Essentials", 3000);
+    const shopriteBlinkit = blinkitRes.rankedCards.find((c) => c.cardName === "RBL ShopRite");
+    expect(shopriteBlinkit?.returnPct).toBe(5.0);
+    expect(shopriteBlinkit?.savingsInINR).toBe(150);
+
+    const fuelRes = rankCardsForPayment(rblPortfolio, "HPCL", "Fuel", 2000);
+    const shopriteFuel = fuelRes.rankedCards.find((c) => c.cardName === "RBL ShopRite");
+    expect(shopriteFuel?.returnPct).toBe(2.5);
+    expect(shopriteFuel?.savingsInINR).toBe(50);
+
+    // 5. RBL Play gets 10% on BookMyShow
+    const playBms = bmsRes.rankedCards.find((c) => c.cardName === "RBL Play BookMyShow");
+    expect(playBms?.returnPct).toBe(10.0);
+    expect(playBms?.savingsInINR).toBe(200);
+
+    // 6. RBL Cookies gets 10% on Zomato, Swiggy, Uber
+    const cookiesZomato = zomatoRes.rankedCards.find((c) => c.cardName === "RBL Cookies");
+    expect(cookiesZomato?.returnPct).toBe(10.0);
+    expect(cookiesZomato?.savingsInINR).toBe(200);
+
+    const uberRes = rankCardsForPayment(rblPortfolio, "Uber", "Cabs & Commute", 1000);
+    const cookiesUber = uberRes.rankedCards.find((c) => c.cardName === "RBL Cookies");
+    expect(cookiesUber?.returnPct).toBe(10.0);
+    expect(cookiesUber?.savingsInINR).toBe(100);
+
+    // 7. RBL Popcorn gets 12% on BookMyShow
+    const popcornBms = bmsRes.rankedCards.find((c) => c.cardName === "RBL Popcorn");
+    expect(popcornBms?.returnPct).toBe(12.0);
+    expect(popcornBms?.savingsInINR).toBe(240);
+
+    // 8. RBL Platinum Maxima gets 5X rewards (2.5%) on Dining and Fuel
+    const swiggyRes = rankCardsForPayment(rblPortfolio, "Swiggy", "Food & Dining", 2000);
+    const maximaSwiggy = swiggyRes.rankedCards.find((c) => c.cardName === "RBL Platinum Maxima");
+    expect(maximaSwiggy?.returnPct).toBe(2.5);
+    expect(maximaSwiggy?.savingsInINR).toBe(50);
+
+    // 9. RBL Bajaj Finserv SuperCard gets 2% on Amazon
+    const amazonRes = rankCardsForPayment(rblPortfolio, "Amazon", "Online Shopping", 5000);
+    const bflAmazon = amazonRes.rankedCards.find((c) => c.cardName === "RBL Bajaj Finserv SuperCard");
+    expect(bflAmazon?.returnPct).toBe(2.0);
+    expect(bflAmazon?.savingsInINR).toBe(100);
+
+    // 10. RBL IndianOil RuPay gets 8.5% at IndianOil pumps
+    const ioclRes = rankCardsForPayment(rblPortfolio, "IndianOil", "Fuel", 2000);
+    const ioclCard = ioclRes.rankedCards.find((c) => c.cardName === "RBL IndianOil RuPay");
+    expect(ioclCard?.returnPct).toBe(8.5);
+    expect(ioclCard?.savingsInINR).toBe(170);
+
+    // 11. RBL Zomato Edition gets 5% on Zomato
+    const zomatoEdition = zomatoRes.rankedCards.find((c) => c.cardName === "RBL Zomato Edition");
+    expect(zomatoEdition?.returnPct).toBe(5.0);
+    expect(zomatoEdition?.savingsInINR).toBe(100);
+  });
 });
 

@@ -735,6 +735,61 @@ describe("Credit Card Artwork & Variant Visuals Engine", () => {
         expectedId: "sc-priority",
         expectedImage: "/cards/sc-priority.png",
       },
+      {
+        query: "RBL World Safari Credit Card",
+        expectedId: "rbl-world-safari",
+        expectedImage: "/cards/rbl-world-safari.png",
+      },
+      {
+        query: "RBL Insignia Preferred Banking Credit Card",
+        expectedId: "rbl-insignia",
+        expectedImage: "/cards/rbl-insignia.png",
+      },
+      {
+        query: "RBL Icon Credit Card",
+        expectedId: "rbl-icon",
+        expectedImage: "/cards/rbl-icon.png",
+      },
+      {
+        query: "RBL ShopRite Credit Card",
+        expectedId: "rbl-shoprite",
+        expectedImage: "/cards/rbl-shoprite.png",
+      },
+      {
+        query: "RBL Play BookMyShow Credit Card",
+        expectedId: "rbl-play",
+        expectedImage: "/cards/rbl-play.png",
+      },
+      {
+        query: "RBL Cookies Credit Card",
+        expectedId: "rbl-cookies",
+        expectedImage: "/cards/rbl-cookies.png",
+      },
+      {
+        query: "RBL Popcorn Credit Card",
+        expectedId: "rbl-popcorn",
+        expectedImage: "/cards/rbl-popcorn.png",
+      },
+      {
+        query: "RBL Platinum Maxima Credit Card",
+        expectedId: "rbl-platinum-maxima",
+        expectedImage: "/cards/rbl-platinum-maxima.png",
+      },
+      {
+        query: "RBL Bajaj Finserv SuperCard",
+        expectedId: "rbl-bfl-supercard",
+        expectedImage: "/cards/rbl-bfl-supercard.png",
+      },
+      {
+        query: "RBL IndianOil RuPay Credit Card",
+        expectedId: "rbl-indianoil",
+        expectedImage: "/cards/rbl-indianoil.png",
+      },
+      {
+        query: "RBL Zomato Edition Classic",
+        expectedId: "rbl-zomato",
+        expectedImage: "/cards/rbl-zomato.png",
+      },
     ];
 
     it.each(requiredCards)(
