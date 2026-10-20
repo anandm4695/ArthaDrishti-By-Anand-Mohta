@@ -541,7 +541,7 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
   });
 
   it("RBL Bank Credit Cards Reward Engine (Phase 14)", () => {
-    const rblPortfolio: StoredCard[] = [
+    const rblPortfolio = [
       {
         id: "rbl-world-safari",
         issuer: "RBL World Safari",
@@ -719,7 +719,7 @@ describe("Smart Card Reward Engine - Which Card to Use?", () => {
   });
 
   it("IDFC FIRST Bank Credit Cards Reward Engine (Phase 15)", () => {
-    const idfcPortfolio: StoredCard[] = [
+    const idfcPortfolio = [
       {
         id: "idfc-private",
         issuer: "IDFC FIRST Private",

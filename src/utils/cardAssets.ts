@@ -18,19 +18,39 @@ export interface CardArtPreset {
     | "lifestyle"
     | "co-brand"
     | "virtual"
-    | "standard";
+    | "standard"
+    | "fuel"
+    | "dining"
+    | "super-premium"
+    | "premium"
+    | "entertainment"
+    | "custom"
+    | "upi"
+    | "luxury";
   tags: string[];
   bgGradient: string;
   accentColor: string;
   textColor: string;
   badgeText?: string;
-  patternType: "mesh" | "lines" | "filigree" | "wave" | "swoosh" | "dots" | "minimal";
+  patternType:
+    | "mesh"
+    | "lines"
+    | "filigree"
+    | "wave"
+    | "swoosh"
+    | "dots"
+    | "minimal"
+    | "geometric"
+    | "circles"
+    | "circuit"
+    | "stripes"
+    | "radial";
   imageUrl?: string;
   officialImageUrl?: string;
   suggestedVariants?: Array<{
     name: string;
     network: "Visa" | "Mastercard" | "RuPay" | "Amex" | "Diners";
-    cardType: "physical" | "virtual" | "addon";
+    cardType?: "physical" | "virtual" | "addon";
     cardImageUrl?: string;
   }>;
 }
@@ -2623,7 +2643,19 @@ export interface ResolvedCardArt {
   accentColor: string;
   textColor: string;
   badgeText: string;
-  patternType: "mesh" | "lines" | "filigree" | "wave" | "swoosh" | "dots" | "minimal";
+  patternType:
+    | "mesh"
+    | "lines"
+    | "filigree"
+    | "wave"
+    | "swoosh"
+    | "dots"
+    | "minimal"
+    | "geometric"
+    | "circles"
+    | "circuit"
+    | "stripes"
+    | "radial";
   presetName: string;
   network: string;
 }

@@ -18,7 +18,7 @@ export interface MerchantInfo {
 
 export interface CardRewardPerk {
   returnPct: number;
-  perkType: "cashback" | "reward_points" | "discount" | "miles";
+  perkType: "cashback" | "reward_points" | "discount" | "miles" | "air_miles" | "waiver";
   description: string;
   maxCap?: string;
   badge?: string;
@@ -49,7 +49,7 @@ export interface EvaluatedCardPayment {
   nextDueDateStr: string;
   returnPct: number;
   savingsInINR: number;
-  perkType: "cashback" | "reward_points" | "discount" | "miles";
+  perkType: "cashback" | "reward_points" | "discount" | "miles" | "air_miles" | "waiver";
   perkHeadline: string;
   perkReason: string;
   maxCap?: string;
@@ -5522,7 +5522,7 @@ export function evaluateCardForPayment(
   const resolvedMerchant = resolveMerchant(merchantQuery, category);
 
   let returnPct: number;
-  let perkType: "cashback" | "reward_points" | "discount" | "miles" = "cashback";
+  let perkType: CardRewardPerk["perkType"] = "cashback";
   let perkReason: string;
   let maxCap: string | undefined = undefined;
   let badge: string | undefined;
