@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface PrivacyCtx {
   privacyMode: boolean;
-  setPrivacyMode: (v: boolean) => void;
+  setPrivacyMode: (v: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const PrivacyContext = createContext<PrivacyCtx>({ privacyMode: true, setPrivacyMode: () => {} });
@@ -38,7 +38,7 @@ export const PrivacyProvider = ({ children }: { children: React.ReactNode }) => 
 
   return (
     <PrivacyContext.Provider
-      value={{ privacyMode, setPrivacyMode: setPrivacyMode as (v: boolean) => void }}
+      value={{ privacyMode, setPrivacyMode }}
     >
       {children}
     </PrivacyContext.Provider>

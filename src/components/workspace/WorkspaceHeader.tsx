@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Settings,
   Command,
+  Plus,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { formatProfileOption } from "../../utils/masterData";
@@ -67,6 +68,8 @@ interface WorkspaceHeaderProps {
   session: any;
   /** Runs the full sign-out sequence (demo vs. real session, state reset) — owned by App.tsx. */
   onSignOut: () => void;
+  /** Opens the quick add transaction modal */
+  onQuickAdd?: () => void;
 }
 
 /**
@@ -107,6 +110,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   setShowProfileMenu,
   session,
   onSignOut,
+  onQuickAdd,
 }) => {
   const { privacyMode, setPrivacyMode } = usePrivacy();
   return (
@@ -162,23 +166,45 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                     {greeting.subtitle}
                   </div>
                 )}
-                {(() => {
-                  const crumb = getNavBreadcrumb(tab, subTab || undefined);
-                  return crumb ? (
-                    <div
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  {(() => {
+                    const crumb = getNavBreadcrumb(tab, subTab || undefined);
+                    return crumb ? (
+                      <div
+                        className="desktop-only"
+                        style={{
+                          fontSize: 11,
+                          color: THEME.muted,
+                          fontWeight: 600,
+                          letterSpacing: "0.02em",
+                          opacity: 0.75,
+                        }}
+                      >
+                        {crumb}
+                      </div>
+                    ) : null;
+                  })()}
+                  {privacyMode && (
+                    <span
                       className="desktop-only"
+                      title="Financial figures are currently masked. Press P or click eye icon to unmask."
                       style={{
-                        fontSize: 11,
-                        color: THEME.muted,
-                        fontWeight: 600,
-                        letterSpacing: "0.02em",
-                        opacity: 0.75,
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: "var(--state-warning, #f59e0b)",
+                        background: "color-mix(in srgb, var(--state-warning, #f59e0b) 12%, transparent)",
+                        border: "1px solid color-mix(in srgb, var(--state-warning, #f59e0b) 30%, transparent)",
+                        padding: "1px 7px",
+                        borderRadius: 6,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
                       }}
                     >
-                      {crumb}
-                    </div>
-                  ) : null;
-                })()}
+                      <EyeOff size={10} /> Privacy Mode (P)
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* GLOBAL SEARCH */}
@@ -359,6 +385,60 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                   flexShrink: 0,
                 }}
               >
+                {/* QUICK ADD BUTTON */}
+                {onQuickAdd && (
+                  <button
+                    onClick={onQuickAdd}
+                    className="header-quick-add-btn"
+                    title="Quick Add Transaction (Q or ⌘N)"
+                    aria-label="Quick Add Transaction"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "var(--t-accent)",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "6px 12px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px color-mix(in srgb, var(--t-accent) 40%, transparent)",
+                      transition: "transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease",
+                      marginRight: 4,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 12px color-mix(in srgb, var(--t-accent) 55%, transparent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "none";
+                      e.currentTarget.style.boxShadow =
+                        "0 2px 8px color-mix(in srgb, var(--t-accent) 40%, transparent)";
+                    }}
+                  >
+                    <Plus size={14} strokeWidth={2.5} />
+                    <span className="desktop-only">Add</span>
+                    <kbd
+                      className="desktop-only"
+                      style={{
+                        fontSize: 10,
+                        opacity: 0.85,
+                        background: "rgba(255, 255, 255, 0.22)",
+                        padding: "1px 4px",
+                        borderRadius: 4,
+                        fontWeight: 700,
+                        marginLeft: 2,
+                      }}
+                    >
+                      Q
+                    </kbd>
+                  </button>
+                )}
+
                 {/* PROFILE SWITCHER — compact (hidden on mobile) */}
                 <select
                   className="desktop-only"
@@ -659,11 +739,19 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
                 {/* Privacy toggle */}
                 <button
-                  onClick={() => setPrivacyMode(!privacyMode)}
+                  onClick={() => setPrivacyMode((prev: boolean) => !prev)}
                   className="header-icon-btn"
-                  aria-label={privacyMode ? "Reveal financial data" : "Hide financial data"}
-                  title={privacyMode ? "Unhide data" : "Hide data"}
-                  style={privacyMode ? { color: THEME.rust, borderColor: THEME.rust } : {}}
+                  aria-label={privacyMode ? "Reveal financial data (P)" : "Hide financial data (P)"}
+                  title={privacyMode ? "Unhide data (P)" : "Hide data (P)"}
+                  style={
+                    privacyMode
+                      ? {
+                          color: "var(--state-warning, #f59e0b)",
+                          borderColor: "var(--state-warning, #f59e0b)",
+                          background: "color-mix(in srgb, var(--state-warning, #f59e0b) 12%, transparent)",
+                        }
+                      : {}
+                  }
                 >
                   {privacyMode ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>

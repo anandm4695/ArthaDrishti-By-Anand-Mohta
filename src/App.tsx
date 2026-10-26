@@ -134,6 +134,7 @@ import { CommandKModal } from "./components/workspace/CommandKModal";
 import { WorkspaceSidebar } from "./components/workspace/WorkspaceSidebar";
 import { WorkspaceHeader } from "./components/workspace/WorkspaceHeader";
 import { OnboardingWizard } from "./components/modals/OnboardingWizard";
+import { QuickAddModal } from "./components/modals/QuickAddModal";
 
 // UI Imports
 import { ToastStack, ConfirmDialog } from "./components/ui/Feedback";
@@ -730,6 +731,7 @@ function FinanceDashboard() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const shortcutsMouseDownOnBackdrop = useRef(false);
   // Body scroll lock while the keyboard-shortcuts help is open — this panel is
   // hand-rolled (not the shared Modal component, since it's a static reference
@@ -1570,9 +1572,19 @@ function FinanceDashboard() {
         tag === "SELECT" ||
         (e.target as HTMLElement)?.isContentEditable;
 
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setShowCmdPalette((prev) => !prev);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setSidebarMinimized((prev) => !prev);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        setShowQuickAdd(true);
         return;
       }
       if (e.key === "Escape") {
@@ -1580,6 +1592,7 @@ function FinanceDashboard() {
         setShowAlerts(false);
         setShowSearch(false);
         setShowShortcuts(false);
+        setShowQuickAdd(false);
         return;
       }
 
@@ -1605,6 +1618,10 @@ function FinanceDashboard() {
       };
 
       // Letter shortcuts
+      if (e.key === "q") {
+        setShowQuickAdd(true);
+        return;
+      }
       if (e.key === "d") {
         setTab("analytics");
         return;
@@ -1659,7 +1676,7 @@ function FinanceDashboard() {
         return;
       }
       if (e.key === "p") {
-        setPrivacyMode(!privacyMode);
+        setPrivacyMode((prev: boolean) => !prev);
         return;
       }
       if (e.key === "?") {
@@ -5108,6 +5125,7 @@ function FinanceDashboard() {
             setShowProfileMenu={setShowProfileMenu}
             session={session}
             onSignOut={handleSignOut}
+            onQuickAdd={() => setShowQuickAdd(true)}
           />
 
           {/* Sync status pill in header area handled by header logic */}
@@ -5826,11 +5844,13 @@ function FinanceDashboard() {
                 {
                   title: "Actions",
                   shortcuts: [
+                    { key: "Q / ⌘N", desc: "Quick Add Transaction" },
                     { key: "⌘K", desc: "Command Palette" },
+                    { key: "⌘B", desc: "Toggle Sidebar" },
                     { key: "/", desc: "Search" },
                     { key: "A", desc: "Toggle Alerts" },
                     { key: "P", desc: "Privacy Mode" },
-                    { key: "?", desc: "This Help" },
+                    { key: "?", desc: "Keyboard Shortcuts" },
                     { key: "Esc", desc: "Close Modals" },
                   ],
                 },
@@ -5911,9 +5931,33 @@ function FinanceDashboard() {
             setTab(t);
             if (st) setSubTab(st);
           }}
-          togglePrivacy={() => setPrivacyMode(!privacyMode)}
+          togglePrivacy={() => setPrivacyMode((prev: boolean) => !prev)}
           isPrivacyMode={privacyMode}
+          onQuickAdd={() => setShowQuickAdd(true)}
+          toggleDarkMode={() => updateSettings({ darkMode: !darkMode })}
+          isDarkMode={darkMode}
+          onExportJSON={exportJSON}
+          onShowShortcuts={() => setShowShortcuts(true)}
+          familyProfiles={state?.masterData?.familyProfiles || []}
+          onSelectProfile={(pid) => setActiveProfile(pid)}
+          activeProfile={activeProfile}
         />
+
+        {/* ── QUICK ADD TRANSACTION MODAL ── */}
+        {showQuickAdd && (
+          <QuickAddModal
+            onClose={() => setShowQuickAdd(false)}
+            onSave={async (data) => {
+              await addItem("transactions", data);
+              setShowQuickAdd(false);
+              showToast(
+                `Logged ₹${Number(data.amount).toLocaleString("en-IN")} ${data.type === "credit" ? "income" : "expense"} for ${data.category}`,
+                "success"
+              );
+            }}
+            bankAccounts={state.bankAccounts || []}
+          />
+        )}
 
         {/* ── RESET OVERLAY ── */}
         {isResetting && (

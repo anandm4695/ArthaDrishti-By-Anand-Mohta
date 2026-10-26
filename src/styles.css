@@ -386,10 +386,28 @@ select {
 button {
   cursor: pointer;
   user-select: none;
+  touch-action: manipulation;
 }
 button:active {
   transform: scale(0.985);
   transition-duration: 0.1s;
+}
+
+/* ── Privacy Mode Global Masks ─────────────────────────────────── */
+body.privacy-mode .privacy-mask,
+body.privacy-mode [data-privacy="mask"] {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter var(--motion-base) ease;
+}
+body.privacy-mode .privacy-mask:hover,
+body.privacy-mode [data-privacy="mask"]:hover {
+  filter: blur(2px);
+}
+
+.header-quick-add-btn:active {
+  transform: scale(0.96) !important;
 }
 
 /* ── Table defaults ────────────────────────────────────────────── */
@@ -3594,6 +3612,7 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
   display: flex;
   flex-direction: column;
   height: 195px;
+  min-width: 0;
   position: relative;
   overflow: hidden;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);

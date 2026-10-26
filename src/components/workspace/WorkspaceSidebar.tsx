@@ -115,8 +115,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                 setSidebarMinimized((v) => !v);
                 setSidebarHovered(false);
               }}
-              title={sidebarMinimized ? "Expand sidebar" : "Collapse sidebar"}
-              aria-label={sidebarMinimized ? "Expand sidebar" : "Collapse sidebar"}
+              title={sidebarMinimized ? "Expand sidebar (⌘B)" : "Collapse sidebar (⌘B)"}
+              aria-label={sidebarMinimized ? "Expand sidebar (⌘B)" : "Collapse sidebar (⌘B)"}
               style={{
                 position: isSidebarCompact ? "static" : "absolute",
                 top: isSidebarCompact ? undefined : 14,

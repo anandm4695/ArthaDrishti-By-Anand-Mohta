@@ -4561,9 +4561,9 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                             </span>
                           </div>
 
-                          <div style={{ flex: 1, width: "100%", minHeight: 120 }}>
+                          <div style={{ width: "100%", height: 120, minWidth: 0, position: "relative" }}>
                             {hasSparkData ? (
-                              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                              <ResponsiveContainer width="100%" height={120} minWidth={0}>
                                 <AreaChart data={sparklineData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                                   <defs>
                                     <linearGradient id="heroSparkGrad" x1="0" y1="0" x2="0" y2="1">
@@ -12384,14 +12384,15 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                     style={{
                       flex: 1,
                       width: "100%",
-                      height: "100%",
+                      minHeight: 280,
+                      height: 280,
                       background: `color-mix(in srgb, ${THEME.ink} 1%, transparent)`,
                       border: `1px solid ${THEME.line}`,
                       borderRadius: 16,
                       padding: "16px 12px 6px",
                     }}
                   >
-                    <div style={{ width: "100%", height: "100%", position: "relative" }}><ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <div style={{ width: "100%", height: "100%", minHeight: 250, position: "relative" }}><ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
                       <AreaChart
                         data={projectionData}
                         margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
@@ -15724,8 +15725,8 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
                 Your key metrics vs Indian personal finance averages and top-10% performers.
               </div>
             </div>
-            <div style={{ height: 310 }}>
-              <div style={{ width: "100%", height: "100%", position: "relative" }}><ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <div style={{ height: 310, minHeight: 310 }}>
+              <div style={{ width: "100%", height: "100%", minHeight: 300, position: "relative" }}><ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                 <BarChart
                   data={[
                     {
