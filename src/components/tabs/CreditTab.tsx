@@ -4951,16 +4951,19 @@ function PrepaidList({ items, onRemove, onEdit, onUpdateCard, onAdd }: any) {
   const [selectedProfile, setSelectedProfile] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState<PrepaidCardSortOption>(getSavedPrepaidCardSort);
+  const [sortSavedFeedback, setSortSavedFeedback] = useState(false);
 
   const handlePrepaidSortChange = (newSort: PrepaidCardSortOption) => {
     setSortBy(newSort);
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(PREPAID_SORT_STORAGE_KEY, newSort);
-      } catch {
-        // Ignore write errors
+      } catch (err) {
+        console.warn("Could not persist prepaid card sort preference:", err);
       }
     }
+    setSortSavedFeedback(true);
+    setTimeout(() => setSortSavedFeedback(false), 2000);
   };
 
   const selected = items.find((c: any) => c.id === selectedId);
@@ -5284,28 +5287,46 @@ function PrepaidList({ items, onRemove, onEdit, onUpdateCard, onAdd }: any) {
             style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}
             title="Sort preference is saved automatically and persists across page reloads"
           >
-            <ArrowUpDown size={13} style={{ color: "var(--t-muted)" }} />
-            <select
-              value={sortBy}
-              onChange={(e) => handlePrepaidSortChange(e.target.value as PrepaidCardSortOption)}
-              style={{
-                padding: "5px 10px",
-                fontSize: 12,
-                borderRadius: 8,
-                border: "1px solid var(--t-line)",
-                background: "var(--t-paper)",
-                color: "var(--t-ink)",
-                outline: "none",
-                cursor: "pointer",
-              }}
-              title="Sort preference is saved automatically and persists across page reloads"
-            >
-              <option value="balance-desc">Balance (High to Low)</option>
-              <option value="balance-asc">Balance (Low to High)</option>
-              <option value="name">Card Name (A-Z)</option>
-              <option value="tx-count">Most Transactions</option>
-              <option value="expiry">Expiry (Soonest First)</option>
-            </select>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <ArrowUpDown size={13} style={{ color: "var(--t-muted)" }} />
+              <select
+                value={sortBy}
+                onChange={(e) => handlePrepaidSortChange(e.target.value as PrepaidCardSortOption)}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: "1px solid var(--t-line)",
+                  background: "var(--t-paper)",
+                  color: "var(--t-ink)",
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+                aria-label="Sort prepaid cards"
+                title="Sort preference is saved automatically and persists across page reloads"
+              >
+                <option value="balance-desc">Balance: High to Low</option>
+                <option value="balance-asc">Balance: Low to High</option>
+                <option value="name">Card Name: A to Z</option>
+                <option value="tx-count">Most Transactions</option>
+                <option value="expiry">Expiry: Soonest First</option>
+              </select>
+            </div>
+            {sortSavedFeedback && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.sage,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 3,
+                }}
+              >
+                <Check size={11} strokeWidth={3} /> Saved
+              </span>
+            )}
           </div>
         </div>
       )}
