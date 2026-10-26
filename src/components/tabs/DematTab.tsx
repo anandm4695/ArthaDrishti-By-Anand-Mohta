@@ -42,6 +42,7 @@ import {
   Sparkles,
   Award,
   History,
+  Gift,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { useMasterData, formatProfileOption } from "../../utils/masterData";
@@ -57,11 +58,23 @@ import { Field } from "../ui/Form";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { SectionTitle } from "../ui/SectionTitle";
-import { ConfirmDialog } from "../ui/Feedback";
 import { BrokerImportModal } from "../modals/BrokerImportModal";
+import { StockScripModal } from "../modals/StockScripModal";
+import { SellStockModal } from "../modals/SellStockModal";
+import { FifoSellModal } from "../modals/FifoSellModal";
+import { CorporateActionModal } from "../modals/CorporateActionModal";
 import { BrokerLogo, StockLogo } from "../ui/BrandLogos";
+import { ConfirmDialog } from "../ui/Feedback";
 
-export { BrokerLogo, StockLogo };
+export {
+  BrokerLogo,
+  StockLogo,
+  StockScripModal,
+  SellStockModal,
+  FifoSellModal,
+  CorporateActionModal,
+};
+export const SplitBonusModal = CorporateActionModal;
 
 // Broker logo domains for Clearbit / fallback
 const BROKER_LOGO_DOMAINS: Record<string, string> = {
@@ -173,7 +186,7 @@ export function computeFifoAlloc(
     if (lotQty <= 0) continue;
 
     const consume = Math.min(lotQty, remainingToSell);
-    const buyPrice = Number(lot.avgPrice) || 0;
+    const buyPrice = Number(lot.avgPrice ?? lot.buyPrice) || 0;
     const pnl = (sellPrice - buyPrice) * consume;
     const isLTCG = lot.buyDate ? isLongTerm(lot.buyDate, sellDate, 12) : false;
     const fullyConsumed = Math.abs(lotQty - consume) <= 0.0001;
@@ -283,6 +296,7 @@ export function DematTab({
   const [splitBonusGroup, setSplitBonusGroup] = useState<any>(null);
   const [selectedDematId, setSelectedDematId] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [corpSearch, setCorpSearch] = useState("");
 
   // Filters & Search
   const [search, setSearch] = useState("");
@@ -1077,7 +1091,7 @@ export function DematTab({
       statusColor = THEME.rust;
     }
 
-    let rationale = "";
+    let rationale: string;
     if (overall >= 80) {
       rationale =
         "Your portfolio exhibits exceptional health, characterized by high-quality assets, solid diversification, and robust risk management. Maintain your current holding pattern.";
@@ -3373,6 +3387,111 @@ CREATE POLICY "Users can access own data" ON public.corporate_actions FOR ALL US
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {dematView === "corporateActions" && (
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Executive Corporate Actions & Tax Intelligence Overview */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {/* KPI 1: Total Corporate Actions */}
+            <div
+              style={{
+                background: "var(--surface-0)",
+                border: "1px solid var(--t-line)",
+                borderRadius: "var(--radius-lg, 12px)",
+                padding: "16px 18px",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
+                  Total Actions
+                </span>
+                <Scissors size={16} style={{ color: "var(--t-accent)" }} />
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--t-ink)", marginTop: 6 }}>
+                {(state.corporateActions || []).length}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
+                Audit trail adjustments
+              </div>
+            </div>
+
+            {/* KPI 2: Stock Splits */}
+            <div
+              style={{
+                background: "var(--surface-0)",
+                border: "1px solid var(--t-line)",
+                borderRadius: "var(--radius-lg, 12px)",
+                padding: "16px 18px",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--t-gold)", textTransform: "uppercase" }}>
+                  Stock Splits
+                </span>
+                <Scissors size={16} style={{ color: "var(--t-gold)" }} />
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--t-ink)", marginTop: 6 }}>
+                {(state.corporateActions || []).filter((a: any) => a.actionType === "split").length}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
+                Face value sub-divisions
+              </div>
+            </div>
+
+            {/* KPI 3: Bonus Issues */}
+            <div
+              style={{
+                background: "var(--surface-0)",
+                border: "1px solid var(--t-line)",
+                borderRadius: "var(--radius-lg, 12px)",
+                padding: "16px 18px",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--t-sage)", textTransform: "uppercase" }}>
+                  Bonus Issues
+                </span>
+                <Gift size={16} style={{ color: "var(--t-sage)" }} />
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--t-ink)", marginTop: 6 }}>
+                {(state.corporateActions || []).filter((a: any) => a.actionType === "bonus").length}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
+                Free share allotments
+              </div>
+            </div>
+
+            {/* KPI 4: Extra Shares Generated */}
+            <div
+              style={{
+                background: "var(--surface-0)",
+                border: "1px solid var(--t-line)",
+                borderRadius: "var(--radius-lg, 12px)",
+                padding: "16px 18px",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--t-accent)", textTransform: "uppercase" }}>
+                  Shares Created
+                </span>
+                <Sparkles size={16} style={{ color: "var(--t-accent)" }} />
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--t-ink)", marginTop: 6 }}>
+                +{(state.corporateActions || []).reduce((sum: number, a: any) => sum + Math.max(0, Number(a.newQty || 0) - Number(a.oldQty || 0)), 0)}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
+                Net additional equity units
+              </div>
+            </div>
+          </div>
+
           {/* Tax Rules Overview */}
           <Card style={{ padding: 20 }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: THEME.ink, marginBottom: 10 }}>
@@ -3407,12 +3526,35 @@ CREATE POLICY "Users can access own data" ON public.corporate_actions FOR ALL US
 
           {/* Corporate Actions History Table */}
           <Card style={{ padding: 24 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: THEME.ink, marginBottom: 14 }}>
-              Split &amp; Bonus Issues Audit Trail
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: THEME.ink }}>
+                  Split &amp; Bonus Issues Audit Trail
+                </div>
+                <div style={{ fontSize: 12, color: THEME.muted, marginTop: 2 }}>
+                  Historical record of all corporate actions applied across your stock holdings
+                </div>
+              </div>
+
+              {(state.corporateActions || []).length > 0 && (
+                <div style={{ position: "relative", minWidth: 240 }}>
+                  <Search
+                    size={14}
+                    style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--t-muted)", pointerEvents: "none" }}
+                  />
+                  <input
+                    style={{ ...inputStyle, paddingLeft: 32, fontSize: 12, padding: "7px 12px 7px 32px" }}
+                    placeholder="Search by Symbol (e.g. TCS, RELIANCE)…"
+                    value={corpSearch}
+                    onChange={(e) => setCorpSearch(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
+
             {(state.corporateActions || []).length === 0 ? (
-              <div style={{ textAlign: "center", padding: 24, color: THEME.muted, fontSize: 13 }}>
-                No corporate action splits or bonus shares recorded yet. When you perform a split or bonus action on a holding, its adjustment audit trail will appear here.
+              <div style={{ textAlign: "center", padding: 32, color: THEME.muted, fontSize: 13 }}>
+                No corporate action splits or bonus shares recorded yet. When you perform a split or bonus action on a holding (e.g. TCS), its adjustment audit trail will appear here.
               </div>
             ) : (
               <div style={{ overflowX: "auto" }}>
@@ -3428,40 +3570,55 @@ CREATE POLICY "Users can access own data" ON public.corporate_actions FOR ALL US
                     </tr>
                   </thead>
                   <tbody>
-                    {(state.corporateActions || []).map((a: any) => (
-                      <tr key={a.id} style={{ borderBottom: `1px solid ${THEME.line}` }}>
-                        <td style={{ ...tdStyle, paddingLeft: 16, fontWeight: 800 }}>
-                          {a.symbol} ({a.exchange || "NSE"})
-                        </td>
-                        <td style={tdStyle}>
-                          <span
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 850,
-                              padding: "2px 8px",
-                              borderRadius: 4,
-                              background: a.actionType === "split" ? `color-mix(in srgb, ${THEME.gold} 12%, transparent)` : `color-mix(in srgb, ${THEME.sage} 12%, transparent)`,
-                              color: a.actionType === "split" ? THEME.gold : THEME.sage,
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            {a.actionType}
-                          </span>
-                        </td>
-                        <td style={{ ...tdStyle, fontWeight: 700 }}>
-                          {a.ratioN} : {a.ratioM}
-                        </td>
-                        <td style={{ ...tdStyle, color: THEME.muted }}>
-                          {a.actionDate || "—"}
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                          <span style={{ color: THEME.muted }}>{a.oldQty}</span> → <b>{a.newQty}</b>
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: "right", paddingRight: 16, fontVariantNumeric: "tabular-nums" }}>
-                          <span style={{ color: THEME.muted }}>₹{Number(a.oldAvgPrice).toFixed(2)}</span> → <b>₹{Number(a.newAvgPrice).toFixed(2)}</b>
-                        </td>
-                      </tr>
-                    ))}
+                    {(state.corporateActions || [])
+                      .filter((a: any) => !corpSearch.trim() || (a.symbol || "").toLowerCase().includes(corpSearch.trim().toLowerCase()))
+                      .map((a: any) => (
+                        <tr key={a.id || `${a.symbol}-${a.actionDate}`} style={{ borderBottom: `1px solid ${THEME.line}` }}>
+                          <td style={{ ...tdStyle, paddingLeft: 16, fontWeight: 800 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <StockLogo symbol={a.symbol} exchange={a.exchange} size={30} />
+                              <div>
+                                <span style={{ fontWeight: 800 }}>{a.symbol}</span>
+                                <span style={{ fontSize: 10, color: THEME.muted, marginLeft: 6 }}>
+                                  ({a.exchange || "NSE"})
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={tdStyle}>
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 850,
+                                padding: "3px 8px",
+                                borderRadius: 6,
+                                background: a.actionType === "split" ? `color-mix(in srgb, ${THEME.gold} 12%, transparent)` : `color-mix(in srgb, ${THEME.sage} 12%, transparent)`,
+                                color: a.actionType === "split" ? THEME.gold : THEME.sage,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {a.actionType === "split" ? "Stock Split" : "Bonus Issue"}
+                            </span>
+                          </td>
+                          <td style={{ ...tdStyle, fontWeight: 700 }}>
+                            <span style={{ padding: "2px 8px", borderRadius: 4, background: "var(--surface-1)", border: `1px solid ${THEME.line}` }}>
+                              {a.ratioN} : {a.ratioM}
+                            </span>
+                          </td>
+                          <td style={{ ...tdStyle, color: THEME.muted }}>
+                            {a.actionDate || "—"}
+                          </td>
+                          <td style={{ ...tdStyle, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                            <span style={{ color: THEME.muted }}>{a.oldQty}</span> → <b>{a.newQty}</b>
+                            <span style={{ fontSize: 10, color: "var(--t-sage)", marginLeft: 6, fontWeight: 700 }}>
+                              (+{Math.max(0, Number(a.newQty || 0) - Number(a.oldQty || 0))})
+                            </span>
+                          </td>
+                          <td style={{ ...tdStyle, textAlign: "right", paddingRight: 16, fontVariantNumeric: "tabular-nums" }}>
+                            <span style={{ color: THEME.muted }}>₹{Number(a.oldAvgPrice).toFixed(2)}</span> → <b>₹{Number(a.newAvgPrice).toFixed(2)}</b>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -3491,9 +3648,11 @@ CREATE POLICY "Users can access own data" ON public.corporate_actions FOR ALL US
       )}
 
       {showStock && (
-        <StockModal
+        <StockScripModal
           demats={state.demat || []}
           defaults={stockDefaults}
+          marketData={marketData}
+          existingStocks={state.stocks || []}
           onClose={() => {
             setShowStock(false);
             setStockDefaults(null);
@@ -3505,9 +3664,11 @@ CREATE POLICY "Users can access own data" ON public.corporate_actions FOR ALL US
       )}
 
       {editStockId && (
-        <StockModal
+        <StockScripModal
           demats={state.demat || []}
           initial={(state.stocks || []).find((s: any) => s.id === editStockId)}
+          marketData={marketData}
+          existingStocks={state.stocks || []}
           onClose={() => setEditStockId(null)}
           onSave={(v: any) => saveStockEdit(editStockId, v)}
           activeProfile={activeProfile}
@@ -3518,6 +3679,13 @@ CREATE POLICY "Users can access own data" ON public.corporate_actions FOR ALL US
       {sellLot && (
         <SellStockModal
           lot={sellLot}
+          currentPrice={
+            marketData[
+              `${sellLot.base || (sellLot.symbol || "").replace(/\.(NS|BO)$/i, "")}.${
+                (sellLot.exchange || "NSE") === "BSE" ? "BO" : "NS"
+              }`
+            ]?.price
+          }
           onClose={() => setSellLot(null)}
           onSave={(record: any, remainingQty: number) => saveSellStock(sellLot.id, record, remainingQty)}
           saving={savingSellStock}
@@ -3538,7 +3706,7 @@ CREATE POLICY "Users can access own data" ON public.corporate_actions FOR ALL US
       )}
 
       {splitBonusGroup && (
-        <SplitBonusModal
+        <CorporateActionModal
           group={splitBonusGroup}
           onClose={() => setSplitBonusGroup(null)}
           onApply={saveSplitBonus}
@@ -3715,512 +3883,9 @@ function DematModal({ onClose, onSave, initial = null, activeProfile = "all", sa
   );
 }
 
-function StockModal({ demats = [], onClose, onSave, initial = null, defaults = null, activeProfile = "all", saving = false }: any) {
-  const { familyProfiles } = useMasterData();
-  const defaultOwner = activeProfile !== "all" ? activeProfile : "self";
-  const [f, setF] = useState(
-    initial || {
-      symbol: defaults?.symbol || "",
-      exchange: defaults?.exchange || "NSE",
-      dematId: defaults?.dematId || demats[0]?.id || "",
-      qty: "",
-      avgPrice: defaults?.avgPrice || "",
-      currentPrice: "",
-      buyDate: today(),
-      owner: defaultOwner,
-    }
-  );
+export const StockModal = StockScripModal;
 
-  const qtyNum = Number(f.qty);
-  const avgPriceNum = Number(f.avgPrice);
-  const currentPriceNum = Number(f.currentPrice);
-  const isValid =
-    !!f.symbol.trim() &&
-    !!f.dematId &&
-    qtyNum > 0 &&
-    avgPriceNum > 0 &&
-    (f.currentPrice === "" || (Number.isFinite(currentPriceNum) && currentPriceNum >= 0));
 
-  return (
-    <Modal title={initial ? "Edit Stock Scrip" : "Add Stock Scrip"} onClose={onClose}>
-      <Field label="Owner / Family Profile">
-        <select
-          style={inputStyle}
-          value={f.owner || "self"}
-          onChange={(e) => setF({ ...f, owner: e.target.value })}
-        >
-          {familyProfiles.map((p: any) => (
-            <option key={p.id} value={p.id}>
-              {formatProfileOption(p)}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: 12 }}>
-        <Field label="Scrip Symbol">
-          <input
-            style={inputStyle}
-            value={f.symbol}
-            onChange={(e) =>
-              setF({ ...f, symbol: e.target.value.toUpperCase().replace(/\.(NS|BO)$/i, "") })
-            }
-            placeholder="e.g. RELIANCE, TCS"
-          />
-        </Field>
-        <Field label="Exchange">
-          <select
-            style={inputStyle}
-            value={f.exchange || "NSE"}
-            onChange={(e) => setF({ ...f, exchange: e.target.value })}
-          >
-            <option value="NSE">NSE</option>
-            <option value="BSE">BSE</option>
-          </select>
-        </Field>
-      </div>
-
-      <Field label="Demat Account">
-        <select
-          style={inputStyle}
-          value={f.dematId}
-          onChange={(e) => setF({ ...f, dematId: e.target.value })}
-        >
-          {demats.length === 0 && <option value="">Please add a Demat Account first</option>}
-          {demats.map((d: any) => (
-            <option key={d.id} value={d.id}>
-              {d.broker} {d.clientId ? `(${d.clientId})` : ""}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
-        <Field label="Quantity">
-          <input
-            style={inputStyle}
-            type="number"
-            min="0.0001"
-            value={f.qty}
-            onChange={(e) => setF({ ...f, qty: e.target.value })}
-            placeholder="e.g. 50"
-          />
-        </Field>
-        <Field label="Buy Price (₹)">
-          <input
-            style={inputStyle}
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={f.avgPrice}
-            onChange={(e) => setF({ ...f, avgPrice: e.target.value })}
-            placeholder="e.g. 2450.50"
-          />
-        </Field>
-        <Field label="Current Price (Optional)">
-          <input
-            style={inputStyle}
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={f.currentPrice}
-            onChange={(e) => setF({ ...f, currentPrice: e.target.value })}
-            placeholder="Auto-updated live"
-          />
-        </Field>
-      </div>
-
-      <Field label="Buy Date (Enables LTCG/STCG Tax Calculation & CAGR)">
-        <input
-          style={inputStyle}
-          type="date"
-          max={today()}
-          value={f.buyDate || ""}
-          onChange={(e) => setF({ ...f, buyDate: e.target.value })}
-        />
-      </Field>
-
-      <ModalActions
-        onSave={() => isValid && onSave(f)}
-        onClose={onClose}
-        saveLabel={initial ? "Save Changes" : "Add Scrip"}
-        disabled={!isValid || saving}
-        loading={saving}
-      />
-    </Modal>
-  );
-}
-
-function SellStockModal({ lot, onClose, onSave, saving = false }: any) {
-  const [f, setF] = useState({
-    sellQty: String(lot.qty),
-    sellPrice: String(lot.currentPrice || lot.avgPrice || ""),
-    sellDate: today(),
-    broker: lot.broker || "",
-  });
-
-  const sellQtyNum = Number(f.sellQty) || 0;
-  const sellPriceNum = Number(f.sellPrice) || 0;
-  const totalLotQty = Number(lot.qty) || 0;
-  const actualSellQty = Math.abs(sellQtyNum - totalLotQty) <= 0.0001 ? totalLotQty : sellQtyNum;
-  const remainingQty = Math.max(0, totalLotQty - actualSellQty) <= 0.0001 ? 0 : totalLotQty - actualSellQty;
-  const profit = (sellPriceNum - Number(lot.avgPrice)) * actualSellQty;
-  const isLtcg = lot.buyDate ? isLongTerm(lot.buyDate, f.sellDate, 12) : false;
-  const isValid = sellQtyNum > 0 && sellPriceNum > 0 && sellQtyNum <= totalLotQty + 0.0001 && !!f.sellDate;
-
-  const handleSave = () => {
-    if (!isValid) return;
-    const record = {
-      id: `ss-${Date.now()}`,
-      owner: lot.owner || "self",
-      symbol: lot.base || lot.symbol,
-      exchange: lot.exchange || "NSE",
-      qty: actualSellQty,
-      buyPrice: Number(lot.avgPrice),
-      buyDate: lot.buyDate || "",
-      sellPrice: sellPriceNum,
-      sellDate: f.sellDate,
-      broker: f.broker,
-      dematId: lot.dematId || "",
-      profit: Number(profit.toFixed(2)),
-    };
-    onSave(record, remainingQty);
-  };
-
-  return (
-    <Modal title={`Sell Shares — ${lot.base || lot.symbol}`} onClose={onClose}>
-      <div style={{ fontSize: 13, color: THEME.muted, marginBottom: 14 }}>
-        Lot: <b>{lot.qty} shares</b> @ cost basis <Prv>₹{Number(lot.avgPrice).toFixed(2)}</Prv> (Bought: {lot.buyDate || "—"})
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Sell Quantity">
-          <input
-            style={inputStyle}
-            type="number"
-            min="0.0001"
-            max={lot.qty}
-            value={f.sellQty}
-            onChange={(e) => setF({ ...f, sellQty: e.target.value })}
-          />
-        </Field>
-        <Field label="Sell Price (₹)">
-          <input
-            style={inputStyle}
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={f.sellPrice}
-            onChange={(e) => setF({ ...f, sellPrice: e.target.value })}
-          />
-        </Field>
-      </div>
-
-      <Field label="Sell Date">
-        <input
-          style={inputStyle}
-          type="date"
-          min={lot.buyDate || undefined}
-          max={today()}
-          value={f.sellDate}
-          onChange={(e) => setF({ ...f, sellDate: e.target.value })}
-        />
-      </Field>
-
-      {sellQtyNum > 0 && sellPriceNum > 0 && (
-        <div
-          style={{
-            padding: "12px 14px",
-            borderRadius: 10,
-            background: profit >= 0 ? `color-mix(in srgb, ${THEME.sage} 10%, transparent)` : `color-mix(in srgb, ${THEME.rust} 10%, transparent)`,
-            marginTop: 4,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 13, color: THEME.muted, fontWeight: 600 }}>Estimated Capital Gain/Loss:</span>
-            <b style={{ color: profit >= 0 ? THEME.sage : THEME.rust, fontSize: 14 }}>
-              {profit >= 0 ? "+" : ""}₹{Math.abs(profit).toFixed(2)}
-            </b>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, fontSize: 11 }}>
-            <span className={isLtcg ? "demat-tax-badge-ltcg" : "demat-tax-badge-stcg"}>
-              {isLtcg ? "LTCG @ 12.5%" : "STCG @ 20.0%"}
-            </span>
-            {remainingQty > 0 && <span style={{ color: THEME.muted }}>{remainingQty} shares will remain</span>}
-          </div>
-        </div>
-      )}
-
-      <ModalActions
-        onSave={handleSave}
-        onClose={onClose}
-        saveLabel="Confirm Sell"
-        disabled={!isValid || saving}
-        loading={saving}
-      />
-    </Modal>
-  );
-}
-
-function FifoSellModal({ group, currentPrice, demats = [], onClose, onSave, saving = false }: any) {
-  const totalQty = group.lots.reduce((s: number, l: any) => s + Number(l.qty || 0), 0);
-  const [f, setF] = useState({
-    sellQty: String(totalQty),
-    sellPrice: currentPrice ? String(Number(currentPrice).toFixed(2)) : "",
-    sellDate: today(),
-    broker: demats[0]?.broker || "",
-  });
-
-  const sellQtyNum = Number(f.sellQty) || 0;
-  const sellPriceNum = Number(f.sellPrice) || 0;
-  const allocs: FifoAlloc[] =
-    sellQtyNum > 0 && sellPriceNum > 0 && sellQtyNum <= totalQty + 0.0001
-      ? computeFifoAlloc(
-          group.lots,
-          Math.abs(sellQtyNum - totalQty) <= 0.0001 ? totalQty : sellQtyNum,
-          sellPriceNum,
-          f.sellDate
-        )
-      : [];
-
-  const totalProceeds = sellQtyNum * sellPriceNum;
-  const totalCost = allocs.reduce((s, a) => s + a.consume * a.buyPrice, 0);
-  const totalPnl = totalProceeds - totalCost;
-  const stcgPnl = allocs.filter((a) => !a.isLTCG).reduce((s, a) => s + a.pnl, 0);
-  const ltcgPnl = allocs.filter((a) => a.isLTCG).reduce((s, a) => s + a.pnl, 0);
-  const remainingAfter = totalQty - sellQtyNum;
-  const isValid = sellQtyNum > 0 && sellPriceNum > 0 && sellQtyNum <= totalQty + 0.0001 && !!f.sellDate;
-
-  return (
-    <Modal title={`FIFO Share Sell — ${group.base}`} onClose={onClose} maxWidth={640}>
-      <div style={{ fontSize: 13, color: THEME.muted, marginBottom: 12 }}>
-        Automated FIFO allocation sells oldest lots first for maximum LTCG tax benefits.
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Total Sell Qty">
-          <input
-            style={inputStyle}
-            type="number"
-            min="0.0001"
-            max={totalQty}
-            value={f.sellQty}
-            onChange={(e) => setF({ ...f, sellQty: e.target.value })}
-          />
-        </Field>
-        <Field label="Sell Price (₹)">
-          <input
-            style={inputStyle}
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={f.sellPrice}
-            onChange={(e) => setF({ ...f, sellPrice: e.target.value })}
-          />
-        </Field>
-      </div>
-
-      <Field label="Sell Date">
-        <input
-          style={inputStyle}
-          type="date"
-          max={today()}
-          value={f.sellDate}
-          onChange={(e) => setF({ ...f, sellDate: e.target.value })}
-        />
-      </Field>
-
-      {/* FIFO Lot Allocation Breakdown Preview */}
-      {allocs.length > 0 && (
-        <div style={{ marginTop: 12, border: `1px solid ${THEME.line}`, borderRadius: 10, padding: 14, background: "var(--surface-1)" }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: THEME.ink, marginBottom: 8 }}>
-            FIFO Lot Allocation Preview ({allocs.length} lot{allocs.length === 1 ? "" : "s"} consumed)
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 11 }}>
-            {allocs.map((a, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>
-                  Lot #{i + 1} ({a.lot.buyDate || "—"}): <b>{a.consume} sh</b> @ ₹{a.buyPrice.toFixed(2)}
-                </span>
-                <span className={a.isLTCG ? "demat-tax-badge-ltcg" : "demat-tax-badge-stcg"}>
-                  {a.isLTCG ? "LTCG" : "STCG"} · {a.pnl >= 0 ? "+" : ""}₹{a.pnl.toFixed(2)}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ borderTop: `1px solid ${THEME.line}`, marginTop: 10, paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-            <span style={{ color: THEME.muted, fontWeight: 600 }}>Total Realized P&amp;L:</span>
-            <b style={{ color: totalPnl >= 0 ? THEME.sage : THEME.rust }}>
-              {totalPnl >= 0 ? "+" : ""}₹{totalPnl.toFixed(2)}
-            </b>
-          </div>
-        </div>
-      )}
-
-      <ModalActions
-        onSave={() => isValid && onSave(allocs, sellPriceNum, f.sellDate, f.broker)}
-        onClose={onClose}
-        saveLabel="Confirm FIFO Sell"
-        disabled={!isValid || allocs.length === 0 || saving}
-        loading={saving}
-      />
-    </Modal>
-  );
-}
-
-function SplitBonusModal({ group, onClose, onApply, saving = false }: any) {
-  const [type, setType] = useState<"split" | "bonus">("split");
-  const [ratioN, setRatioN] = useState("2");
-  const [ratioM, setRatioM] = useState("1");
-  const [actionDate, setActionDate] = useState(today());
-
-  const n = Number(ratioN) || 0;
-  const m = Number(ratioM) || 0;
-  const totalQty = group.lots.reduce((s: number, l: any) => s + Number(l.qty || 0), 0);
-  const totalInv = group.lots.reduce((s: number, l: any) => s + Number(l.qty || 0) * Number(l.avgPrice || 0), 0);
-
-  let newTotalQty = 0;
-  if (n > 0 && m > 0)
-    newTotalQty = type === "split" ? Math.floor((totalQty * n) / m) : Math.floor((totalQty * (m + n)) / m);
-  const newAvgPreview = newTotalQty > 0 ? totalInv / newTotalQty : 0;
-  const isValid = n > 0 && m > 0 && !!actionDate && (type === "split" ? n !== m : true);
-
-  const handleApply = () => {
-    if (!isValid) return;
-    const lotCalcs = group.lots.map((lot: any) => {
-      const oldQty = Number(lot.qty);
-      const oldAvg = Number(lot.avgPrice);
-      const exact = type === "split" ? (oldQty * n) / m : (oldQty * (m + n)) / m;
-      return {
-        lot,
-        oldQty,
-        oldAvg,
-        floored: Math.floor(exact),
-        remainder: exact - Math.floor(exact),
-      };
-    });
-    let shortfall = newTotalQty - lotCalcs.reduce((s: number, c: any) => s + c.floored, 0);
-    const sorted = [...lotCalcs].sort((a: any, b: any) => b.remainder - a.remainder);
-    for (const c of sorted) {
-      if (shortfall <= 0) break;
-      c.floored += 1;
-      shortfall -= 1;
-    }
-    const updates = lotCalcs
-      .filter((c: any) => c.floored > 0)
-      .map((c: any) => {
-        const newAvg = (c.oldQty * c.oldAvg) / c.floored;
-        return {
-          id: c.lot.id,
-          qty: String(c.floored),
-          avgPrice: String(Number(newAvg.toFixed(4))),
-        };
-      });
-    const removals = lotCalcs.filter((c: any) => c.floored <= 0).map((c: any) => c.lot.id);
-    const actionLog = {
-      symbol: group.base,
-      exchange: group.exchange,
-      actionType: type,
-      ratioN: n,
-      ratioM: m,
-      actionDate,
-      oldQty: totalQty,
-      newQty: newTotalQty,
-      oldAvgPrice: totalQty > 0 ? Number((totalInv / totalQty).toFixed(2)) : 0,
-      newAvgPrice: Number(newAvgPreview.toFixed(2)),
-    };
-    onApply(updates, actionLog, removals);
-  };
-
-  return (
-    <Modal title={`Corporate Action — ${group.base}`} onClose={onClose}>
-      <Field label="Action Type">
-        <div style={{ display: "flex", gap: 10 }}>
-          {(["split", "bonus"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              style={{
-                flex: 1,
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: `1.5px solid ${type === t ? THEME.accent : THEME.line}`,
-                background: type === t ? THEME.accent : "transparent",
-                color: type === t ? THEME.darkInk : THEME.ink,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                setType(t);
-                if (t === "bonus") {
-                  setRatioN("1");
-                  setRatioM("1");
-                } else {
-                  setRatioN("2");
-                  setRatioM("1");
-                }
-              }}
-            >
-              {t === "split" ? "Stock Split" : "Bonus Issue"}
-            </button>
-          ))}
-        </div>
-      </Field>
-
-      <Field label="Corporate Action Date">
-        <input
-          style={inputStyle}
-          type="date"
-          max={today()}
-          value={actionDate}
-          onChange={(e) => setActionDate(e.target.value)}
-        />
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "end" }}>
-        <Field label={type === "split" ? "New Shares" : "Bonus Shares"}>
-          <input
-            style={inputStyle}
-            type="number"
-            min="1"
-            value={ratioN}
-            onChange={(e) => setRatioN(e.target.value)}
-          />
-        </Field>
-        <div style={{ paddingBottom: 10, fontWeight: 700, fontSize: 20, color: THEME.muted, textAlign: "center" }}>:</div>
-        <Field label="Existing Shares">
-          <input
-            style={inputStyle}
-            type="number"
-            min="1"
-            value={ratioM}
-            onChange={(e) => setRatioM(e.target.value)}
-          />
-        </Field>
-      </div>
-
-      {isValid && newTotalQty > 0 && (
-        <div style={{ padding: "12px 14px", borderRadius: 10, background: "var(--surface-1)", border: `1px solid ${THEME.line}`, marginTop: 8, fontSize: 13 }}>
-          <div>
-            Total Qty: <span style={{ color: THEME.muted }}>{totalQty}</span> → <b style={{ color: THEME.gold }}>{newTotalQty} shares</b>
-          </div>
-          <div style={{ marginTop: 4 }}>
-            Adjusted Avg Price: <span style={{ color: THEME.muted }}>₹{(totalQty > 0 ? totalInv / totalQty : 0).toFixed(2)}</span> → <b style={{ color: THEME.gold }}>₹{newAvgPreview.toFixed(2)}</b>
-          </div>
-        </div>
-      )}
-
-      <ModalActions
-        onSave={handleApply}
-        onClose={onClose}
-        saveLabel="Apply Action"
-        disabled={!isValid || saving}
-        loading={saving}
-      />
-    </Modal>
-  );
-}
 
 function WishlistModal({ onClose, onSave, initial = null, saving = false }: any) {
   const [f, setF] = useState(
