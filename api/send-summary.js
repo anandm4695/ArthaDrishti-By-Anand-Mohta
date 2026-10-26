@@ -689,9 +689,11 @@ function computeSummary(state, refDate = new Date()) {
       .reduce((s, c) => s + (Number(c.limit || c.cardLimit) || 0), 0) +
     Object.values(ccGroupPools).reduce((s, v) => s + v, 0);
   const creditAvailable = Math.max(0, creditLimit - creditOutstanding);
+  const isCreditOverLimit = creditLimit > 0 && creditOutstanding > creditLimit;
+  const creditOverLimitAmount = isCreditOverLimit ? creditOutstanding - creditLimit : 0;
   const creditUtil =
     creditLimit > 0
-      ? Math.min(100, Math.max(0, Math.round((creditOutstanding / creditLimit) * 100)))
+      ? Math.max(0, Math.round((creditOutstanding / creditLimit) * 100))
       : (creditOutstanding > 0 ? 100 : 0);
 
   const enrichedCards = activeCards.map((c) => {
@@ -702,14 +704,18 @@ function computeSummary(state, refDate = new Date()) {
       (groupKey ? ccGroupPools[groupKey] : 0) ||
       Number(c.limit || c.cardLimit) ||
       0;
-    const u = lim > 0 ? Math.min(100, Math.max(0, Math.round((out / lim) * 100))) : (out > 0 ? 100 : 0);
+    const u = lim > 0 ? Math.max(0, Math.round((out / lim) * 100)) : (out > 0 ? 100 : 0);
     const avail = Math.max(0, lim - out);
+    const isCardOverLimit = lim > 0 && out > lim;
+    const overLimitAmount = isCardOverLimit ? out - lim : 0;
     return {
       ...c,
       outstanding: out,
       effectiveLimit: lim,
       utilizationPct: u,
       availableLimit: avail,
+      isOverLimit: isCardOverLimit,
+      overLimitAmount,
     };
   });
 
@@ -1455,6 +1461,13 @@ function computeSummary(state, refDate = new Date()) {
   // ── Alerts & Smart Insights ────────────────────────────────────────────────
   const alerts = [];
 
+  // 1. Dues vs Cash liquidity (immediate 3-day cash buffer check + 7-day liquidity check)
+  if (totalDues3Days > bankTotal) {
+    alerts.push({
+      type: "alert",
+      msg: `Immediate cash shortfall: Upcoming dues in the next 3 days (${fmtINR(totalDues3Days)}) exceed your bank cash (${fmtINR(bankTotal)}) by ${fmtINR(totalDues3Days - bankTotal)}. Arrange funds immediately.`,
+    });
+  }
   if (totalDues7Days > bankTotal) {
     alerts.push({
       type: "alert",
@@ -1462,10 +1475,57 @@ function computeSummary(state, refDate = new Date()) {
     });
   }
 
-  if (creditUtil >= 70) {
+  // 2. Overdue bills
+  const overdueDues = dues.filter((d) => d.isOverdue);
+  if (overdueDues.length > 0) {
+    const overdueTotal = overdueDues.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    alerts.push({
+      type: "alert",
+      msg: `Past-due payments detected: ${overdueDues.length} obligation${overdueDues.length > 1 ? "s" : ""} totaling ${fmtINR(overdueTotal)} are past due. Settle immediately to avoid penalty charges.`,
+    });
+  }
+
+  // 3. Credit Card Limit & Utilization
+  if (creditUtil > 100) {
+    alerts.push({
+      type: "alert",
+      msg: `Credit limit breached: Overall credit utilization is at ${creditUtil}% (${fmtINR(creditOutstanding)} of ${fmtINR(creditLimit)} combined limit). Over-limit penalties apply and credit score may drop significantly. Settle immediately.`,
+    });
+  } else if (creditUtil >= 70) {
     alerts.push({
       type: "warn",
       msg: `High credit card utilization: ${creditUtil}% of combined limit utilized (${fmtINR(creditOutstanding)} of ${fmtINR(creditLimit)}). Pay down to protect credit score.`,
+    });
+  }
+
+  // 4. Individual Over-limit or High-utilization Cards
+  const overLimitCards = enrichedCards.filter((c) => c.isOverLimit || c.utilizationPct > 100);
+  overLimitCards.forEach((c) => {
+    if (enrichedCards.length > 1 || creditUtil <= 100) {
+      alerts.push({
+        type: "alert",
+        msg: `${c.issuer || c.name || "Credit card"}${c.last4 ? ` (··${c.last4})` : ""} is OVER LIMIT at ${c.utilizationPct}% (${fmtINR(c.outstanding)} of ${fmtINR(c.effectiveLimit)}). Pay down ${fmtINR(c.outstanding - c.effectiveLimit)} immediately to avoid over-limit penalties.`,
+      });
+    }
+  });
+
+  if (creditUtil < 70) {
+    const highUtilCards = enrichedCards.filter(
+      (c) => c.effectiveLimit > 0 && c.utilizationPct >= 80 && c.utilizationPct <= 100
+    );
+    highUtilCards.forEach((c) => {
+      alerts.push({
+        type: "warn",
+        msg: `High utilization on ${c.issuer || c.name || "Credit card"}${c.last4 ? ` (··${c.last4})` : ""}: ${c.utilizationPct}% used (${fmtINR(c.outstanding)} of ${fmtINR(c.effectiveLimit)}). Keep individual card usage below 30% for optimal CIBIL score.`,
+      });
+    });
+  }
+
+  // 5. Positive credit insight if optimal (< 30%)
+  if (creditLimit > 0 && creditOutstanding > 0 && creditUtil <= 30) {
+    alerts.push({
+      type: "info",
+      msg: `Optimal credit utilization: Your revolving credit usage is at ${creditUtil}%, well below the 30% threshold. This actively protects and strengthens your CIBIL score.`,
     });
   }
 
@@ -1485,10 +1545,31 @@ function computeSummary(state, refDate = new Date()) {
     });
   }
 
+  // 6. Weekly spending surge
+  if (weeklySpendTrendPct !== null && weeklySpendTrendPct >= 35 && past7DaysExpense > 5000) {
+    alerts.push({
+      type: "warn",
+      msg: `Spending acceleration: Past 7-day outflow (${fmtINR(past7DaysExpense)}) jumped by +${weeklySpendTrendPct}% compared to prior week (${fmtINR(prior7DaysExpense)}). Review recent debit categories.`,
+    });
+  }
+
+  // 7. Weekly budget exceeded
+  if (weeklyBudgetAllowance > 0 && weeklyBudgetSpentPct > 100) {
+    alerts.push({
+      type: "warn",
+      msg: `Weekly budget exceeded: Spent ${fmtINR(past7DaysExpense)} against weekly allowance of ${fmtINR(weeklyBudgetAllowance)} (${weeklyBudgetSpentPct}%).`,
+    });
+  }
+
   if (savingsPct < 20 && monthIncome > 0 && dayOfMonth >= 15) {
     alerts.push({
       type: "info",
       msg: `Savings rate MTD is ${savingsPct}%. Target 20%+ by controlling discretionary expenses.`,
+    });
+  } else if (savingsPct >= 40 && monthIncome > 0 && dayOfMonth >= 15) {
+    alerts.push({
+      type: "info",
+      msg: `Strong savings discipline: Saved ${savingsPct}% of income MTD (${fmtINR(netSavings)} saved out of ${fmtINR(monthIncome)}). Great progress towards your financial goals.`,
     });
   }
 
@@ -1503,6 +1584,11 @@ function computeSummary(state, refDate = new Date()) {
     alerts.push({
       type: "alert",
       msg: `Debt-to-assets ratio at ${debtToAssetRatio}%. Total liabilities: ${fmtINR(totalLiabilities)}.`,
+    });
+  } else if (totalLiabilities === 0 && totalAssets > 0) {
+    alerts.push({
+      type: "info",
+      msg: `Debt-free milestone: You have zero outstanding liabilities across loans and credit cards. 100% of your assets are unencumbered.`,
     });
   }
 
@@ -1614,6 +1700,8 @@ function computeSummary(state, refDate = new Date()) {
     activeCardCount: activeCards.length,
     activeCards,
     enrichedCards,
+    isCreditOverLimit,
+    creditOverLimitAmount,
   };
 }
 
@@ -1860,7 +1948,24 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
       const out = Number(c.outstanding || 0);
       const lim = Number(c.effectiveLimit || c.limit || c.cardLimit || 0);
       const u = c.utilizationPct != null ? c.utilizationPct : (lim > 0 ? Math.round((out / lim) * 100) : (out > 0 ? 100 : 0));
-      const uColor = u >= 70 ? EMAIL_STYLES.negColor : u >= 40 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.posColor;
+      const isCardOverLimit = lim > 0 && out > lim;
+      const uColor = isCardOverLimit || u > 100
+        ? EMAIL_STYLES.negColor
+        : u >= 70
+          ? EMAIL_STYLES.negColor
+          : u >= 40
+            ? EMAIL_STYLES.warnColor
+            : EMAIL_STYLES.posColor;
+      const uBg = isCardOverLimit || u > 100
+        ? "#fee2e2"
+        : u >= 70
+          ? EMAIL_STYLES.negBg
+          : u >= 40
+            ? EMAIL_STYLES.warnBg
+            : EMAIL_STYLES.posBg;
+      const uLabel = lim > 0
+        ? (isCardOverLimit || u > 100 ? `${u}% used · OVER LIMIT` : `${u}% used`)
+        : (out > 0 ? "No limit set" : "0% used");
       const bg = i % 2 === 0 ? "#ffffff" : "#f8fafc";
       return `
       <tr><td style="padding:11px 24px;background:${bg};border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
@@ -1873,7 +1978,7 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
             <td style="text-align:right;">
               <span style="font-size:13.5px;font-weight:800;color:${EMAIL_STYLES.textPrimary};">${fmtINR(out)}</span>
               ${lim > 0 ? `<span style="font-size:11px;color:${EMAIL_STYLES.textMuted};margin-left:3px;">/ ${fmtINR(lim)}</span>` : ""}
-              <span style="display:inline-block;font-size:10.5px;color:${uColor};font-weight:700;margin-left:6px;background:${u >= 70 ? EMAIL_STYLES.negBg : u >= 40 ? EMAIL_STYLES.warnBg : EMAIL_STYLES.posBg};padding:1px 6px;border-radius:4px;">${u}% used</span>
+              <span style="display:inline-block;font-size:10.5px;color:${uColor};font-weight:700;margin-left:6px;background:${uBg};${isCardOverLimit || u > 100 ? "border:1px solid #fca5a5;" : ""}padding:1px 6px;border-radius:4px;">${uLabel}</span>
             </td>
           </tr>
         </table>
@@ -2002,7 +2107,12 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
   ${
     ccCardsToRender.length > 0
       ? `
-  ${renderSectionHeader(`Credit Cards (${creditUtil}% utilized)`, `${fmtINR(creditOutstanding)} of ${fmtINR(creditLimit)}`)}
+  ${renderSectionHeader(
+    `Credit Cards (${creditUtil}% utilized${creditUtil > 100 ? " · OVER LIMIT" : ""})`,
+    `${fmtINR(creditOutstanding)} of ${fmtINR(creditLimit)}`,
+    creditUtil > 100 ? EMAIL_STYLES.negColor : creditUtil >= 70 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.accentColor,
+    creditUtil > 100 ? "#fee2e2" : creditUtil >= 70 ? EMAIL_STYLES.warnBg : EMAIL_STYLES.accentLight
+  )}
   <tr><td style="background:${EMAIL_STYLES.cardBg};">
     ${ccRows}
   </td></tr>`
@@ -2015,7 +2125,7 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
       ? `
   ${renderSectionHeader("Immediate Action Items", `${alerts.length} alert${alerts.length === 1 ? "" : "s"}`)}
   <tr><td style="background:${EMAIL_STYLES.cardBg};padding-bottom:14px;">
-    ${renderAlertRows(alerts.slice(0, 3))}
+    ${renderAlertRows(alerts.slice(0, 4))}
   </td></tr>`
       : ""
   }
@@ -2143,7 +2253,24 @@ function renderWeeklyHTML(summary, recipientName, refDate = new Date()) {
       const out = Number(c.outstanding || 0);
       const lim = Number(c.effectiveLimit || c.limit || c.cardLimit || 0);
       const u = c.utilizationPct != null ? c.utilizationPct : (lim > 0 ? Math.round((out / lim) * 100) : (out > 0 ? 100 : 0));
-      const uColor = u >= 70 ? EMAIL_STYLES.negColor : u >= 40 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.posColor;
+      const isCardOverLimit = lim > 0 && out > lim;
+      const uColor = isCardOverLimit || u > 100
+        ? EMAIL_STYLES.negColor
+        : u >= 70
+          ? EMAIL_STYLES.negColor
+          : u >= 40
+            ? EMAIL_STYLES.warnColor
+            : EMAIL_STYLES.posColor;
+      const uBg = isCardOverLimit || u > 100
+        ? "#fee2e2"
+        : u >= 70
+          ? EMAIL_STYLES.negBg
+          : u >= 40
+            ? EMAIL_STYLES.warnBg
+            : EMAIL_STYLES.posBg;
+      const uLabel = lim > 0
+        ? (isCardOverLimit || u > 100 ? `${u}% used · OVER LIMIT` : `${u}% used`)
+        : (out > 0 ? "No limit set" : "0% used");
       const bg = i % 2 === 0 ? "#ffffff" : "#f8fafc";
       return `
       <tr><td style="padding:11px 24px;background:${bg};border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
@@ -2156,7 +2283,7 @@ function renderWeeklyHTML(summary, recipientName, refDate = new Date()) {
             <td style="text-align:right;">
               <span style="font-size:13.5px;font-weight:800;color:${EMAIL_STYLES.textPrimary};">${fmtINR(out)}</span>
               ${lim > 0 ? `<span style="font-size:11px;color:${EMAIL_STYLES.textMuted};margin-left:3px;">/ ${fmtINR(lim)}</span>` : ""}
-              <span style="display:inline-block;font-size:10.5px;color:${uColor};font-weight:700;margin-left:6px;background:${u >= 70 ? EMAIL_STYLES.negBg : u >= 40 ? EMAIL_STYLES.warnBg : EMAIL_STYLES.posBg};padding:1px 6px;border-radius:4px;">${u}% used</span>
+              <span style="display:inline-block;font-size:10.5px;color:${uColor};font-weight:700;margin-left:6px;background:${uBg};${isCardOverLimit || u > 100 ? "border:1px solid #fca5a5;" : ""}padding:1px 6px;border-radius:4px;">${uLabel}</span>
             </td>
           </tr>
         </table>
@@ -2316,7 +2443,12 @@ function renderWeeklyHTML(summary, recipientName, refDate = new Date()) {
   ${
     ccCardsToRender.length > 0
       ? `
-  ${renderSectionHeader(`Credit Cards & Revolving Limit (${creditUtil}% utilized)`, `${fmtINR(creditOutstanding)} of ${fmtINR(creditLimit)}`)}
+  ${renderSectionHeader(
+    `Credit Cards & Revolving Limit (${creditUtil}% utilized${creditUtil > 100 ? " · OVER LIMIT" : ""})`,
+    `${fmtINR(creditOutstanding)} of ${fmtINR(creditLimit)}`,
+    creditUtil > 100 ? EMAIL_STYLES.negColor : creditUtil >= 70 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.accentColor,
+    creditUtil > 100 ? "#fee2e2" : creditUtil >= 70 ? EMAIL_STYLES.warnBg : EMAIL_STYLES.accentLight
+  )}
   <tr><td style="background:${EMAIL_STYLES.cardBg};">
     ${ccRows}
   </td></tr>`
@@ -2490,7 +2622,24 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
       const out = Number(c.outstanding || 0);
       const lim = Number(c.effectiveLimit || c.limit || c.cardLimit || 0);
       const u = c.utilizationPct != null ? c.utilizationPct : (lim > 0 ? Math.round((out / lim) * 100) : (out > 0 ? 100 : 0));
-      const uColor = u >= 70 ? EMAIL_STYLES.negColor : u >= 40 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.posColor;
+      const isCardOverLimit = lim > 0 && out > lim;
+      const uColor = isCardOverLimit || u > 100
+        ? EMAIL_STYLES.negColor
+        : u >= 70
+          ? EMAIL_STYLES.negColor
+          : u >= 40
+            ? EMAIL_STYLES.warnColor
+            : EMAIL_STYLES.posColor;
+      const uBg = isCardOverLimit || u > 100
+        ? "#fee2e2"
+        : u >= 70
+          ? EMAIL_STYLES.negBg
+          : u >= 40
+            ? EMAIL_STYLES.warnBg
+            : EMAIL_STYLES.posBg;
+      const uLabel = lim > 0
+        ? (isCardOverLimit || u > 100 ? `${u}% used · OVER LIMIT` : `${u}% used`)
+        : (out > 0 ? "No limit set" : "0% used");
       const bg = i % 2 === 0 ? "#ffffff" : "#f8fafc";
       return `
       <tr><td style="padding:11px 24px;background:${bg};border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
@@ -2503,7 +2652,7 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
             <td style="text-align:right;">
               <span style="font-size:13.5px;font-weight:800;color:${EMAIL_STYLES.textPrimary};">${fmtINR(out)}</span>
               ${lim > 0 ? `<span style="font-size:11px;color:${EMAIL_STYLES.textMuted};margin-left:3px;">/ ${fmtINR(lim)}</span>` : ""}
-              <span style="display:inline-block;font-size:10.5px;color:${uColor};font-weight:700;margin-left:6px;background:${u >= 70 ? EMAIL_STYLES.negBg : u >= 40 ? EMAIL_STYLES.warnBg : EMAIL_STYLES.posBg};padding:1px 6px;border-radius:4px;">${u}% used</span>
+              <span style="display:inline-block;font-size:10.5px;color:${uColor};font-weight:700;margin-left:6px;background:${uBg};${isCardOverLimit || u > 100 ? "border:1px solid #fca5a5;" : ""}padding:1px 6px;border-radius:4px;">${uLabel}</span>
             </td>
           </tr>
         </table>
@@ -2546,7 +2695,7 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
   rowIdx = 0;
   const liabilityItems = [
     loanOutstandingTotal > 0 && listRow("Loans Outstanding", fmtINR(loanOutstandingTotal)),
-    creditOutstanding > 0 && listRow(`Credit Card Dues (${creditUtil}% limit used)`, fmtINR(creditOutstanding)),
+    creditOutstanding > 0 && listRow(`Credit Card Dues (${creditUtil}% limit used${creditUtil > 100 ? " · OVER LIMIT" : ""})`, fmtINR(creditOutstanding)),
     informalBorrowedTotal > 0 && listRow("Informal Borrowings", fmtINR(informalBorrowedTotal)),
     rentalDepositLiability > 0 && listRow("Tenant Deposits Owed", fmtINR(rentalDepositLiability)),
     realEstateOutstanding > 0 && listRow("Real Estate Construction Dues", fmtINR(realEstateOutstanding)),
@@ -2770,7 +2919,12 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
   ${
     ccCardsToRender.length > 0
       ? `
-  ${renderSectionHeader("Credit Cards & Revolving Lines", `${creditUtil}% utilized`)}
+  ${renderSectionHeader(
+    "Credit Cards & Revolving Lines",
+    creditUtil > 100 ? `${creditUtil}% utilized · OVER LIMIT` : `${creditUtil}% utilized`,
+    creditUtil > 100 ? EMAIL_STYLES.negColor : creditUtil >= 70 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.accentColor,
+    creditUtil > 100 ? "#fee2e2" : creditUtil >= 70 ? EMAIL_STYLES.warnBg : EMAIL_STYLES.accentLight
+  )}
   <tr><td style="padding:12px 24px;background:#f8fafc;border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
@@ -2780,8 +2934,10 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
       </tr>
       <tr>
         <td style="font-size:15px;font-weight:900;color:${EMAIL_STYLES.textPrimary};padding-top:3px;">${fmtINR(creditLimit)}</td>
-        <td style="font-size:15px;font-weight:900;color:${creditUtil >= 70 ? EMAIL_STYLES.negColor : creditUtil >= 40 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.textPrimary};padding-top:3px;text-align:center;">${fmtINR(creditOutstanding)}</td>
-        <td style="font-size:15px;font-weight:900;color:${EMAIL_STYLES.posColor};padding-top:3px;text-align:right;">${fmtINR(creditAvailable)}</td>
+        <td style="font-size:15px;font-weight:900;color:${creditUtil > 100 || creditUtil >= 70 ? EMAIL_STYLES.negColor : creditUtil >= 40 ? EMAIL_STYLES.warnColor : EMAIL_STYLES.textPrimary};padding-top:3px;text-align:center;">${fmtINR(creditOutstanding)}</td>
+        <td style="font-size:15px;font-weight:900;color:${creditOutstanding > creditLimit ? EMAIL_STYLES.negColor : EMAIL_STYLES.posColor};padding-top:3px;text-align:right;">
+          ${creditOutstanding > creditLimit ? `₹0 (Over by ${fmtINR(creditOutstanding - creditLimit)})` : fmtINR(creditAvailable)}
+        </td>
       </tr>
     </table>
   </td></tr>

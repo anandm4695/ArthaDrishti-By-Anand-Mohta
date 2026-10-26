@@ -1038,7 +1038,7 @@ export const computeCreditPortfolioSummary = (cards: any[] = []): CreditPortfoli
     pool.isOverLimit = pool.poolLimit > 0 && pool.totalOutstanding > pool.poolLimit;
     pool.utilizationPct =
       pool.poolLimit > 0
-        ? Math.min(100, Math.max(0, Math.round((pool.totalOutstanding / pool.poolLimit) * 100)))
+        ? Math.max(0, Math.round((pool.totalOutstanding / pool.poolLimit) * 100))
         : pool.totalOutstanding > 0
           ? 100
           : 0;
@@ -1059,7 +1059,7 @@ export const computeCreditPortfolioSummary = (cards: any[] = []): CreditPortfoli
   const isOverLimit = totalLimit > 0 && totalOutstanding > totalLimit;
   const utilizationPct =
     totalLimit > 0
-      ? Math.min(100, Math.max(0, Math.round((totalOutstanding / totalLimit) * 100)))
+      ? Math.max(0, Math.round((totalOutstanding / totalLimit) * 100))
       : totalOutstanding > 0
         ? 100
         : 0;

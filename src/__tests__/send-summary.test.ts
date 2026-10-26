@@ -427,8 +427,9 @@ describe("Daily, Weekly & Monthly Email Summary Engine", () => {
         goals: [{ name: "House Downpayment", targetAmount: 2000000, currentAmount: 850000 }],
       };
 
-      const summary = computeSummary(state);
-      const html = generateHTML(summary, "monthly", "Anand");
+      const refDate = new Date("2026-10-15T00:00:00Z");
+      const summary = computeSummary(state, refDate);
+      const html = generateHTML(summary, "monthly", "Anand", refDate);
 
       expect(html).toContain("ArthaDrishti");
       expect(html).toContain("Monthly Executive");
@@ -700,6 +701,150 @@ describe("Daily, Weekly & Monthly Email Summary Engine", () => {
       expect(monthlyHtml).toContain("Emergency Liquidity &amp; Safety Cushion");
       expect(monthlyHtml).toContain("6-Month Target Cushion");
       expect(monthlyHtml).toContain("Fully Funded");
+    });
+  });
+
+  describe("10. Credit Card Over-Limit Tracking & Multi-Cadence Smart Insights", () => {
+    it("accurately calculates utilization > 100% when credit card limit is exceeded without capping at 100%", () => {
+      const state = {
+        creditCards: [
+          { issuer: "HDFC Regalia", limit: 100000, outstanding: 125000, status: "active" },
+        ],
+      };
+
+      const summary = computeSummary(state);
+
+      expect(summary.creditLimit).toBe(100000);
+      expect(summary.creditOutstanding).toBe(125000);
+      expect(summary.creditUtil).toBe(125); // NOT capped at 100%
+      expect(summary.isCreditOverLimit).toBe(true);
+      expect(summary.creditOverLimitAmount).toBe(25000);
+      expect(summary.creditAvailable).toBe(0);
+
+      expect(summary.enrichedCards[0].utilizationPct).toBe(125); // NOT capped at 100%
+      expect(summary.enrichedCards[0].isOverLimit).toBe(true);
+      expect(summary.enrichedCards[0].overLimitAmount).toBe(25000);
+
+      // Verify critical over-limit alert is generated
+      const overLimitAlert = summary.alerts.find(
+        (a: any) => a.type === "alert" && a.msg.includes("Credit limit breached")
+      );
+      expect(overLimitAlert).toBeDefined();
+      expect(overLimitAlert.msg).toContain("125%");
+      expect(overLimitAlert.msg).toContain("₹1.25L");
+    });
+
+    it("renders over-limit badges, labels, and warning colors across Daily, Weekly, and Monthly emails", () => {
+      const state = {
+        bankAccounts: [{ balance: 200000 }],
+        creditCards: [
+          { issuer: "Axis Atlas", last4: "4321", limit: 200000, outstanding: 250000, status: "active" },
+        ],
+      };
+
+      const summary = computeSummary(state);
+      const dailyHtml = generateHTML(summary, "daily", "Anand");
+      const weeklyHtml = generateHTML(summary, "weekly", "Anand");
+      const monthlyHtml = generateHTML(summary, "monthly", "Anand");
+
+      // Daily checks
+      expect(dailyHtml).toContain("Credit Cards (125% utilized · OVER LIMIT)");
+      expect(dailyHtml).toContain("125% used · OVER LIMIT");
+      expect(dailyHtml).toContain("Axis Atlas");
+
+      // Weekly checks
+      expect(weeklyHtml).toContain("Credit Cards &amp; Revolving Limit (125% utilized · OVER LIMIT)");
+      expect(weeklyHtml).toContain("125% used · OVER LIMIT");
+
+      // Monthly checks
+      expect(monthlyHtml).toContain("125% utilized · OVER LIMIT");
+      expect(monthlyHtml).toContain("125% used · OVER LIMIT");
+      expect(monthlyHtml).toContain("Credit Card Dues (125% limit used · OVER LIMIT)");
+      expect(monthlyHtml).toContain("Over by ₹50K");
+    });
+
+    it("triggers specific over-limit alert for individual card even when total portfolio limit is under limit", () => {
+      const state = {
+        bankAccounts: [{ balance: 100000 }],
+        creditCards: [
+          { issuer: "ICICI Sapphiro", last4: "1111", limit: 50000, outstanding: 60000, status: "active" }, // 120% over limit
+          { issuer: "HDFC Infinia", last4: "2222", limit: 500000, outstanding: 15000, status: "active" }, // 3%
+        ],
+      };
+
+      const summary = computeSummary(state);
+
+      // Total limit = 550,000, total out = 75,000 => ~14% overall
+      expect(summary.creditUtil).toBe(14);
+      expect(summary.isCreditOverLimit).toBe(false);
+
+      // Card-level over-limit detection
+      const iciciCard = summary.enrichedCards.find((c: any) => c.issuer === "ICICI Sapphiro");
+      expect(iciciCard.utilizationPct).toBe(120);
+      expect(iciciCard.isOverLimit).toBe(true);
+      expect(iciciCard.overLimitAmount).toBe(10000);
+
+      // Alert generated specifically for the breached card
+      const cardAlert = summary.alerts.find(
+        (a: any) => a.type === "alert" && a.msg.includes("ICICI Sapphiro") && a.msg.includes("OVER LIMIT")
+      );
+      expect(cardAlert).toBeDefined();
+      expect(cardAlert.msg).toContain("120%");
+      expect(cardAlert.msg).toContain("₹60K");
+    });
+
+    it("generates smart insights for high single-card utilization and optimal credit utilization", () => {
+      // 1. High single-card utilization (85%) when overall is < 70%
+      const stateHigh = {
+        creditCards: [
+          { issuer: "SBI Cashback", last4: "9999", limit: 100000, outstanding: 85000, status: "active" },
+          { issuer: "Amex Plat", last4: "8888", limit: 400000, outstanding: 20000, status: "active" },
+        ],
+      };
+      const summaryHigh = computeSummary(stateHigh);
+      const highAlert = summaryHigh.alerts.find(
+        (a: any) => a.type === "warn" && a.msg.includes("SBI Cashback") && a.msg.includes("85% used")
+      );
+      expect(highAlert).toBeDefined();
+
+      // 2. Optimal credit utilization insight (<30%)
+      const stateOptimal = {
+        creditCards: [
+          { issuer: "HDFC Millennia", limit: 300000, outstanding: 30000, status: "active" },
+        ],
+      };
+      const summaryOptimal = computeSummary(stateOptimal);
+      const optimalInsight = summaryOptimal.alerts.find(
+        (a: any) => a.type === "info" && a.msg.includes("Optimal credit utilization")
+      );
+      expect(optimalInsight).toBeDefined();
+      expect(optimalInsight.msg).toContain("10%");
+    });
+
+    it("generates cash shortfall, overdue bills, spend acceleration, and debt-free insights", () => {
+      const refDate = new Date("2026-10-10T00:00:00Z");
+
+      // 1. Immediate 3-day cash deficit alert
+      const stateShortfall = {
+        bankAccounts: [{ balance: 5000 }],
+        creditCards: [{ issuer: "HDFC", outstanding: 20000, dueDay: 11 }], // Due in 1 day
+      };
+      const summaryShortfall = computeSummary(stateShortfall, refDate);
+      const shortfallAlert = summaryShortfall.alerts.find(
+        (a: any) => a.type === "alert" && a.msg.includes("Immediate cash shortfall")
+      );
+      expect(shortfallAlert).toBeDefined();
+
+      // 2. Debt-free milestone
+      const stateDebtFree = {
+        bankAccounts: [{ balance: 500000 }],
+        mutualFunds: [{ scheme: "Bluechip Fund", units: 100, currentNav: 500 }],
+      };
+      const summaryDebtFree = computeSummary(stateDebtFree, refDate);
+      const debtFreeAlert = summaryDebtFree.alerts.find(
+        (a: any) => a.type === "info" && a.msg.includes("Debt-free milestone")
+      );
+      expect(debtFreeAlert).toBeDefined();
     });
   });
 });

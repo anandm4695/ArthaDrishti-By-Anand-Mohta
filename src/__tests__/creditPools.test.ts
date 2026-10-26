@@ -104,4 +104,26 @@ describe("Credit Card Shared Limit Pools & Portfolio Metrics", () => {
     expect(infoC3.effectiveAvailable).toBe(80000);
     expect(infoC3.cardOutstanding).toBe(20000);
   });
+
+  it("calculates utilization > 100% when pool or total limit is exceeded (not capped at 100%)", () => {
+    const cards = [
+      { id: "c1", issuer: "HDFC Overlimit", limit: 200000, outstanding: 250000, sharedGroup: "HDFC Shared", sharedGroupLimit: 200000 },
+      { id: "c2", issuer: "SBI Standalone Overlimit", limit: 100000, outstanding: 125000 },
+    ];
+
+    const summary = computeCreditPortfolioSummary(cards);
+
+    // Total limit = 200k + 100k = 300,000
+    // Total outstanding = 250k + 125k = 375,000
+    // Utilization = 375k / 300k = 125%
+    expect(summary.totalLimit).toBe(300000);
+    expect(summary.totalOutstanding).toBe(375000);
+    expect(summary.utilizationPct).toBe(125); // NOT capped at 100%
+    expect(summary.isOverLimit).toBe(true);
+    expect(summary.totalAvailable).toBe(0);
+
+    const hdfcPool = summary.pools["hdfc shared"];
+    expect(hdfcPool.utilizationPct).toBe(125); // 250k / 200k = 125%
+    expect(hdfcPool.isOverLimit).toBe(true);
+  });
 });
