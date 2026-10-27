@@ -295,6 +295,148 @@ describe("BanksTab Transaction Saving and Modal State", () => {
     expect(ccOptionLabels[2]).toContain("HSBC Cashback");
     expect(ccOptionLabels[3]).toContain("SBI SimplyCLICK");
   });
+
+  it("allows selecting and linking credit cards for income (credit) transactions like cash advance / loan", async () => {
+    const addItemMock = vi.fn().mockResolvedValue({ success: true, id: "test-uuid" });
+    const updateItemMock = vi.fn().mockResolvedValue({ success: true });
+    const showToastMock = vi.fn();
+
+    const mockState = {
+      bankAccounts: [
+        {
+          id: "bank-1",
+          bankName: "HDFC Bank",
+          type: "Savings",
+          balance: 20000,
+          owner: "self",
+        },
+      ],
+      creditCards: [
+        {
+          id: "cc-1",
+          issuer: "HDFC Regalia Gold",
+          last4: "4589",
+          outstanding: 15000,
+          status: "active",
+          transactions: [],
+        },
+      ],
+      transactions: [],
+    };
+
+    const container = await mount(
+      <PrivacyProvider>
+        <BanksTab
+          state={mockState}
+          addItem={addItemMock}
+          updateItem={updateItemMock}
+          showToast={showToastMock}
+          activeProfile="self"
+        />
+      </PrivacyProvider>
+    );
+
+    // Open Record Transaction modal
+    const recordBtn = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Record Transaction")
+    );
+    await act(async () => {
+      recordBtn?.click();
+    });
+
+    // Switch to Income (Credit) mode
+    const creditTypeBtn = Array.from(document.body.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Income (Credit)")
+    );
+    expect(creditTypeBtn).toBeDefined();
+    await act(async () => {
+      creditTypeBtn?.click();
+    });
+
+    // Select category "Credit Card"
+    const selects = Array.from(document.body.querySelectorAll("select"));
+    const categorySelect = selects.find((s) =>
+      Array.from(s.options).some((o) => o.value === "Credit Card")
+    );
+    expect(categorySelect).toBeDefined();
+
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value")!.set!;
+    await act(async () => {
+      setter.call(categorySelect, "Credit Card");
+      categorySelect!.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    // Verify helpful tip appears
+    expect(document.body.textContent).toContain("Credit Card Inflow / Drawdown");
+
+    // Find the Link dropdown
+    const linkSelect = Array.from(document.body.querySelectorAll("select")).find((s) =>
+      Array.from(s.options).some((o) => o.value.startsWith("creditCards:"))
+    );
+    expect(linkSelect).toBeDefined();
+
+    const ccOptions = Array.from(linkSelect!.options)
+      .filter((o) => o.value.startsWith("creditCards:"))
+      .map((o) => ({ value: o.value, text: o.textContent?.trim() || "" }));
+
+    expect(ccOptions).toHaveLength(2);
+    expect(ccOptions[0].value).toBe("creditCards:cc-1:advance");
+    expect(ccOptions[0].text).toContain("Cash Advance / Loan / Transfer");
+    expect(ccOptions[1].value).toBe("creditCards:cc-1:refund");
+    expect(ccOptions[1].text).toContain("Refund / Reversal / Cashback");
+
+    // Select advance option
+    await act(async () => {
+      setter.call(linkSelect, "creditCards:cc-1:advance");
+      linkSelect!.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    // Enter amount
+    const amountInput = document.body.querySelector('input[type="number"]') as HTMLInputElement;
+    const inputSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => {
+      inputSetter.call(amountInput, "50000");
+      amountInput.dispatchEvent(new Event("input", { bubbles: true }));
+      amountInput.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    // Click Record Transaction
+    const saveButtons = Array.from(document.body.querySelectorAll("button")).filter((b) =>
+      b.textContent?.trim() === "Record Transaction"
+    );
+    const saveBtn = saveButtons[saveButtons.length - 1];
+    await act(async () => {
+      saveBtn?.click();
+    });
+
+    // Verify addItem was called with credit transaction linked to creditCards:cc-1:advance
+    expect(addItemMock).toHaveBeenCalledWith(
+      "transactions",
+      expect.objectContaining({
+        accountId: "bank-1",
+        amount: 50000,
+        type: "credit",
+        category: "Credit Card",
+        linkedType: "creditCards",
+        linkedId: "cc-1:advance",
+      })
+    );
+
+    // Verify updateItem was called to increase credit card outstanding by 50,000 and log advance transaction
+    expect(updateItemMock).toHaveBeenCalledWith(
+      "creditCards",
+      "cc-1",
+      expect.objectContaining({
+        outstanding: 65000, // 15000 + 50000
+        transactions: expect.arrayContaining([
+          expect.objectContaining({
+            amount: "50000",
+            category: "Cash Advance",
+          }),
+        ]),
+      })
+    );
+  });
 });
 
 

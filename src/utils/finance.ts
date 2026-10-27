@@ -511,6 +511,10 @@ export const autoCateg = (note: string): string | null => {
       /\bsip\b|mutual fund|stock purchase|zerodha|groww|nifty|sensex|invest|ppf deposit|nps.*contrib|demat/i,
       "Investment",
     ],
+    [
+      /credit\s*card|\bcc\b.*(bill|pay|stmt|statement|advance|loan|transfer|cash)|card\s*to\s*bank|cash\s*advance/i,
+      "Credit Card",
+    ],
     [/\bemi\b|loan repay|hdfc.*loan|sbi.*loan|equitas|debt repay/i, "EMI"],
     [/loan recover|money recover|lent recover/i, "Loan Recovery"],
     [/loan given|lent money|money lent/i, "Loan Given"],

@@ -3178,11 +3178,21 @@ function FinanceDashboard() {
     const amt = Number(txn.amount || 0);
     const entryId = `bank-${txn.id}`;
     if (lt === "creditCards") {
-      const card = (state.creditCards || []).find((c: any) => c.id === lid);
+      const sep = String(lid).indexOf(":");
+      const cardId = sep >= 0 ? String(lid).slice(0, sep) : lid;
+      const subAction = sep >= 0 ? String(lid).slice(sep + 1) : "";
+      const card = (state.creditCards || []).find((c: any) => c.id === cardId);
       if (card) {
-        updateItem("creditCards", lid, {
+        const isAdvance =
+          txn.type === "credit" &&
+          subAction !== "refund" &&
+          !/refund|cashback|reversal|chargeback/i.test(txn.note || "");
+        const newOutstanding = isAdvance
+          ? Math.max(0, Number(card.outstanding || 0) - amt)
+          : Number(card.outstanding || 0) + amt;
+        updateItem("creditCards", cardId, {
           transactions: (card.transactions || []).filter((t: any) => t.id !== entryId),
-          outstanding: Number(card.outstanding || 0) + amt,
+          outstanding: newOutstanding,
         });
       }
     } else if (lt === "loansTaken") {

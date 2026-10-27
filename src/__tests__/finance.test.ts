@@ -270,6 +270,13 @@ describe("autoCateg", () => {
     expect(autoCateg("payroll November")).toBe("Salary");
   });
 
+  it("categorizes credit card bills, loans, and cash advances correctly", () => {
+    expect(autoCateg("HDFC Credit card bill")).toBe("Credit Card");
+    expect(autoCateg("Credit card loan disbursed")).toBe("Credit Card");
+    expect(autoCateg("CC cash advance")).toBe("Credit Card");
+    expect(autoCateg("Card to bank transfer")).toBe("Credit Card");
+  });
+
   it("returns null for uncategorized transactions", () => {
     expect(autoCateg("random unclassified payment xyz")).toBeNull();
   });

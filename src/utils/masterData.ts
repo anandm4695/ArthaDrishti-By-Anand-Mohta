@@ -177,6 +177,8 @@ export const DEFAULT_MASTER_DATA: MasterData = {
     "Utilities",
     "Travel",
     "Payment",
+    "Cash Advance",
+    "Refund",
     "Other",
   ],
   prepaidCategories: [

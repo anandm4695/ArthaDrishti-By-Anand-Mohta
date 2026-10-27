@@ -540,21 +540,66 @@ export function BanksTab({
         ],
       });
     } else if (lt === "creditCards") {
-      const card = (state.creditCards || []).find((c: any) => c.id === lid);
+      const sep = lid.indexOf(":");
+      const cardId = sep >= 0 ? lid.slice(0, sep) : lid;
+      const subAction = sep >= 0 ? lid.slice(sep + 1) : "";
+      const card = (state.creditCards || []).find((c: any) => c.id === cardId);
       if (!card) return;
-      await updateItem("creditCards", lid, {
-        transactions: [
-          ...(card.transactions || []),
-          {
-            id: newId,
-            date,
-            merchant: note || "Payment from Bank Account",
-            amount: String(-amt),
-            category: "Payment",
-          },
-        ],
-        outstanding: Math.max(0, Number(card.outstanding || 0) - amt),
-      });
+
+      if (type === "credit") {
+        // Amount received into bank account from credit card
+        const isRefund =
+          subAction === "refund" ||
+          Boolean(note && /refund|cashback|reversal|chargeback/i.test(note));
+
+        if (isRefund) {
+          // Refund / Reversal / Cashback received into bank from credit card
+          await updateItem("creditCards", cardId, {
+            transactions: [
+              ...(card.transactions || []),
+              {
+                id: newId,
+                date,
+                merchant: note || "Refund / Reversal to Bank Account",
+                amount: String(-amt),
+                category: "Refund",
+              },
+            ],
+            outstanding: Math.max(0, Number(card.outstanding || 0) - amt),
+          });
+        } else {
+          // Cash advance / card-to-bank transfer / instant loan on credit card disbursed to bank
+          const currentOutstanding = Number(card.outstanding || 0);
+          await updateItem("creditCards", cardId, {
+            transactions: [
+              ...(card.transactions || []),
+              {
+                id: newId,
+                date,
+                merchant: note || "Cash Advance / Card-to-Bank Transfer",
+                amount: String(amt),
+                category: "Cash Advance",
+              },
+            ],
+            outstanding: currentOutstanding + amt,
+          });
+        }
+      } else {
+        // Debit: Payment towards credit card bill from bank account
+        await updateItem("creditCards", cardId, {
+          transactions: [
+            ...(card.transactions || []),
+            {
+              id: newId,
+              date,
+              merchant: note || "Payment from Bank Account",
+              amount: String(-amt),
+              category: "Payment",
+            },
+          ],
+          outstanding: Math.max(0, Number(card.outstanding || 0) - amt),
+        });
+      }
     } else if (lt === "realEstateProperties") {
       const sep = lid.indexOf(":");
       const propId = sep >= 0 ? lid.slice(0, sep) : lid;
@@ -4252,9 +4297,9 @@ function getLinkConfig(category: string, type: string, state: any, privacyMode?:
         })),
     };
   }
-  if ((category === "Credit Card" || category === "Bills") && type === "debit") {
+  if ((category === "Credit Card" || category === "Bills" || catLower.includes("credit card")) && type === "debit") {
     return {
-      label: "Credit Card",
+      label: "Credit Card (Bill Payment)",
       options: (state.creditCards || [])
         .filter((c: any) => (c.status || "").toLowerCase() !== "closed")
         .map((c: any) => ({
@@ -4267,6 +4312,37 @@ function getLinkConfig(category: string, type: string, state: any, privacyMode?:
           a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
         ),
     };
+  }
+  if (
+    (category === "Credit Card" ||
+      catLower.includes("credit card") ||
+      catLower.includes("card to bank") ||
+      catLower.includes("cash advance")) &&
+    type === "credit"
+  ) {
+    const activeCards = (state.creditCards || [])
+      .filter((c: any) => (c.status || "").toLowerCase() !== "closed")
+      .sort((a: any, b: any) =>
+        (a.issuer || "").localeCompare(b.issuer || "", undefined, { sensitivity: "base" })
+      );
+
+    const options = activeCards.flatMap((c: any) => [
+      {
+        key: `creditCards:${c.id}:advance`,
+        label: `${c.issuer || "Card"} ····${c.last4 || "????"} — Cash Advance / Loan / Transfer (+ Card Balance)`,
+      },
+      {
+        key: `creditCards:${c.id}:refund`,
+        label: `${c.issuer || "Card"} ····${c.last4 || "????"} — Refund / Reversal / Cashback (- Card Balance)`,
+      },
+    ]);
+
+    if (options.length > 0) {
+      return {
+        label: "Credit Card",
+        options,
+      };
+    }
   }
   if (category === "Real Estate" && type === "debit") {
     const costFields = [
@@ -4677,7 +4753,7 @@ function TxnModal({
               opacity: f.type === "credit" ? 0.9 : 0.75,
             }}
           >
-            Money In • Earnings
+            Money In • Receipts & Inflows
           </div>
         </button>
 
@@ -5206,6 +5282,29 @@ function TxnModal({
                   <option key={c}>{c}</option>
                 ))}
               </select>
+
+              {f.category === "Credit Card" && f.type === "credit" && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: THEME.accent,
+                    marginTop: 6,
+                    padding: "6px 10px",
+                    background: `color-mix(in srgb, ${THEME.accent} 8%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${THEME.accent} 20%, transparent)`,
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 6,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  <Sparkles size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div>
+                    <strong>Credit Card Inflow / Drawdown:</strong> Amount received into bank from your credit card (Cash advance, Insta Loan, Card-to-Bank transfer, or Refund). Link your card below to sync its balance and ledger.
+                  </div>
+                </div>
+              )}
 
               {(() => {
                 const cfg = getLinkConfig(f.category, f.type, state, privacyMode);

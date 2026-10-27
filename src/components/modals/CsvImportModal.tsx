@@ -96,6 +96,8 @@ const categorizeByNarration = (narration: string): string => {
   const n = (narration || "").toUpperCase();
   if (/\b(SALARY|SAL\b|PAYROLL)/.test(n)) return "Salary";
   if (/\b(RENT)\b/.test(n)) return "Rent";
+  if (/\b(CREDIT\s*CARD|CC\s*PAY|CC\s*BILL|CARD\s*TO\s*BANK|CASH\s*ADVANCE)/.test(n))
+    return "Credit Card";
   if (/\b(EMI|LOAN)\b/.test(n)) return "EMI";
   if (/\b(SWIGGY|ZOMATO|FOOD|RESTAURANT|CAFE|DINING|DOMINOS|MCDONALDS)/.test(n)) return "Food";
   if (/\b(AMAZON|FLIPKART|MYNTRA|AJIO|MEESHO|NYKAA|SHOPPING)/.test(n)) return "Shopping";
