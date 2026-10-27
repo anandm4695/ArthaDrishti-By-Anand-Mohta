@@ -137,22 +137,16 @@ export function VehicleImage({
           width: presetConf.width,
           height: presetConf.height,
           borderRadius: br,
-          background: isRealPhoto
-            ? "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)"
-            : "radial-gradient(ellipse at 50% 65%, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
-          border: isRealPhoto
-            ? "1px solid rgba(0, 0, 0, 0.08)"
-            : "1px solid var(--t-line, rgba(255,255,255,0.12))",
-          boxShadow: isRealPhoto
-            ? "0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)"
-            : "0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
-          overflow: "hidden",
+          background: "transparent",
+          border: "none",
+          boxShadow: "none",
+          overflow: "visible",
           flexShrink: 0,
           cursor: enlargeable ? "pointer" : "default",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease",
+          transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
           ...style,
         }}
       >
@@ -168,7 +162,8 @@ export function VehicleImage({
               width: "100%",
               height: "100%",
               objectFit: "contain",
-              padding: size === "xs" ? 1 : size === "sm" ? 2 : 4,
+              filter: "drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28))",
+              padding: 0,
               boxSizing: "border-box",
             }}
           />

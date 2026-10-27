@@ -318,9 +318,9 @@ export function VehicleImagePicker({
                       width: "100%",
                       height: 60,
                       borderRadius: 6,
-                      background: "#ffffff",
-                      border: "1px solid rgba(0, 0, 0, 0.08)",
-                      overflow: "hidden",
+                      background: "transparent",
+                      border: "none",
+                      overflow: "visible",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -336,6 +336,7 @@ export function VehicleImagePicker({
                         width: "100%",
                         height: "100%",
                         objectFit: "contain",
+                        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.22))",
                       }}
                     />
                   </div>
