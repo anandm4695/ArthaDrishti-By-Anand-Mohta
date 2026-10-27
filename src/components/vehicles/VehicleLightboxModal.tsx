@@ -5,7 +5,7 @@ import { Button } from "../ui/Button";
 import { IndianNumberPlate, resolveVehicleColor } from "../tabs/VehiclesTab";
 import { VehicleMakeLogo } from "../ui/BrandLogos";
 import { VehicleStudioIllustration } from "./VehicleStudioIllustration";
-import { detectVehicleBodyStyle } from "../../utils/vehicleAssets";
+import { detectVehicleBodyStyle, findMatchingVehiclePreset } from "../../utils/vehicleAssets";
 
 export interface VehicleLightboxModalProps {
   vehicle: any;
@@ -26,6 +26,8 @@ export function VehicleLightboxModal({
   const model = vehicle.model || vehicle.name?.split(" ").slice(1).join(" ") || "";
   const bodyStyle = detectVehicleBodyStyle(make, model, vehicle.vehicleType);
   const cInfo = resolveVehicleColor(vehicle.color, make);
+  const preset = findMatchingVehiclePreset(make, model);
+  const displayPhoto = vehicle.photoUrl || preset?.imageUrl;
   const hasCustomPhoto = !!vehicle.photoUrl;
 
   return (
@@ -90,9 +92,9 @@ export function VehicleLightboxModal({
             justifyContent: "center",
           }}
         >
-          {vehicle.photoUrl ? (
+          {displayPhoto ? (
             <img
-              src={vehicle.photoUrl}
+              src={displayPhoto}
               alt={`${make} ${model}`}
               style={{
                 width: "100%",
