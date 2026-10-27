@@ -30,6 +30,7 @@ import {
   Printer,
   Copy,
   Lock,
+  Lightbulb,
 } from "lucide-react";
 import {
   LineChart,
@@ -974,8 +975,9 @@ function SmartCreditImportModal({ onImport, onClose, saving = false }: SmartCred
 
           {/* Quick Partner Apps */}
           <div style={{ marginTop: 6, padding: "10px 12px", background: "var(--surface-1)", borderRadius: 8, border: "1px solid var(--t-line)" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: THEME.ink, marginBottom: 4 }}>
-              💡 Zero-Hassle Instant Monthly Sync Apps:
+            <div style={{ fontSize: 11, fontWeight: 700, color: THEME.ink, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+              <Lightbulb size={13} color={THEME.gold} />
+              <span>Zero-Hassle Instant Monthly Sync Apps:</span>
             </div>
             <div style={{ fontSize: 11, color: THEME.muted, lineHeight: 1.5 }}>
               Use <strong>OneScore</strong> (Free monthly CIBIL + Experian refresh without spam), <strong>Google Pay</strong> (Check CIBIL score under Profile), or <strong>CRED</strong>. Download their PDF report once a month and drop it into the PDF parser tab for instant auto-sync!
@@ -1609,8 +1611,8 @@ function CreditScoreRoadmap({ currentScore }: { currentScore: number }) {
                   <div style={{ fontSize: 13, fontWeight: 700, color: isSel ? THEME.accent : THEME.ink }}>
                     {t.title}
                   </div>
-                  <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
-                    {currentScore >= t.target ? "✅ Goal achieved!" : `${t.target - currentScore} points to go`}
+                  <div style={{ fontSize: 11, color: currentScore >= t.target ? THEME.sage : THEME.muted, marginTop: 2, fontWeight: currentScore >= t.target ? 600 : 400 }}>
+                    {currentScore >= t.target ? "Goal achieved" : `${t.target - currentScore} points to go`}
                   </div>
                 </div>
                 <Badge style={{ background: isSel ? THEME.accent : "var(--surface-2)", color: isSel ? "#fff" : THEME.ink, fontWeight: 800 }}>
@@ -1649,7 +1651,7 @@ function CreditScoreRoadmap({ currentScore }: { currentScore: number }) {
 
         <div style={{ textAlign: "center", marginBottom: 16 }}>
           <div style={{ fontSize: 36, fontWeight: 800, color: gap === 0 ? THEME.sage : THEME.accent, fontFamily: "var(--font-display)" }}>
-            {gap === 0 ? "Target Reached! 🚀" : `+${gap} Points`}
+            {gap === 0 ? "Target Reached" : `+${gap} Points`}
           </div>
           <div style={{ fontSize: 12, color: THEME.muted, marginTop: 4 }}>
             {gap === 0 ? "You qualify for top-tier prime lending interest rates." : `Estimated Timeline: ~${estimatedMonths} months with clean repayment discipline`}

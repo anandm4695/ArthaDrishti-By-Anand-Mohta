@@ -379,7 +379,7 @@ describe("Daily, Weekly & Monthly Email Summary Engine", () => {
       expect(html).toContain("Daily Digest");
       expect(html).toContain("Available Bank Balance &amp; Cash");
       expect(html).toContain("Yesterday&#39;s Spending Pulse");
-      expect(html).toContain("Zero expenses yesterday! 🎉");
+      expect(html).toContain("Zero expenses yesterday!");
       expect(html).toContain("Immediate Dues (Today &amp; Next 3 Days)");
       expect(html).toContain("Anand");
       expect(html).toContain('bgcolor="#0a0f1d"');

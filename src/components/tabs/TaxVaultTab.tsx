@@ -2267,9 +2267,10 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                   {regimeVerdict.better !== "equal" && (
                     <Badge
                       variant={regimeVerdict.better === "new" ? "accent" : "gold"}
-                      style={{ fontSize: 13, padding: "6px 16px", fontWeight: 800 }}
+                      style={{ fontSize: 13, padding: "6px 16px", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 6 }}
                     >
-                      ★ {regimeVerdict.better === "new" ? "New Regime" : "Old Regime"} Saves More
+                      <Sparkles size={13} />
+                      <span>{regimeVerdict.better === "new" ? "New Regime" : "Old Regime"} Saves More</span>
                     </Badge>
                   )}
                 </div>

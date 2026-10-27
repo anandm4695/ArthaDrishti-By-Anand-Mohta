@@ -18,6 +18,9 @@ import {
   Flame,
   Search,
   RefreshCw,
+  Users,
+  Landmark,
+  CreditCard,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -2159,7 +2162,9 @@ export const PerformanceBenchmarkTab: React.FC<{
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
             <Card style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>🛡️ Nominee Audit</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800, color: THEME.ink }}>
+                  <Users size={14} color={THEME.accent} /> Nominee Audit
+                </span>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: nomineeAudit.pct === 100 ? "color-mix(in srgb, var(--t-sage) 15%, transparent)" : "color-mix(in srgb, var(--t-rust) 15%, transparent)", color: nomineeAudit.pct === 100 ? THEME.sage : THEME.rust }}>
                   {nomineeAudit.pct}% Safe
                 </span>
@@ -2168,13 +2173,25 @@ export const PerformanceBenchmarkTab: React.FC<{
                 {nomineeAudit.covered} / {nomineeAudit.total} <span style={{ fontSize: 12, fontWeight: 500, color: THEME.muted }}>Assets</span>
               </div>
               <div style={{ fontSize: 11, color: THEME.muted, marginTop: 4 }}>
-                {nomineeAudit.uncoveredItems.length > 0 ? `⚠️ ${nomineeAudit.uncoveredItems.length} accounts missing registered nominee` : "✅ 100% nominee coverage across all accounts"}
+                {nomineeAudit.uncoveredItems.length > 0 ? (
+                  <span style={{ color: THEME.rust, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <AlertTriangle size={12} />
+                    <span>{nomineeAudit.uncoveredItems.length} accounts missing registered nominee</span>
+                  </span>
+                ) : (
+                  <span style={{ color: THEME.sage, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <CheckCircle2 size={12} />
+                    <span>100% nominee coverage across all accounts</span>
+                  </span>
+                )}
               </div>
             </Card>
 
             <Card style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>🚑 Protection Cover</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800, color: THEME.ink }}>
+                  <Shield size={14} color={THEME.accent} /> Protection Cover
+                </span>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: insuranceAudit.protectionScore >= 70 ? "color-mix(in srgb, var(--t-sage) 15%, transparent)" : "color-mix(in srgb, var(--t-gold) 15%, transparent)", color: insuranceAudit.protectionScore >= 70 ? THEME.sage : THEME.gold }}>
                   {insuranceAudit.protectionScore >= 70 ? "Adequate" : "Attention"}
                 </span>
@@ -2189,7 +2206,9 @@ export const PerformanceBenchmarkTab: React.FC<{
 
             <Card style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>🏦 Cash Runway</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800, color: THEME.ink }}>
+                  <Landmark size={14} color={THEME.accent} /> Cash Runway
+                </span>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: (metrics.emergencyFund?.monthsCovered || 0) >= 6 ? "color-mix(in srgb, var(--t-sage) 15%, transparent)" : "color-mix(in srgb, var(--t-rust) 15%, transparent)", color: (metrics.emergencyFund?.monthsCovered || 0) >= 6 ? THEME.sage : THEME.rust }}>
                   {(metrics.emergencyFund?.monthsCovered || 0) >= 6 ? "Resilient" : "Low Buffer"}
                 </span>
@@ -2204,7 +2223,9 @@ export const PerformanceBenchmarkTab: React.FC<{
 
             <Card style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>💳 Debt Service Ratio</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800, color: THEME.ink }}>
+                  <CreditCard size={14} color={THEME.accent} /> Debt Service Ratio
+                </span>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: (metrics.debtToAssetRatio || 0) <= 30 ? "color-mix(in srgb, var(--t-sage) 15%, transparent)" : "color-mix(in srgb, var(--t-rust) 15%, transparent)", color: (metrics.debtToAssetRatio || 0) <= 30 ? THEME.sage : THEME.rust }}>
                   {(metrics.debtToAssetRatio || 0) <= 30 ? "Low Risk" : "Elevated"}
                 </span>

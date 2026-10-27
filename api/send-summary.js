@@ -1918,7 +1918,7 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
         })
         .join("")
     : `<tr><td style="padding:18px 24px;background:#f0fdf4;text-align:center;color:#15803d;font-size:13px;font-weight:600;">
-        ✨ No bills or obligations due in the next 3 days. Clean immediate runway!
+        No bills or obligations due in the next 3 days. Clean immediate runway!
       </td></tr>`;
 
   const yesterdayTxnRows = yesterdayTxns.length > 0
@@ -2076,7 +2076,7 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
     </div>`
         : `
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;text-align:center;margin-bottom:8px;">
-      <div style="font-size:14px;font-weight:800;color:#166534;">Zero expenses yesterday! 🎉</div>
+      <div style="font-size:14px;font-weight:800;color:#166534;">Zero expenses yesterday!</div>
       <div style="font-size:12px;color:#15803d;margin-top:2px;">No debits recorded across your bank &amp; card accounts.</div>
     </div>`
     }

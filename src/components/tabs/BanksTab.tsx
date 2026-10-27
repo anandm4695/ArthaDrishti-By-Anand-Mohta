@@ -34,6 +34,7 @@ import {
   RefreshCw,
   Sparkles,
   Repeat,
+  AlertTriangle,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -2341,7 +2342,7 @@ export function BanksTab({
             >
               <option value="all">All Types</option>
               {unsyncedCount > 0 && (
-                <option value="unsynced">⚠️ Unsynced ({unsyncedCount} Pending)</option>
+                <option value="unsynced">Unsynced ({unsyncedCount} Pending)</option>
               )}
               <option value="credit">Credits (Income / In)</option>
               <option value="debit">Debits (Expense / Out)</option>
@@ -5142,9 +5143,13 @@ function TxnModal({
                       padding: "4px 8px",
                       background: `color-mix(in srgb, ${THEME.rust} 12%, transparent)`,
                       borderRadius: 6,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
                     }}
                   >
-                    ⚠️ Warning: Projected overdraft / negative balance
+                    <AlertTriangle size={12} />
+                    <span>Warning: Projected overdraft / negative balance</span>
                   </div>
                 )}
               </>

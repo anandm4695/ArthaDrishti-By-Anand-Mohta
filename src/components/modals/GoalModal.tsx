@@ -625,8 +625,9 @@ export function GoalModal({ initial, onClose, onSave, saving = false }: GoalModa
                       <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>
                         {fmtINR(tpl.suggestedAmount)} · {isRec ? `${(tpl as any).installmentsCount} Annual Payouts` : `${tpl.yearsOut}y Horizon`}
                       </div>
-                      <div style={{ fontSize: 9, color: isRec ? THEME.sage : THEME.accent, fontWeight: 700, marginTop: 2 }}>
-                        {isRec ? "🔄 Recurring Annual Cash Flow" : "🎯 Lump-Sum Milestone"}
+                      <div style={{ fontSize: 9, color: isRec ? THEME.sage : THEME.accent, fontWeight: 700, marginTop: 2, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        {isRec ? <Repeat size={10} /> : <Target size={10} />}
+                        <span>{isRec ? "Recurring Annual Cash Flow" : "Lump-Sum Milestone"}</span>
                       </div>
                     </div>
                   </button>

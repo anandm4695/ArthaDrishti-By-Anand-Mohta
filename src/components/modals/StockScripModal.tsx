@@ -1437,8 +1437,9 @@ export function StockScripModal({
 
                 <div style={{ fontSize: 10, color: "var(--t-muted)" }}>
                   {projectedWeight > 15 ? (
-                    <span style={{ color: "var(--t-rust)", fontWeight: 600 }}>
-                      ⚠️ Concentration note: This scrip will represent &gt;15% of your equity portfolio.
+                    <span style={{ color: "var(--t-rust)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <AlertTriangle size={12} />
+                      <span>Concentration note: This scrip will represent &gt;15% of your equity portfolio.</span>
                     </span>
                   ) : (
                     <span>Balanced diversification within recommended allocation guidelines.</span>

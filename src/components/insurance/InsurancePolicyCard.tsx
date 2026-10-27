@@ -6,6 +6,8 @@ import {
   Trash2,
   ListOrdered,
   Calendar,
+  CheckCircle2,
+  Award,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { Card } from "../ui/Card";
@@ -124,9 +126,13 @@ export const InsurancePolicyCard: React.FC<InsurancePolicyCardProps> = ({
                     borderRadius: 6,
                     background: "color-mix(in srgb, var(--t-sage) 15%, transparent)",
                     color: "var(--t-sage)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
                   }}
                 >
-                  ✓ Fully Paid
+                  <CheckCircle2 size={11} />
+                  <span>Fully Paid</span>
                 </span>
               )}
               {policy.isMatured && (
@@ -138,9 +144,13 @@ export const InsurancePolicyCard: React.FC<InsurancePolicyCardProps> = ({
                     borderRadius: 6,
                     background: "color-mix(in srgb, var(--t-gold) 15%, transparent)",
                     color: "var(--t-gold)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
                   }}
                 >
-                  ★ Matured
+                  <Award size={11} />
+                  <span>Matured</span>
                 </span>
               )}
             </div>
@@ -353,8 +363,18 @@ export const InsurancePolicyCard: React.FC<InsurancePolicyCardProps> = ({
               : `Next: ${policy.nextDueDate}`}
           </div>
         ) : (
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--t-sage)" }}>
-            {policy.isMatured ? "✓ Matured" : "✓ Paid Up"}
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--t-sage)", display: "inline-flex", alignItems: "center", gap: 3 }}>
+            {policy.isMatured ? (
+              <>
+                <Award size={11} />
+                <span>Matured</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={11} />
+                <span>Paid Up</span>
+              </>
+            )}
           </div>
         )}
       </div>

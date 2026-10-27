@@ -2550,14 +2550,28 @@ Generated via ArthaDrishti by Anand Mohta`;
                 >
                   {successProbability.toFixed(1)}%
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 700, marginTop: 6 }}>
-                  {successProbability >= 95
-                    ? "🛡️ Fortress Survival (1,000 Trials)"
-                    : successProbability >= 85
-                      ? "✨ Safe & Highly Sustainable"
-                      : successProbability >= 70
-                        ? "⚠️ Moderate Sequence Risk"
-                        : "🚨 Critical Early Depletion Risk"}
+                <div style={{ fontSize: 11, fontWeight: 700, marginTop: 6, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  {successProbability >= 95 ? (
+                    <>
+                      <ShieldCheck size={13} color="var(--t-sage)" />
+                      <span>Fortress Survival (1,000 Trials)</span>
+                    </>
+                  ) : successProbability >= 85 ? (
+                    <>
+                      <CheckCircle2 size={13} color="var(--accent)" />
+                      <span>Safe & Highly Sustainable</span>
+                    </>
+                  ) : successProbability >= 70 ? (
+                    <>
+                      <AlertTriangle size={13} color="var(--t-gold)" />
+                      <span>Moderate Sequence Risk</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldAlert size={13} color="var(--t-rust)" />
+                      <span>Critical Early Depletion Risk</span>
+                    </>
+                  )}
                 </div>
               </Card>
 

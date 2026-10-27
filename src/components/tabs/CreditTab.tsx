@@ -7443,13 +7443,13 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
             <div className="cc-summary-item">
               <span className="cc-summary-label">Autopay</span>
               <span className="cc-summary-val" style={{ color: f.autoPay ? THEME.sage : THEME.muted }}>
-                {f.autoPay ? "✓ Active" : "Disabled"}
+                {f.autoPay ? "Active" : "Disabled"}
               </span>
             </div>
             <div className="cc-summary-item">
               <span className="cc-summary-label">Status</span>
               <span className="cc-summary-val" style={{ color: isClosed ? THEME.rust : THEME.sage }}>
-                {isClosed ? "✕ Closed" : "✓ Active"}
+                {isClosed ? "Closed" : "Active"}
               </span>
             </div>
           </div>
@@ -8420,7 +8420,7 @@ function CCModal({ onClose, onSave, initial = null, existingGroups = [], saving 
                             transition: "all 0.15s ease",
                           }}
                         >
-                          {s === "active" ? "✓ Active" : "✕ Closed"}
+                          {s === "active" ? "Active" : "Closed"}
                         </button>
                       ))}
                     </div>
@@ -8931,7 +8931,7 @@ function PrepaidModal({ onClose, onSave, initial = null, saving }: any) {
             <div className="cc-summary-item">
               <span className="cc-summary-label">Status</span>
               <span className="cc-summary-val" style={{ color: isClosed ? THEME.rust : THEME.sage }}>
-                {isClosed ? "✕ Closed" : "✓ Active"}
+                {isClosed ? "Closed" : "Active"}
               </span>
             </div>
           </div>
@@ -9146,7 +9146,7 @@ function PrepaidModal({ onClose, onSave, initial = null, saving }: any) {
                         textTransform: "capitalize",
                       }}
                     >
-                      {st === "active" ? "✓ Active" : "✕ Closed"}
+                      {st === "active" ? "Active" : "Closed"}
                     </button>
                   ))}
                 </div>

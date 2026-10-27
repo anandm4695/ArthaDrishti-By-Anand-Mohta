@@ -3415,7 +3415,15 @@ export function CardInsightsSection({
                           <Prv>{fmtINRFull(paymentRecommendation.topCard.availableLimit)}</Prv>
                         </div>
                         <div style={{ fontSize: 10.5, color: paymentRecommendation.topCard.availableLimit >= paymentRecommendation.amount ? THEME.sage : THEME.rust, marginTop: 2, fontWeight: 600 }}>
-                          {paymentRecommendation.topCard.availableLimit >= paymentRecommendation.amount ? "✓ Sufficient Limit" : "⚠ Low Limit"}
+                          {paymentRecommendation.topCard.availableLimit >= paymentRecommendation.amount ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                              <CheckCircle2 size={11} /> Sufficient Limit
+                            </span>
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                              <AlertTriangle size={11} /> Low Limit
+                            </span>
+                          )}
                         </div>
                       </div>
 

@@ -2644,10 +2644,15 @@ Generated via ArthaDrishti by Anand Mohta on ${new Date().toLocaleDateString("en
                   background: `color-mix(in srgb, ${THEME.accent} 8%, transparent)`,
                   fontSize: 12,
                   color: THEME.text,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                ⭐ <strong>No Upper Rupee Limit:</strong> Tax deduction is allowed up to 10% of (Basic +
-                DA) for private sector employees and 14% for Central/State Govt employees.
+                <Info size={14} color={THEME.accent} style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>No Upper Rupee Limit:</strong> Tax deduction is allowed up to 10% of (Basic + DA) for private sector employees and 14% for Central/State Govt employees.
+                </span>
               </div>
             </Card>
 

@@ -10,6 +10,7 @@ import {
   AlertCircle,
   ExternalLink,
   RotateCw,
+  Zap,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { BankLogo } from "../ui/BrandLogos";
@@ -589,9 +590,13 @@ export function CreditCardVisual({
                         border: "1px solid rgba(254, 240, 138, 0.5)",
                         letterSpacing: "0.03em",
                         whiteSpace: "nowrap",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 3,
                       }}
                     >
-                      ⚡ {selectedVariant?.name || `${selectedVariant?.network || "LINKED"} VARIANT`}
+                      <Zap size={9} style={{ fill: "#fef08a" }} />
+                      <span>{selectedVariant?.name || `${selectedVariant?.network || "LINKED"} VARIANT`}</span>
                     </span>
                   ) : (
                     <span

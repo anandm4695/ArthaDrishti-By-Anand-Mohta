@@ -3168,7 +3168,7 @@ export function HealthInsuranceTab({ state, addItem, removeItem, updateItem, sho
 
               {/* Right Column: Executive Intelligence & Emergency Readiness Cockpit */}
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Companion Widget 1: 🚨 24x7 Cashless Hospitalization Protocol */}
+                {/* Companion Widget 1: 24x7 Cashless Hospitalization Protocol */}
                 <Card
                   style={{
                     padding: "18px 20px",
@@ -3304,7 +3304,7 @@ export function HealthInsuranceTab({ state, addItem, removeItem, updateItem, sho
                   </div>
                 </Card>
 
-                {/* Companion Widget 2: 🛡️ Section 80D Tax Optimizer Radar */}
+                {/* Companion Widget 2: Section 80D Tax Optimizer Radar */}
                 <Card
                   style={{
                     padding: "18px 20px",
@@ -3417,7 +3417,7 @@ export function HealthInsuranceTab({ state, addItem, removeItem, updateItem, sho
                   </div>
                 </Card>
 
-                {/* Companion Widget 3: 👨‍👩‍👧‍👦 Family Health Shield Status */}
+                {/* Companion Widget 3: Family Health Shield Status */}
                 <Card
                   style={{
                     padding: "18px 20px",
