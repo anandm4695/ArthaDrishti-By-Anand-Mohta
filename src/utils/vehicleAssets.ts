@@ -618,8 +618,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Arctic White",
     badge: "India's #1 Mid-SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/106815/creta-exterior-right-side-view-36.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/creta.webp",
     tags: ["hyundai", "creta", "suv", "crossover"],
   },
   {
@@ -631,8 +630,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "electric",
     defaultColor: "Daytona Grey",
     badge: "Bestselling EV SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/141867/nexon-exterior-right-side-front-three-quarter-135.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/tata-nexon-ev.webp",
     tags: ["tata", "nexon", "nexon ev", "ev", "suv", "tatamotors"],
   },
   {
@@ -644,8 +642,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "Crimson Red",
     badge: "Iconic 4x4 Off-Roader",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/219824/thar-facelift-exterior-right-side-view-5.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/thar.webp",
     tags: ["mahindra", "thar", "4x4", "suv", "offroad", "roxx"],
   },
   {
@@ -657,8 +654,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "Midnight Black",
     badge: "Luxury Tech SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/42355/xuv700-exterior-right-side-view-3.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/mahindra-xuv700.webp",
     tags: ["mahindra", "xuv700", "xuv", "7seater", "suv"],
   },
   {
@@ -670,8 +666,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Royal Blue",
     badge: "Premium Tech Crossover",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/136183/seltos-exterior-right-side-view-3.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/kia-seltos.webp",
     tags: ["kia", "seltos", "suv", "crossover"],
   },
   {
@@ -683,8 +678,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "Arctic White",
     badge: "Legendary Full-Size SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/44709/fortuner-exterior-right-side-view-3.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/fortuner.webp",
     tags: ["toyota", "fortuner", "suv", "4x4"],
   },
   {
@@ -696,8 +690,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "hybrid",
     defaultColor: "Gaming Grey",
     badge: "Strong Hybrid SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/124839/urban-cruiser-hyryder-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/toyota-hyryder.webp",
     tags: ["toyota", "hyryder", "urban cruiser", "hybrid", "suv"],
   },
   {
@@ -709,8 +702,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "Onyx Black",
     badge: "Bold Omega-Arc SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/142515/harrier-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/tata-harrier.webp",
     tags: ["tata", "harrier", "safari", "suv"],
   },
   {
@@ -722,8 +714,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Sunset Orange",
     badge: "Compact Urban SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/107543/brezza-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/maruti-brezza.webp",
     tags: ["maruti", "brezza", "maruti suzuki", "suv"],
   },
   {
@@ -735,8 +726,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "Selenite Grey",
     badge: "450d 4MATIC Flagship SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/167883/gls-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/mercedes-gls.webp",
     tags: ["mercedes", "mercedes-benz", "gls", "suv", "maybach", "4matic"],
   },
   {
@@ -748,8 +738,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "Glacier White",
     badge: "Quattro Technology SUV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/112839/q7-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/audi-q7.webp",
     tags: ["audi", "q7", "suv", "quattro", "technology"],
   },
 
@@ -763,8 +752,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Crimson Red",
     badge: "India's Favorite Hatchback",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/159281/swift-exterior-right-side-view-30.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/maruti-swift.webp",
     tags: ["maruti", "swift", "hatchback", "maruti suzuki"],
   },
   {
@@ -776,8 +764,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Royal Blue",
     badge: "Nexa Premium Hatchback",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/221126/baleno-2026-exterior-right-side-view-8.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/baleno.webp",
     tags: ["maruti", "baleno", "nexa", "hatchback"],
   },
   {
@@ -789,8 +776,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Fiery Red",
     badge: "Sporty Premium Hatchback",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/150591/i20-exterior-right-side-view-7.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/hyundai-i20.webp",
     tags: ["hyundai", "i20", "n-line", "hatchback"],
   },
   {
@@ -802,8 +788,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Sunburst Gold",
     badge: "5-Star Safety Hatchback",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/32597/altroz-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/tata-altroz.webp",
     tags: ["tata", "altroz", "hatchback"],
   },
 
@@ -817,8 +802,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Arctic White",
     badge: "The Benchmark Sedan",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/134185/city-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/honda-city.webp",
     tags: ["honda", "city", "sedan", "ivtec"],
   },
   {
@@ -830,8 +814,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Dapper Ash",
     badge: "Futuristic Turbo Sedan",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/121943/verna-exterior-right-side-view-3.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/hyundai-verna.webp",
     tags: ["hyundai", "verna", "sedan", "turbo"],
   },
   {
@@ -843,8 +826,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Royal Blue",
     badge: "Executive Sport Luxury",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/139589/3-series-gran-limousine-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/bmw-3-series.webp",
     tags: ["bmw", "3 series", "sedan", "luxury", "m340i"],
   },
   {
@@ -856,8 +838,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Onyx Black",
     badge: "Pinnacle of Elegance",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/116201/c-class-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/mercedes-c-class.webp",
     tags: ["mercedes", "mercedes-benz", "c-class", "sedan", "luxury"],
   },
 
@@ -871,8 +852,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Dapper Ash",
     badge: "Urban Retro Roadster",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/4/42/Hunter_350_side_view_India_Model.png",
+    imageUrl: "/vehicles/hunter-350.webp",
     tags: ["royal enfield", "hunter 350", "hunter", "cruiser", "bike", "royalenfield"],
   },
   {
@@ -884,8 +864,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Onyx Black",
     badge: "Timeless British Heritage",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/bw/ec/42145/Royal-Enfield-Classic-350-Right-Side-166779.jpg",
+    imageUrl: "/vehicles/royal-enfield-classic-350.webp",
     tags: ["royal enfield", "classic 350", "bullet", "cruiser", "bike"],
   },
   {
@@ -897,8 +876,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Sunset Orange",
     badge: "The Corner Rocket",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/bw/models/ktm-390-duke-2024.jpeg",
+    imageUrl: "/vehicles/ktm-duke-390.webp",
     tags: ["ktm", "duke", "390 duke", "sportsbike", "naked"],
   },
   {
@@ -910,8 +888,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "petrol",
     defaultColor: "Royal Blue",
     badge: "Track Racing DNA",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/bw/models/yamaha-yzf-r15-v4-2021.jpeg",
+    imageUrl: "/vehicles/yamaha-r15.webp",
     tags: ["yamaha", "r15", "yzf", "sportsbike", "supersport"],
   },
 
@@ -925,8 +902,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "electric",
     defaultColor: "Space Grey",
     badge: "Performance Smart EV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/bw/models/ather-energy-450x-gen-3-2022.jpeg",
+    imageUrl: "/vehicles/ather-450x.webp",
     tags: ["ather", "ather energy", "450x", "scooter", "ev", "electric"],
   },
   {
@@ -938,22 +914,34 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "electric",
     defaultColor: "Porcelain White",
     badge: "Hypercharging EV Scooter",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/bw/ec/40967/Ola-S1-Right-Side-View-162983.jpg",
+    imageUrl: "/vehicles/ola-s1-pro.webp",
     tags: ["ola", "ola electric", "s1", "s1 pro", "scooter", "ev"],
   },
   {
     id: "honda-activa",
-    name: "Honda Activa 6G",
+    name: "Honda Activa 125 / 6G",
     make: "Honda",
-    model: "Activa 6G",
+    model: "Activa",
     bodyStyle: "scooter",
     fuelType: "petrol",
-    defaultColor: "Deep Blue",
+    defaultColor: "Heavy Gray Metallic",
     badge: "India's Household Scooter",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/bw/ec/43482/Honda-Activa-6G-Right-Side-View-172421.jpg",
-    tags: ["honda", "activa", "activa 6g", "scooter"],
+    imageUrl: "/vehicles/honda-activa.webp",
+    tags: [
+      "honda",
+      "activa",
+      "activa 125",
+      "activa 125 disc",
+      "activa 6g",
+      "activa 5g",
+      "activa 4g",
+      "activa 3g",
+      "activa 110",
+      "activa disc",
+      "activa dlx",
+      "activa premium",
+      "scooter",
+    ],
   },
 
   // ── Multi-Utility & Commercial ─────────────────────────────────────────────
@@ -966,8 +954,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "hybrid",
     defaultColor: "Arctic White",
     badge: "The Undisputed MPV King",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/115025/innova-hycross-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/innova-hycross.webp",
     tags: ["toyota", "innova", "mpv", "hycross", "crysta"],
   },
   {
@@ -979,8 +966,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "hybrid",
     defaultColor: "Black",
     badge: "Executive Lounge VIP MPV",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/154569/vellfire-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/toyota-vellfire.webp",
     tags: ["toyota", "vellfire", "mpv", "vip", "luxury"],
   },
   {
@@ -992,8 +978,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "White",
     badge: "15S Luxury Coach",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/36021/winger-exterior-right-side-view-2.jpeg",
+    imageUrl: "/vehicles/tata-winger.webp",
     tags: ["tata", "winger", "van", "coach", "commercial"],
   },
   {
@@ -1005,8 +990,7 @@ export const CURATED_VEHICLE_PRESETS: CuratedVehiclePreset[] = [
     fuelType: "diesel",
     defaultColor: "Diamond White",
     badge: "Commercial Workhorse",
-    imageUrl:
-      "https://imgd.aeplcdn.com/664x374/n/cw/ec/131131/bolero-exterior-right-side-view-2.jpeg?isig=0&q=80",
+    imageUrl: "/vehicles/mahindra-bolero.webp",
     tags: ["mahindra", "bolero", "commercial", "pik-up", "utility"],
   },
 ];
@@ -1169,7 +1153,7 @@ export function findMatchingVehiclePreset(
   }
 
   const makeMatches = (pMake: string): boolean => {
-    if (!qMake) return true;
+    if (!qMake || qMake === "vehicle" || qMake === "two-wheeler" || qMake === "four-wheeler") return true;
     const p = pMake.toLowerCase();
     return (
       qMake === p ||
@@ -1180,7 +1164,8 @@ export function findMatchingVehiclePreset(
       (qMake.startsWith("royal") && p.includes("royal")) ||
       (qMake.startsWith("ather") && p.includes("ather")) ||
       (qMake.startsWith("ola") && p.includes("ola")) ||
-      (qMake.startsWith("mercedes") && p.includes("mercedes"))
+      (qMake.startsWith("mercedes") && p.includes("mercedes")) ||
+      (qMake.startsWith("honda") && p.includes("honda"))
     );
   };
 
@@ -1189,12 +1174,12 @@ export function findMatchingVehiclePreset(
     if (qModel === pModel) return true;
 
     // Check if preset model is a distinct word in the user's model query
-    // e.g. "Creta" in "Creta SX (O) 1.5 Turbo" or "Nexon" in "Nexon EV Fearless"
+    // e.g. "Activa" in "Activa 125 Disc" or "Creta" in "Creta SX (O) 1.5 Turbo"
     const escaped = pModel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`(^|[\\s-_])${escaped}($|[\\s-_])`, "i");
     if (regex.test(qModel)) return true;
 
-    // Check distinct preset tags (e.g. "nexon ev")
+    // Check distinct preset tags (e.g. "activa 125", "activa 125 disc", "nexon ev")
     for (const tag of preset.tags) {
       if (tag.length >= 3 && tag !== preset.make.toLowerCase()) {
         const tagEscaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

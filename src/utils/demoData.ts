@@ -861,8 +861,7 @@ export function getDemoState(existingSettings?: any): any {
         nextServiceDueDate: offsetMonths(1),
         nextServiceDueOdometer: 30000,
         owner: "self",
-        photoUrl:
-          "https://imgd.aeplcdn.com/664x374/n/cw/ec/106815/creta-exterior-right-side-view-36.jpeg?isig=0&q=80",
+        photoUrl: "/vehicles/creta.webp",
         serviceHistory: [
           {
             id: "demo-sh-1",
@@ -909,8 +908,7 @@ export function getDemoState(existingSettings?: any): any {
         nextServiceDueDate: offsetMonths(4),
         nextServiceDueOdometer: 10000,
         owner: "self",
-        photoUrl:
-          "https://imgd.aeplcdn.com/664x374/bw/models/ather-energy-450x-gen-3-2022.jpeg",
+        photoUrl: "/vehicles/ather-450x.webp",
         serviceHistory: [],
         insuranceHistory: [],
       },
@@ -935,8 +933,7 @@ export function getDemoState(existingSettings?: any): any {
         nextServiceDueDate: offsetMonths(2),
         nextServiceDueOdometer: 8000,
         owner: "self",
-        photoUrl:
-          "https://upload.wikimedia.org/wikipedia/commons/4/42/Hunter_350_side_view_India_Model.png",
+        photoUrl: "/vehicles/hunter-350.webp",
         serviceHistory: [],
         insuranceHistory: [],
       },

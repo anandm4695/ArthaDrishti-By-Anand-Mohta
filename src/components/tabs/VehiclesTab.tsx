@@ -345,11 +345,20 @@ export function normalizeVehicle(v: any): any {
 
   const cleanName = v.name || `${make} ${model}`.trim();
 
+  let photoUrl = v.photoUrl;
+  if (photoUrl && (photoUrl.includes("imgd.aeplcdn.com") || photoUrl.includes("aeplcdn.com"))) {
+    const preset = findMatchingVehiclePreset(make, model);
+    if (preset?.imageUrl) {
+      photoUrl = preset.imageUrl;
+    }
+  }
+
   return {
     ...v,
     make,
     model,
     name: cleanName,
+    photoUrl,
   };
 }
 

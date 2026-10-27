@@ -382,6 +382,22 @@ describe("VehiclesTab Component", () => {
     expect(hunter).toBeTruthy();
     expect(hunter?.id).toBe("royal-enfield-hunter-350");
 
+    // Honda Activa variations (including user's model "Activa 125 Disc")
+    const activa125 = findMatchingVehiclePreset("Honda", "Activa 125 Disc");
+    expect(activa125).toBeTruthy();
+    expect(activa125?.id).toBe("honda-activa");
+    expect(activa125?.imageUrl).toBe("/vehicles/honda-activa.webp");
+
+    const activa6g = findMatchingVehiclePreset("Honda", "Activa 6G");
+    expect(activa6g).toBeTruthy();
+    expect(activa6g?.id).toBe("honda-activa");
+
+    // All presets should use reliable local assets
+    for (const preset of CURATED_VEHICLE_PRESETS) {
+      expect(preset.imageUrl.startsWith("/vehicles/")).toBe(true);
+      expect(preset.imageUrl.endsWith(".webp")).toBe(true);
+    }
+
     // Strict discrimination: prevent make-only hijacking!
     expect(findMatchingVehiclePreset("Tata", "Tiago")).toBeNull();
     expect(findMatchingVehiclePreset("Tata", "Punch")).toBeNull();

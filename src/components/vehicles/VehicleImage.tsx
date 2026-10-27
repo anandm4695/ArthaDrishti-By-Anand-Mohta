@@ -67,6 +67,8 @@ export function VehicleImage({
   onPhotoRemove,
 }: VehicleImageProps) {
   const [imageError, setImageError] = useState(false);
+  const [fallbackAttempted, setFallbackAttempted] = useState(false);
+  const [activeSrcOverride, setActiveSrcOverride] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Extract attributes from vehicle object or explicit props
@@ -80,17 +82,35 @@ export function VehicleImage({
   // Reset image error state whenever vehicle props or photo source update
   React.useEffect(() => {
     setImageError(false);
+    setFallbackAttempted(false);
+    setActiveSrcOverride(null);
   }, [propPhotoUrl, vehicle?.photoUrl, make, model]);
 
-  // Photo resolution: prop > vehicle.photoUrl > curated preset match
+  // Photo resolution: explicit override > prop > vehicle.photoUrl > curated preset match
   const rawSrc = propPhotoUrl !== undefined ? propPhotoUrl : (vehicle?.photoUrl ?? "");
-  let activeSrc: string | null = rawSrc && rawSrc.trim().length > 0 ? rawSrc.trim() : null;
-  if (!activeSrc && !imageError) {
-    const preset = findMatchingVehiclePreset(make, model);
-    if (preset?.imageUrl) {
-      activeSrc = preset.imageUrl;
+  const preset = findMatchingVehiclePreset(make, model);
+
+  let displaySrc: string | null = activeSrcOverride;
+  if (!displaySrc) {
+    if (rawSrc && (rawSrc.includes("imgd.aeplcdn.com") || rawSrc.includes("aeplcdn.com")) && preset?.imageUrl) {
+      displaySrc = preset.imageUrl;
+    } else if (rawSrc && rawSrc.trim().length > 0) {
+      displaySrc = rawSrc.trim();
+    } else if (preset?.imageUrl) {
+      displaySrc = preset.imageUrl;
     }
   }
+
+  const handleImageError = () => {
+    // If external/custom URL failed and we have a local curated preset photo, fall back to it
+    if (!fallbackAttempted && preset?.imageUrl && displaySrc !== preset.imageUrl) {
+      setFallbackAttempted(true);
+      setActiveSrcOverride(preset.imageUrl);
+      setImageError(false);
+    } else {
+      setImageError(true);
+    }
+  };
 
   const bodyStyle = detectVehicleBodyStyle(make, model, vehicleType);
   const cInfo = resolveVehicleColor(color, make);
@@ -104,7 +124,7 @@ export function VehicleImage({
     }
   };
 
-  const isRealPhoto = Boolean(activeSrc && !imageError);
+  const isRealPhoto = Boolean(displaySrc && !imageError);
 
   return (
     <>
@@ -137,11 +157,11 @@ export function VehicleImage({
         }}
       >
         {/* Render either authentic photo or metallic studio illustration */}
-        {activeSrc && !imageError ? (
+        {displaySrc && !imageError ? (
           <img
-            src={activeSrc}
+            src={displaySrc}
             alt={`${make} ${model}`}
-            onError={() => setImageError(true)}
+            onError={handleImageError}
             loading="lazy"
             decoding="async"
             style={{
@@ -247,7 +267,7 @@ export function VehicleImage({
             color,
             vehicleType,
             fuelType,
-            photoUrl: activeSrc && !imageError ? activeSrc : undefined,
+            photoUrl: displaySrc && !imageError ? displaySrc : undefined,
           }}
           onClose={() => setLightboxOpen(false)}
           onChangePhoto={onPhotoChange}
