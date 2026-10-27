@@ -793,22 +793,25 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
             }}
           >
             {[
-              { id: "identity", label: "Identity & Brand", icon: "🚗" },
-              { id: "specs", label: "Registration & Specs", icon: "📋" },
-              { id: "financials", label: "Financials & Value", icon: "💰" },
-              { id: "compliance", label: "Compliance & Docs", icon: "🛡️" },
-              { id: "all", label: "All Fields", icon: "📄" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={`vehicle-modal-tab-btn ${activeSection === tab.id ? "active" : ""}`}
-                onClick={() => setActiveSection(tab.id as any)}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+              { id: "identity", label: "Identity & Brand", icon: Car },
+              { id: "specs", label: "Registration & Specs", icon: FileText },
+              { id: "financials", label: "Financials & Value", icon: IndianRupee },
+              { id: "compliance", label: "Compliance & Docs", icon: Shield },
+              { id: "all", label: "All Fields", icon: SlidersHorizontal },
+            ].map((tab) => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`vehicle-modal-tab-btn ${activeSection === tab.id ? "active" : ""}`}
+                  onClick={() => setActiveSection(tab.id as any)}
+                >
+                  <TabIcon size={13} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Section 1: Identity & Ownership */}
