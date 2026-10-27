@@ -77,7 +77,15 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         key: "bankAccounts",
         label: "Bank Accounts",
         description: "Savings, current, salary & checking ledgers with branch & IFSC info",
-        fields: ["id", "bankName", "accountNumber", "accountType", "balance", "ifsc", "minBalance", "notes"],
+        fields: ["id", "bankName", "accountNumber", "accountType", "balance", "ifsc", "branch", "accountHolder", "minBalance", "notes"],
+        subObjects: [
+          {
+            name: "Account Transactions",
+            key: "transactions",
+            description: "Inflows, outflows, category tags, ledger transfers & reference IDs",
+            fields: ["id", "date", "type", "category", "amount", "description", "tags", "refNo"],
+          },
+        ],
       },
       {
         key: "transactions",
@@ -89,13 +97,13 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         key: "creditCards",
         label: "Credit Cards & Variants",
         description: "Cards, limits, billing dates, reward points, companion cards & sub-card ledgers",
-        fields: ["id", "issuer", "network", "last4", "limit", "outstanding", "billDate", "dueDay", "annualFee", "rewardPointsBalance"],
+        fields: ["id", "issuer", "network", "last4", "limit", "outstanding", "billDate", "dueDay", "annualFee", "rewardPointsBalance", "autoPay", "sharedGroup", "cardImageUrl"],
         subObjects: [
           {
             name: "Card Variants",
             key: "variants",
             description: "Multi-card linked companion cards (RuPay UPI, Virtual, Add-on, Companion Amex)",
-            fields: ["id", "name", "network", "last4", "cardType", "status"],
+            fields: ["id", "name", "network", "last4", "cardType", "status", "cardImageUrl"],
           },
           {
             name: "Card Transactions",
@@ -116,6 +124,14 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         label: "Bills & Subscriptions",
         description: "Utility bills, scheduled dues, auto-pay setups & frequency",
         fields: ["id", "biller", "category", "amount", "dueDate", "autoPay", "status", "notes"],
+        subObjects: [
+          {
+            name: "Payment Receipts History",
+            key: "history",
+            description: "Historical payment receipts, transaction reference IDs & audit timestamps",
+            fields: ["id", "amount", "datePaid", "paymentRef", "paymentMode"],
+          },
+        ],
       },
       {
         key: "billPaymentHistory",
@@ -254,6 +270,20 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         label: "Real Estate Properties",
         description: "Land, residential apartments, commercial units, registry & valuation data",
         fields: ["id", "name", "type", "location", "purchasePrice", "currentValue", "loanId", "registrationDate", "areaSqFt"],
+        subObjects: [
+          {
+            name: "Builder Demands",
+            key: "demands",
+            description: "Milestone payment notices, architectural stages & due dates",
+            fields: ["id", "demandStage", "demandDate", "amountDue", "dueDate", "status"],
+          },
+          {
+            name: "Disbursements & Payments",
+            key: "payments",
+            description: "Construction disbursements, builder challans & payment receipts",
+            fields: ["id", "demandId", "datePaid", "amountPaid", "paymentMode", "receiptNo"],
+          },
+        ],
       },
       {
         key: "realEstateDemands",
@@ -271,19 +301,82 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         key: "rentalProperties",
         label: "Rental Properties (Income)",
         description: "Tenants, lease agreements, monthly rental inflows & security deposits received",
-        fields: ["id", "propertyId", "tenantName", "monthlyRent", "depositReceived", "leaseStart", "leaseEnd", "status"],
+        fields: ["id", "propertyName", "propertyId", "tenantName", "monthlyRent", "securityDeposit", "leaseStart", "leaseEnd", "status", "rentDueDay"],
+        subObjects: [
+          {
+            name: "Deposit Ledger",
+            key: "depositTransactions",
+            description: "Security deposit receipts, inflows and return disbursements",
+            fields: ["id", "date", "amount", "type", "paymentMode", "notes"],
+          },
+          {
+            name: "Deposit Deductions",
+            key: "depositDeductions",
+            description: "Deductions for damages, painting, maintenance or lease penalties",
+            fields: ["id", "date", "amount", "reason", "notes"],
+          },
+          {
+            name: "Rent Escalations",
+            key: "escalations",
+            description: "Annual rent escalations, scheduled revisions & percentage increments",
+            fields: ["id", "effectiveDate", "newRent", "percentage", "notes"],
+          },
+        ],
       },
       {
         key: "rentedProperties",
         label: "Rented Properties (Expense)",
         description: "Landlord agreements, monthly rent obligations & security deposits paid",
-        fields: ["id", "propertyName", "landlordName", "rentAmount", "depositPaid", "agreementEnd"],
+        fields: ["id", "propertyName", "landlordName", "rentAmount", "depositPaid", "agreementStart", "agreementEnd", "rentDueDay"],
+        subObjects: [
+          {
+            name: "Deposit Inflows/Refunds",
+            key: "depositTransactions",
+            description: "Security deposit advances paid and refund receipts",
+            fields: ["id", "date", "amount", "type", "paymentMode", "notes"],
+          },
+        ],
       },
       {
         key: "vehicles",
         label: "Vehicles & Automobiles",
         description: "Cars, motorcycles, registration, purchase price, current valuation & insurance/PUCC dates",
-        fields: ["id", "vehicleName", "registrationNo", "makeModel", "purchaseYear", "purchasePrice", "currentValue", "insuranceExpiry", "puccExpiry", "loanId"],
+        fields: [
+          "id",
+          "vehicleType",
+          "make",
+          "model",
+          "year",
+          "registrationNumber",
+          "fuelType",
+          "transmission",
+          "purchasePrice",
+          "currentValue",
+          "currentValuation",
+          "isFinanced",
+          "financier",
+          "loanOutstanding",
+          "loanEmi",
+          "insuranceExpiry",
+          "pucExpiry",
+          "nextServiceDueDate",
+          "fastagBalance",
+          "fuelEfficiency",
+        ],
+        subObjects: [
+          {
+            name: "Service Records",
+            key: "serviceHistory",
+            description: "Garage maintenance, scheduled services, odometer, invoice numbers & parts replaced",
+            fields: ["id", "date", "type", "description", "cost", "odometer", "serviceCenter", "invoiceNumber", "partsReplaced", "notes"],
+          },
+          {
+            name: "Insurance History",
+            key: "insuranceHistory",
+            description: "Annual policy renewals, IDV coverages, add-on riders & tax-inclusive premiums",
+            fields: ["id", "policyType", "insurer", "policyNumber", "tenure", "fromDate", "toDate", "basicCost", "cgstAmount", "sgstAmount", "totalPremium", "idv", "policyDocUrl", "addOns", "notes"],
+          },
+        ],
       },
     ],
   },
@@ -310,7 +403,37 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         key: "healthInsurance",
         label: "Health & Mediclaim",
         description: "Family floater, individual health covers, TPA contact & No-Claim Bonus",
-        fields: ["id", "policyNo", "insurer", "planType", "sumInsured", "membersCovered", "premium", "renewalDate", "tpaContact", "noClaimBonus"],
+        fields: [
+          "id",
+          "policyNumber",
+          "policyName",
+          "insurer",
+          "policyType",
+          "sumInsured",
+          "deductible",
+          "premium",
+          "premiumFrequency",
+          "renewalDate",
+          "tpaName",
+          "tpaContact",
+          "noClaimBonus",
+          "copayPercent",
+          "roomRentLimit",
+        ],
+        subObjects: [
+          {
+            name: "Insured Lives",
+            key: "insuredMembers",
+            description: "Covered family members, relationships, DOB & entry ages",
+            fields: ["name", "relation", "dob", "entryAge"],
+          },
+          {
+            name: "Claims History",
+            key: "claims",
+            description: "Cashless & reimbursement health claims, hospital details, settled amounts & TPA reference numbers",
+            fields: ["id", "claimDate", "hospitalName", "ailment", "claimAmount", "settledAmount", "status", "claimNumber", "notes"],
+          },
+        ],
       },
       {
         key: "investmentPlans",
@@ -388,7 +511,38 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         key: "goals",
         label: "Financial Goals",
         description: "Retirement, child education, house down payment, target amounts & timelines",
-        fields: ["id", "title", "targetAmount", "currentAmount", "targetDate", "category", "priority"],
+        fields: [
+          "id",
+          "name",
+          "category",
+          "goalType",
+          "targetAmount",
+          "currentAmount",
+          "recurringFrequency",
+          "installmentsCount",
+          "amountPerInstallment",
+          "installmentsPaid",
+          "nextDueDate",
+          "expectedReturnRate",
+          "priority",
+          "startDate",
+          "targetDate",
+          "notes",
+        ],
+        subObjects: [
+          {
+            name: "Installment Milestones",
+            key: "schedule",
+            description: "Multi-year cash-flow milestones, academic fee schedules & target payment dates",
+            fields: ["installmentNumber", "label", "dueDate", "amount", "isPaid", "paidDate", "paidAmount", "notes"],
+          },
+          {
+            name: "Realized Disbursements",
+            key: "disbursements",
+            description: "Executed disbursements, portfolio withdrawals and goal payments",
+            fields: ["id", "date", "amount", "installmentNumber", "notes"],
+          },
+        ],
       },
       {
         key: "budgets",
@@ -407,6 +561,20 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         label: "Document Vault Meta",
         description: "Vault document records, physical locker tags, issue/expiry dates & certificate numbers",
         fields: ["id", "title", "category", "documentType", "issueDate", "expiryDate", "documentNumber", "tags", "storageLocation"],
+        subObjects: [
+          {
+            name: "Will Execution Meta",
+            key: "willMeta",
+            description: "Registered will status, registry number, sub-registrar office, executors & legal witnesses",
+            fields: ["status", "regNumber", "subRegistrarOffice", "primaryExecutor", "alternateExecutor", "witnesses", "lawyerName"],
+          },
+          {
+            name: "Key Advisory Contacts",
+            key: "keyContacts",
+            description: "Family lawyer, chartered accountant, financial advisor & executor contact details",
+            fields: ["name", "role", "phone", "email", "notes"],
+          },
+        ],
       },
       {
         key: "nominees",
@@ -431,6 +599,14 @@ export const DOMAIN_CATEGORIES: DataCategory[] = [
         label: "Watchlists",
         description: "Stock & mutual fund watchlists, themes & target allocations",
         fields: ["id", "name", "description", "targetAllocation"],
+        subObjects: [
+          {
+            name: "Tracked Assets",
+            key: "trackedItems",
+            description: "Target buy prices, investment rationale & allocation triggers",
+            fields: ["id", "symbol", "targetPrice", "notes"],
+          },
+        ],
       },
       {
         key: "wishlistItems",
@@ -865,6 +1041,114 @@ export const DataExportTab: React.FC<{
     triggerDownload(csvContent, filename, "text/csv;charset=utf-8;");
     if (showToast) showToast(`Exported ${data.length} records to ${filename}`, "success");
   };
+
+  // ─── Sub-Object Record Counter & Direct CSV Download ─────────────────────
+
+  const getSubObjectRecordCount = useCallback(
+    (parentKey: string, subKey: string): number => {
+      const parentData = state[parentKey];
+      if (!Array.isArray(parentData)) return 0;
+
+      let count = 0;
+      parentData.forEach((p: any) => {
+        const child = p?.[subKey];
+        if (Array.isArray(child)) {
+          count += child.length;
+        }
+      });
+
+      // Relational collections fallback
+      if (count === 0 && subKey === "transactions" && parentKey === "bankAccounts") {
+        count = (state.transactions || []).length;
+      } else if (count === 0 && subKey === "demands" && parentKey === "realEstateProperties") {
+        count = (state.realEstateDemands || []).length;
+      } else if (count === 0 && subKey === "payments" && parentKey === "realEstateProperties") {
+        count = (state.realEstatePayments || []).length;
+      } else if (count === 0 && subKey === "trackedItems" && parentKey === "wishlists") {
+        count = (state.wishlistItems || []).length;
+      } else if (count === 0 && subKey === "history" && parentKey === "billPayments") {
+        count = (state.billPaymentHistory || []).length;
+      }
+
+      return count;
+    },
+    [state]
+  );
+
+  const downloadSubObjectCSV = useCallback(
+    (parentKey: string, parentLabel: string, subObjMeta: SubObjectMeta) => {
+      const parentData = state[parentKey];
+      if (!Array.isArray(parentData) || parentData.length === 0) {
+        if (showToast) showToast(`No records found for ${parentLabel}`, "warn");
+        return;
+      }
+
+      const flattenedSubRecords: any[] = [];
+      parentData.forEach((parentItem: any) => {
+        const parentName =
+          parentItem.name ||
+          parentItem.vehicleName ||
+          (parentItem.make && parentItem.model ? `${parentItem.make} ${parentItem.model}` : "") ||
+          parentItem.propertyName ||
+          parentItem.cardName ||
+          (parentItem.issuer ? `${parentItem.issuer} Card` : "") ||
+          parentItem.policyName ||
+          parentItem.bankName ||
+          parentItem.id ||
+          "Record";
+
+        const parentRef =
+          parentItem.registrationNumber ||
+          parentItem.accountNumber ||
+          parentItem.policyNumber ||
+          parentItem.last4 ||
+          parentItem.id ||
+          "";
+
+        // 1. Direct array field on parent object
+        let childItems = parentItem[subObjMeta.key];
+
+        // 2. Relational child collection fallback
+        if ((!childItems || !Array.isArray(childItems) || childItems.length === 0) && subObjMeta.key === "transactions") {
+          childItems = (state.transactions || []).filter((tx: any) => tx.accountId === parentItem.id);
+        } else if ((!childItems || !Array.isArray(childItems) || childItems.length === 0) && subObjMeta.key === "demands") {
+          childItems = (state.realEstateDemands || []).filter((d: any) => d.propertyId === parentItem.id);
+        } else if ((!childItems || !Array.isArray(childItems) || childItems.length === 0) && subObjMeta.key === "payments") {
+          childItems = (state.realEstatePayments || []).filter((p: any) => p.propertyId === parentItem.id);
+        } else if ((!childItems || !Array.isArray(childItems) || childItems.length === 0) && subObjMeta.key === "trackedItems") {
+          childItems = (state.wishlistItems || []).filter((w: any) => w.wishlistId === parentItem.id);
+        } else if ((!childItems || !Array.isArray(childItems) || childItems.length === 0) && subObjMeta.key === "history") {
+          childItems = (state.billPaymentHistory || []).filter((h: any) => h.biller === parentItem.biller);
+        }
+
+        if (Array.isArray(childItems) && childItems.length > 0) {
+          childItems.forEach((c: any) => {
+            flattenedSubRecords.push({
+              parentRecord: parentName,
+              parentReference: parentRef,
+              ...c,
+            });
+          });
+        }
+      });
+
+      if (flattenedSubRecords.length === 0) {
+        if (showToast) showToast(`No ${subObjMeta.name} records found in ${parentLabel}`, "warn");
+        return;
+      }
+
+      const csvContent = toCleanCSV(flattenedSubRecords);
+      if (!csvContent) {
+        if (showToast) showToast(`Could not format CSV for ${subObjMeta.name}`, "error");
+        return;
+      }
+
+      const filename = `arthadrishti-${parentKey}-${subObjMeta.key}-${today()}.csv`;
+      triggerDownload(csvContent, filename, "text/csv;charset=utf-8;");
+      if (showToast) showToast(`Exported ${flattenedSubRecords.length} ${subObjMeta.name} records to ${filename}`, "success");
+    },
+    [state, showToast]
+  );
 
   // ─── Export Executors ───────────────────────────────────────────────────
 
@@ -2296,42 +2580,85 @@ export const DataExportTab: React.FC<{
                     Nested Child Sub-Objects ({currentInspectedItem.subObjects.length})
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
-                    {currentInspectedItem.subObjects.map((so) => (
-                      <div
-                        key={so.key}
-                        style={{
-                          padding: 12,
-                          borderRadius: 8,
-                          background: "var(--surface-1)",
-                          border: "1px solid var(--t-line)",
-                        }}
-                      >
-                        <div style={{ fontSize: 13, fontWeight: 700, color: THEME.text, marginBottom: 2 }}>
-                          {so.name} (<code style={{ color: "var(--t-accent)" }}>.{so.key}[]</code>)
-                        </div>
-                        <div style={{ fontSize: 12, color: THEME.textSecondary, marginBottom: 8 }}>
-                          {so.description}
-                        </div>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {so.fields.map((sf) => (
-                            <span
-                              key={sf}
+                    {currentInspectedItem.subObjects.map((so) => {
+                      const count = getSubObjectRecordCount(currentInspectedItem.key, so.key);
+                      return (
+                        <div
+                          key={so.key}
+                          style={{
+                            padding: 14,
+                            borderRadius: 10,
+                            background: "var(--surface-1)",
+                            border: "1px solid var(--t-line)",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            gap: 10,
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: THEME.text }}>
+                                {so.name} <code style={{ fontSize: 11, color: "var(--t-accent)" }}>.{so.key}[]</code>
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 600,
+                                  padding: "2px 7px",
+                                  borderRadius: 12,
+                                  background: count > 0 ? "rgba(16, 185, 129, 0.12)" : "rgba(148, 163, 184, 0.12)",
+                                  color: count > 0 ? THEME.sage : THEME.textSecondary,
+                                  border: `1px solid ${count > 0 ? "rgba(16, 185, 129, 0.25)" : "var(--t-line)"}`,
+                                }}
+                              >
+                                {count} {count === 1 ? "record" : "records"}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 12, color: THEME.textSecondary, marginBottom: 8, lineHeight: 1.4 }}>
+                              {so.description}
+                            </div>
+                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
+                              {so.fields.map((sf) => (
+                                <span
+                                  key={sf}
+                                  style={{
+                                    fontSize: 10.5,
+                                    padding: "2px 6px",
+                                    borderRadius: 4,
+                                    background: "var(--surface-0)",
+                                    border: "1px solid var(--t-line)",
+                                    fontFamily: "monospace",
+                                    color: THEME.textSecondary,
+                                  }}
+                                >
+                                  {sf}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 8, borderTop: "1px dashed var(--t-line)" }}>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => downloadSubObjectCSV(currentInspectedItem.key, currentInspectedItem.label, so)}
+                              disabled={count === 0}
+                              title={count === 0 ? "No records available to export" : `Export ${so.name} as clean CSV`}
                               style={{
-                                fontSize: 11,
-                                padding: "2px 6px",
-                                borderRadius: 4,
-                                background: "var(--surface-0)",
-                                border: "1px solid var(--t-line)",
-                                fontFamily: "monospace",
-                                color: THEME.textSecondary,
+                                fontSize: 11.5,
+                                padding: "4px 10px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
                               }}
                             >
-                              {sf}
-                            </span>
-                          ))}
+                              <Download size={12} />
+                              Export Sub-Object CSV
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

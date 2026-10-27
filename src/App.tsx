@@ -1266,6 +1266,7 @@ function FinanceDashboard() {
                 vehicles: snakeToCamel(vehiclesQ.data).map((v: any) => ({
                   ...v,
                   serviceHistory: v.serviceHistory || [],
+                  insuranceHistory: v.insuranceHistory || [],
                 })),
               }
             : {}),
@@ -2632,7 +2633,9 @@ function FinanceDashboard() {
         if (cleanItem.policy_name === null) cleanItem.policy_name = "";
       }
       if (key === "vehicles") {
-        delete cleanItem.photo_url;
+        if (typeof cleanItem.photo_url === "string" && cleanItem.photo_url.length > 200000) {
+          delete cleanItem.photo_url;
+        }
       }
 
       return cleanItem;
@@ -3887,7 +3890,9 @@ function FinanceDashboard() {
           if (finalPatch.policy_name === null) finalPatch.policy_name = "";
         }
         if (key === "vehicles") {
-          delete finalPatch.photo_url;
+          if (typeof finalPatch.photo_url === "string" && finalPatch.photo_url.length > 200000) {
+            delete finalPatch.photo_url;
+          }
         }
 
         const isNetErr = (msg?: string) =>

@@ -71,16 +71,16 @@ export interface AppState {
   demat: any[];
   wishlists: any[];
   wishlistItems: any[];
-  creditCards: any[];
+  creditCards: CreditCardEntity[];
   prepaidCards: any[];
   loansTaken: any[];
   loansGiven: any[];
   informalBorrowed: any[];
   informalLent: any[];
-  rentalProperties: any[];
-  rentedProperties: any[];
+  rentalProperties: RentalPropertyEntity[];
+  rentedProperties: RentedPropertyEntity[];
   subscriptions: any[];
-  goals: any[];
+  goals: GoalEntity[];
   income: any[];
   taxPayments: any[];
   budgets: any[];
@@ -99,7 +99,7 @@ export interface AppState {
   goldHoldings: any[];
   lifeEvents: any[];
   corporateActions: any[];
-  healthInsurance: any[];
+  healthInsurance: HealthInsuranceEntity[];
   creditScores: any[];
   billPayments: any[];
   billPaymentHistory: any[];
@@ -451,5 +451,122 @@ export interface Vehicle {
   insuranceHistory?: VehicleInsuranceRecord[];
 }
 
+// ────────────────────────────────────────────────────────────
+// Health Insurance & Claim Models
+// ────────────────────────────────────────────────────────────
 
+export interface HealthInsuredMember {
+  name: string;
+  relation: string;
+  dob?: string;
+  entryAge?: number;
+}
 
+export interface HealthClaim {
+  id: string;
+  claimDate: string;
+  hospitalName: string;
+  ailment: string;
+  claimAmount: number | string;
+  settledAmount?: number | string;
+  status: "submitted" | "in_review" | "approved" | "settled" | "rejected" | string;
+  claimNumber?: string;
+  notes?: string;
+}
+
+export interface HealthInsuranceEntity {
+  id?: string;
+  owner?: string;
+  insurer: string;
+  policyName: string;
+  policyNumber: string;
+  policyType: "family_floater" | "individual" | "corporate" | "top_up" | "super_top_up" | "critical_illness" | string;
+  sumInsured: number | string;
+  deductible?: number | string;
+  premium: number | string;
+  premiumFrequency?: "annual" | "semi_annual" | "quarterly" | "monthly" | string;
+  startDate?: string;
+  renewalDate: string;
+  tpaName?: string;
+  tpaContact?: string;
+  hospitalNetwork?: string;
+  cashless?: boolean;
+  preExistingCovered?: boolean;
+  waitingPeriodYears?: number | string;
+  noClaimBonus?: number | string;
+  copayPercent?: number | string;
+  roomRentLimit?: string;
+  restorationBenefit?: boolean;
+  maternityCover?: boolean;
+  daycareCover?: boolean;
+  policyDocumentUrl?: string;
+  policyDocumentName?: string;
+  policyDocumentSize?: number;
+  policyDocumentMime?: string;
+  policyDocumentUploadedAt?: string;
+  notes?: string;
+  insuredMembers?: HealthInsuredMember[];
+  claims?: HealthClaim[];
+}
+
+// ────────────────────────────────────────────────────────────
+// Rental & Lease Models (Ledger & Deposit Sub-Objects)
+// ────────────────────────────────────────────────────────────
+
+export interface RentalDepositTransaction {
+  id: string;
+  date: string;
+  amount: number | string;
+  type: "deposit_in" | "deposit_out" | "deposit_return_out" | "deposit_return_in" | string;
+  paymentMode?: string;
+  notes?: string;
+}
+
+export interface RentalDepositDeduction {
+  id: string;
+  date: string;
+  amount: number | string;
+  reason: string;
+  notes?: string;
+}
+
+export interface RentalEscalation {
+  id: string;
+  effectiveDate: string;
+  newRent: number | string;
+  percentage?: number | string;
+  notes?: string;
+}
+
+export interface RentalPropertyEntity {
+  id?: string;
+  owner?: string;
+  propertyName?: string;
+  propertyId?: string;
+  tenantName: string;
+  monthlyRent: number | string;
+  securityDeposit?: number | string;
+  leaseStart?: string;
+  leaseEnd?: string;
+  rentDueDay?: number | string;
+  status?: "active" | "expiring" | "ended" | string;
+  isActive?: boolean;
+  notes?: string;
+  depositTransactions?: RentalDepositTransaction[];
+  depositDeductions?: RentalDepositDeduction[];
+  escalations?: RentalEscalation[];
+}
+
+export interface RentedPropertyEntity {
+  id?: string;
+  owner?: string;
+  propertyName: string;
+  landlordName: string;
+  rentAmount: number | string;
+  depositPaid?: number | string;
+  agreementStart?: string;
+  agreementEnd?: string;
+  rentDueDay?: number | string;
+  notes?: string;
+  depositTransactions?: RentalDepositTransaction[];
+}

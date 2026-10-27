@@ -1108,6 +1108,29 @@ CREATE TABLE IF NOT EXISTS public.vehicles (
 
   current_odometer           numeric(12,2),                       -- 78
 
+  transmission               text DEFAULT 'manual',               -- 105
+  emission_standard          text DEFAULT '',                     -- 105
+  fuel_efficiency            numeric(6,2),                        -- 105
+  fuel_capacity              numeric(6,2),                        -- 105
+  puc_number                 text DEFAULT '',                     -- 105
+  is_financed                boolean DEFAULT false,               -- 105
+  loan_account_number        text DEFAULT '',                     -- 105
+  loan_amount                numeric(14,2),                       -- 105
+  loan_emi                   numeric(14,2),                       -- 105
+  loan_tenure_months         integer,                             -- 105
+  loan_interest_rate         numeric(6,2),                        -- 105
+  loan_outstanding           numeric(14,2),                       -- 105
+  fastag_provider            text DEFAULT '',                     -- 105
+  fastag_id                  text DEFAULT '',                     -- 105
+  fastag_balance             numeric(10,2),                       -- 105
+  warranty_expiry            date,                                -- 105
+  extended_warranty_expiry   date,                                -- 105
+  rsa_provider               text DEFAULT '',                     -- 105
+  rsa_contact_number         text DEFAULT '',                     -- 105
+  current_valuation          numeric(14,2),                       -- 105
+  photo_url                  text DEFAULT '',                     -- 105
+  tax_invoice_url            text DEFAULT '',                     -- 105
+
   notes                      text,
   created_at                 timestamptz DEFAULT now()
 );
