@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   LayoutGrid,
   List,
+  Columns,
   MessageSquare,
   Sparkles,
   Zap,
@@ -29,6 +30,14 @@ import {
   ChevronUp,
   CreditCard,
   Layers,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ArrowRight,
+  ArrowLeft,
+  X,
+  History,
+  FileSpreadsheet,
+  ExternalLink,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { fmtINR, fmtINRFull, fmtINRExact, today } from "../../utils/finance";
@@ -60,10 +69,22 @@ const getAvatarGradient = (name: string) => {
   return `linear-gradient(135deg, ${colors[idx][0]} 0%, ${colors[idx][1]} 100%)`;
 };
 
+const RELATIONSHIP_OPTIONS = [
+  "Friend",
+  "Family",
+  "Relative",
+  "Colleague",
+  "Business Partner",
+  "Neighbor",
+  "Other",
+];
+
 interface InformalLoanSectionProps {
   direction: "borrowed" | "lent";
   items?: any[];
   bankAccounts?: any[];
+  otherDirectionItems?: any[];
+  onDirectionChange?: (newDirection: "borrowed" | "lent") => void;
   onAddPerson: (v: any) => Promise<void> | void;
   onUpdate: (id: string, patch: any) => Promise<void> | void;
   onRemove: (id: string) => Promise<void> | void;
@@ -72,9 +93,11 @@ interface InformalLoanSectionProps {
 }
 
 export function InformalLoanSection({
-  direction,
+  direction: controlledDirection,
   items = [],
   bankAccounts = [],
+  otherDirectionItems = [],
+  onDirectionChange,
   onAddPerson,
   onUpdate,
   onRemove,
@@ -82,8 +105,17 @@ export function InformalLoanSection({
   onEdit,
 }: InformalLoanSectionProps) {
   const { familyProfiles } = useMasterData();
-  const isBorrowed = direction === "borrowed";
+  const [internalDirection, setInternalDirection] = useState<"borrowed" | "lent">(controlledDirection);
+
+  // Sync internal state if controlled prop changes
+  React.useEffect(() => {
+    setInternalDirection(controlledDirection);
+  }, [controlledDirection]);
+
+  const activeDirection = onDirectionChange ? controlledDirection : internalDirection;
+  const isBorrowed = activeDirection === "borrowed";
   const personLabel = isBorrowed ? "Lender" : "Borrower";
+  const otherLabel = isBorrowed ? "Borrower" : "Lender";
   const accentColor = isBorrowed ? "var(--t-rust)" : "var(--t-accent)";
   const now = new Date();
 
@@ -95,8 +127,9 @@ export function InformalLoanSection({
   const [sortBy, setSortBy] = useState<
     "overdue_first" | "due_soon" | "outstanding_desc" | "recent_activity" | "name_asc"
   >("overdue_first");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "split" | "table">("grid");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
 
   // Modals
   const [addPersonOpen, setAddPersonOpen] = useState(false);
@@ -111,8 +144,8 @@ export function InformalLoanSection({
   const [confirmDeletePayment, setConfirmDeletePayment] = useState<any | null>(null);
 
   // Enriched Person Data
-  const enrichedItems = useMemo(() => {
-    return items.map((person: any) => {
+  const enrichList = (rawItems: any[]) => {
+    return rawItems.map((person: any) => {
       const name = person.person || person.name || "Unknown";
       let tranches: any[] = person.tranches || [];
       let payments: any[] = person.payments || [];
@@ -180,9 +213,12 @@ export function InformalLoanSection({
         lastActivityDate,
       };
     });
-  }, [items, familyProfiles]);
+  };
 
-  // Aggregated KPIs
+  const enrichedItems = useMemo(() => enrichList(items), [items, familyProfiles]);
+  const otherEnrichedItems = useMemo(() => enrichList(otherDirectionItems), [otherDirectionItems, familyProfiles]);
+
+  // Aggregated KPIs for Active Direction
   const totalBorrowed = enrichedItems.reduce((s, p) => s + p.totalT, 0);
   const totalPaid = enrichedItems.reduce((s, p) => s + p.totalP, 0);
   const totalOutstanding = Math.max(0, totalBorrowed - totalPaid);
@@ -193,6 +229,18 @@ export function InformalLoanSection({
   const activeCount = enrichedItems.filter((x) => x.outstanding > 0).length;
   const settledCount = enrichedItems.filter((x) => x.settled && !x.overpaid).length;
   const overpaidCount = enrichedItems.filter((x) => x.overpaid).length;
+
+  // Other Direction Totals for Consolidated View
+  const otherTotalBorrowed = otherEnrichedItems.reduce((s, p) => s + p.totalT, 0);
+  const otherTotalPaid = otherEnrichedItems.reduce((s, p) => s + p.totalP, 0);
+  const otherTotalOutstanding = Math.max(0, otherTotalBorrowed - otherTotalPaid);
+
+  // Consolidated Net Informal Position: (Lent - Borrowed)
+  // If positive -> Net Creditor (you are owed net)
+  // If negative -> Net Debtor (you owe net)
+  const netInformalPosition = isBorrowed
+    ? otherTotalOutstanding - totalOutstanding
+    : totalOutstanding - otherTotalOutstanding;
 
   // Filtered & Sorted Display Items
   const filteredItems = useMemo(() => {
@@ -260,6 +308,26 @@ export function InformalLoanSection({
     return list;
   }, [enrichedItems, searchQuery, statusFilter, ownerFilter, relationshipFilter, sortBy]);
 
+  // Default selected person for Split View
+  const selectedItem = useMemo(() => {
+    if (selectedPersonId) {
+      const found = filteredItems.find((x) => x.id === selectedPersonId);
+      if (found) return found;
+    }
+    return filteredItems[0] || null;
+  }, [filteredItems, selectedPersonId]);
+
+  const handleDirectionSwitch = (newDir: "borrowed" | "lent") => {
+    if (newDir === activeDirection) return;
+    if (onDirectionChange) {
+      onDirectionChange(newDir);
+    } else {
+      setInternalDirection(newDir);
+    }
+    setExpandedId(null);
+    setSelectedPersonId(null);
+  };
+
   const fmtD = (d: string) =>
     d
       ? new Date(d).toLocaleDateString("en-IN", {
@@ -270,8 +338,134 @@ export function InformalLoanSection({
       : "—";
 
   return (
-    <div>
-      {/* 1. Executive Analytics / Stat Cards */}
+    <div style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
+      {/* ── 0. High-Level Direction Switcher & Consolidated Net Financial Position ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12,
+          padding: "10px 14px",
+          background: "color-mix(in srgb, var(--surface-1) 40%, transparent)",
+          borderRadius: 12,
+          border: "1px solid var(--t-line)",
+          marginBottom: 16,
+        }}
+      >
+        {/* Seamless Direction Switcher Tabs */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => handleDirectionSwitch("borrowed")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "7px 14px",
+              borderRadius: 8,
+              border: `1px solid ${
+                isBorrowed ? "var(--t-rust)" : "color-mix(in srgb, var(--t-line) 80%, transparent)"
+              }`,
+              background: isBorrowed
+                ? "color-mix(in srgb, var(--t-rust) 14%, var(--surface-0))"
+                : "transparent",
+              color: isBorrowed ? "var(--t-rust)" : "var(--t-muted)",
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <ArrowDownLeft size={16} />
+            <span>From People (Borrowed)</span>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: "2px 7px",
+                borderRadius: 12,
+                background: isBorrowed ? "var(--t-rust)" : "color-mix(in srgb, var(--surface-1) 80%, transparent)",
+                color: isBorrowed ? "#fff" : "var(--t-muted)",
+              }}
+            >
+              {isBorrowed ? enrichedItems.length : otherEnrichedItems.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleDirectionSwitch("lent")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "7px 14px",
+              borderRadius: 8,
+              border: `1px solid ${
+                !isBorrowed ? "var(--t-accent)" : "color-mix(in srgb, var(--t-line) 80%, transparent)"
+              }`,
+              background: !isBorrowed
+                ? "color-mix(in srgb, var(--t-accent) 14%, var(--surface-0))"
+                : "transparent",
+              color: !isBorrowed ? "var(--t-accent)" : "var(--t-muted)",
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <ArrowUpRight size={16} />
+            <span>To People (Lent)</span>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: "2px 7px",
+                borderRadius: 12,
+                background: !isBorrowed ? "var(--t-accent)" : "color-mix(in srgb, var(--surface-1) 80%, transparent)",
+                color: !isBorrowed ? "#fff" : "var(--t-muted)",
+              }}
+            >
+              {!isBorrowed ? enrichedItems.length : otherEnrichedItems.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Consolidated Net Financial Position Badge */}
+        {(otherDirectionItems.length > 0 || items.length > 0) && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 12px",
+              borderRadius: 8,
+              background: "var(--t-card-bg)",
+              border: "1px solid var(--t-line)",
+              fontSize: 12,
+            }}
+          >
+            <span style={{ color: "var(--t-muted)", fontWeight: 600 }}>Net Position:</span>
+            {netInformalPosition > 0 ? (
+              <span style={{ color: "var(--t-sage)", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <CheckCircle2 size={13} /> You are Net Creditor (+₹{fmtINR(netInformalPosition)})
+              </span>
+            ) : netInformalPosition < 0 ? (
+              <span style={{ color: "var(--t-rust)", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <AlertCircle size={13} /> You are Net Debtor (-₹{fmtINR(Math.abs(netInformalPosition))})
+              </span>
+            ) : (
+              <span style={{ color: "var(--t-muted)", fontWeight: 700 }}>
+                Balanced (₹0 Net)
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── 1. Executive Analytics / Stat Cards ── */}
       <div
         style={{
           display: "grid",
@@ -318,7 +512,7 @@ export function InformalLoanSection({
         />
       </div>
 
-      {/* 2. Control Toolbar: Search, Filters, View Modes & Add CTA */}
+      {/* ── 2. Control Toolbar: Search, Filters, View Modes & Add CTA ── */}
       <div
         style={{
           display: "flex",
@@ -334,12 +528,12 @@ export function InformalLoanSection({
         }}
       >
         {/* Left side: Search & Status Filter Tabs */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, flex: "1 1 400px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, flex: "1 1 380px" }}>
           <div style={{ position: "relative", minWidth: 200, flex: "1 1 200px" }}>
             <input
               style={{
                 width: "100%",
-                padding: "8px 12px 8px 34px",
+                padding: "8px 32px 8px 34px",
                 borderRadius: "var(--radius-md)",
                 border: "1px solid var(--t-line)",
                 background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
@@ -362,6 +556,25 @@ export function InformalLoanSection({
                 color: "var(--t-muted)",
               }}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--t-muted)",
+                  cursor: "pointer",
+                  padding: 3,
+                }}
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
 
           {/* Status Pills */}
@@ -428,8 +641,30 @@ export function InformalLoanSection({
           </div>
         </div>
 
-        {/* Right side: Owner filter, Sorting, View Switcher & Add Button */}
+        {/* Right side: Relationship, Owner filter, Sorting, View Switcher & Add Button */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {/* Relationship Filter */}
+          <select
+            style={{
+              padding: "7px 10px",
+              borderRadius: "var(--radius-md)",
+              border: "1px solid var(--t-line)",
+              background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
+              color: "var(--t-ink)",
+              fontSize: 12,
+              outline: "none",
+            }}
+            value={relationshipFilter}
+            onChange={(e) => setRelationshipFilter(e.target.value)}
+          >
+            <option value="all">All Relationships</option>
+            {RELATIONSHIP_OPTIONS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+
           {/* Owner Filter */}
           {familyProfiles.length > 1 && (
             <select
@@ -445,7 +680,7 @@ export function InformalLoanSection({
               value={ownerFilter}
               onChange={(e) => setOwnerFilter(e.target.value)}
             >
-              <option value="all">All Household Profiles</option>
+              <option value="all">All Profiles</option>
               {familyProfiles.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -475,7 +710,7 @@ export function InformalLoanSection({
             <option value="name_asc">Name: Alphabetical A-Z</option>
           </select>
 
-          {/* View Mode Toggle */}
+          {/* View Mode Toggle: Grid, Split Widescreen, Dense Table */}
           <div
             style={{
               display: "flex",
@@ -492,7 +727,7 @@ export function InformalLoanSection({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 30,
+                width: 32,
                 height: 28,
                 borderRadius: 6,
                 border: "none",
@@ -507,12 +742,32 @@ export function InformalLoanSection({
             </button>
             <button
               type="button"
+              onClick={() => setViewMode("split")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 28,
+                borderRadius: 6,
+                border: "none",
+                background: viewMode === "split" ? "var(--t-card-bg)" : "transparent",
+                color: viewMode === "split" ? "var(--t-accent)" : "var(--t-muted)",
+                boxShadow: viewMode === "split" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                cursor: "pointer",
+              }}
+              title="Split Master-Detail View"
+            >
+              <Columns size={15} />
+            </button>
+            <button
+              type="button"
               onClick={() => setViewMode("table")}
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 30,
+                width: 32,
                 height: 28,
                 borderRadius: 6,
                 border: "none",
@@ -551,7 +806,7 @@ export function InformalLoanSection({
         </div>
       </div>
 
-      {/* 3. Empty State or Results View */}
+      {/* ── 3. Content Area: Empty State or Active View Mode ── */}
       {enrichedItems.length === 0 ? (
         <Card style={{ padding: "48px 32px", textAlign: "center" }}>
           <div
@@ -638,11 +893,11 @@ export function InformalLoanSection({
           </button>
         </Card>
       ) : viewMode === "grid" ? (
-        /* 4. Rich Grid View */
+        /* ── 4A. Rich Cards Grid View ── */
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
             gap: 16,
           }}
         >
@@ -730,7 +985,13 @@ export function InformalLoanSection({
                               <span>•</span>
                               <a
                                 href={`tel:${item.phone}`}
-                                style={{ color: "var(--t-accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 3 }}
+                                style={{
+                                  color: "var(--t-accent)",
+                                  textDecoration: "none",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 3,
+                                }}
                               >
                                 <Phone size={10} /> {item.phone}
                               </a>
@@ -1045,6 +1306,7 @@ export function InformalLoanSection({
                     isBorrowed={isBorrowed}
                     item={item}
                     accentColor={accentColor}
+                    bankAccounts={bankAccounts}
                     onAddTranche={() => setTrancheTarget(item.person)}
                     onEditTranche={(t: any) => setEditTrancheTarget({ person: item.person, tranche: t })}
                     onDeleteTranche={(t: any) =>
@@ -1068,8 +1330,417 @@ export function InformalLoanSection({
             );
           })}
         </div>
+      ) : viewMode === "split" ? (
+        /* ── 4B. Widescreen Split Master-Detail Layout ── */
+        <div className="informal-split-layout">
+          {/* Left Column: Master List of Parties */}
+          <div
+            style={{
+              background: "var(--t-card-bg)",
+              borderRadius: 14,
+              border: "1px solid var(--t-line)",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              maxHeight: "820px",
+            }}
+          >
+            <div
+              style={{
+                padding: "12px 16px",
+                borderBottom: "1px solid var(--t-line)",
+                background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", color: "var(--t-muted)", letterSpacing: "0.05em" }}>
+                {personLabel}s ({filteredItems.length})
+              </span>
+              <span style={{ fontSize: 11, color: "var(--t-muted)" }}>
+                Total: ₹{fmtINR(totalOutstanding)}
+              </span>
+            </div>
+
+            <div style={{ overflowY: "auto", flex: 1, padding: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+              {filteredItems.map((item) => {
+                const isSelected = selectedItem?.id === item.id;
+                const avatarGradient = getAvatarGradient(item.name);
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedPersonId(item.id)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      border: `1px solid ${isSelected ? "var(--t-accent)" : "transparent"}`,
+                      background: isSelected
+                        ? "color-mix(in srgb, var(--t-accent) 12%, var(--surface-0))"
+                        : "transparent",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                      <div
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: "50%",
+                          background: avatarGradient,
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 13,
+                          fontWeight: 800,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {item.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            color: isSelected ? "var(--t-accent)" : "var(--t-ink)",
+                            fontSize: 13,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {item.name}
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
+                          {item.relationship}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 800,
+                          fontVariantNumeric: "tabular-nums",
+                          color: item.overpaid
+                            ? "var(--t-gold)"
+                            : item.settled
+                            ? "var(--t-sage)"
+                            : accentColor,
+                        }}
+                      >
+                        ₹{fmtINR(Math.abs(item.outstanding))}
+                      </div>
+                      <div style={{ fontSize: 10, fontWeight: 700, marginTop: 2 }}>
+                        {item.overpaid ? (
+                          <span style={{ color: "var(--t-gold)" }}>OVERPAID</span>
+                        ) : item.settled ? (
+                          <span style={{ color: "var(--t-sage)" }}>SETTLED ✓</span>
+                        ) : item.isOverdue ? (
+                          <span style={{ color: "var(--t-rust)" }}>{item.daysOverdue}D DUE</span>
+                        ) : (
+                          <span style={{ color: "var(--t-muted)" }}>ACTIVE</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Column: Comprehensive Detail Dossier & Timeline */}
+          {selectedItem && (
+            <div
+              style={{
+                background: "var(--t-card-bg)",
+                borderRadius: 14,
+                border: "1px solid var(--t-line)",
+                padding: "20px 24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 18,
+              }}
+            >
+              {/* Detail Header Banner */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 14,
+                  paddingBottom: 16,
+                  borderBottom: "1px solid var(--t-line)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: "50%",
+                      background: getAvatarGradient(selectedItem.name),
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 20,
+                      fontWeight: 800,
+                      boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
+                    }}
+                  >
+                    {selectedItem.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 20, fontWeight: 900, color: "var(--t-ink)" }}>
+                        {selectedItem.name}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                          background: "color-mix(in srgb, var(--surface-1) 80%, transparent)",
+                          color: "var(--t-muted)",
+                          border: "1px solid var(--t-line)",
+                        }}
+                      >
+                        {selectedItem.relationship}
+                      </span>
+                      {selectedItem.overpaid ? (
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "var(--t-gold)", background: "color-mix(in srgb, var(--t-gold) 12%, transparent)", padding: "3px 8px", borderRadius: 6 }}>
+                          OVERPAID
+                        </span>
+                      ) : selectedItem.settled ? (
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "var(--t-sage)", background: "color-mix(in srgb, var(--t-sage) 12%, transparent)", padding: "3px 8px", borderRadius: 6 }}>
+                          SETTLED ✓
+                        </span>
+                      ) : selectedItem.isOverdue ? (
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: "var(--t-rust)", padding: "3px 8px", borderRadius: 6 }}>
+                          {selectedItem.daysOverdue}D OVERDUE
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "var(--t-accent)", background: "color-mix(in srgb, var(--t-accent) 12%, transparent)", padding: "3px 8px", borderRadius: 6 }}>
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--t-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <span>Profile: <strong>{selectedItem.ownerLabel}</strong></span>
+                      {selectedItem.phone && (
+                        <>
+                          <span>•</span>
+                          <a
+                            href={`tel:${selectedItem.phone}`}
+                            style={{ color: "var(--t-accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
+                          >
+                            <Phone size={12} /> {selectedItem.phone}
+                          </a>
+                        </>
+                      )}
+                      {selectedItem.nextDueDate && (
+                        <>
+                          <span>•</span>
+                          <span style={{ color: selectedItem.isOverdue ? "var(--t-rust)" : "var(--t-muted)", fontWeight: 600 }}>
+                            Due: {fmtD(selectedItem.nextDueDate)}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Primary Action Buttons */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {selectedItem.outstanding > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentTarget(selectedItem.person)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "7px 12px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "var(--t-sage)",
+                        color: "#fff",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Zap size={14} /> Record Payment
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setTrancheTarget(selectedItem.person)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "7px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Plus size={14} /> Add {isBorrowed ? "Borrowing" : "Loan"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatementTarget(selectedItem.person)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "7px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <MessageSquare size={14} /> WhatsApp Statement
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => (onEdit ? onEdit(selectedItem.id) : setEditPersonTarget(selectedItem.person))}
+                    style={{
+                      padding: "7px 10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--t-line)",
+                      background: "transparent",
+                      color: "var(--t-muted)",
+                      cursor: "pointer",
+                    }}
+                    title="Edit party details"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeletePerson(selectedItem.person)}
+                    style={{
+                      padding: "7px 10px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(239, 68, 68, 0.2)",
+                      background: "rgba(239, 68, 68, 0.08)",
+                      color: "var(--t-rust)",
+                      cursor: "pointer",
+                    }}
+                    title="Delete person"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Note callout */}
+              {selectedItem.note && (
+                <div
+                  style={{
+                    padding: "8px 14px",
+                    background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: "var(--t-muted)",
+                    fontStyle: "italic",
+                  }}
+                >
+                  "{selectedItem.note}"
+                </div>
+              )}
+
+              {/* 4 Mini Stat Metrics */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: 12,
+                }}
+              >
+                <div style={{ padding: "10px 14px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 40%, transparent)", border: "1px solid var(--t-line)" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+                    Outstanding
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: selectedItem.overpaid ? "var(--t-gold)" : selectedItem.settled ? "var(--t-sage)" : accentColor, fontVariantNumeric: "tabular-nums", marginTop: 2 }}>
+                    <Money value={Math.abs(selectedItem.outstanding)} variant="full" />
+                  </div>
+                </div>
+                <div style={{ padding: "10px 14px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 40%, transparent)", border: "1px solid var(--t-line)" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+                    {isBorrowed ? "Total Borrowed" : "Total Lent"}
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--t-ink)", fontVariantNumeric: "tabular-nums", marginTop: 2 }}>
+                    ₹{fmtINR(selectedItem.totalT)}
+                  </div>
+                </div>
+                <div style={{ padding: "10px 14px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 40%, transparent)", border: "1px solid var(--t-line)" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+                    {isBorrowed ? "Total Repaid" : "Total Received"}
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--t-sage)", fontVariantNumeric: "tabular-nums", marginTop: 2 }}>
+                    ₹{fmtINR(selectedItem.totalP)}
+                  </div>
+                </div>
+                <div style={{ padding: "10px 14px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 40%, transparent)", border: "1px solid var(--t-line)" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+                    Recovery Rate
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--t-ink)", fontVariantNumeric: "tabular-nums", marginTop: 2 }}>
+                    {selectedItem.totalT > 0 ? ((selectedItem.totalP / selectedItem.totalT) * 100).toFixed(0) : 0}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Comprehensive Ledger Breakdown with Passbook & Dual View */}
+              <ExpandedLedgerView
+                isBorrowed={isBorrowed}
+                item={selectedItem}
+                accentColor={accentColor}
+                bankAccounts={bankAccounts}
+                onAddTranche={() => setTrancheTarget(selectedItem.person)}
+                onEditTranche={(t: any) => setEditTrancheTarget({ person: selectedItem.person, tranche: t })}
+                onDeleteTranche={(t: any) =>
+                  setConfirmDeleteTranche({
+                    personId: selectedItem.id,
+                    updated: selectedItem.tranches.filter((x: any) => x.id !== t.id),
+                  })
+                }
+                onAddPayment={() => setPaymentTarget(selectedItem.person)}
+                onEditPayment={(p: any) => setEditPaymentTarget({ person: selectedItem.person, payment: p })}
+                onDeletePayment={(p: any) =>
+                  setConfirmDeletePayment({
+                    personId: selectedItem.id,
+                    updated: selectedItem.payments.filter((x: any) => x.id !== p.id),
+                  })
+                }
+                onSettleFull={() => setPaymentTarget(selectedItem.person)}
+              />
+            </div>
+          )}
+        </div>
       ) : (
-        /* 5. Dense Table Ledger View */
+        /* ── 4C. Dense Table Ledger View ── */
         <Card style={{ padding: 0, overflow: "hidden", border: "1px solid var(--t-line)" }}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "left" }}>
@@ -1122,7 +1793,6 @@ export function InformalLoanSection({
                                 color: "#fff",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyItems: "center",
                                 justifyContent: "center",
                                 fontSize: 13,
                                 fontWeight: 800,
@@ -1259,6 +1929,7 @@ export function InformalLoanSection({
                               isBorrowed={isBorrowed}
                               item={item}
                               accentColor={accentColor}
+                              bankAccounts={bankAccounts}
                               onAddTranche={() => setTrancheTarget(item.person)}
                               onEditTranche={(t: any) => setEditTrancheTarget({ person: item.person, tranche: t })}
                               onDeleteTranche={(t: any) =>
@@ -1289,11 +1960,11 @@ export function InformalLoanSection({
         </Card>
       )}
 
-      {/* MODALS */}
+      {/* ── 5. MODALS & DIALOGS ── */}
       {/* 1. Add Person */}
       {addPersonOpen && (
         <InformalPersonModal
-          direction={direction}
+          direction={activeDirection}
           bankAccounts={bankAccounts}
           onSave={async (newPerson, bankTxn) => {
             await onAddPerson(newPerson);
@@ -1309,7 +1980,7 @@ export function InformalLoanSection({
       {/* 2. Edit Person */}
       {editPersonTarget && (
         <InformalPersonModal
-          direction={direction}
+          direction={activeDirection}
           initial={editPersonTarget}
           onSave={async (updatedPerson) => {
             await onUpdate(editPersonTarget.id, updatedPerson);
@@ -1322,7 +1993,7 @@ export function InformalLoanSection({
       {/* 3. Add Tranche */}
       {trancheTarget && (
         <InformalTrancheModal
-          direction={direction}
+          direction={activeDirection}
           person={trancheTarget}
           bankAccounts={bankAccounts}
           onSave={async (trancheData, bankTxn) => {
@@ -1340,7 +2011,7 @@ export function InformalLoanSection({
       {/* 4. Edit Tranche */}
       {editTrancheTarget && (
         <InformalTrancheModal
-          direction={direction}
+          direction={activeDirection}
           person={editTrancheTarget.person}
           initial={editTrancheTarget.tranche}
           bankAccounts={bankAccounts}
@@ -1359,7 +2030,7 @@ export function InformalLoanSection({
       {/* 5. Record / Add Payment */}
       {paymentTarget && (
         <InformalPaymentModal
-          direction={direction}
+          direction={activeDirection}
           person={paymentTarget}
           bankAccounts={bankAccounts}
           onSave={async (paymentData, bankTxn) => {
@@ -1377,7 +2048,7 @@ export function InformalLoanSection({
       {/* 6. Edit Payment */}
       {editPaymentTarget && (
         <InformalPaymentModal
-          direction={direction}
+          direction={activeDirection}
           person={editPaymentTarget.person}
           initial={editPaymentTarget.payment}
           bankAccounts={bankAccounts}
@@ -1396,7 +2067,7 @@ export function InformalLoanSection({
       {/* 7. Statement / WhatsApp Reminder Generator */}
       {statementTarget && (
         <InformalStatementModal
-          direction={direction}
+          direction={activeDirection}
           person={statementTarget}
           onClose={() => setStatementTarget(null)}
         />
@@ -1446,12 +2117,13 @@ export function InformalLoanSection({
 }
 
 /* =========================================================================
-   Expanded Item Ledger Component (Loans & Payments Breakdown)
+   Expanded Item Ledger Component (Loans, Payments & Passbook Timeline)
    ========================================================================= */
 interface ExpandedLedgerViewProps {
   isBorrowed: boolean;
   item: any;
   accentColor: string;
+  bankAccounts?: any[];
   onAddTranche: () => void;
   onEditTranche: (tranche: any) => void;
   onDeleteTranche: (tranche: any) => void;
@@ -1465,6 +2137,7 @@ function ExpandedLedgerView({
   isBorrowed,
   item,
   accentColor,
+  bankAccounts = [],
   onAddTranche,
   onEditTranche,
   onDeleteTranche,
@@ -1473,6 +2146,8 @@ function ExpandedLedgerView({
   onDeletePayment,
   onSettleFull,
 }: ExpandedLedgerViewProps) {
+  const [ledgerTab, setLedgerTab] = useState<"passbook" | "columns">("passbook");
+
   const fmtD = (d: string) =>
     d
       ? new Date(d).toLocaleDateString("en-IN", {
@@ -1482,6 +2157,66 @@ function ExpandedLedgerView({
         })
       : "—";
 
+  // Synthesize unified chronological passbook timeline with running balance
+  const passbookTimeline = useMemo(() => {
+    const events: any[] = [];
+
+    // Add tranches (+ liability if borrowed, + asset if lent)
+    (item.tranches || []).forEach((t: any) => {
+      events.push({
+        id: t.id,
+        rawDate: t.date || today(),
+        date: t.date,
+        dueDate: t.dueDate,
+        type: "tranche",
+        label: isBorrowed ? "Loan Received" : "Loan Given",
+        amount: Number(t.amount || 0),
+        sign: 1, // increases outstanding principal
+        note: t.note,
+        mode: t.mode || t.method || "Direct",
+        bankAccountId: t.bankAccountId,
+        referenceNumber: t.referenceNumber || t.reference,
+        rawObj: t,
+      });
+    });
+
+    // Add payments (- liability if borrowed, - asset if lent)
+    (item.payments || []).forEach((p: any) => {
+      events.push({
+        id: p.id,
+        rawDate: p.date || today(),
+        date: p.date,
+        type: "payment",
+        label: isBorrowed ? "Repayment Made" : "Payment Received",
+        amount: Number(p.amount || 0),
+        sign: -1, // reduces outstanding principal
+        note: p.note,
+        mode: p.method || "Direct",
+        bankAccountId: p.bankAccountId,
+        referenceNumber: p.referenceNumber || p.reference,
+        rawObj: p,
+      });
+    });
+
+    // Sort chronologically (earliest first) to compute running balance
+    events.sort((a, b) => (a.rawDate || "").localeCompare(b.rawDate || ""));
+
+    let running = 0;
+    events.forEach((ev) => {
+      running += ev.sign * ev.amount;
+      ev.runningBalance = running;
+    });
+
+    // Return in reverse chronological order for passbook display (newest first)
+    return [...events].reverse();
+  }, [item.tranches, item.payments, isBorrowed]);
+
+  const getBankName = (id?: string) => {
+    if (!id) return null;
+    const b = bankAccounts.find((acc) => acc.id === id);
+    return b ? b.bankName || "Linked Bank" : "Linked Bank";
+  };
+
   return (
     <div
       style={{
@@ -1490,266 +2225,525 @@ function ExpandedLedgerView({
         borderTop: "1px solid var(--t-line)",
       }}
     >
+      {/* Ledger Mode Switcher Toolbar */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 10,
           marginBottom: 14,
         }}
       >
-        {/* Left Column: Loan Entries */}
-        <div
-          style={{
-            background: "var(--t-card-bg)",
-            borderRadius: 10,
-            border: "1px solid var(--t-line)",
-            padding: 14,
-          }}
-        >
-          <div
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            type="button"
+            onClick={() => setLedgerTab("passbook")}
             style={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 10,
+              gap: 6,
+              padding: "5px 12px",
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              border: `1px solid ${ledgerTab === "passbook" ? "var(--t-accent)" : "var(--t-line)"}`,
+              background: ledgerTab === "passbook" ? "color-mix(in srgb, var(--t-accent) 14%, transparent)" : "transparent",
+              color: ledgerTab === "passbook" ? "var(--t-accent)" : "var(--t-muted)",
             }}
           >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                color: accentColor,
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                letterSpacing: "0.04em",
-              }}
-            >
-              {isBorrowed ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
-              {isBorrowed ? "Borrowings / Loans Received" : "Loans Given / Disbursed"}
-            </div>
-            <button
-              type="button"
-              onClick={onAddTranche}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "3px 8px",
-                borderRadius: 6,
-                border: "none",
-                background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
-                color: "var(--t-accent)",
-                fontSize: 11,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              <Plus size={11} /> {isBorrowed ? "Add Borrowing" : "Add Loan"}
-            </button>
-          </div>
-
-          {item.tranches.length === 0 ? (
-            <div style={{ fontSize: 12, color: "var(--t-muted)", fontStyle: "italic", padding: "8px 0" }}>
-              {isBorrowed ? "No borrowings recorded yet." : "No loans recorded yet."}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {item.tranches.map((t: any) => {
-                const isTrancheOverdue =
-                  t.dueDate && item.outstanding > 0 && new Date(t.dueDate + "T00:00:00") < new Date();
-                return (
-                  <div
-                    key={t.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "8px 10px",
-                      background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
-                      borderRadius: 8,
-                      border: "1px solid var(--t-line)",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: accentColor, fontVariantNumeric: "tabular-nums" }}>
-                        <Money value={t.amount} variant="exact" />
-                      </div>
-                      <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
-                        {fmtD(t.date)}
-                        {t.note ? ` • ${t.note}` : ""}
-                        {t.dueDate && (
-                          <span
-                            style={{
-                              marginLeft: 6,
-                              fontWeight: isTrancheOverdue ? 800 : 500,
-                              color: isTrancheOverdue ? "var(--t-rust)" : "var(--t-muted)",
-                            }}
-                          >
-                            [Due {fmtD(t.dueDate)}]
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <button
-                        type="button"
-                        onClick={() => onEditTranche(t)}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "var(--t-muted)",
-                          cursor: "pointer",
-                          padding: 4,
-                        }}
-                        title={isBorrowed ? "Edit borrowing record" : "Edit loan record"}
-                      >
-                        <Pencil size={12} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDeleteTranche(t)}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "var(--t-rust)",
-                          cursor: "pointer",
-                          padding: 4,
-                        }}
-                        title={isBorrowed ? "Delete borrowing record" : "Delete loan record"}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+            <History size={13} /> Chronological Passbook
+          </button>
+          <button
+            type="button"
+            onClick={() => setLedgerTab("columns")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 12px",
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              border: `1px solid ${ledgerTab === "columns" ? "var(--t-accent)" : "var(--t-line)"}`,
+              background: ledgerTab === "columns" ? "color-mix(in srgb, var(--t-accent) 14%, transparent)" : "transparent",
+              color: ledgerTab === "columns" ? "var(--t-accent)" : "var(--t-muted)",
+            }}
+          >
+            <Columns size={13} /> Dual Columns (Loans vs Payments)
+          </button>
         </div>
 
-        {/* Right Column: Repayments / Payments Made */}
-        <div
-          style={{
-            background: "var(--t-card-bg)",
-            borderRadius: 10,
-            border: "1px solid var(--t-line)",
-            padding: 14,
-          }}
-        >
-          <div
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            onClick={onAddTranche}
             style={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 10,
+              gap: 4,
+              padding: "5px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--t-line)",
+              background: "var(--t-card-bg)",
+              color: "var(--t-ink)",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
             }}
           >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                color: "var(--t-sage)",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                letterSpacing: "0.04em",
-              }}
-            >
-              <CheckCircle2 size={13} />
-              {isBorrowed ? "Repayments Made" : "Payments Received"}
-            </div>
-            <button
-              type="button"
-              onClick={onAddPayment}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "3px 8px",
-                borderRadius: 6,
-                border: "none",
-                background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
-                color: "var(--t-sage)",
-                fontSize: 11,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              <Plus size={11} /> Record Payment
-            </button>
-          </div>
-
-          {item.payments.length === 0 ? (
-            <div style={{ fontSize: 12, color: "var(--t-muted)", fontStyle: "italic", padding: "8px 0" }}>
-              No payments recorded yet.
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {item.payments.map((p: any) => (
-                <div
-                  key={p.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "8px 10px",
-                    background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
-                    borderRadius: 8,
-                    border: "1px solid var(--t-line)",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-sage)", fontVariantNumeric: "tabular-nums" }}>
-                      <Money value={p.amount} variant="exact" />
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
-                      {fmtD(p.date)}
-                      {p.method ? ` via ${p.method}` : ""}
-                      {p.note ? ` • ${p.note}` : ""}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <button
-                      type="button"
-                      onClick={() => onEditPayment(p)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "var(--t-muted)",
-                        cursor: "pointer",
-                        padding: 4,
-                      }}
-                      title="Edit payment"
-                    >
-                      <Pencil size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeletePayment(p)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "var(--t-rust)",
-                        cursor: "pointer",
-                        padding: 4,
-                      }}
-                      title="Delete payment"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+            <Plus size={12} /> {isBorrowed ? "Add Borrowing" : "Add Loan"}
+          </button>
+          <button
+            type="button"
+            onClick={onAddPayment}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "5px 10px",
+              borderRadius: 6,
+              border: "none",
+              background: "var(--t-sage)",
+              color: "#fff",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <Plus size={12} /> Record Payment
+          </button>
         </div>
       </div>
+
+      {ledgerTab === "passbook" ? (
+        /* Chronological Passbook Timeline Table */
+        <div
+          style={{
+            background: "var(--t-card-bg)",
+            borderRadius: 10,
+            border: "1px solid var(--t-line)",
+            overflow: "hidden",
+            marginBottom: 14,
+          }}
+        >
+          {passbookTimeline.length === 0 ? (
+            <div style={{ padding: "24px", textAlign: "center", color: "var(--t-muted)", fontSize: 13 }}>
+              No transactions recorded yet for this person.
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table className="informal-passbook-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Transaction Type</th>
+                    <th>Details & Mode</th>
+                    <th style={{ textAlign: "right" }}>Amount</th>
+                    <th style={{ textAlign: "right" }}>Balance After</th>
+                    <th style={{ textAlign: "right" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {passbookTimeline.map((ev) => {
+                    const isTranche = ev.type === "tranche";
+                    const isOverdue =
+                      ev.dueDate && item.outstanding > 0 && new Date(ev.dueDate + "T00:00:00") < new Date();
+                    const bankName = getBankName(ev.bankAccountId);
+
+                    return (
+                      <tr key={ev.id}>
+                        <td style={{ fontWeight: 600, color: "var(--t-ink)", whiteSpace: "nowrap" }}>
+                          {fmtD(ev.date)}
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 800,
+                              padding: "2px 7px",
+                              borderRadius: 4,
+                              background: isTranche
+                                ? isBorrowed
+                                  ? "color-mix(in srgb, var(--t-rust) 12%, transparent)"
+                                  : "color-mix(in srgb, var(--t-accent) 12%, transparent)"
+                                : "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                              color: isTranche
+                                ? isBorrowed
+                                  ? "var(--t-rust)"
+                                  : "var(--t-accent)"
+                                : "var(--t-sage)",
+                              border: "1px solid",
+                              borderColor: isTranche
+                                ? isBorrowed
+                                  ? "color-mix(in srgb, var(--t-rust) 25%, transparent)"
+                                  : "color-mix(in srgb, var(--t-accent) 25%, transparent)"
+                                : "color-mix(in srgb, var(--t-sage) 25%, transparent)",
+                            }}
+                          >
+                            {isTranche ? (isBorrowed ? "+ BORROWED" : "+ DISBURSED") : (isBorrowed ? "- REPAID" : "- RECEIVED")}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: 12, color: "var(--t-ink)", fontWeight: 500 }}>
+                            {ev.note || (isTranche ? "Loan Principal" : "Payment Settlement")}
+                          </div>
+                          <div style={{ fontSize: 10, color: "var(--t-muted)", marginTop: 2, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                            <span>via {ev.mode}</span>
+                            {bankName && <span>• {bankName}</span>}
+                            {ev.referenceNumber && <span>• Ref: {ev.referenceNumber}</span>}
+                            {ev.dueDate && (
+                              <span
+                                style={{
+                                  fontWeight: isOverdue ? 800 : 500,
+                                  color: isOverdue ? "var(--t-rust)" : "var(--t-muted)",
+                                }}
+                              >
+                                • [Due: {fmtD(ev.dueDate)}]
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            textAlign: "right",
+                            fontWeight: 800,
+                            fontVariantNumeric: "tabular-nums",
+                            color: isTranche ? accentColor : "var(--t-sage)",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {isTranche ? "+" : "-"}₹{fmtINR(ev.amount)}
+                        </td>
+                        <td
+                          style={{
+                            textAlign: "right",
+                            fontWeight: 800,
+                            fontVariantNumeric: "tabular-nums",
+                            color: "var(--t-ink)",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          ₹{fmtINR(Math.abs(ev.runningBalance))}
+                          {ev.runningBalance < 0 && (
+                            <span style={{ fontSize: 9, color: "var(--t-gold)", marginLeft: 3 }}>
+                              (CR)
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <button
+                              type="button"
+                              onClick={() => (isTranche ? onEditTranche(ev.rawObj) : onEditPayment(ev.rawObj))}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "var(--t-muted)",
+                                cursor: "pointer",
+                                padding: 4,
+                              }}
+                              title={isTranche ? "Edit loan record" : "Edit payment"}
+                            >
+                              <Pencil size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => (isTranche ? onDeleteTranche(ev.rawObj) : onDeletePayment(ev.rawObj))}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "var(--t-rust)",
+                                cursor: "pointer",
+                                padding: 4,
+                              }}
+                              title={isTranche ? "Delete loan record" : "Delete payment"}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Dual Columns: Loans on Left, Payments on Right */
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 16,
+            marginBottom: 14,
+          }}
+        >
+          {/* Left Column: Loan Entries */}
+          <div
+            style={{
+              background: "var(--t-card-bg)",
+              borderRadius: 10,
+              border: "1px solid var(--t-line)",
+              padding: 14,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  color: accentColor,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {isBorrowed ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
+                {isBorrowed ? "Borrowings / Loans Received" : "Loans Given / Disbursed"}
+              </div>
+              <button
+                type="button"
+                onClick={onAddTranche}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  border: "none",
+                  background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
+                  color: "var(--t-accent)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={11} /> {isBorrowed ? "Add Borrowing" : "Add Loan"}
+              </button>
+            </div>
+
+            {item.tranches.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--t-muted)", fontStyle: "italic", padding: "8px 0" }}>
+                {isBorrowed ? "No borrowings recorded yet." : "No loans recorded yet."}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {item.tranches.map((t: any) => {
+                  const isTrancheOverdue =
+                    t.dueDate && item.outstanding > 0 && new Date(t.dueDate + "T00:00:00") < new Date();
+                  const bankName = getBankName(t.bankAccountId);
+
+                  return (
+                    <div
+                      key={t.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 10px",
+                        background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
+                        borderRadius: 8,
+                        border: "1px solid var(--t-line)",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: accentColor, fontVariantNumeric: "tabular-nums" }}>
+                          <Money value={t.amount} variant="exact" />
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
+                          {fmtD(t.date)}
+                          {t.note ? ` • ${t.note}` : ""}
+                          {bankName ? ` • ${bankName}` : ""}
+                          {t.dueDate && (
+                            <span
+                              style={{
+                                marginLeft: 6,
+                                fontWeight: isTrancheOverdue ? 800 : 500,
+                                color: isTrancheOverdue ? "var(--t-rust)" : "var(--t-muted)",
+                              }}
+                            >
+                              [Due {fmtD(t.dueDate)}]
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => onEditTranche(t)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--t-muted)",
+                            cursor: "pointer",
+                            padding: 4,
+                          }}
+                          title={isBorrowed ? "Edit borrowing record" : "Edit loan record"}
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteTranche(t)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--t-rust)",
+                            cursor: "pointer",
+                            padding: 4,
+                          }}
+                          title={isBorrowed ? "Delete borrowing record" : "Delete loan record"}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Repayments / Payments Made */}
+          <div
+            style={{
+              background: "var(--t-card-bg)",
+              borderRadius: 10,
+              border: "1px solid var(--t-line)",
+              padding: 14,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  color: "var(--t-sage)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                <CheckCircle2 size={13} />
+                {isBorrowed ? "Repayments Made" : "Payments Received"}
+              </div>
+              <button
+                type="button"
+                onClick={onAddPayment}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  border: "none",
+                  background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                  color: "var(--t-sage)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={11} /> Record Payment
+              </button>
+            </div>
+
+            {item.payments.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--t-muted)", fontStyle: "italic", padding: "8px 0" }}>
+                No payments recorded yet.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {item.payments.map((p: any) => {
+                  const bankName = getBankName(p.bankAccountId);
+                  return (
+                    <div
+                      key={p.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 10px",
+                        background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
+                        borderRadius: 8,
+                        border: "1px solid var(--t-line)",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-sage)", fontVariantNumeric: "tabular-nums" }}>
+                          <Money value={p.amount} variant="exact" />
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
+                          {fmtD(p.date)}
+                          {p.method ? ` via ${p.method}` : ""}
+                          {bankName ? ` • ${bankName}` : ""}
+                          {p.note ? ` • ${p.note}` : ""}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => onEditPayment(p)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--t-muted)",
+                            cursor: "pointer",
+                            padding: 4,
+                          }}
+                          title="Edit payment"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeletePayment(p)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--t-rust)",
+                            cursor: "pointer",
+                            padding: 4,
+                          }}
+                          title="Delete payment"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Ledger Footer / Settle Up Bar */}
       <div

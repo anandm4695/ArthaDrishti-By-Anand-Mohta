@@ -223,6 +223,61 @@ describe("Informal Loans Redesign (From People & To People)", () => {
         })
       );
     });
+
+    it("renders Add New Borrower with amount presets, due date offsets and bank debit sync", async () => {
+      const onSave = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <InformalPersonModal
+          direction="lent"
+          bankAccounts={mockBankAccounts}
+          onSave={onSave}
+          onClose={onClose}
+        />
+      );
+
+      // Verify Borrower title
+      expect(screen.getByText("Add New Borrower")).toBeTruthy();
+      expect(screen.getByText(/To People · Personal Money Lent/i)).toBeTruthy();
+
+      // Enter Name
+      const nameInput = screen.getByPlaceholderText(/Rajesh Sharma/i);
+      fireEvent.change(nameInput, { target: { value: "Ankit Verma" } });
+
+      // Click Amount Preset Chip (+₹50,000)
+      const preset50k = screen.getByText("+₹50,000");
+      fireEvent.click(preset50k);
+
+      // Click Due Date Offset Chip (+3M)
+      const due3M = screen.getByText("+3M");
+      fireEvent.click(due3M);
+
+      // Select Bank Account for auto-debit
+      const bankSelect = screen.getByRole("combobox", { name: /Auto-Debit Bank Account/i });
+      fireEvent.change(bankSelect, { target: { value: "ba1" } });
+
+      // Save
+      const saveBtn = screen.getByRole("button", { name: /Add Borrower/i });
+      fireEvent.click(saveBtn);
+
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          person: "Ankit Verma",
+          tranches: expect.arrayContaining([
+            expect.objectContaining({
+              amount: 50000,
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          amount: 50000,
+          type: "debit",
+          accountId: "ba1",
+          category: "Loan Given",
+        })
+      );
+    });
   });
 
   describe("InformalTrancheModal Component", () => {
@@ -328,4 +383,74 @@ describe("Informal Loans Redesign (From People & To People)", () => {
       expect(previewText).toBeTruthy();
     });
   });
+
+  describe("Screen Size & UX Improvements (Direction Switcher, Split View & Passbook)", () => {
+    it("renders direction switcher with consolidated net financial position", () => {
+      const onDirectionChange = vi.fn();
+
+      render(
+        <InformalLoanSection
+          direction="borrowed"
+          items={mockBorrowedItems}
+          otherDirectionItems={mockLentItems}
+          onDirectionChange={onDirectionChange}
+          onAddPerson={vi.fn()}
+          onUpdate={vi.fn()}
+          onRemove={vi.fn()}
+        />
+      );
+
+      // Verify Direction Switcher Tabs
+      expect(screen.getByText("From People (Borrowed)")).toBeTruthy();
+      expect(screen.getByText("To People (Lent)")).toBeTruthy();
+      expect(screen.getByText(/Net Position:/i)).toBeTruthy();
+
+      // Click To People tab and verify callback
+      const lentTabBtn = screen.getByText("To People (Lent)");
+      fireEvent.click(lentTabBtn);
+      expect(onDirectionChange).toHaveBeenCalledWith("lent");
+    });
+
+    it("switches to Split Master-Detail view mode for wide screens", () => {
+      render(
+        <InformalLoanSection
+          direction="borrowed"
+          items={mockBorrowedItems}
+          onAddPerson={vi.fn()}
+          onUpdate={vi.fn()}
+          onRemove={vi.fn()}
+        />
+      );
+
+      const splitModeBtn = screen.getByTitle("Split Master-Detail View");
+      fireEvent.click(splitModeBtn);
+
+      // Verify Split View elements (Master party list and Detail dossier)
+      expect(screen.getByText(/Lenders \(2\)/i)).toBeTruthy();
+      expect(screen.getByRole("button", { name: /WhatsApp Statement/i })).toBeTruthy();
+    });
+
+    it("renders chronological passbook timeline with running balance", () => {
+      render(
+        <InformalLoanSection
+          direction="borrowed"
+          items={mockBorrowedItems}
+          onAddPerson={vi.fn()}
+          onUpdate={vi.fn()}
+          onRemove={vi.fn()}
+        />
+      );
+
+      // Expand first card
+      const expandButtons = screen.getAllByTitle("View Ledger & Transaction History");
+      fireEvent.click(expandButtons[0]);
+
+      // Check Passbook timeline is present
+      expect(screen.getByText("Chronological Passbook")).toBeTruthy();
+      expect(screen.getByText("Balance After")).toBeTruthy();
+      expect(screen.getByText("First installment")).toBeTruthy();
+      expect(screen.getByText("Part repayment")).toBeTruthy();
+    });
+  });
 });
+

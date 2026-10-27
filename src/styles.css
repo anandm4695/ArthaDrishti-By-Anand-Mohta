@@ -3791,7 +3791,48 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
   color: var(--text);
 }
 
+/* ── Informal Loans (From People / To People) Responsive & Widescreen UX ── */
+.informal-split-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+}
 
+@media (max-width: 960px) {
+  .informal-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
 
+.informal-passbook-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+}
 
+.informal-passbook-table th {
+  padding: 10px 14px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--t-muted);
+  background: color-mix(in srgb, var(--surface-1) 85%, transparent);
+  border-bottom: 1px solid var(--t-line);
+}
 
+.informal-passbook-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--t-line) 60%, transparent);
+  vertical-align: middle;
+}
+
+.informal-passbook-table tbody tr:hover {
+  background: color-mix(in srgb, var(--surface-1) 50%, transparent);
+}
+
+.informal-passbook-table tbody tr:last-child td {
+  border-bottom: none;
+}

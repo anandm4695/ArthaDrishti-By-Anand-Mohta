@@ -1093,6 +1093,11 @@ export function CreditTab({
           <InformalLoanSection
             direction="borrowed"
             items={state.informalBorrowed || []}
+            otherDirectionItems={state.informalLent || []}
+            onDirectionChange={(newDir) => {
+              setSub(newDir);
+              onSubTabChange?.(newDir);
+            }}
             bankAccounts={state.bankAccounts || []}
             onAddPerson={async (v: any) => {
               try {
@@ -1124,6 +1129,11 @@ export function CreditTab({
           <InformalLoanSection
             direction="lent"
             items={state.informalLent || []}
+            otherDirectionItems={state.informalBorrowed || []}
+            onDirectionChange={(newDir) => {
+              setSub(newDir);
+              onSubTabChange?.(newDir);
+            }}
             bankAccounts={state.bankAccounts || []}
             onAddPerson={async (v: any) => {
               try {

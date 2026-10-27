@@ -47,6 +47,10 @@ import {
   SlidersHorizontal,
   Copy,
   ChevronDown,
+  Wifi,
+  Tv,
+  Info,
+  ShieldCheck,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -119,6 +123,121 @@ const fmtDate = (dateStr: string) => {
     return dateStr;
   }
 };
+
+export function numToIndianWords(n: number | string | null | undefined): string {
+  const num = Math.floor(Number(n) || 0);
+  if (num <= 0 || isNaN(num)) return "";
+  if (num > 999999999) return "";
+
+  const units = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen",
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  const convertTwoDigits = (v: number): string => {
+    if (v < 20) return units[v];
+    return tens[Math.floor(v / 10)] + (v % 10 !== 0 ? " " + units[v % 10] : "");
+  };
+
+  const convertThreeDigits = (v: number): string => {
+    let str = "";
+    if (Math.floor(v / 100) > 0) {
+      str += units[Math.floor(v / 100)] + " Hundred";
+      if (v % 100 > 0) str += " and ";
+    }
+    if (v % 100 > 0) {
+      str += convertTwoDigits(v % 100);
+    }
+    return str;
+  };
+
+  const crore = Math.floor(num / 10000000);
+  let rem = num % 10000000;
+  const lakh = Math.floor(rem / 100000);
+  rem = rem % 100000;
+  const thousand = Math.floor(rem / 1000);
+  rem = rem % 1000;
+  const hundred = rem;
+
+  let res = "";
+  if (crore > 0) res += convertThreeDigits(crore) + " Crore ";
+  if (lakh > 0) res += convertTwoDigits(lakh) + " Lakh ";
+  if (thousand > 0) res += convertTwoDigits(thousand) + " Thousand ";
+  if (hundred > 0) res += convertThreeDigits(hundred) + " ";
+
+  return res.trim() + " Rupees";
+}
+
+export function getNextOccurrence(frequency: string, dueDay: number, startDateStr?: string) {
+  try {
+    const todayDate = new Date();
+    const curYear = todayDate.getFullYear();
+    const curMonth = todayDate.getMonth();
+    const curDay = todayDate.getDate();
+
+    if (frequency === "weekly") {
+      const dayOfWeek = todayDate.getDay();
+      const currentIsoDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+      const targetDay = Math.min(7, Math.max(1, dueDay || 1));
+      let diff = targetDay - currentIsoDay;
+      if (diff < 0) diff += 7;
+      const nextDate = new Date(todayDate);
+      nextDate.setDate(curDay + diff);
+      const daysAway = diff;
+      const formatted = nextDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      const daysText = daysAway === 0 ? "Due today" : daysAway === 1 ? "Due tomorrow" : `in ${daysAway} days`;
+      return { date: formatted, daysText, daysAway };
+    }
+
+    if (frequency === "yearly") {
+      const startMonth = startDateStr ? new Date(startDateStr).getMonth() : curMonth;
+      let targetYear = curYear;
+      const thisYearDate = new Date(targetYear, startMonth, dueDay || 1);
+      if (thisYearDate.getTime() < todayDate.getTime()) {
+        targetYear += 1;
+      }
+      const nextDate = new Date(targetYear, startMonth, dueDay || 1);
+      const daysAway = Math.max(0, Math.ceil((nextDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24)));
+      const formatted = nextDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      return { date: formatted, daysText: `in ${daysAway} days`, daysAway };
+    }
+
+    if (frequency === "quarterly") {
+      let candidate = new Date(curYear, curMonth, dueDay || 1);
+      if (candidate.getTime() < todayDate.getTime()) {
+        candidate = new Date(curYear, curMonth + 3, dueDay || 1);
+      }
+      const daysAway = Math.max(0, Math.ceil((candidate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24)));
+      const formatted = candidate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      return { date: formatted, daysText: `in ${daysAway} days`, daysAway };
+    }
+
+    // Default: monthly
+    const daysInCurMonth = new Date(curYear, curMonth + 1, 0).getDate();
+    const clampedDay = Math.min(daysInCurMonth, Math.max(1, Number(dueDay) || 1));
+    let targetYear = curYear;
+    let targetMonth = curMonth;
+
+    if (curDay > clampedDay) {
+      targetMonth += 1;
+      if (targetMonth > 11) {
+        targetMonth = 0;
+        targetYear += 1;
+      }
+    }
+    const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const finalDay = Math.min(daysInTargetMonth, clampedDay);
+    const targetDate = new Date(targetYear, targetMonth, finalDay);
+    const diffTime = targetDate.getTime() - todayDate.getTime();
+    const daysAway = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    const formatted = targetDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    const daysText = daysAway === 0 ? "Due today" : daysAway === 1 ? "Due tomorrow" : `in ${daysAway} days`;
+    return { date: formatted, daysText, daysAway };
+  } catch {
+    return { date: "—", daysText: "", daysAway: 0 };
+  }
+}
 
 // 50/30/20 Classification rules
 const NEEDS_CATEGORIES = new Set([
@@ -1053,26 +1172,59 @@ export function BudgetTab({
           )}
         </div>
 
-        {/* Sub Navigation Segmented Control */}
-        <div className="demat-portfolio-bar no-scrollbar" style={{ marginBottom: 0 }}>
-          {(
-            [
-              { id: "budget", label: "Budget Tracker", icon: BarChart2 },
-              { id: "recurring", label: "Fixed & Recurring", icon: Repeat },
-              { id: "analytics", label: "Analytics & Trends", icon: TrendingUp },
-            ] as const
-          ).map(({ id, label, icon: TabIcon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveSubTab(id)}
-              aria-pressed={activeSubTab === id}
-              className={`demat-portfolio-pill ${activeSubTab === id ? "active" : ""}`}
-              style={{ padding: "8px 18px", fontSize: 13, fontWeight: 700 }}
+        {/* Sub Navigation Segmented Control + Adaptive Action CTA */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div className="demat-portfolio-bar no-scrollbar" style={{ marginBottom: 0 }}>
+            {(
+              [
+                { id: "budget", label: "Budget Tracker", icon: BarChart2 },
+                { id: "recurring", label: "Fixed & Recurring", icon: Repeat },
+                { id: "analytics", label: "Analytics & Trends", icon: TrendingUp },
+              ] as const
+            ).map(({ id, label, icon: TabIcon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveSubTab(id)}
+                aria-pressed={activeSubTab === id}
+                className={`demat-portfolio-pill ${activeSubTab === id ? "active" : ""}`}
+                style={{ padding: "8px 18px", fontSize: 13, fontWeight: 700 }}
+              >
+                <TabIcon size={14} />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {activeSubTab === "budget" && (
+            <Button
+              onClick={() => setShowAddBudget(true)}
+              variant="accent"
+              icon={<Plus size={14} />}
+              style={{ fontWeight: 700, borderRadius: 10, padding: "8px 16px", whiteSpace: "nowrap" }}
             >
-              <TabIcon size={14} />
-              {label}
-            </button>
-          ))}
+              Add Budget Category
+            </Button>
+          )}
+          {activeSubTab === "recurring" && (
+            <Button
+              onClick={() => setShowAddRecurring(true)}
+              variant="accent"
+              icon={<Plus size={14} />}
+              style={{ fontWeight: 700, borderRadius: 10, padding: "8px 16px", whiteSpace: "nowrap" }}
+            >
+              Add Recurring Expense
+            </Button>
+          )}
+          {activeSubTab === "analytics" && (
+            <Button
+              onClick={() => setShowAddBudget(true)}
+              variant="accent"
+              icon={<Plus size={14} />}
+              style={{ fontWeight: 700, borderRadius: 10, padding: "8px 16px", whiteSpace: "nowrap" }}
+            >
+              Add Category
+            </Button>
+          )}
         </div>
       </div>
 
@@ -3260,6 +3412,10 @@ export function BudgetTab({
         <BudgetModal
           existing={budgetsToUse.map((b: any) => b.category)}
           activeProfile={activeProfile}
+          monthSpending={monthSpending}
+          prevMonthSpending={prevMonthSpending}
+          historicalAverages={historicalAverages.averages}
+          selectedMonthLabel={selectedMonthLabel}
           onClose={() => setShowAddBudget(false)}
           onSave={saveNewBudget}
           saving={savingNewBudget}
@@ -3274,6 +3430,10 @@ export function BudgetTab({
             .map((b: any) => b.category)}
           initialValues={editBudget}
           activeProfile={activeProfile}
+          monthSpending={monthSpending}
+          prevMonthSpending={prevMonthSpending}
+          historicalAverages={historicalAverages.averages}
+          selectedMonthLabel={selectedMonthLabel}
           onClose={() => setEditBudget(null)}
           onSave={saveBudgetEdit}
           saving={savingBudgetEdit}
@@ -3285,6 +3445,7 @@ export function BudgetTab({
         <RecurringModal
           accounts={state.bankAccounts}
           activeProfile={activeProfile}
+          selectedMonth={selectedMonth}
           onClose={() => setShowAddRecurring(false)}
           onSave={saveNewRecurring}
           saving={savingNewRecurring}
@@ -3297,6 +3458,7 @@ export function BudgetTab({
           accounts={state.bankAccounts}
           initialValues={editRecurring}
           activeProfile={activeProfile}
+          selectedMonth={selectedMonth}
           onClose={() => setEditRecurring(null)}
           onSave={saveRecurringEdit}
           saving={savingRecurringEdit}
@@ -3325,6 +3487,10 @@ export function BudgetModal({
   existing = [],
   activeProfile = "all",
   saving = false,
+  monthSpending = {},
+  prevMonthSpending = {},
+  historicalAverages = {},
+  selectedMonthLabel = "",
 }: any) {
   const { transactionCategories: allCats, familyProfiles } = useMasterData();
   const availableCats = allCats.filter((c: string) => !existing.includes(c));
@@ -3342,82 +3508,473 @@ export function BudgetModal({
       : { owner: defaultOwner, category: defaultCat, monthly: "", rollover: false }
   );
 
+  const currentSpent = Number(monthSpending[f.category] || 0);
+  const prevSpent = Number(prevMonthSpending[f.category] || 0);
+  const histAvg = Number(historicalAverages[f.category]?.avg || 0);
+  const roundedAvg = Math.ceil(histAvg / 500) * 500;
+  const bufferAmt = Math.ceil((Math.max(histAvg, prevSpent) * 1.1) / 100) * 100;
+
+  const monthlyNum = Number(f.monthly) || 0;
+  const dailyAllowance = monthlyNum > 0 ? Math.round(monthlyNum / 30) : 0;
+  const remainingCapacity = monthlyNum - currentSpent;
+  const inWords = numToIndianWords(f.monthly);
+
+  const categoryMeta = useMemo(() => {
+    if (NEEDS_CATEGORIES.has(f.category)) {
+      return {
+        tag: "50% Needs",
+        color: THEME.accent,
+        bg: `color-mix(in srgb, ${THEME.accent} 12%, transparent)`,
+        desc: "Essential living expenses (Housing, Groceries, Utilities, Bills, Health)",
+      };
+    }
+    if (WANTS_CATEGORIES.has(f.category)) {
+      return {
+        tag: "30% Wants",
+        color: THEME.gold,
+        bg: `color-mix(in srgb, ${THEME.gold} 12%, transparent)`,
+        desc: "Discretionary lifestyle spending (Dining, Entertainment, Shopping, Travel)",
+      };
+    }
+    if (SAVINGS_CATEGORIES.has(f.category)) {
+      return {
+        tag: "20% Savings",
+        color: THEME.sage,
+        bg: `color-mix(in srgb, ${THEME.sage} 12%, transparent)`,
+        desc: "Wealth building & long-term assets (Investments, SIPs, Gold, NPS)",
+      };
+    }
+    return {
+      tag: "Flexible",
+      color: THEME.muted,
+      bg: "rgba(128,128,128,0.1)",
+      desc: "General budget category",
+    };
+  }, [f.category]);
+
+  const CatIcon = getCatIcon(f.category);
+
+  const suggestions = useMemo(() => {
+    const list: { label: string; val: number }[] = [];
+    if (roundedAvg > 0) {
+      list.push({ label: `3-Mo Avg: ₹${fmtINRFull(roundedAvg)}`, val: roundedAvg });
+    }
+    if (prevSpent > 0 && Math.round(prevSpent) !== roundedAvg) {
+      list.push({ label: `Last Month: ₹${fmtINRFull(Math.round(prevSpent))}`, val: Math.round(prevSpent) });
+    }
+    if (bufferAmt > 0 && bufferAmt !== roundedAvg && bufferAmt !== Math.round(prevSpent)) {
+      list.push({ label: `+10% Buffer: ₹${fmtINRFull(bufferAmt)}`, val: bufferAmt });
+    }
+    const presets = [2500, 5000, 10000, 20000, 50000];
+    presets.forEach((p) => {
+      if (!list.some((item) => item.val === p)) {
+        list.push({ label: `₹${fmtINR(p)}`, val: p });
+      }
+    });
+    return list.slice(0, 5);
+  }, [roundedAvg, prevSpent, bufferAmt]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && monthlyNum > 0 && !saving) {
+      e.preventDefault();
+      onSave(f);
+    }
+  };
+
   return (
-    <Modal title={initialValues ? "Edit Budget Limit" : "Add Budget Category"} onClose={onClose}>
-      <Field label="Owner / Profile">
-        <select
-          className="form-input"
-          value={f.owner || "self"}
-          onChange={(e) => setF({ ...f, owner: e.target.value })}
-        >
-          {familyProfiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {formatProfileOption(p)}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field label="Category">
-        <select
-          className="form-input"
-          value={f.category}
-          onChange={(e) => setF({ ...f, category: e.target.value })}
-        >
-          {initialValues && <option key={initialValues.category}>{initialValues.category}</option>}
-          {availableCats
-            .filter((c: string) => !initialValues || c !== initialValues.category)
-            .map((c: string) => (
-              <option key={c}>{c}</option>
-            ))}
-          {availableCats.length === 0 && !initialValues && (
-            <option disabled>All categories budgeted</option>
-          )}
-        </select>
-      </Field>
-      <Field label="Monthly Limit (₹)">
-        <input
-          className="form-input"
-          type="number"
-          min="0"
-          inputMode="decimal"
-          value={f.monthly}
-          onChange={(e) => setF({ ...f, monthly: e.target.value })}
-          placeholder="e.g. 5000"
-          autoFocus
-        />
-      </Field>
-      <Field label="Rollover">
-        <label
+    <Modal
+      title={initialValues ? "Edit Budget Limit" : "Add Budget Category"}
+      onClose={onClose}
+      maxWidth={660}
+    >
+      <form onSubmit={(e) => { e.preventDefault(); if (monthlyNum > 0) onSave(f); }}>
+        {/* Category Header Preview Badge */}
+        <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            marginTop: 8,
-            cursor: "pointer",
+            gap: 14,
+            padding: "14px 18px",
+            borderRadius: 14,
+            background: `color-mix(in srgb, ${categoryMeta.color} 5%, var(--surface-0))`,
+            border: `1px solid color-mix(in srgb, ${categoryMeta.color} 20%, transparent)`,
+            marginBottom: 20,
           }}
         >
-          <input
-            type="checkbox"
-            checked={f.rollover}
-            onChange={(e) => setF({ ...f, rollover: e.target.checked })}
-          />
-          <span style={{ fontSize: 13 }}>
-            Carry over unused amount into next month's budget
-          </span>
-        </label>
-      </Field>
-      <ModalActions
-        onSave={() => f.monthly && Number(f.monthly) > 0 && onSave(f)}
-        onClose={onClose}
-        disabled={!(Number(f.monthly) > 0) || saving}
-        loading={saving}
-        saveLabel={initialValues ? "Save Changes" : "Add Budget"}
-      />
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: `color-mix(in srgb, ${categoryMeta.color} 15%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${categoryMeta.color} 30%, transparent)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: categoryMeta.color,
+              flexShrink: 0,
+            }}
+          >
+            <CatIcon size={22} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: THEME.ink }}>
+                {f.category}
+              </span>
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  background: categoryMeta.bg,
+                  color: categoryMeta.color,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                {categoryMeta.tag}
+              </span>
+            </div>
+            <div style={{ fontSize: 11.5, color: THEME.muted, marginTop: 2 }}>
+              {categoryMeta.desc}
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Column Row: Category & Owner */}
+        <div className="form-grid-2">
+          <Field label="Category">
+            <select
+              className="form-input"
+              value={f.category}
+              onChange={(e) => setF({ ...f, category: e.target.value })}
+            >
+              {initialValues && <option key={initialValues.category}>{initialValues.category}</option>}
+              {availableCats
+                .filter((c: string) => !initialValues || c !== initialValues.category)
+                .map((c: string) => (
+                  <option key={c}>{c}</option>
+                ))}
+              {availableCats.length === 0 && !initialValues && (
+                <option disabled>All categories budgeted</option>
+              )}
+            </select>
+          </Field>
+
+          <Field label="Owner / Profile">
+            <select
+              className="form-input"
+              value={f.owner || "self"}
+              onChange={(e) => setF({ ...f, owner: e.target.value })}
+            >
+              {familyProfiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {formatProfileOption(p)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {/* Spend Benchmarks Banner if available */}
+        {(currentSpent > 0 || prevSpent > 0 || histAvg > 0) && (
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              background: "var(--surface-0)",
+              border: "1px solid var(--t-line)",
+              marginBottom: 16,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: THEME.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Sparkles size={12} color={THEME.accent} />
+              <span>Historical Spend Benchmarks</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+              <div
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  background: "rgba(128,128,128,0.05)",
+                  border: "1px solid var(--t-line)",
+                }}
+              >
+                <div style={{ fontSize: 10.5, color: THEME.muted, fontWeight: 600 }}>This Month</div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: THEME.ink, marginTop: 2 }}>
+                  {fmtINRFull(currentSpent)}
+                </div>
+              </div>
+              <div
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  background: "rgba(128,128,128,0.05)",
+                  border: "1px solid var(--t-line)",
+                }}
+              >
+                <div style={{ fontSize: 10.5, color: THEME.muted, fontWeight: 600 }}>Last Month</div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: THEME.ink, marginTop: 2 }}>
+                  {fmtINRFull(prevSpent)}
+                </div>
+              </div>
+              <div
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  background: "rgba(128,128,128,0.05)",
+                  border: "1px solid var(--t-line)",
+                }}
+              >
+                <div style={{ fontSize: 10.5, color: THEME.muted, fontWeight: 600 }}>3-Mo Average</div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: THEME.accent, marginTop: 2 }}>
+                  {fmtINRFull(histAvg)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Monthly Limit Field */}
+        <Field label="Monthly Target Limit (₹)">
+          <div style={{ position: "relative" }}>
+            <span
+              style={{
+                position: "absolute",
+                left: 14,
+                top: "50%",
+                transform: "translateY(-50%)",
+                fontSize: 16,
+                fontWeight: 700,
+                color: THEME.muted,
+                pointerEvents: "none",
+              }}
+            >
+              ₹
+            </span>
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              inputMode="decimal"
+              value={f.monthly}
+              onChange={(e) => setF({ ...f, monthly: e.target.value })}
+              onKeyDown={handleKeyDown}
+              placeholder="e.g. 5000"
+              style={{ paddingLeft: 32, fontSize: 16, fontWeight: 700 }}
+              autoFocus
+            />
+          </div>
+        </Field>
+
+        {/* Indian Currency in Words */}
+        {inWords && (
+          <div
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: THEME.accent,
+              marginTop: -10,
+              marginBottom: 12,
+              paddingLeft: 2,
+            }}
+          >
+            {inWords}
+          </div>
+        )}
+
+        {/* Quick Suggestion Chips */}
+        {suggestions.length > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 6 }}>
+              Quick Suggestions:
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {suggestions.map((s, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setF({ ...f, monthly: String(s.val) })}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 8,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    border: "1px solid var(--t-line)",
+                    background:
+                      Number(f.monthly) === s.val
+                        ? `color-mix(in srgb, ${THEME.accent} 15%, transparent)`
+                        : "var(--surface-0)",
+                    color: Number(f.monthly) === s.val ? THEME.accent : THEME.ink,
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Pacing & Capacity Simulator */}
+        {monthlyNum > 0 && (
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              background:
+                remainingCapacity < 0
+                  ? `color-mix(in srgb, ${THEME.rust} 8%, transparent)`
+                  : `color-mix(in srgb, ${THEME.sage} 6%, transparent)`,
+              border: `1px solid ${
+                remainingCapacity < 0
+                  ? `color-mix(in srgb, ${THEME.rust} 25%, transparent)`
+                  : `color-mix(in srgb, ${THEME.sage} 20%, transparent)`
+              }`,
+              marginBottom: 18,
+              fontSize: 12,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontWeight: 700, color: THEME.ink, display: "flex", alignItems: "center", gap: 6 }}>
+                <Clock size={13} color={remainingCapacity < 0 ? THEME.rust : THEME.sage} />
+                Daily Spending Allowance
+              </span>
+              <span style={{ fontWeight: 800, color: THEME.ink }}>
+                ₹{fmtINRFull(dailyAllowance)} / day
+              </span>
+            </div>
+            {currentSpent > 0 && (
+              <div
+                style={{
+                  marginTop: 6,
+                  paddingTop: 6,
+                  borderTop: "1px dashed rgba(128,128,128,0.2)",
+                  color: remainingCapacity < 0 ? THEME.rust : THEME.sage,
+                  fontWeight: 600,
+                  fontSize: 11.5,
+                }}
+              >
+                {remainingCapacity >= 0
+                  ? `₹${fmtINRFull(remainingCapacity)} capacity remaining for ${selectedMonthLabel || "this month"}.`
+                  : `⚠️ Warning: Limit is ₹${fmtINRFull(Math.abs(remainingCapacity))} less than current month spending (₹${fmtINRFull(currentSpent)}).`}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Rollover Toggle Switch Card */}
+        <div
+          onClick={() => setF({ ...f, rollover: !f.rollover })}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 16px",
+            borderRadius: 12,
+            border: `1px solid ${f.rollover ? THEME.accent : "var(--t-line)"}`,
+            background: f.rollover
+              ? `color-mix(in srgb, ${THEME.accent} 6%, var(--surface-0))`
+              : "var(--surface-0)",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: f.rollover
+                  ? `color-mix(in srgb, ${THEME.accent} 18%, transparent)`
+                  : "rgba(128,128,128,0.08)",
+                color: f.rollover ? THEME.accent : THEME.muted,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Repeat size={18} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: THEME.ink }}>
+                Rollover Unused Budget
+              </div>
+              <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                Carry over surplus into next month to expand your budget ceiling
+              </div>
+            </div>
+          </div>
+          {/* Custom Toggle Switch */}
+          <div
+            style={{
+              width: 42,
+              height: 24,
+              borderRadius: 12,
+              background: f.rollover ? THEME.accent : "var(--t-line)",
+              position: "relative",
+              transition: "background 0.2s ease",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: "50%",
+                background: "#fff",
+                position: "absolute",
+                top: 3,
+                left: f.rollover ? 21 : 3,
+                transition: "left 0.2s ease",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+              }}
+            />
+          </div>
+        </div>
+
+        <ModalActions
+          onSave={() => f.monthly && Number(f.monthly) > 0 && onSave(f)}
+          onClose={onClose}
+          disabled={!(Number(f.monthly) > 0) || saving}
+          loading={saving}
+          saveLabel={initialValues ? "Save Changes" : "Add Budget"}
+        />
+      </form>
     </Modal>
   );
 }
 
 // ── RECURRING EXPENSES MODAL COMPONENT ──
+const RECURRING_PRESETS = [
+  { name: "Maid / Cook Salary", category: "Food", amount: "5000", frequency: "monthly", dueDay: 1, icon: Home },
+  { name: "Broadband Wi-Fi", category: "Bills", amount: "999", frequency: "monthly", dueDay: 10, icon: Wifi },
+  { name: "Electricity Bill", category: "Bills", amount: "2500", frequency: "monthly", dueDay: 20, icon: Zap },
+  { name: "OTT / Subscriptions", category: "Entertainment", amount: "649", frequency: "monthly", dueDay: 15, icon: Film },
+  { name: "Mobile Postpaid", category: "Bills", amount: "599", frequency: "monthly", dueDay: 12, icon: CreditCard },
+  { name: "Gym Membership", category: "Healthcare", amount: "2000", frequency: "monthly", dueDay: 1, icon: Stethoscope },
+  { name: "Vehicle EMI", category: "EMI", amount: "15000", frequency: "monthly", dueDay: 5, icon: Car },
+  { name: "Term / Life Insurance", category: "Tax", amount: "18000", frequency: "yearly", dueDay: 1, icon: Landmark },
+];
+
 export function RecurringModal({
   onClose,
   onSave,
@@ -3425,6 +3982,7 @@ export function RecurringModal({
   accounts = [],
   activeProfile = "all",
   saving = false,
+  selectedMonth = today().slice(0, 7),
 }: any) {
   const { transactionCategories: cats, familyProfiles } = useMasterData();
   const defaultOwner = activeProfile !== "all" ? activeProfile : "self";
@@ -3457,130 +4015,619 @@ export function RecurringModal({
         }
   );
 
+  const amt = Number(f.amount) || 0;
+  const computedMonthlyImpact = (() => {
+    if (f.frequency === "weekly") return amt * 4.33;
+    if (f.frequency === "quarterly") return amt / 3;
+    if (f.frequency === "yearly") return amt / 12;
+    return amt;
+  })();
+  const computedAnnualImpact = computedMonthlyImpact * 12;
+
+  const nextSchedule = useMemo(() => {
+    return getNextOccurrence(f.frequency, Number(f.dueDay), f.startDate);
+  }, [f.frequency, f.dueDay, f.startDate]);
+
+  const inWords = numToIndianWords(f.amount);
+  const CatIcon = getCatIcon(f.category);
+
+  const applyPreset = (preset: typeof RECURRING_PRESETS[0]) => {
+    setF((prev: any) => ({
+      ...prev,
+      name: preset.name,
+      category: preset.category,
+      amount: preset.amount,
+      frequency: preset.frequency,
+      dueDay: preset.dueDay,
+    }));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && f.name.trim() && amt > 0 && !saving) {
+      e.preventDefault();
+      onSave(f);
+    }
+  };
+
+  const selectedBank = accounts.find((a: any) => a.id === f.accountId);
+
   return (
     <Modal
       title={initialValues ? "Edit Recurring Expense" : "Add Recurring Expense"}
       onClose={onClose}
+      maxWidth={760}
     >
-      <div className="form-grid-2">
-        <Field label="Owner / Profile">
-          <select
-            className="form-input"
-            value={f.owner}
-            onChange={(e) => setF({ ...f, owner: e.target.value })}
-          >
-            {familyProfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {formatProfileOption(p)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Paid From (Bank Account)">
-          <select
-            className="form-input"
-            value={f.accountId}
-            onChange={(e) => setF({ ...f, accountId: e.target.value })}
-          >
-            <option value="">No linked account</option>
-            {accounts.map((a: any) => (
-              <option key={a.id} value={a.id}>
-                {a.bankName} (•••• {a.accountNumber?.slice(-4)})
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+      <form onSubmit={(e) => { e.preventDefault(); if (f.name.trim() && amt > 0) onSave(f); }}>
+        {/* Preset Templates Gallery (Especially helpful on new creation) */}
+        {!initialValues && (
+          <div style={{ marginBottom: 20 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: THEME.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Sparkles size={12} color={THEME.accent} />
+              <span>Quick Preset Templates</span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                overflowX: "auto",
+                paddingBottom: 6,
+              }}
+              className="no-scrollbar"
+            >
+              {RECURRING_PRESETS.map((p, idx) => {
+                const PIcon = p.icon;
+                const isSelected = f.name === p.name;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => applyPreset(p)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 12px",
+                      borderRadius: 10,
+                      border: `1px solid ${isSelected ? THEME.accent : "var(--t-line)"}`,
+                      background: isSelected
+                        ? `color-mix(in srgb, ${THEME.accent} 12%, var(--surface-0))`
+                        : "var(--surface-0)",
+                      color: isSelected ? THEME.accent : THEME.ink,
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <PIcon size={13} color={isSelected ? THEME.accent : THEME.muted} />
+                    <span>{p.name}</span>
+                    <span style={{ color: THEME.muted, fontWeight: 500 }}>
+                      ₹{fmtINR(p.amount)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-      <Field label="Expense Name">
-        <input
-          className="form-input"
-          value={f.name}
-          onChange={(e) => setF({ ...f, name: e.target.value })}
-          placeholder="e.g. Maid Salary, Broadband Bill"
-          autoFocus
+        {/* Row 1: Name & Category */}
+        <div className="form-grid-2">
+          <Field label="Expense Name">
+            <input
+              className="form-input"
+              value={f.name}
+              onChange={(e) => setF({ ...f, name: e.target.value })}
+              onKeyDown={handleKeyDown}
+              placeholder="e.g. Maid Salary, Broadband Bill"
+              autoFocus
+            />
+          </Field>
+
+          <Field label="Category">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: `color-mix(in srgb, ${THEME.accent} 12%, transparent)`,
+                  color: THEME.accent,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <CatIcon size={18} />
+              </div>
+              <select
+                className="form-input"
+                style={{ flex: 1 }}
+                value={f.category}
+                onChange={(e) => setF({ ...f, category: e.target.value })}
+              >
+                {cats.map((c: string) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </Field>
+        </div>
+
+        {/* Row 2: Amount with Quick Increments */}
+        <div style={{ marginBottom: 16 }}>
+          <Field label="Amount (₹)">
+            <div style={{ position: "relative" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: 14,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: THEME.muted,
+                  pointerEvents: "none",
+                }}
+              >
+                ₹
+              </span>
+              <input
+                className="form-input"
+                type="number"
+                min="0"
+                inputMode="decimal"
+                value={f.amount}
+                onChange={(e) => setF({ ...f, amount: e.target.value })}
+                onKeyDown={handleKeyDown}
+                placeholder="e.g. 5000"
+                style={{ paddingLeft: 32, fontSize: 16, fontWeight: 700 }}
+              />
+            </div>
+          </Field>
+
+          {/* Currency Words */}
+          {inWords && (
+            <div
+              style={{
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: THEME.accent,
+                marginTop: -10,
+                marginBottom: 10,
+                paddingLeft: 2,
+              }}
+            >
+              {inWords}
+            </div>
+          )}
+
+          {/* Quick Increment Buttons */}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: THEME.muted }}>Quick Add:</span>
+            {[500, 1000, 5000, 10000].map((inc) => (
+              <button
+                key={inc}
+                type="button"
+                onClick={() => setF({ ...f, amount: String((Number(f.amount) || 0) + inc) })}
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  border: "1px solid var(--t-line)",
+                  background: "var(--surface-0)",
+                  color: THEME.ink,
+                  cursor: "pointer",
+                }}
+              >
+                +₹{fmtINR(inc)}
+              </button>
+            ))}
+            {amt > 0 && (
+              <button
+                type="button"
+                onClick={() => setF({ ...f, amount: "" })}
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  border: "1px solid transparent",
+                  background: "transparent",
+                  color: THEME.muted,
+                  cursor: "pointer",
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Row 3: Frequency & Due Day / Schedule */}
+        <div className="form-grid-2">
+          <Field label="Recurrence Frequency">
+            <select
+              className="form-input"
+              value={f.frequency}
+              onChange={(e) => setF({ ...f, frequency: e.target.value })}
+            >
+              <option value="monthly">Monthly (Most common)</option>
+              <option value="weekly">Weekly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </Field>
+
+          {f.frequency === "weekly" ? (
+            <Field label="Recurring Day of Week">
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {[
+                  { label: "Mon", day: 1 },
+                  { label: "Tue", day: 2 },
+                  { label: "Wed", day: 3 },
+                  { label: "Thu", day: 4 },
+                  { label: "Fri", day: 5 },
+                  { label: "Sat", day: 6 },
+                  { label: "Sun", day: 7 },
+                ].map((item) => (
+                  <button
+                    key={item.day}
+                    type="button"
+                    onClick={() => setF({ ...f, dueDay: item.day })}
+                    style={{
+                      flex: "1 1 36px",
+                      padding: "8px 4px",
+                      borderRadius: 8,
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      border: `1px solid ${Number(f.dueDay) === item.day ? THEME.accent : "var(--t-line)"}`,
+                      background:
+                        Number(f.dueDay) === item.day
+                          ? `color-mix(in srgb, ${THEME.accent} 15%, transparent)`
+                          : "var(--surface-0)",
+                      color: Number(f.dueDay) === item.day ? THEME.accent : THEME.ink,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          ) : (
+            <Field label={`Due Day of ${f.frequency === "yearly" ? "Billing Month" : "Month"} (1-31)`}>
+              <div>
+                <input
+                  className="form-input"
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={f.dueDay}
+                  onChange={(e) =>
+                    setF({ ...f, dueDay: Math.min(31, Math.max(1, parseInt(e.target.value) || 1)) })
+                  }
+                  style={{ marginBottom: 6 }}
+                />
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {[1, 5, 10, 15, 20, 25, 30].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setF({ ...f, dueDay: d })}
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        border: `1px solid ${Number(f.dueDay) === d ? THEME.accent : "var(--t-line)"}`,
+                        background:
+                          Number(f.dueDay) === d
+                            ? `color-mix(in srgb, ${THEME.accent} 15%, transparent)`
+                            : "var(--surface-0)",
+                        color: Number(f.dueDay) === d ? THEME.accent : THEME.muted,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {d === 30 ? "End (30th)" : `${d}th`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Field>
+          )}
+        </div>
+
+        {/* Row 4: Account & Owner */}
+        <div className="form-grid-2">
+          <Field label="Paid From (Bank Account)">
+            <select
+              className="form-input"
+              value={f.accountId}
+              onChange={(e) => setF({ ...f, accountId: e.target.value })}
+            >
+              <option value="">No linked account</option>
+              {accounts.map((a: any) => (
+                <option key={a.id} value={a.id}>
+                  {a.bankName} (•••• {a.accountNumber?.slice(-4)})
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Owner / Profile">
+            <select
+              className="form-input"
+              value={f.owner}
+              onChange={(e) => setF({ ...f, owner: e.target.value })}
+            >
+              {familyProfiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {formatProfileOption(p)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {/* Row 5: Start Date & Optional End Date */}
+        <div className="form-grid-2">
+          <Field label="Start Date">
+            <input
+              className="form-input"
+              type="date"
+              value={f.startDate}
+              onChange={(e) => setF({ ...f, startDate: e.target.value })}
+            />
+          </Field>
+          <Field label="End Date (Optional)">
+            <input
+              className="form-input"
+              type="date"
+              value={f.endDate}
+              onChange={(e) => setF({ ...f, endDate: e.target.value })}
+              placeholder="Repeat indefinitely if blank"
+            />
+          </Field>
+        </div>
+
+        {/* Row 6: Active Status Switch Card */}
+        <div
+          onClick={() => setF({ ...f, isActive: !f.isActive })}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 16px",
+            borderRadius: 12,
+            border: `1px solid ${f.isActive ? THEME.sage : "var(--t-line)"}`,
+            background: f.isActive
+              ? `color-mix(in srgb, ${THEME.sage} 6%, var(--surface-0))`
+              : "var(--surface-0)",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: f.isActive
+                  ? `color-mix(in srgb, ${THEME.sage} 18%, transparent)`
+                  : "rgba(128,128,128,0.08)",
+                color: f.isActive ? THEME.sage : THEME.muted,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {f.isActive ? <CheckCircle2 size={18} /> : <Pause size={18} />}
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: THEME.ink }}>
+                {f.isActive ? "Active Commitment" : "Paused / On Hold"}
+              </div>
+              <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                {f.isActive
+                  ? "Track on calendar, calculate monthly cash burn, and auto-match debits"
+                  : "Hold payment schedule without deleting record"}
+              </div>
+            </div>
+          </div>
+          <div
+            style={{
+              width: 42,
+              height: 24,
+              borderRadius: 12,
+              background: f.isActive ? THEME.sage : "var(--t-line)",
+              position: "relative",
+              transition: "background 0.2s ease",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: "50%",
+                background: "#fff",
+                position: "absolute",
+                top: 3,
+                left: f.isActive ? 21 : 3,
+                transition: "left 0.2s ease",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Live Cadence & Schedule Projection Card */}
+        {amt > 0 && (
+          <div
+            style={{
+              padding: "16px 18px",
+              borderRadius: 14,
+              background: `color-mix(in srgb, ${THEME.accent} 6%, var(--surface-0))`,
+              border: `1px solid color-mix(in srgb, ${THEME.accent} 22%, transparent)`,
+              marginBottom: 20,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: THEME.accent,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Calendar size={13} />
+                Financial Impact & Next Due Date
+              </span>
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  background: f.isActive
+                    ? `color-mix(in srgb, ${THEME.sage} 15%, transparent)`
+                    : "rgba(128,128,128,0.12)",
+                  color: f.isActive ? THEME.sage : THEME.muted,
+                }}
+              >
+                {f.isActive ? "Active Schedule" : "Paused"}
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "var(--surface-0)",
+                  border: "1px solid var(--t-line)",
+                }}
+              >
+                <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 600 }}>
+                  Monthly Commitment
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: THEME.ink, marginTop: 2 }}>
+                  {fmtINRFull(computedMonthlyImpact)}
+                </div>
+                <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>
+                  {f.frequency} recurring cadence
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "var(--surface-0)",
+                  border: "1px solid var(--t-line)",
+                }}
+              >
+                <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 600 }}>
+                  Annual Outflow
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: THEME.gold, marginTop: 2 }}>
+                  {fmtINRFull(computedAnnualImpact)}
+                </div>
+                <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>
+                  12-month commitment
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "var(--surface-0)",
+                  border: "1px solid var(--t-line)",
+                }}
+              >
+                <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 600 }}>
+                  Next Occurrence
+                </div>
+                <div style={{ fontSize: 14.5, fontWeight: 800, color: THEME.accent, marginTop: 2 }}>
+                  {nextSchedule.date}
+                </div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: THEME.accent, marginTop: 2 }}>
+                  {nextSchedule.daysText}
+                </div>
+              </div>
+            </div>
+
+            {selectedBank && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: THEME.muted,
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Landmark size={12} />
+                <span>
+                  Will auto-match bank debits in <strong>{selectedBank.bankName}</strong> (•••• {selectedBank.accountNumber?.slice(-4)}).
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <ModalActions
+          onSave={() => f.name.trim() && Number(f.amount) > 0 && onSave(f)}
+          onClose={onClose}
+          disabled={!f.name.trim() || !(Number(f.amount) > 0) || saving}
+          loading={saving}
+          saveLabel={initialValues ? "Save Changes" : "Add Recurring Expense"}
         />
-      </Field>
-
-      <div className="form-grid-2">
-        <Field label="Category">
-          <select
-            className="form-input"
-            value={f.category}
-            onChange={(e) => setF({ ...f, category: e.target.value })}
-          >
-            {cats.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Amount (₹)">
-          <input
-            className="form-input"
-            type="number"
-            value={f.amount}
-            onChange={(e) => setF({ ...f, amount: e.target.value })}
-            placeholder="e.g. 5000"
-          />
-        </Field>
-      </div>
-
-      <div className="form-grid-2">
-        <Field label="Frequency">
-          <select
-            className="form-input"
-            value={f.frequency}
-            onChange={(e) => setF({ ...f, frequency: e.target.value })}
-          >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-        </Field>
-        <Field label="Due Day of Month (1-31)">
-          <input
-            className="form-input"
-            type="number"
-            min={1}
-            max={31}
-            value={f.dueDay}
-            onChange={(e) =>
-              setF({ ...f, dueDay: Math.min(31, Math.max(1, parseInt(e.target.value) || 1)) })
-            }
-          />
-        </Field>
-      </div>
-
-      <div className="form-grid-2">
-        <Field label="Start Date">
-          <input
-            className="form-input"
-            type="date"
-            value={f.startDate}
-            onChange={(e) => setF({ ...f, startDate: e.target.value })}
-          />
-        </Field>
-        <Field label="End Date (Optional)">
-          <input
-            className="form-input"
-            type="date"
-            value={f.endDate}
-            onChange={(e) => setF({ ...f, endDate: e.target.value })}
-            placeholder="Repeat indefinitely if blank"
-          />
-        </Field>
-      </div>
-
-      <ModalActions
-        onSave={() => f.name.trim() && Number(f.amount) > 0 && onSave(f)}
-        onClose={onClose}
-        disabled={!f.name.trim() || !(Number(f.amount) > 0) || saving}
-        loading={saving}
-        saveLabel={initialValues ? "Save Changes" : "Add Recurring Expense"}
-      />
+      </form>
     </Modal>
   );
 }
