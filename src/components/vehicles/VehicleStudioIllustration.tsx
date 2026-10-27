@@ -43,7 +43,6 @@ export function VehicleStudioIllustration({
   const gradientId = `veh-grad-${baseColor.replace("#", "")}-${bodyStyle}-${Math.random().toString(36).substring(2, 7)}`;
   const glassId = `veh-glass-${Math.random().toString(36).substring(2, 7)}`;
   const rimColor = isLight ? "#475569" : "#cbd5e1";
-  const evAccent = isElectric ? "#06b6d4" : "transparent";
 
   // Common wrapper styling
   const svgWrapperStyle: React.CSSProperties = {

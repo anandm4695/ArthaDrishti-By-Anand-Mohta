@@ -1,8 +1,7 @@
-import React from "react";
-import { X, Sparkles, User, Gauge, Calendar, Car, ExternalLink, Trash2 } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
-import { IndianNumberPlate, resolveVehicleColor } from "../tabs/VehiclesTab";
+import { IndianNumberPlate, resolveVehicleColor, TRANSMISSION_TYPES } from "../tabs/VehiclesTab";
 import { VehicleMakeLogo } from "../ui/BrandLogos";
 import { VehicleStudioIllustration } from "./VehicleStudioIllustration";
 import { detectVehicleBodyStyle, findMatchingVehiclePreset } from "../../utils/vehicleAssets";
@@ -172,7 +171,7 @@ export function VehicleLightboxModal({
         >
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
-              Paint Finish & Finish
+              Exterior Paint Finish
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
               <span
@@ -193,10 +192,10 @@ export function VehicleLightboxModal({
 
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
-              Body Class & Fuel
+              Body Class & Powertrain
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginTop: 4 }}>
-              {bodyStyle.toUpperCase()} • {vehicle.fuelType || "Petrol"}
+              {bodyStyle.toUpperCase()} • {vehicle.transmission ? (TRANSMISSION_TYPES[vehicle.transmission] || vehicle.transmission) : "Manual"} • {vehicle.fuelType || "Petrol"}
             </div>
           </div>
 
@@ -218,6 +217,28 @@ export function VehicleLightboxModal({
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginTop: 4 }}>
                 {Number(vehicle.currentOdometer).toLocaleString("en-IN")} km
+              </div>
+            </div>
+          )}
+
+          {vehicle.purchasePrice && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
+                On-Road Price
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-accent)", marginTop: 4 }}>
+                ₹{Number(vehicle.purchasePrice).toLocaleString("en-IN")}
+              </div>
+            </div>
+          )}
+
+          {vehicle.currentValue && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
+                Current Valuation
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", marginTop: 4 }}>
+                ₹{Number(vehicle.currentValue).toLocaleString("en-IN")}
               </div>
             </div>
           )}

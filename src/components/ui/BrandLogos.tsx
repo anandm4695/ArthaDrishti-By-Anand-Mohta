@@ -790,7 +790,7 @@ export function resolveBrand(rawInput: string): BrandInfo | null {
   // Separate common glued terms (e.g. "HDFCBANK" -> "hdfc bank", "SBI_CARD" -> "sbi card")
   const clean = text
     .replace(/([a-z])([A-Z0-9])/g, "$1 $2")
-    .replace(/[_\-\/\(\)]+/g, " ")
+    .replace(/[_\-/()]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 

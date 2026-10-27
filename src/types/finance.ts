@@ -96,6 +96,8 @@ export interface AppState {
   vehicles: Vehicle[];
   dividends: any[];
   documents: any[];
+  goldHoldings: any[];
+  lifeEvents: any[];
   corporateActions: any[];
   healthInsurance: any[];
   creditScores: any[];
@@ -358,6 +360,9 @@ export interface VehicleServiceRecord {
   cost: number;
   odometer?: number;
   serviceCenter?: string;
+  invoiceNumber?: string;
+  invoiceUrl?: string;
+  partsReplaced?: string[];
   notes?: string;
 }
 
@@ -373,6 +378,9 @@ export interface VehicleInsuranceRecord {
   cgstAmount?: number;
   sgstAmount?: number;
   totalPremium: number;
+  idv?: number;
+  policyDocUrl?: string;
+  addOns?: string[];
   notes?: string;
 }
 
@@ -383,18 +391,38 @@ export interface Vehicle {
   model: string;
   name?: string; // backwards compatibility
   year?: number | string;
+  purchaseYear?: number | string;
   color?: string;
   fuelType?: "petrol" | "diesel" | "electric" | "cng" | "hybrid" | string;
+  transmission?: "manual" | "automatic" | "amt" | "cvt" | "dct" | "single_speed" | string;
   registrationNumber?: string;
   chassisNumber?: string;
   engineNumber?: string;
   cubicCapacity?: string;
   seatingCapacity?: string;
+  fuelEfficiency?: number | string;
+  fuelCapacity?: number | string;
   fitnessUpto?: string;
+  pucNumber?: string;
+  isFinanced?: boolean;
   financier?: string;
+  loanAccountNumber?: string;
+  loanAmount?: number;
+  loanEmi?: number;
+  loanTenureMonths?: number;
+  loanInterestRate?: number;
+  loanOutstanding?: number;
+  fastagProvider?: string;
+  fastagId?: string;
+  fastagBalance?: number;
+  warrantyExpiry?: string;
+  extendedWarrantyExpiry?: string;
+  rsaProvider?: string;
+  rsaContactNumber?: string;
   insuranceCompany?: string;
   insurancePolicyNumber?: string;
   emissionNorms?: string;
+  emissionStandard?: string;
   rto?: string;
   state?: string;
   registeredOwner?: string;
@@ -406,6 +434,7 @@ export interface Vehicle {
   rtoCharges?: number;
   accessoriesCharges?: number;
   currentValue?: number;
+  currentValuation?: number;
   currentOdometer?: number;
   insuranceExpiry?: string;
   pucExpiry?: string;
@@ -415,10 +444,12 @@ export interface Vehicle {
   rcDocumentUrl?: string;
   insurancePolicyUrl?: string;
   pucCertificateUrl?: string;
+  taxInvoiceUrl?: string;
   notes?: string;
   owner?: string;
   serviceHistory?: VehicleServiceRecord[];
   insuranceHistory?: VehicleInsuranceRecord[];
 }
+
 
 

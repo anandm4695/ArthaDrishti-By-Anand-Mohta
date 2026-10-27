@@ -39,6 +39,8 @@ import {
   Landmark,
   CheckCircle2,
   X,
+  Phone,
+  CreditCard,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -104,7 +106,7 @@ export {
 // Brand Domains & Visual Themes (35+ Indian & Global Automakers)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VEHICLE_MAKE_DOMAINS: Record<string, string> = {
+export const VEHICLE_MAKE_DOMAINS: Record<string, string> = {
   honda: "honda.com",
   yamaha: "yamaha-motor.com",
   suzuki: "suzuki.com",
@@ -442,6 +444,39 @@ const INSURANCE_POLICY_TYPES: Record<string, { label: string; color: string }> =
   bundled_long_term: { label: "Bundled Long-Term (1yr OD + 3/5yr TP)", color: THEME.violet },
 };
 
+export const TRANSMISSION_TYPES: Record<string, string> = {
+  manual: "Manual",
+  automatic: "Automatic (AT)",
+  amt: "Automated Manual (AMT / AGS)",
+  cvt: "Continuous Variable (CVT)",
+  dct: "Dual-Clutch (DCT / DSG)",
+  single_speed: "Single-Speed EV",
+};
+
+export const POPULAR_FINANCIERS: string[] = [
+  "HDFC Bank",
+  "ICICI Bank",
+  "State Bank of India (SBI)",
+  "Axis Bank",
+  "Kotak Mahindra Bank",
+  "Mahindra Finance",
+  "Tata Capital",
+  "Bajaj Finance",
+  "Unencumbered",
+];
+
+export const POPULAR_FASTAG_PROVIDERS: string[] = [
+  "ICICI Bank FASTag",
+  "IDFC FIRST Bank FASTag",
+  "Paytm Payments Bank",
+  "Airtel Payments Bank",
+  "State Bank of India (SBI)",
+  "HDFC Bank FASTag",
+  "Axis Bank FASTag",
+  "Kotak Mahindra Bank",
+];
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Compliance & Reminder Calculations
 // ─────────────────────────────────────────────────────────────────────────────
@@ -618,13 +653,30 @@ const EMPTY_VEHICLE = {
   year: new Date().getFullYear(),
   color: "",
   fuelType: "petrol",
+  transmission: "manual",
   registrationNumber: "",
   chassisNumber: "",
   engineNumber: "",
   cubicCapacity: "",
   seatingCapacity: "",
+  fuelEfficiency: "",
+  fuelCapacity: "",
   fitnessUpto: "",
+  pucNumber: "",
   financier: "",
+  loanAccountNumber: "",
+  loanAmount: "",
+  loanEmi: "",
+  loanTenureMonths: "",
+  loanInterestRate: "",
+  loanOutstanding: "",
+  fastagProvider: "",
+  fastagId: "",
+  fastagBalance: "",
+  warrantyExpiry: "",
+  extendedWarrantyExpiry: "",
+  rsaProvider: "",
+  rsaContactNumber: "",
   insuranceCompany: "",
   insurancePolicyNumber: "",
   emissionNorms: "",
@@ -648,6 +700,7 @@ const EMPTY_VEHICLE = {
   rcDocumentUrl: "",
   insurancePolicyUrl: "",
   pucCertificateUrl: "",
+  taxInvoiceUrl: "",
   notes: "",
   owner: "self",
 };
@@ -669,6 +722,12 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           accessoriesCharges: normalizedExisting.accessoriesCharges ?? "",
           currentValue: normalizedExisting.currentValue ?? "",
           currentOdometer: normalizedExisting.currentOdometer ?? "",
+          loanAmount: normalizedExisting.loanAmount ?? "",
+          loanEmi: normalizedExisting.loanEmi ?? "",
+          loanTenureMonths: normalizedExisting.loanTenureMonths ?? "",
+          loanInterestRate: normalizedExisting.loanInterestRate ?? "",
+          loanOutstanding: normalizedExisting.loanOutstanding ?? "",
+          fastagBalance: normalizedExisting.fastagBalance ?? "",
         }
       : { ...EMPTY_VEHICLE }
   );
@@ -715,6 +774,10 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           ? "commercial"
           : p.vehicleType || "four-wheeler",
       fuelType: preset.fuelType || p.fuelType,
+      transmission:
+        preset.fuelType === "electric"
+          ? "single_speed"
+          : p.transmission || "manual",
     }));
   };
 
@@ -745,10 +808,21 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
       currentOdometer: Number(f.currentOdometer) || 0,
       year: Number(f.year) || new Date().getFullYear(),
       nextServiceDueOdometer: Number(f.nextServiceDueOdometer) || 0,
+      loanAmount: Number(f.loanAmount) || 0,
+      loanEmi: Number(f.loanEmi) || 0,
+      loanTenureMonths: Number(f.loanTenureMonths) || 0,
+      loanInterestRate: Number(f.loanInterestRate) || 0,
+      loanOutstanding: Number(f.loanOutstanding) || 0,
+      fastagBalance: Number(f.fastagBalance) || 0,
+      isFinanced:
+        Number(f.loanAmount || 0) > 0 ||
+        Number(f.loanOutstanding || 0) > 0 ||
+        (!!f.financier && f.financier.trim().toLowerCase() !== "unencumbered" && f.financier.trim() !== ""),
       serviceHistory: existing?.serviceHistory || [],
       insuranceHistory: existing?.insuranceHistory || [],
     });
   };
+
 
   const g2: React.CSSProperties = {
     display: "grid",
@@ -843,12 +917,18 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                 <span style={{ fontSize: 10, color: "var(--t-accent)" }}>* Required</span>
               </div>
 
-              <div style={g3}>
+              <div style={g2}>
                 <Field label="Vehicle Type *">
                   <select
                     style={inp}
                     value={f.vehicleType}
-                    onChange={(e) => set("vehicleType", e.target.value)}
+                    onChange={(e) => {
+                      const vt = e.target.value;
+                      set("vehicleType", vt);
+                      if (vt === "two-wheeler" && (!f.seatingCapacity || f.seatingCapacity === "5")) {
+                        set("seatingCapacity", "2");
+                      }
+                    }}
                   >
                     {Object.entries(VEHICLE_TYPES).map(([k, v]) => (
                       <option key={k} value={k}>
@@ -858,10 +938,36 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                   </select>
                 </Field>
                 <Field label="Fuel Type">
-                  <select style={inp} value={f.fuelType} onChange={(e) => set("fuelType", e.target.value)}>
+                  <select
+                    style={inp}
+                    value={f.fuelType}
+                    onChange={(e) => {
+                      const ft = e.target.value;
+                      set("fuelType", ft);
+                      if (ft === "electric" && f.transmission !== "single_speed") {
+                        set("transmission", "single_speed");
+                      }
+                    }}
+                  >
                     {Object.entries(FUEL_TYPES).map(([k, v]) => (
                       <option key={k} value={k}>
                         {v.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              <div style={g2}>
+                <Field label="Transmission">
+                  <select
+                    style={inp}
+                    value={f.transmission || "manual"}
+                    onChange={(e) => set("transmission", e.target.value)}
+                  >
+                    {Object.entries(TRANSMISSION_TYPES).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
                       </option>
                     ))}
                   </select>
@@ -941,7 +1047,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                 </Field>
               </div>
 
-              <div style={g2}>
+              <div style={g3}>
                 <Field label="Manufacturing Year">
                   <input
                     style={inp}
@@ -950,6 +1056,14 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                     onChange={(e) => set("year", e.target.value)}
                     min={1980}
                     max={2035}
+                  />
+                </Field>
+                <Field label="Seating Capacity">
+                  <input
+                    style={inp}
+                    value={f.seatingCapacity || ""}
+                    onChange={(e) => set("seatingCapacity", e.target.value)}
+                    placeholder="e.g. 5 Seater, 2 Seater"
                   />
                 </Field>
                 <Field label="Exterior Color">
@@ -1114,29 +1228,48 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                 </Field>
               </div>
 
+              <div style={g2}>
+                <Field label="Fuel / Battery Capacity">
+                  <input
+                    style={inp}
+                    value={f.fuelCapacity || ""}
+                    onChange={(e) => set("fuelCapacity", e.target.value)}
+                    placeholder="e.g. 50 Litres, 30.2 kWh"
+                  />
+                </Field>
+                <Field label="Fuel Economy / Efficiency">
+                  <input
+                    style={inp}
+                    value={f.fuelEfficiency || ""}
+                    onChange={(e) => set("fuelEfficiency", e.target.value)}
+                    placeholder="e.g. 18.5 km/l, 7.5 km/kWh"
+                  />
+                </Field>
+              </div>
+
               <div style={g3}>
+                <Field label="PUC Certificate #">
+                  <input
+                    style={inp}
+                    value={f.pucNumber || ""}
+                    onChange={(e) => set("pucNumber", e.target.value.toUpperCase())}
+                    placeholder="e.g. KA03202400918"
+                  />
+                </Field>
+                <Field label="Emission Standard">
+                  <input
+                    style={inp}
+                    value={f.emissionNorms || ""}
+                    onChange={(e) => set("emissionNorms", e.target.value)}
+                    placeholder="e.g. BS6 Phase 2, OBD-II, EV"
+                  />
+                </Field>
                 <Field label="Fitness Validity Upto">
                   <input
                     style={inp}
                     type="date"
                     value={f.fitnessUpto || ""}
                     onChange={(e) => set("fitnessUpto", e.target.value)}
-                  />
-                </Field>
-                <Field label="Hypothecation / Financed Bank">
-                  <input
-                    style={inp}
-                    value={f.financier || ""}
-                    onChange={(e) => set("financier", e.target.value)}
-                    placeholder="e.g. HDFC Bank Ltd / Unencumbered"
-                  />
-                </Field>
-                <Field label="Emission Norms">
-                  <input
-                    style={inp}
-                    value={f.emissionNorms || ""}
-                    onChange={(e) => set("emissionNorms", e.target.value)}
-                    placeholder="e.g. BS-VI, BS-IV, EV"
                   />
                 </Field>
               </div>
@@ -1211,7 +1344,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                 </Field>
               </div>
 
-              <div style={g3}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
                 <Field label="Basic Ex-Showroom (₹)">
                   <input
                     style={inp}
@@ -1241,6 +1374,15 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                     value={f.rtoCharges}
                     onChange={(e) => set("rtoCharges", e.target.value)}
                     placeholder="Registration"
+                  />
+                </Field>
+                <Field label="Accessories & Options (₹)">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.accessoriesCharges}
+                    onChange={(e) => set("accessoriesCharges", e.target.value)}
+                    placeholder="Accessories"
                   />
                 </Field>
               </div>
@@ -1285,6 +1427,109 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                     placeholder="e.g. 18500"
                   />
                 </Field>
+              </div>
+
+              {/* Automotive Loan & Hypothecation Section */}
+              <div
+                style={{
+                  borderTop: "1px solid var(--t-line)",
+                  paddingTop: 14,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: "var(--t-muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Landmark size={13} color="var(--t-accent)" />
+                    <span>Hypothecation & Vehicle Financing</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--t-muted)" }}>
+                    Optional for active vehicle loans
+                  </div>
+                </div>
+
+                <div style={g2}>
+                  <Field label="Financier / Bank Name">
+                    <input
+                      style={inp}
+                      value={f.financier || ""}
+                      onChange={(e) => set("financier", e.target.value)}
+                      placeholder="e.g. HDFC Bank, ICICI Bank, or Unencumbered"
+                    />
+                  </Field>
+                  <Field label="Loan Account Number">
+                    <input
+                      style={inp}
+                      value={f.loanAccountNumber || ""}
+                      onChange={(e) => set("loanAccountNumber", e.target.value)}
+                      placeholder="e.g. HDFC-AUTO-881920"
+                    />
+                  </Field>
+                </div>
+
+                <div style={g3}>
+                  <Field label="Sanctioned Loan (₹)">
+                    <input
+                      style={inp}
+                      type="number"
+                      value={f.loanAmount || ""}
+                      onChange={(e) => set("loanAmount", e.target.value)}
+                      placeholder="Principal borrowed"
+                    />
+                  </Field>
+                  <Field label="Monthly EMI (₹)">
+                    <input
+                      style={inp}
+                      type="number"
+                      value={f.loanEmi || ""}
+                      onChange={(e) => set("loanEmi", e.target.value)}
+                      placeholder="Monthly installment"
+                    />
+                  </Field>
+                  <Field label="Remaining Balance (₹)">
+                    <input
+                      style={inp}
+                      type="number"
+                      value={f.loanOutstanding || ""}
+                      onChange={(e) => set("loanOutstanding", e.target.value)}
+                      placeholder="Outstanding principal"
+                    />
+                  </Field>
+                </div>
+
+                <div style={g2}>
+                  <Field label="Tenure (Months)">
+                    <input
+                      style={inp}
+                      type="number"
+                      value={f.loanTenureMonths || ""}
+                      onChange={(e) => set("loanTenureMonths", e.target.value)}
+                      placeholder="e.g. 60 months"
+                    />
+                  </Field>
+                  <Field label="Interest Rate (% p.a.)">
+                    <input
+                      style={inp}
+                      type="number"
+                      step="0.05"
+                      value={f.loanInterestRate || ""}
+                      onChange={(e) => set("loanInterestRate", e.target.value)}
+                      placeholder="e.g. 8.75%"
+                    />
+                  </Field>
+                </div>
               </div>
 
               {activeSection !== "all" && (
@@ -1376,7 +1621,125 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                 </Field>
               </div>
 
-              <div style={g3}>
+              {/* FASTag Electronic Toll Pass */}
+              <div
+                style={{
+                  borderTop: "1px solid var(--t-line)",
+                  paddingTop: 14,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--t-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <CreditCard size={13} color="var(--t-accent)" />
+                  <span>FASTag Electronic Toll Pass</span>
+                </div>
+                <div style={g3}>
+                  <Field label="FASTag Bank / Issuer">
+                    <input
+                      style={inp}
+                      value={f.fastagProvider || ""}
+                      onChange={(e) => set("fastagProvider", e.target.value)}
+                      placeholder="e.g. ICICI Bank, IDFC FIRST, Paytm"
+                    />
+                  </Field>
+                  <Field label="FASTag Barcode / Tag ID">
+                    <input
+                      style={inp}
+                      value={f.fastagId || ""}
+                      onChange={(e) => set("fastagId", e.target.value)}
+                      placeholder="e.g. 34161FA82091"
+                    />
+                  </Field>
+                  <Field label="Wallet Balance (₹)">
+                    <input
+                      style={inp}
+                      type="number"
+                      value={f.fastagBalance || ""}
+                      onChange={(e) => set("fastagBalance", e.target.value)}
+                      placeholder="Tag balance"
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* Warranty & Roadside Assistance (RSA) */}
+              <div
+                style={{
+                  borderTop: "1px solid var(--t-line)",
+                  paddingTop: 14,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--t-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <Phone size={13} color={THEME.sage} />
+                  <span>Warranty & 24x7 Roadside Assistance (RSA)</span>
+                </div>
+                <div style={g2}>
+                  <Field label="Manufacturer Warranty Upto">
+                    <input
+                      style={inp}
+                      type="date"
+                      value={f.warrantyExpiry || ""}
+                      onChange={(e) => set("warrantyExpiry", e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Extended Warranty Upto">
+                    <input
+                      style={inp}
+                      type="date"
+                      value={f.extendedWarrantyExpiry || ""}
+                      onChange={(e) => set("extendedWarrantyExpiry", e.target.value)}
+                    />
+                  </Field>
+                </div>
+                <div style={g2}>
+                  <Field label="RSA Provider">
+                    <input
+                      style={inp}
+                      value={f.rsaProvider || ""}
+                      onChange={(e) => set("rsaProvider", e.target.value)}
+                      placeholder="e.g. Hyundai 24x7 RSA, Allianz, Tata Assist"
+                    />
+                  </Field>
+                  <Field label="Emergency RSA Contact Number">
+                    <input
+                      style={inp}
+                      value={f.rsaContactNumber || ""}
+                      onChange={(e) => set("rsaContactNumber", e.target.value)}
+                      placeholder="e.g. 1800-102-4645"
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* Document Links */}
+              <div style={g2}>
                 <Field label="RC Document Link">
                   <input
                     style={inp}
@@ -1393,6 +1756,9 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                     placeholder="Policy PDF link"
                   />
                 </Field>
+              </div>
+
+              <div style={g2}>
                 <Field label="PUC Certificate Link">
                   <input
                     style={inp}
@@ -1401,7 +1767,16 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                     placeholder="PUC copy link"
                   />
                 </Field>
+                <Field label="Purchase / Tax Invoice Link">
+                  <input
+                    style={inp}
+                    value={f.taxInvoiceUrl || ""}
+                    onChange={(e) => set("taxInvoiceUrl", e.target.value)}
+                    placeholder="Vehicle invoice link"
+                  />
+                </Field>
               </div>
+
 
               <Field label="Additional Vehicle Notes">
                 <textarea
@@ -1631,6 +2006,8 @@ export function ServiceModal({
     odometer: existing?.odometer ?? "",
     serviceCenter: existing?.serviceCenter || "",
     invoiceNumber: existing?.invoiceNumber || "",
+    invoiceUrl: existing?.invoiceUrl || "",
+    partsReplaced: existing?.partsReplaced?.join(", ") || "",
     notes: existing?.notes || "",
   });
 
@@ -1654,6 +2031,10 @@ export function ServiceModal({
       odometer: Number(f.odometer) || 0,
       serviceCenter: f.serviceCenter,
       invoiceNumber: f.invoiceNumber,
+      invoiceUrl: f.invoiceUrl ? f.invoiceUrl.trim() : undefined,
+      partsReplaced: f.partsReplaced
+        ? f.partsReplaced.split(",").map((s: string) => s.trim()).filter(Boolean)
+        : undefined,
       notes: f.notes,
     };
     onSave({
@@ -1766,12 +2147,31 @@ export function ServiceModal({
         </Field>
       </div>
 
-      <Field label="Notes / Parts Replaced">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Invoice Document Link (URL)">
+          <input
+            style={inp}
+            value={f.invoiceUrl}
+            onChange={(e) => set("invoiceUrl", e.target.value)}
+            placeholder="https://drive.google.com/..."
+          />
+        </Field>
+        <Field label="Key Parts Replaced (comma-separated)">
+          <input
+            style={inp}
+            value={f.partsReplaced}
+            onChange={(e) => set("partsReplaced", e.target.value)}
+            placeholder="e.g. Engine Oil, Air Filter, Brake Pads"
+          />
+        </Field>
+      </div>
+
+      <Field label="Technician Notes / Work Order Details">
         <textarea
           style={{ ...inp, height: 60, resize: "vertical" }}
           value={f.notes}
           onChange={(e) => set("notes", e.target.value)}
-          placeholder="Synthetic engine oil, brake pads, wheel alignment..."
+          placeholder="Wheel balancing, software ECU update, general safety inspection..."
         />
       </Field>
 
@@ -1837,6 +2237,8 @@ export function InsuranceModal({ existing, vehicleName, onClose, onSave, saving 
     sgstAmount: existing?.sgstAmount ?? "",
     totalPremium: existing?.totalPremium ?? "",
     idv: existing?.idv ?? "",
+    policyDocUrl: existing?.policyDocUrl || "",
+    addOns: existing?.addOns?.join(", ") || "",
     notes: existing?.notes || "",
   });
 
@@ -1858,6 +2260,10 @@ export function InsuranceModal({ existing, vehicleName, onClose, onSave, saving 
       sgstAmount: Number(f.sgstAmount) || 0,
       totalPremium: Number(f.totalPremium) || 0,
       idv: Number(f.idv) || 0,
+      policyDocUrl: f.policyDocUrl ? f.policyDocUrl.trim() : undefined,
+      addOns: f.addOns
+        ? f.addOns.split(",").map((s: string) => s.trim()).filter(Boolean)
+        : undefined,
       notes: f.notes,
     });
   };
@@ -1969,12 +2375,31 @@ export function InsuranceModal({ existing, vehicleName, onClose, onSave, saving 
         </Field>
       </div>
 
-      <Field label="Add-on Covers & Notes">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Policy Document Link (URL)">
+          <input
+            style={inp}
+            value={f.policyDocUrl}
+            onChange={(e) => set("policyDocUrl", e.target.value)}
+            placeholder="https://drive.google.com/..."
+          />
+        </Field>
+        <Field label="Add-on Riders (comma-separated)">
+          <input
+            style={inp}
+            value={f.addOns}
+            onChange={(e) => set("addOns", e.target.value)}
+            placeholder="Zero Dep, Engine Protect, RSA, RTI"
+          />
+        </Field>
+      </div>
+
+      <Field label="Policy Remarks & Endorsements">
         <textarea
           style={{ ...inp, height: 60, resize: "vertical" }}
           value={f.notes}
           onChange={(e) => set("notes", e.target.value)}
-          placeholder="Includes Zero Depreciation, Engine Protect, Roadside Assistance, RTI..."
+          placeholder="Includes NCB 50%, electrical accessories endorsed, personal accident cover..."
         />
       </Field>
     </Modal>
@@ -2006,8 +2431,8 @@ function VehicleCard({
   const ownerProfile = familyProfiles.find((p) => p.id === (vehicle.owner || "self"));
   const ownerName = ownerProfile ? formatProfileOption(ownerProfile) : vehicle.owner || "Self";
 
-  const sh: any[] = vehicle.serviceHistory || [];
-  const ih: any[] = vehicle.insuranceHistory || [];
+  const sh: any[] = useMemo(() => vehicle.serviceHistory || [], [vehicle.serviceHistory]);
+  const ih: any[] = useMemo(() => vehicle.insuranceHistory || [], [vehicle.insuranceHistory]);
 
   const totalInsurancePremium = ih.reduce(
     (s: number, r: any) => s + Number(r.totalPremium || 0),
@@ -2509,6 +2934,18 @@ function VehicleCard({
                   },
                   { label: "Fuel Type", value: fuelMeta.label, icon: Fuel, color: fuelMeta.color },
                   {
+                    label: "Transmission",
+                    value: TRANSMISSION_TYPES[vehicle.transmission] || vehicle.transmission || (vehicle.fuelType === "electric" ? "Single-Speed EV" : "Manual"),
+                    icon: Cog,
+                    color: THEME.gold,
+                  },
+                  {
+                    label: "Seating Capacity",
+                    value: vehicle.seatingCapacity ? `${vehicle.seatingCapacity}` : (vehicle.vehicleType === "two-wheeler" ? "2 Seater" : "5 Seater"),
+                    icon: User,
+                    color: THEME.cyan,
+                  },
+                  {
                     label: "Manufacturing Year",
                     value: vehicle.year || "—",
                     icon: Calendar,
@@ -2546,10 +2983,56 @@ function VehicleCard({
                     color: THEME.cyan,
                   },
                   {
-                    label: "Hypothecation / Financed",
-                    value: vehicle.financier || "Unencumbered",
+                    label: "Fuel / Battery Capacity",
+                    value: vehicle.fuelCapacity ? String(vehicle.fuelCapacity) : (vehicle.fuelType === "electric" ? "3.7 kWh" : "50 L"),
+                    icon: Fuel,
+                    color: fuelMeta.color,
+                  },
+                  {
+                    label: "Certified Fuel Economy",
+                    value: vehicle.fuelEfficiency ? String(vehicle.fuelEfficiency) : (vehicle.fuelType === "electric" ? "7.5 km/kWh" : "18.5 km/l"),
+                    icon: Zap,
+                    color: THEME.gold,
+                  },
+                  {
+                    label: "PUC Certificate #",
+                    value: vehicle.pucNumber ? `#${vehicle.pucNumber}` : (vehicle.fuelType === "electric" ? "Exempt (EV)" : "Active"),
+                    icon: ShieldCheck,
+                    color: THEME.cyan,
+                  },
+                  {
+                    label: "Warranty & Protection",
+                    value: vehicle.extendedWarrantyExpiry
+                      ? `Ext: till ${fmtDate(vehicle.extendedWarrantyExpiry)}`
+                      : vehicle.warrantyExpiry
+                        ? `Mfr: till ${fmtDate(vehicle.warrantyExpiry)}`
+                        : "Standard Warranty",
+                    icon: Award,
+                    color: THEME.sage,
+                  },
+                  {
+                    label: "Hypothecation & EMI",
+                    value: Number(vehicle.loanOutstanding || 0) > 0
+                      ? `${vehicle.financier || "Financed"} • EMI: ₹${Number(vehicle.loanEmi || 0).toLocaleString("en-IN")}`
+                      : (vehicle.financier || "Unencumbered"),
                     icon: Landmark,
-                    color: vehicle.financier && !vehicle.financier.toLowerCase().includes("unencumbered") && !vehicle.financier.toLowerCase().includes("none") ? THEME.gold : THEME.sage,
+                    color: Number(vehicle.loanOutstanding || 0) > 0 ? THEME.gold : THEME.sage,
+                  },
+                  {
+                    label: "FASTag Electronic Toll",
+                    value: vehicle.fastagProvider
+                      ? `${vehicle.fastagProvider}${Number(vehicle.fastagBalance || 0) > 0 ? ` (₹${Number(vehicle.fastagBalance).toLocaleString("en-IN")})` : ""}`
+                      : (vehicle.fastagId ? `#${vehicle.fastagId}` : "Not Configured"),
+                    icon: CreditCard,
+                    color: THEME.accent,
+                  },
+                  {
+                    label: "24x7 Roadside Assistance",
+                    value: vehicle.rsaProvider
+                      ? `${vehicle.rsaProvider}${vehicle.rsaContactNumber ? ` • ${vehicle.rsaContactNumber}` : ""}`
+                      : "Standard Assist",
+                    icon: Phone,
+                    color: THEME.sage,
                   },
                   {
                     label: "Emission Standard",
@@ -2687,6 +3170,24 @@ function VehicleCard({
                       </div>
                     </div>
                   )}
+                  {Number(vehicle.purchaseCgstAmount || 0) + Number(vehicle.purchaseSgstAmount || 0) > 0 && (
+                    <div>
+                      <div style={{ fontSize: 11, color: "var(--t-muted)" }}>CGST + SGST</div>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "var(--text)",
+                          marginTop: 2,
+                        }}
+                      >
+                        <Money
+                          value={Number(vehicle.purchaseCgstAmount || 0) + Number(vehicle.purchaseSgstAmount || 0)}
+                          variant="full"
+                        />
+                      </div>
+                    </div>
+                  )}
                   {Number(vehicle.rtoCharges || 0) > 0 && (
                     <div>
                       <div style={{ fontSize: 11, color: "var(--t-muted)" }}>
@@ -2701,6 +3202,55 @@ function VehicleCard({
                         }}
                       >
                         <Money value={Number(vehicle.rtoCharges)} variant="full" />
+                      </div>
+                    </div>
+                  )}
+                  {Number(vehicle.accessoriesCharges || 0) > 0 && (
+                    <div>
+                      <div style={{ fontSize: 11, color: "var(--t-muted)" }}>
+                        Accessories & Options
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "var(--text)",
+                          marginTop: 2,
+                        }}
+                      >
+                        <Money value={Number(vehicle.accessoriesCharges)} variant="full" />
+                      </div>
+                    </div>
+                  )}
+                  {(vehicle.isFinanced || Number(vehicle.loanAmount || 0) > 0) && (
+                    <div>
+                      <div style={{ fontSize: 11, color: "var(--t-muted)" }}>
+                        Hypothecation ({vehicle.financier || "Financed"})
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "var(--text)",
+                          marginTop: 2,
+                        }}
+                      >
+                        <Money
+                          value={Number(vehicle.loanOutstanding || vehicle.loanAmount || 0)}
+                          variant="full"
+                        />
+                        {Number(vehicle.loanEmi || 0) > 0 && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              color: "var(--t-muted)",
+                              fontWeight: 500,
+                              marginLeft: 4,
+                            }}
+                          >
+                            (EMI: <Money value={Number(vehicle.loanEmi)} />/mo)
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
@@ -2923,7 +3473,66 @@ function VehicleCard({
                                   <span>{rec.serviceCenter}</span>
                                 </span>
                               )}
+                              {rec.invoiceNumber && (
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 3,
+                                    fontFamily: "monospace",
+                                    fontSize: 11,
+                                    color: "var(--t-muted)",
+                                  }}
+                                >
+                                  #{rec.invoiceNumber}
+                                </span>
+                              )}
+                              {rec.invoiceUrl && (
+                                <a
+                                  href={rec.invoiceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 3,
+                                    color: THEME.accent,
+                                    fontSize: 11,
+                                    textDecoration: "none",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  <Eye size={11} /> Invoice <ArrowUpRight size={10} />
+                                </a>
+                              )}
                             </div>
+                            {rec.partsReplaced && rec.partsReplaced.length > 0 && (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: 5,
+                                  flexWrap: "wrap",
+                                  marginTop: 6,
+                                }}
+                              >
+                                {rec.partsReplaced.map((part: string, pIdx: number) => (
+                                  <span
+                                    key={pIdx}
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      padding: "1px 6px",
+                                      borderRadius: 4,
+                                      background: "var(--surface-0)",
+                                      border: "1px solid var(--t-line)",
+                                      color: "var(--text)",
+                                    }}
+                                  >
+                                    {part}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {rec.notes && (
                               <div
                                 style={{
@@ -3126,7 +3735,57 @@ function VehicleCard({
                               {rec.policyNumber && (
                                 <span style={{ fontFamily: "monospace" }}>#{rec.policyNumber}</span>
                               )}
+                              {Number(rec.idv || 0) > 0 && (
+                                <span style={{ color: "var(--text)", fontWeight: 700 }}>
+                                  IDV: <Money value={Number(rec.idv)} />
+                                </span>
+                              )}
+                              {rec.policyDocUrl && (
+                                <a
+                                  href={rec.policyDocUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 3,
+                                    color: THEME.accent,
+                                    fontSize: 11,
+                                    textDecoration: "none",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  <Eye size={11} /> Policy Doc <ArrowUpRight size={10} />
+                                </a>
+                              )}
                             </div>
+                            {rec.addOns && rec.addOns.length > 0 && (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: 5,
+                                  flexWrap: "wrap",
+                                  marginTop: 6,
+                                }}
+                              >
+                                {rec.addOns.map((addon: string, aIdx: number) => (
+                                  <span
+                                    key={aIdx}
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      padding: "1px 6px",
+                                      borderRadius: 4,
+                                      background: `color-mix(in srgb, ${THEME.sage} 12%, var(--surface-0))`,
+                                      border: `1px solid color-mix(in srgb, ${THEME.sage} 25%, transparent)`,
+                                      color: THEME.sage,
+                                    }}
+                                  >
+                                    {addon}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {rec.notes && (
                               <div
                                 style={{
@@ -3211,21 +3870,59 @@ function VehicleCard({
                     url: vehicle.rcDocumentUrl,
                     icon: Hash,
                     color: THEME.accent,
-                    desc: "Smart card / Digital copy of vehicle registration",
+                    desc: vehicle.registrationNumber
+                      ? `Reg #${vehicle.registrationNumber} • Official smart card copy`
+                      : "Smart card / Digital copy of vehicle registration",
                   },
                   {
                     title: "Insurance Policy Schedule",
                     url: vehicle.insurancePolicyUrl,
-                    icon: Shield,
+                    icon: ShieldCheck,
                     color: THEME.sage,
-                    desc: "Comprehensive active policy document",
+                    desc: vehicle.insuranceExpiry
+                      ? `Active policy cover • Valid till ${fmtDate(vehicle.insuranceExpiry)}`
+                      : "Comprehensive active policy document",
                   },
                   {
                     title: "Pollution Under Control (PUC)",
                     url: vehicle.pucCertificateUrl,
                     icon: Activity,
                     color: THEME.cyan,
-                    desc: "Emission testing certificate",
+                    desc: vehicle.pucNumber
+                      ? `Certificate #${vehicle.pucNumber} • Exp: ${vehicle.pucExpiry ? fmtDate(vehicle.pucExpiry) : "Active"}`
+                      : "Emission testing certificate",
+                  },
+                  {
+                    title: "Purchase & Tax Invoice",
+                    url: vehicle.taxInvoiceUrl,
+                    icon: FileText,
+                    color: THEME.gold,
+                    desc: vehicle.purchasePrice
+                      ? `Dealer commercial bill • Total: ₹${Number(vehicle.purchasePrice).toLocaleString("en-IN")}`
+                      : "Original showroom commercial invoice & tax receipt",
+                  },
+                  {
+                    title: "Roadside Assistance (RSA)",
+                    url: vehicle.rsaContactNumber
+                      ? `tel:${vehicle.rsaContactNumber.replace(/[^0-9+]/g, "")}`
+                      : undefined,
+                    isCall: !!vehicle.rsaContactNumber,
+                    icon: Award,
+                    color: THEME.violet,
+                    desc: vehicle.rsaProvider
+                      ? `${vehicle.rsaProvider} • Helpline: ${vehicle.rsaContactNumber || "24x7 Emergency"}`
+                      : "24x7 Roadside emergency assistance helpline",
+                  },
+                  {
+                    title: "FASTag Electronic Toll",
+                    url: vehicle.fastagId
+                      ? "https://www.npci.org.in/what-we-do/netc-fastag/check-fastag-status"
+                      : undefined,
+                    icon: CreditCard,
+                    color: THEME.teal,
+                    desc: vehicle.fastagProvider
+                      ? `${vehicle.fastagProvider} • Tag: ${vehicle.fastagId} • ₹${Number(vehicle.fastagBalance || 0).toLocaleString("en-IN")} balance`
+                      : "National electronic toll collection RFID pass",
                   },
                 ].map((doc, idx) => (
                   <div
@@ -3269,8 +3966,8 @@ function VehicleCard({
                     {doc.url ? (
                       <a
                         href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target={doc.isCall ? undefined : "_blank"}
+                        rel={doc.isCall ? undefined : "noopener noreferrer"}
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -3286,7 +3983,15 @@ function VehicleCard({
                           textDecoration: "none",
                         }}
                       >
-                        <Eye size={13} /> View Document <ArrowUpRight size={13} />
+                        {doc.isCall ? (
+                          <>
+                            <Phone size={13} /> Call Helpline <ArrowUpRight size={13} />
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={13} /> View Document <ArrowUpRight size={13} />
+                          </>
+                        )}
                       </a>
                     ) : (
                       <button
@@ -3303,7 +4008,7 @@ function VehicleCard({
                           cursor: "pointer",
                         }}
                       >
-                        + Attach Link via Edit
+                        + Configure via Edit
                       </button>
                     )}
                   </div>
@@ -3473,7 +4178,10 @@ function VehicleCard({
                               tickFormatter={(v) => (privacyMode ? "••••" : `₹${v}`)}
                             />
                             <Tooltip
-                              formatter={(v: any) => [<Money value={v} variant="full" />, "Spend"]}
+                              formatter={(v: any) => [
+                                <Money key="spend-val" value={v} variant="full" />,
+                                "Spend",
+                              ]}
                             />
                             <Bar dataKey="amount" fill={THEME.accent} radius={[4, 4, 0, 0]} />
                           </BarChart>
@@ -5067,7 +5775,10 @@ export function VehiclesTab({ state, addItem, removeItem, updateItem, showToast 
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(val: any) => [<Money value={val} variant="full" />, "Value"]}
+                      formatter={(val: any) => [
+                        <Money key="fleet-val" value={val} variant="full" />,
+                        "Value",
+                      ]}
                     />
                   </PieChart>
                 </ResponsiveContainer>

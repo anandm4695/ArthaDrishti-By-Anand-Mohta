@@ -271,7 +271,7 @@ export function generateVehicleSvgString(opts: VehicleSvgOptions): string {
   const isAther = effMake.includes("ather") || effModel.includes("450") || effModel.includes("rizta");
   const isOla = effMake.includes("ola") || effModel.includes("s1");
 
-  let bodyContent = "";
+  let bodyContent: string;
 
   if (bodyStyle === "suv") {
     bodyContent = `

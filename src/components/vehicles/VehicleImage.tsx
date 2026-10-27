@@ -5,10 +5,9 @@ import { VehicleMakeLogo } from "../ui/BrandLogos";
 import {
   detectVehicleBodyStyle,
   findMatchingVehiclePreset,
-  VehicleBodyStyle,
 } from "../../utils/vehicleAssets";
 import { resolveVehicleColor } from "../tabs/VehiclesTab";
-import { Eye, Sparkles } from "lucide-react";
+import { Eye } from "lucide-react";
 
 export interface VehicleImageProps {
   vehicle?: any;
@@ -123,8 +122,6 @@ export function VehicleImage({
       setLightboxOpen(true);
     }
   };
-
-  const isRealPhoto = Boolean(displaySrc && !imageError);
 
   return (
     <>

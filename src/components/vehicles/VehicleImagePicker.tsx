@@ -6,20 +6,16 @@ import {
   Link as LinkIcon,
   Check,
   Trash2,
-  Car,
   AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 import {
   CURATED_VEHICLE_PRESETS,
   CuratedVehiclePreset,
-  VehicleBodyStyle,
   compressVehiclePhotoFile,
   findMatchingVehiclePreset,
 } from "../../utils/vehicleAssets";
 import { VehicleImage } from "./VehicleImage";
 import { Button } from "../ui/Button";
-import { Field } from "../ui/Form";
 import { THEME } from "../../utils/constants";
 
 export interface VehicleImagePickerProps {
