@@ -8,7 +8,15 @@ import {
   InsuranceModal,
   resolveVehicleColor,
   PRESET_VEHICLE_COLORS,
+  VehicleImage,
+  VehicleImagePicker,
+  VehicleStudioIllustration,
+  CURATED_VEHICLE_PRESETS,
+  detectVehicleBodyStyle,
+  findMatchingVehiclePreset,
+  normalizeVehicle,
 } from "../components/tabs/VehiclesTab";
+import { generateVehicleSvgDataUrl } from "../utils/vehicleAssets";
 import { MasterDataContext, DEFAULT_MASTER_DATA } from "../utils/masterData";
 import { PrivacyProvider } from "../context/PrivacyContext";
 
@@ -265,4 +273,210 @@ describe("VehiclesTab Component", () => {
     expect(logoHtml).toContain("img");
     expect(logoHtml).toContain("TATAMOTORS");
   });
+
+  it("renders VehicleImage with custom photo, preset matching, and studio fallback", () => {
+    // 1. Custom uploaded photo
+    const customPhotoHtml = renderToString(
+      <VehicleImage
+        photoUrl="https://example.com/my-creta.jpg"
+        make="Hyundai"
+        model="Creta"
+        size="md"
+        showBrandBadge={true}
+      />
+    );
+    expect(customPhotoHtml).toContain("https://example.com/my-creta.jpg");
+    expect(customPhotoHtml).toContain("img");
+
+    // 2. Curated model preset match (e.g. Tata Nexon EV)
+    const presetHtml = renderToString(
+      <VehicleImage
+        make="Tata"
+        model="Nexon EV"
+        vehicleType="four-wheeler"
+        color="Daytona Grey"
+        size="md"
+        showBrandBadge={true}
+      />
+    );
+    expect(presetHtml).toContain("img");
+
+    // 3. Studio SVG illustration fallback with metallic paint color
+    const svgFallbackHtml = renderToString(
+      <VehicleImage
+        make="UnknownMake"
+        model="CustomProto"
+        color="Crimson Red"
+        vehicleType="four-wheeler"
+        size="md"
+      />
+    );
+    expect(svgFallbackHtml).toContain("svg");
+    expect(svgFallbackHtml).toContain("#dc2626"); // Crimson Red hex
+  });
+
+  it("renders VehicleStudioIllustration for various vehicle body styles and paint colors", () => {
+    // SUV
+    const suvHtml = renderToString(
+      <VehicleStudioIllustration bodyStyle="suv" color="Arctic White" />
+    );
+    expect(suvHtml).toContain("svg");
+    expect(suvHtml).toContain("#f8fafc");
+
+    // Sedan
+    const sedanHtml = renderToString(
+      <VehicleStudioIllustration bodyStyle="sedan" color="Royal Blue" />
+    );
+    expect(sedanHtml).toContain("svg");
+    expect(sedanHtml).toContain("#1d4ed8");
+
+    // Cruiser motorcycle
+    const cruiserHtml = renderToString(
+      <VehicleStudioIllustration bodyStyle="cruiser" color="Dapper Ash" />
+    );
+    expect(cruiserHtml).toContain("svg");
+    expect(cruiserHtml).toContain("#64748b");
+
+    // EV Scooter
+    const scooterHtml = renderToString(
+      <VehicleStudioIllustration bodyStyle="scooter" color="Space Grey" isElectric={true} />
+    );
+    expect(scooterHtml).toContain("svg");
+    expect(scooterHtml).toContain("#06b6d4"); // Electric cyan accent
+  });
+
+  it("accurately detects vehicle body styles from name, model, and category", () => {
+    expect(detectVehicleBodyStyle("Hyundai", "Creta", "four-wheeler")).toBe("suv");
+    expect(detectVehicleBodyStyle("Honda", "City", "four-wheeler")).toBe("sedan");
+    expect(detectVehicleBodyStyle("Maruti Suzuki", "Swift", "four-wheeler")).toBe("hatchback");
+    expect(detectVehicleBodyStyle("Royal Enfield", "Hunter 350", "two-wheeler")).toBe("cruiser");
+    expect(detectVehicleBodyStyle("Ather Energy", "450X Gen 3", "two-wheeler")).toBe("scooter");
+    expect(detectVehicleBodyStyle("KTM", "390 Duke", "two-wheeler")).toBe("sportsbike");
+    expect(detectVehicleBodyStyle("Tata", "Ace EV", "commercial")).toBe("commercial");
+  });
+
+  it("matches curated vehicle presets from make and model query with strict discrimination", () => {
+    // Exact or distinctive model matches
+    const creta = findMatchingVehiclePreset("Hyundai", "Creta");
+    expect(creta).toBeTruthy();
+    expect(creta?.id).toBe("hyundai-creta");
+    expect(creta?.imageUrl).toBeTruthy();
+
+    const nexon = findMatchingVehiclePreset("Tata", "Nexon EV");
+    expect(nexon).toBeTruthy();
+    expect(nexon?.id).toBe("tata-nexon-ev");
+
+    const ather = findMatchingVehiclePreset("Ather Energy", "450X");
+    expect(ather).toBeTruthy();
+    expect(ather?.id).toBe("ather-450x");
+
+    const thar = findMatchingVehiclePreset("Mahindra", "Thar");
+    expect(thar).toBeTruthy();
+    expect(thar?.id).toBe("mahindra-thar");
+
+    const swift = findMatchingVehiclePreset("Maruti Suzuki", "Swift");
+    expect(swift).toBeTruthy();
+    expect(swift?.id).toBe("maruti-swift");
+
+    const hunter = findMatchingVehiclePreset("Royal Enfield", "Hunter 350");
+    expect(hunter).toBeTruthy();
+    expect(hunter?.id).toBe("royal-enfield-hunter-350");
+
+    // Strict discrimination: prevent make-only hijacking!
+    expect(findMatchingVehiclePreset("Tata", "Tiago")).toBeNull();
+    expect(findMatchingVehiclePreset("Tata", "Punch")).toBeNull();
+    expect(findMatchingVehiclePreset("Tata", "")).toBeNull();
+    expect(findMatchingVehiclePreset("Hyundai", "")).toBeNull();
+    expect(findMatchingVehiclePreset("Maruti Suzuki", "WagonR")).toBeNull();
+    expect(findMatchingVehiclePreset("Hyundai", "Venue")).toBeNull();
+
+    expect(CURATED_VEHICLE_PRESETS.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("normalizes legacy vehicle records and multi-word brand names accurately", () => {
+    // Multi-word make: Maruti Suzuki
+    const v1 = normalizeVehicle({ name: "Maruti Suzuki Swift VXi 2021" });
+    expect(v1.make).toBe("Maruti Suzuki");
+    expect(v1.model).toBe("Swift VXi 2021");
+
+    // Multi-word make: Royal Enfield
+    const v2 = normalizeVehicle({ name: "Royal Enfield Hunter 350 Dapper Ash" });
+    expect(v2.make).toBe("Royal Enfield");
+    expect(v2.model).toBe("Hunter 350 Dapper Ash");
+
+    // Multi-word make: Ather Energy
+    const v3 = normalizeVehicle({ name: "Ather Energy 450X Gen 3" });
+    expect(v3.make).toBe("Ather Energy");
+    expect(v3.model).toBe("450X Gen 3");
+
+    // Multi-word make: Mercedes-Benz
+    const v4 = normalizeVehicle({ name: "Mercedes-Benz C-Class 220d" });
+    expect(v4.make).toBe("Mercedes-Benz");
+    expect(v4.model).toBe("C-Class 220d");
+
+    // Single-word make: Hyundai
+    const v5 = normalizeVehicle({ name: "Hyundai Creta SX (O) 1.5 Turbo" });
+    expect(v5.make).toBe("Hyundai");
+    expect(v5.model).toBe("Creta SX (O) 1.5 Turbo");
+
+    // Already normalized vehicle
+    const v6 = normalizeVehicle({ make: "Tata", model: "Nexon EV", name: "Tata Nexon EV" });
+    expect(v6.make).toBe("Tata");
+    expect(v6.model).toBe("Nexon EV");
+    expect(v6.name).toBe("Tata Nexon EV");
+  });
+
+  it("renders model-specific styling cues in VehicleStudioIllustration", () => {
+    // 1. Thar tailgate mounted spare wheel
+    const tharHtml = renderToString(
+      <VehicleStudioIllustration bodyStyle="suv" make="Mahindra" model="Thar" color="Crimson Red" />
+    );
+    expect(tharHtml).toContain("transform=\"translate(24, 116)\"");
+    expect(tharHtml).toContain("r=\"19\"");
+
+    // 2. Ather smart interactive ring and mono-shock accent
+    const atherHtml = renderToString(
+      <VehicleStudioIllustration bodyStyle="scooter" make="Ather Energy" model="450X" color="Space Grey" isElectric={true} />
+    );
+    expect(atherHtml).toContain("#06b6d4"); // Cyan smart ring
+
+    // 3. Ola twin spherical projector headlamps
+    const olaHtml = renderToString(
+      <VehicleStudioIllustration bodyStyle="scooter" make="Ola Electric" model="S1 Pro" color="Porcelain White" isElectric={true} />
+    );
+    expect(olaHtml).toContain("circle cx=\"230\" cy=\"94\"");
+    expect(olaHtml).toContain("circle cx=\"241\" cy=\"94\"");
+  });
+
+  it("generates valid vector SVG data URLs without network dependency", () => {
+    const dataUrl = generateVehicleSvgDataUrl({
+      bodyStyle: "suv",
+      make: "Hyundai",
+      model: "Creta",
+      color: "Arctic White",
+    });
+    expect(dataUrl.startsWith("data:image/svg+xml;charset=utf-8,")).toBe(true);
+    expect(dataUrl).toContain("%3Csvg");
+    expect(dataUrl).toContain("%3C%2Fsvg%3E");
+  });
+
+  it("renders VehicleImagePicker with gallery, upload, and web URL tabs", () => {
+    const html = renderToString(
+      <VehicleImagePicker
+        photoUrl=""
+        make="Hyundai"
+        model="Creta"
+        color="Arctic White"
+        onChange={() => {}}
+      />
+    );
+
+    expect(html).toContain("Vehicle Photo &amp; Avatar");
+    expect(html).toContain("Garage Gallery");
+    expect(html).toContain("Upload Photo");
+    expect(html).toContain("Web Image Link");
+    expect(html).toContain("Suggested Photo:");
+    expect(html).toContain("Hyundai Creta");
+  });
 });
+

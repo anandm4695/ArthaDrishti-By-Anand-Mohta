@@ -74,6 +74,28 @@ import {
   InsurerLogo,
   ServiceLogo,
 } from "../ui/BrandLogos";
+import { VehicleImage } from "../vehicles/VehicleImage";
+import { VehicleImagePicker } from "../vehicles/VehicleImagePicker";
+import { VehicleStudioIllustration } from "../vehicles/VehicleStudioIllustration";
+import { VehicleLightboxModal } from "../vehicles/VehicleLightboxModal";
+import {
+  CURATED_VEHICLE_PRESETS,
+  detectVehicleBodyStyle,
+  findMatchingVehiclePreset,
+  resolveVehicleColor,
+  PRESET_VEHICLE_COLORS,
+  VEHICLE_MAKE_THEMES,
+  getMakeTheme,
+  type VehicleColorInfo,
+} from "../../utils/vehicleAssets";
+
+export {
+  resolveVehicleColor,
+  PRESET_VEHICLE_COLORS,
+  VEHICLE_MAKE_THEMES,
+  getMakeTheme,
+  type VehicleColorInfo,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Brand Domains & Visual Themes (35+ Indian & Global Automakers)
@@ -128,70 +150,6 @@ const VEHICLE_MAKE_DOMAINS: Record<string, string> = {
   jaguar: "jaguar.com",
   "land rover": "landrover.com",
 };
-
-const VEHICLE_MAKE_THEMES: Record<string, { gradient: string; color: string }> = {
-  honda: { gradient: "linear-gradient(135deg,#cc0000 0%,#ff4444 100%)", color: "#cc0000" },
-  yamaha: { gradient: "linear-gradient(135deg,#0049cc 0%,#4488ff 100%)", color: "#0049cc" },
-  suzuki: { gradient: "linear-gradient(135deg,#1a1a7c 0%,#4444cc 100%)", color: "#1a1a7c" },
-  hero: { gradient: "linear-gradient(135deg,#002868 0%,#2255aa 100%)", color: "#002868" },
-  bajaj: { gradient: "linear-gradient(135deg,#1a2b6b 0%,#3355aa 100%)", color: "#1a2b6b" },
-  tvs: { gradient: "linear-gradient(135deg,#e31e26 0%,#ff5555 100%)", color: "#e31e26" },
-  royalenfield: { gradient: "linear-gradient(135deg,#5a3e28 0%,#8b6347 100%)", color: "#5a3e28" },
-  "royal enfield": {
-    gradient: "linear-gradient(135deg,#5a3e28 0%,#8b6347 100%)",
-    color: "#5a3e28",
-  },
-  ktm: { gradient: "linear-gradient(135deg,#ff6600 0%,#ff9944 100%)", color: "#ff6600" },
-  kawasaki: { gradient: "linear-gradient(135deg,#00a651 0%,#33cc77 100%)", color: "#00a651" },
-  maruti: { gradient: "linear-gradient(135deg,#003087 0%,#1155bb 100%)", color: "#003087" },
-  "maruti suzuki": {
-    gradient: "linear-gradient(135deg,#003087 0%,#1155bb 100%)",
-    color: "#003087",
-  },
-  hyundai: { gradient: "linear-gradient(135deg,#002c5f 0%,#1155aa 100%)", color: "#002c5f" },
-  tata: { gradient: "linear-gradient(135deg,#1d2671 0%,#3355bb 100%)", color: "#1d2671" },
-  "tata motors": { gradient: "linear-gradient(135deg,#1d2671 0%,#3355bb 100%)", color: "#1d2671" },
-  toyota: { gradient: "linear-gradient(135deg,#eb0a1e 0%,#ff4455 100%)", color: "#eb0a1e" },
-  ford: { gradient: "linear-gradient(135deg,#003478 0%,#1155cc 100%)", color: "#003478" },
-  mahindra: { gradient: "linear-gradient(135deg,#e31837 0%,#ff4466 100%)", color: "#e31837" },
-  kia: { gradient: "linear-gradient(135deg,#ea0029 0%,#ff3355 100%)", color: "#ea0029" },
-  mg: { gradient: "linear-gradient(135deg,#c41230 0%,#ee3355 100%)", color: "#c41230" },
-  "mg motor": { gradient: "linear-gradient(135deg,#c41230 0%,#ee3355 100%)", color: "#c41230" },
-  bmw: { gradient: "linear-gradient(135deg,#1c69d4 0%,#4488ff 100%)", color: "#1c69d4" },
-  mercedes: { gradient: "linear-gradient(135deg,#444444 0%,#888888 100%)", color: "#555555" },
-  "mercedes-benz": {
-    gradient: "linear-gradient(135deg,#444444 0%,#888888 100%)",
-    color: "#555555",
-  },
-  audi: { gradient: "linear-gradient(135deg,#bb0a30 0%,#ee3355 100%)", color: "#bb0a30" },
-  volkswagen: { gradient: "linear-gradient(135deg,#001e50 0%,#003399 100%)", color: "#001e50" },
-  vw: { gradient: "linear-gradient(135deg,#001e50 0%,#003399 100%)", color: "#001e50" },
-  skoda: { gradient: "linear-gradient(135deg,#4ba82e 0%,#6dcc44 100%)", color: "#4ba82e" },
-  nissan: { gradient: "linear-gradient(135deg,#c3002f 0%,#ee3355 100%)", color: "#c3002f" },
-  renault: { gradient: "linear-gradient(135deg,#c8b700 0%,#eecc00 100%)", color: "#c8b700" },
-  jeep: { gradient: "linear-gradient(135deg,#1f4e2b 0%,#2e7a40 100%)", color: "#1f4e2b" },
-  ola: { gradient: "linear-gradient(135deg,#4c00c8 0%,#8844ff 100%)", color: "#4c00c8" },
-  ather: { gradient: "linear-gradient(135deg,#00b4aa 0%,#33ddcc 100%)", color: "#00b4aa" },
-  harley: { gradient: "linear-gradient(135deg,#cc4400 0%,#ff7722 100%)", color: "#cc4400" },
-  ducati: { gradient: "linear-gradient(135deg,#cc0000 0%,#ff3333 100%)", color: "#cc0000" },
-};
-
-function getMakeKey(make: string): string {
-  return (make || "").toLowerCase().replace(/[\s\-_.]+/g, "");
-}
-
-function getMakeTheme(make: string) {
-  const key = getMakeKey(make);
-  for (const [k, v] of Object.entries(VEHICLE_MAKE_THEMES)) {
-    if (key === getMakeKey(k) || key.startsWith(getMakeKey(k))) return v;
-  }
-  const hue =
-    Array.from(make || "?").reduce((h, c) => (h * 31 + c.charCodeAt(0)) & 0xffff, 0) % 360;
-  return {
-    gradient: `linear-gradient(135deg,hsl(${hue},60%,42%) 0%,hsl(${hue},75%,60%) 100%)`,
-    color: `hsl(${hue},60%,42%)`,
-  };
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Indian High-Security Registration Plate (HSRP) Badge Component
@@ -337,140 +295,61 @@ export function VehicleMakeLogo({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dynamic Vehicle Color & Visual Illustration Engine
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface VehicleColorInfo {
-  hex: string;
-  highlight: string;
-  shadow: string;
-  rimColor: string;
-  isLight: boolean;
-  label: string;
-}
-
-export const PRESET_VEHICLE_COLORS = [
-  { name: "Daytona Grey", hex: "#475569" },
-  { name: "Arctic White", hex: "#f8fafc" },
-  { name: "Onyx Black", hex: "#18181b" },
-  { name: "Royal Blue", hex: "#1d4ed8" },
-  { name: "Crimson Red", hex: "#dc2626" },
-  { name: "Racing Green", hex: "#15803d" },
-  { name: "Sunburst Gold", hex: "#d97706" },
-  { name: "Sunset Orange", hex: "#ea580c" },
-  { name: "Dapper Ash", hex: "#64748b" },
-];
-
-const VEHICLE_COLOR_MAP: Record<string, string> = {
-  // Greys / Silvers
-  "daytona grey": "#475569",
-  "dapper ash": "#64748b",
-  "nardo grey": "#6b7280",
-  graphite: "#374151",
-  charcoal: "#334155",
-  gunmetal: "#4b5563",
-  silver: "#94a3b8",
-  titanium: "#64748b",
-  grey: "#64748b",
-  gray: "#64748b",
-  slate: "#475569",
-  // Whites
-  "arctic white": "#f8fafc",
-  "pearl white": "#f1f5f9",
-  "pristine white": "#fafafa",
-  white: "#f8fafc",
-  ivory: "#fef3c7",
-  "glacier white": "#f8fafc",
-  // Blacks
-  "onyx black": "#18181b",
-  "phantom black": "#111827",
-  "matte black": "#1c1917",
-  "midnight black": "#09090b",
-  black: "#18181b",
-  carbon: "#18181b",
-  obsidian: "#0f172a",
-  // Reds
-  "crimson red": "#dc2626",
-  "racing red": "#ef4444",
-  cherry: "#be123c",
-  ruby: "#9f1239",
-  garnet: "#881337",
-  red: "#dc2626",
-  maroon: "#7f1d1d",
-  scarlet: "#e11d48",
-  // Blues
-  "royal blue": "#1d4ed8",
-  "deep ocean blue": "#1e40af",
-  "navy blue": "#1e3a8a",
-  "midnight blue": "#172554",
-  "electric blue": "#0284c7",
-  "tata blue": "#0369a1",
-  blue: "#2563eb",
-  teal: "#0d9488",
-  cyan: "#0891b2",
-  "sky blue": "#38bdf8",
-  // Greens
-  "racing green": "#15803d",
-  "british racing green": "#14532d",
-  emerald: "#059669",
-  "forest green": "#166534",
-  green: "#16a34a",
-  olive: "#65a30d",
-  sage: "#4d7c0f",
-  // Yellows & Golds
-  "sunburst gold": "#d97706",
-  "champagne gold": "#eab308",
-  gold: "#ca8a04",
-  yellow: "#eab308",
-  "canary yellow": "#facc15",
-  bronze: "#92400e",
-  copper: "#b45309",
-  // Oranges
-  "sunset orange": "#ea580c",
+export {
+  VehicleImage,
+  VehicleImagePicker,
+  VehicleStudioIllustration,
+  VehicleLightboxModal,
+  CURATED_VEHICLE_PRESETS,
+  detectVehicleBodyStyle,
+  findMatchingVehiclePreset,
 };
 
-export function resolveVehicleColor(colorStr?: string, fallbackMake?: string): VehicleColorInfo {
-  const norm = (colorStr || "").trim().toLowerCase();
-  let hex = VEHICLE_COLOR_MAP[norm];
+// ─────────────────────────────────────────────────────────────────────────────
+// Vehicle Normalization & State Management
+// ─────────────────────────────────────────────────────────────────────────────
 
-  if (!hex && norm.startsWith("#") && (norm.length === 4 || norm.length === 7)) {
-    hex = norm;
-  }
+/**
+ * Normalizes vehicle object ensuring make, model, and name are properly populated
+ * across legacy data and form submissions.
+ */
+export function normalizeVehicle(v: any): any {
+  if (!v) return v;
+  let make = (v.make || "").trim();
+  let model = (v.model || "").trim();
 
-  if (!hex) {
-    for (const [key, val] of Object.entries(VEHICLE_COLOR_MAP)) {
-      if (norm.includes(key)) {
-        hex = val;
-        break;
-      }
+  if (!make && v.name) {
+    const rawName = v.name.trim();
+    const lowerName = rawName.toLowerCase();
+    if (lowerName.startsWith("maruti suzuki")) {
+      make = "Maruti Suzuki";
+      model = rawName.substring(13).trim();
+    } else if (lowerName.startsWith("royal enfield")) {
+      make = "Royal Enfield";
+      model = rawName.substring(13).trim();
+    } else if (lowerName.startsWith("ather energy")) {
+      make = "Ather Energy";
+      model = rawName.substring(12).trim();
+    } else if (lowerName.startsWith("ola electric")) {
+      make = "Ola Electric";
+      model = rawName.substring(12).trim();
+    } else if (lowerName.startsWith("mercedes-benz") || lowerName.startsWith("mercedes benz")) {
+      make = "Mercedes-Benz";
+      model = rawName.replace(/^mercedes(-benz)?\s*/i, "").trim();
+    } else {
+      const parts = rawName.split(" ");
+      make = parts[0] || "";
+      model = parts.slice(1).join(" ") || "";
     }
   }
 
-  if (!hex && fallbackMake) {
-    hex = getMakeTheme(fallbackMake).color;
-  }
-
-  if (!hex) {
-    hex = "#475569"; // default elegant slate
-  }
-
-  const isLight =
-    hex === "#f8fafc" ||
-    hex === "#f1f5f9" ||
-    hex === "#fafafa" ||
-    hex === "#ffffff" ||
-    hex === "#fef3c7" ||
-    hex === "#eab308" ||
-    hex === "#facc15";
+  const cleanName = v.name || `${make} ${model}`.trim();
 
   return {
-    hex,
-    highlight: isLight ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)",
-    shadow: isLight ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.45)",
-    rimColor: isLight ? "#94a3b8" : "#cbd5e1",
-    isLight,
-    label: colorStr || "Standard Finish",
+    ...v,
+    make,
+    model,
+    name: cleanName,
   };
 }
 
@@ -764,24 +643,48 @@ const EMPTY_VEHICLE = {
 export function VehicleModal({ existing, onClose, onSave, saving = false }: any) {
   const { familyProfiles } = useMasterData();
   const isEdit = !!existing;
+  const normalizedExisting = existing ? normalizeVehicle(existing) : null;
   const [f, setF] = useState<any>(
-    existing
+    normalizedExisting
       ? {
           ...EMPTY_VEHICLE,
-          ...existing,
-          purchasePrice: existing.purchasePrice ?? "",
-          purchaseBasicCost: existing.purchaseBasicCost ?? "",
-          purchaseCgstAmount: existing.purchaseCgstAmount ?? "",
-          purchaseSgstAmount: existing.purchaseSgstAmount ?? "",
-          rtoCharges: existing.rtoCharges ?? "",
-          accessoriesCharges: existing.accessoriesCharges ?? "",
-          currentValue: existing.currentValue ?? "",
-          currentOdometer: existing.currentOdometer ?? "",
+          ...normalizedExisting,
+          purchasePrice: normalizedExisting.purchasePrice ?? "",
+          purchaseBasicCost: normalizedExisting.purchaseBasicCost ?? "",
+          purchaseCgstAmount: normalizedExisting.purchaseCgstAmount ?? "",
+          purchaseSgstAmount: normalizedExisting.purchaseSgstAmount ?? "",
+          rtoCharges: normalizedExisting.rtoCharges ?? "",
+          accessoriesCharges: normalizedExisting.accessoriesCharges ?? "",
+          currentValue: normalizedExisting.currentValue ?? "",
+          currentOdometer: normalizedExisting.currentOdometer ?? "",
         }
       : { ...EMPTY_VEHICLE }
   );
 
   const set = (k: string, v: any) => setF((p: any) => ({ ...p, [k]: v }));
+
+  const handleMakeChange = (newMake: string) => {
+    setF((p: any) => {
+      const wasPreset = CURATED_VEHICLE_PRESETS.some((preset) => preset.imageUrl === p.photoUrl);
+      return {
+        ...p,
+        make: newMake,
+        photoUrl: wasPreset ? "" : p.photoUrl,
+      };
+    });
+  };
+
+  const handleModelChange = (newModel: string) => {
+    setF((p: any) => {
+      const wasPreset = CURATED_VEHICLE_PRESETS.some((preset) => preset.imageUrl === p.photoUrl);
+      return {
+        ...p,
+        model: newModel,
+        photoUrl: wasPreset ? "" : p.photoUrl,
+      };
+    });
+  };
+
   const canSave = f.make.trim() && f.model.trim();
 
   const onRoadTotal =
@@ -793,8 +696,14 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
 
   const handleSave = () => {
     if (!canSave) return;
+    const cleanMake = f.make.trim();
+    const cleanModel = f.model.trim();
     onSave({
       ...f,
+      make: cleanMake,
+      model: cleanModel,
+      name: `${cleanMake} ${cleanModel}`.trim(),
+      photoUrl: f.photoUrl || "",
       purchasePrice: Number(f.purchasePrice) || 0,
       purchaseBasicCost: Number(f.purchaseBasicCost) || 0,
       purchaseCgstAmount: Number(f.purchaseCgstAmount) || 0,
@@ -849,7 +758,16 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           marginBottom: 16,
         }}
       >
-        <VehicleMakeLogo make={f.make || "Vehicle"} size={44} />
+        <VehicleImage
+          photoUrl={f.photoUrl}
+          make={f.make || "Vehicle"}
+          model={f.model || ""}
+          color={f.color}
+          vehicleType={f.vehicleType}
+          fuelType={f.fuelType}
+          size="sm"
+          showBrandBadge
+        />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontWeight: 800, fontSize: 15, color: "var(--text)" }}>
@@ -940,7 +858,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
               <input
                 style={{ ...inp, flex: 1 }}
                 value={f.make}
-                onChange={(e) => set("make", e.target.value)}
+                onChange={(e) => handleMakeChange(e.target.value)}
                 placeholder="e.g. Tata, Hyundai, Royal Enfield"
               />
             </div>
@@ -953,7 +871,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
                 <button
                   key={brand}
                   type="button"
-                  onClick={() => set("make", brand)}
+                  onClick={() => handleMakeChange(brand)}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -986,7 +904,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           <input
             style={inp}
             value={f.model}
-            onChange={(e) => set("model", e.target.value)}
+            onChange={(e) => handleModelChange(e.target.value)}
             placeholder="e.g. Nexon EV, Creta, Classic 350"
           />
         </Field>
@@ -1060,7 +978,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
         </Field>
       </div>
 
-      {/* Group 2: Registration & Identification */}
+      {/* Group 2: Vehicle Visual Recognition & Photo */}
       <div
         style={{
           fontSize: 11,
@@ -1074,7 +992,34 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           paddingTop: 16,
         }}
       >
-        2. Registration & Identification
+        2. Vehicle Visual Recognition & Photo
+      </div>
+
+      <VehicleImagePicker
+        photoUrl={f.photoUrl || ""}
+        make={f.make}
+        model={f.model}
+        color={f.color}
+        vehicleType={f.vehicleType}
+        fuelType={f.fuelType}
+        onChange={(url) => set("photoUrl", url)}
+      />
+
+      {/* Group 3: Registration & Identification */}
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 800,
+          color: "var(--t-muted)",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          marginTop: 20,
+          marginBottom: 10,
+          borderTop: "1px solid var(--t-line)",
+          paddingTop: 16,
+        }}
+      >
+        3. Registration & Identification
       </div>
 
       <Field label="Registration Number (License Plate)">
@@ -1159,7 +1104,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
         </Field>
       </div>
 
-      {/* Group 3: Financials & On-road Cost Breakdown */}
+      {/* Group 4: Financials & On-road Cost Breakdown */}
       <div
         style={{
           fontSize: 11,
@@ -1173,7 +1118,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           paddingTop: 16,
         }}
       >
-        3. Financials & Valuation
+        4. Financials & Valuation
       </div>
 
       <div style={g2}>
@@ -1272,7 +1217,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
         </Field>
       </div>
 
-      {/* Group 4: Compliance & Service Reminders */}
+      {/* Group 5: Compliance & Service Reminders */}
       <div
         style={{
           fontSize: 11,
@@ -1286,7 +1231,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           paddingTop: 16,
         }}
       >
-        4. Compliance & Service Reminders
+        5. Compliance & Service Reminders
       </div>
 
       <div style={g2}>
@@ -1328,7 +1273,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
         </Field>
       </div>
 
-      {/* Group 5: Documents & Custom Media */}
+      {/* Group 6: Documents & Custom Media */}
       <div
         style={{
           fontSize: 11,
@@ -1342,7 +1287,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
           paddingTop: 16,
         }}
       >
-        5. Document Links & Notes
+        6. Document Links & Notes
       </div>
 
       <div style={g3}>
@@ -1879,8 +1824,21 @@ function VehicleCard({
           transition: "background-color 0.2s ease",
         }}
       >
-        {/* Brand Make Logo */}
-        <VehicleMakeLogo make={vehicle.make} size={50} />
+        {/* Vehicle Photo / Avatar with Brand Logo & Color Dot */}
+        <VehicleImage
+          vehicle={vehicle}
+          photoUrl={vehicle.photoUrl}
+          make={vehicle.make}
+          model={vehicle.model}
+          color={vehicle.color}
+          vehicleType={vehicle.vehicleType}
+          fuelType={vehicle.fuelType}
+          size="md"
+          showBrandBadge
+          showColorDot
+          enlargeable
+          onPhotoChange={onEdit}
+        />
 
         {/* Identity & Specs */}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -2136,6 +2094,123 @@ function VehicleCard({
           {/* Sub-Tab 1: Overview & Specs */}
           {activeTab === "overview" && (
             <div style={{ padding: 20 }}>
+              {/* ── Studio Showcase Hero Banner ── */}
+              <div
+                style={{
+                  position: "relative",
+                  borderRadius: "var(--radius-lg, 14px)",
+                  overflow: "hidden",
+                  background:
+                    "radial-gradient(ellipse at 50% 60%, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.98) 100%)",
+                  border: "1px solid var(--t-line, rgba(255,255,255,0.12))",
+                  padding: "16px 20px",
+                  marginBottom: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 16,
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+                }}
+              >
+                {/* Hero Photo / Avatar Frame */}
+                <div
+                  style={{
+                    width: "clamp(200px, 30vw, 280px)",
+                    height: 140,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <VehicleImage
+                    vehicle={vehicle}
+                    photoUrl={vehicle.photoUrl}
+                    make={vehicle.make}
+                    model={vehicle.model}
+                    color={vehicle.color}
+                    vehicleType={vehicle.vehicleType}
+                    fuelType={vehicle.fuelType}
+                    size="full"
+                    enlargeable
+                  />
+                </div>
+
+                {/* Identity Badges & Fast Photo Actions */}
+                <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 20, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.02em" }}>
+                      {vehicle.make} {vehicle.model}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        background: "rgba(255,255,255,0.12)",
+                        color: "#e2e8f0",
+                      }}
+                    >
+                      {vehicle.year}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    {vehicle.registrationNumber && (
+                      <IndianNumberPlate
+                        registrationNumber={vehicle.registrationNumber}
+                        isElectric={vehicle.fuelType === "electric"}
+                        size="sm"
+                      />
+                    )}
+                    {vehicle.color && (() => {
+                      const cInfo = resolveVehicleColor(vehicle.color, vehicle.make);
+                      return (
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#cbd5e1",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            background: "rgba(255,255,255,0.08)",
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              background: cInfo.hex,
+                              border: "1px solid rgba(255,255,255,0.6)",
+                            }}
+                          />
+                          {vehicle.color}
+                        </span>
+                      );
+                    })()}
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
+                    <Button
+                      variant="secondary"
+                      size="xs"
+                      icon={<Pencil size={11} />}
+                      onClick={onEdit}
+                      style={{ fontSize: 11 }}
+                    >
+                      {vehicle.photoUrl ? "Update Vehicle Photo" : "Add Custom Photo"}
+                    </Button>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
+                      Click on vehicle image to expand full-screen
+                    </span>
+                  </div>
+                </div>
+              </div>
               <div
                 style={{
                   display: "grid",
@@ -3501,7 +3576,10 @@ function vehicleUrgencyRank(v: any): number {
 
 export function VehiclesTab({ state, addItem, removeItem, updateItem, showToast }: any) {
   const { familyProfiles } = useMasterData();
-  const vehicles: any[] = state.vehicles || [];
+  const vehicles: any[] = useMemo(
+    () => (state.vehicles || []).map(normalizeVehicle),
+    [state.vehicles]
+  );
 
   const [viewMode, setViewMode] = useState<
     "garage" | "matrix" | "service" | "analytics" | "simulator"
@@ -4137,6 +4215,7 @@ export function VehiclesTab({ state, addItem, removeItem, updateItem, showToast 
                   gap: 6,
                 }}
               >
+                <VehicleImage vehicle={a.vehicle} size="xs" />
                 <strong>
                   {a.vehicle.make} {a.vehicle.model}:
                 </strong>{" "}
@@ -4417,14 +4496,25 @@ export function VehiclesTab({ state, addItem, removeItem, updateItem, showToast 
                       }}
                     >
                       <td style={{ padding: "12px 16px", fontWeight: 800, color: "var(--text)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <VehicleMakeLogo make={v.make} size={32} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <VehicleImage
+                            vehicle={v}
+                            photoUrl={v.photoUrl}
+                            make={v.make}
+                            model={v.model}
+                            color={v.color}
+                            vehicleType={v.vehicleType}
+                            fuelType={v.fuelType}
+                            size="sm"
+                            showBrandBadge
+                            enlargeable
+                          />
                           <div>
                             <div>
                               {v.make} {v.model}
                             </div>
                             <div style={{ fontSize: 11, fontWeight: 500, color: "var(--t-muted)" }}>
-                              {v.year} • {v.color || "Standard"}
+                              {v.year} • {v.color || "Standard Finish"}
                             </div>
                           </div>
                         </div>
@@ -4575,8 +4665,15 @@ export function VehiclesTab({ state, addItem, removeItem, updateItem, showToast 
                       <div
                         style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
                       >
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                          <VehicleLogo make={rec.vehicleName?.split(" ")[0] || "Vehicle"} size={18} borderRadius={4} />
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                          {(() => {
+                            const parentVeh = vehicles.find((v) => v.id === rec.vehicleId);
+                            return parentVeh ? (
+                              <VehicleImage vehicle={parentVeh} size="xs" showBrandBadge />
+                            ) : (
+                              <VehicleLogo make={rec.vehicleName?.split(" ")[0] || "Vehicle"} size={18} borderRadius={4} />
+                            );
+                          })()}
                           <span style={{ fontSize: 12, fontWeight: 800, color: "var(--text)" }}>
                             {rec.vehicleName}
                           </span>

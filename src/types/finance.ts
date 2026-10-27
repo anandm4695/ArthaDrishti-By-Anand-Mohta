@@ -93,7 +93,7 @@ export interface AppState {
   realEstateProperties: any[];
   realEstateDemands: any[];
   realEstatePayments: any[];
-  vehicles: any[];
+  vehicles: Vehicle[];
   dividends: any[];
   documents: any[];
   corporateActions: any[];
@@ -345,4 +345,80 @@ export interface GoalEntity {
   expectedReturnRate?: number | string;
   notes?: string;
 }
+
+// ────────────────────────────────────────────────────────────
+// Digital Garage & Vehicle Fleet Models
+// ────────────────────────────────────────────────────────────
+
+export interface VehicleServiceRecord {
+  id: string;
+  date: string;
+  type: string;
+  description: string;
+  cost: number;
+  odometer?: number;
+  serviceCenter?: string;
+  notes?: string;
+}
+
+export interface VehicleInsuranceRecord {
+  id: string;
+  policyType: string;
+  insurer: string;
+  policyNumber: string;
+  tenure?: string;
+  fromDate?: string;
+  toDate: string;
+  basicCost?: number;
+  cgstAmount?: number;
+  sgstAmount?: number;
+  totalPremium: number;
+  notes?: string;
+}
+
+export interface Vehicle {
+  id?: string;
+  vehicleType: "two-wheeler" | "four-wheeler" | "commercial" | string;
+  make: string;
+  model: string;
+  name?: string; // backwards compatibility
+  year?: number | string;
+  color?: string;
+  fuelType?: "petrol" | "diesel" | "electric" | "cng" | "hybrid" | string;
+  registrationNumber?: string;
+  chassisNumber?: string;
+  engineNumber?: string;
+  cubicCapacity?: string;
+  seatingCapacity?: string;
+  fitnessUpto?: string;
+  financier?: string;
+  insuranceCompany?: string;
+  insurancePolicyNumber?: string;
+  emissionNorms?: string;
+  rto?: string;
+  state?: string;
+  registeredOwner?: string;
+  purchaseDate?: string;
+  purchasePrice?: number;
+  purchaseBasicCost?: number;
+  purchaseCgstAmount?: number;
+  purchaseSgstAmount?: number;
+  rtoCharges?: number;
+  accessoriesCharges?: number;
+  currentValue?: number;
+  currentOdometer?: number;
+  insuranceExpiry?: string;
+  pucExpiry?: string;
+  nextServiceDueDate?: string;
+  nextServiceDueOdometer?: number;
+  photoUrl?: string; // Custom uploaded base64 data URI or web image link
+  rcDocumentUrl?: string;
+  insurancePolicyUrl?: string;
+  pucCertificateUrl?: string;
+  notes?: string;
+  owner?: string;
+  serviceHistory?: VehicleServiceRecord[];
+  insuranceHistory?: VehicleInsuranceRecord[];
+}
+
 
