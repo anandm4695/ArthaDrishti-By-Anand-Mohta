@@ -3729,6 +3729,69 @@ input[type="range"].cxo-slider::-moz-range-thumb:hover {
   }
 }
 
+/* ── Vehicle Modal Executive Studio Layout (Wide Desktop / Tablet Responsive) ── */
+.vehicle-modal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.95fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .vehicle-modal-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+.vehicle-modal-stage-card {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 55%, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 1px solid var(--t-line, rgba(255,255,255,0.12));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 12px 30px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.vehicle-modal-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.vehicle-modal-tab-btn.active {
+  background: color-mix(in srgb, var(--t-accent) 14%, var(--surface-0));
+  border-color: var(--t-accent);
+  color: var(--t-accent);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.vehicle-modal-tab-btn:not(.active) {
+  background: transparent;
+  color: var(--t-muted);
+}
+
+.vehicle-modal-tab-btn:not(.active):hover {
+  background: var(--surface-1);
+  color: var(--text);
+}
+
+
 
 
 

@@ -28,6 +28,8 @@ import {
   Table,
   Sparkles,
   ArrowUpRight,
+  ArrowRight,
+  ArrowLeft,
   Fuel,
   Zap,
   Eye,
@@ -87,6 +89,7 @@ import {
   VEHICLE_MAKE_THEMES,
   getMakeTheme,
   type VehicleColorInfo,
+  type CuratedVehiclePreset,
 } from "../../utils/vehicleAssets";
 
 export {
@@ -694,7 +697,26 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
     });
   };
 
+  const [activeSection, setActiveSection] = useState<"identity" | "specs" | "financials" | "compliance" | "all">("identity");
+
   const canSave = f.make.trim() && f.model.trim();
+
+  const handleSelectPreset = (preset: CuratedVehiclePreset) => {
+    setF((p: any) => ({
+      ...p,
+      photoUrl: preset.imageUrl,
+      make: p.make && p.make !== "Vehicle" ? p.make : preset.make,
+      model: p.model ? p.model : preset.model,
+      color: p.color ? p.color : preset.defaultColor,
+      vehicleType:
+        preset.bodyStyle === "cruiser" || preset.bodyStyle === "sportsbike" || preset.bodyStyle === "scooter"
+          ? "two-wheeler"
+          : preset.bodyStyle === "commercial"
+          ? "commercial"
+          : p.vehicleType || "four-wheeler",
+      fuelType: preset.fuelType || p.fuelType,
+    }));
+  };
 
   const onRoadTotal =
     Number(f.purchaseBasicCost || 0) +
@@ -743,7 +765,7 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
     <Modal
       title={isEdit ? "Edit Vehicle Details" : "Add Vehicle to Garage"}
       onClose={onClose}
-      maxWidth={620}
+      maxWidth={1160}
       footer={
         <ModalActions
           onClose={onClose}
@@ -754,586 +776,833 @@ export function VehicleModal({ existing, onClose, onSave, saving = false }: any)
         />
       }
     >
-      {/* Live Brand Identity & HSRP Preview Banner */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          padding: "12px 16px",
-          borderRadius: "var(--radius-md, 12px)",
-          background: "var(--surface-1, rgba(255,255,255,0.04))",
-          border: "1px solid var(--t-line, var(--border))",
-          marginBottom: 16,
-        }}
-      >
-        <VehicleImage
-          photoUrl={f.photoUrl}
-          make={f.make || "Vehicle"}
-          model={f.model || ""}
-          color={f.color}
-          vehicleType={f.vehicleType}
-          fuelType={f.fuelType}
-          size="sm"
-          showBrandBadge
-        />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontWeight: 800, fontSize: 15, color: "var(--text)" }}>
-              {f.make ? `${f.make} ${f.model || ""}`.trim() : "New Vehicle in Garage"}
-            </span>
-            <span
+      <div className="vehicle-modal-layout">
+        {/* ── LEFT COLUMN: Configuration Workstation & Structured Steps ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Segmented Section Navigation */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: "var(--surface-1, rgba(255,255,255,0.04))",
+              padding: 4,
+              borderRadius: "var(--radius-md, 10px)",
+              border: "1px solid var(--t-line, var(--border))",
+              overflowX: "auto",
+            }}
+          >
+            {[
+              { id: "identity", label: "Identity & Brand", icon: "🚗" },
+              { id: "specs", label: "Registration & Specs", icon: "📋" },
+              { id: "financials", label: "Financials & Value", icon: "💰" },
+              { id: "compliance", label: "Compliance & Docs", icon: "🛡️" },
+              { id: "all", label: "All Fields", icon: "📄" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`vehicle-modal-tab-btn ${activeSection === tab.id ? "active" : ""}`}
+                onClick={() => setActiveSection(tab.id as any)}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Section 1: Identity & Ownership */}
+          {(activeSection === "identity" || activeSection === "all") && (
+            <div
               style={{
-                fontSize: 10,
-                fontWeight: 700,
-                padding: "2px 6px",
-                borderRadius: 4,
-                background: "var(--t-line)",
-                color: "var(--t-muted)",
+                borderRadius: "var(--radius-md, 12px)",
+                border: "1px solid var(--t-line, var(--border))",
+                background: "var(--surface-0, var(--surface))",
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
               }}
             >
-              {f.year || new Date().getFullYear()}
-            </span>
-            {f.registrationNumber && (
-              <IndianNumberPlate
-                registrationNumber={f.registrationNumber}
-                isElectric={f.fuelType === "electric"}
-                size="sm"
-              />
-            )}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
-            {VEHICLE_TYPES[f.vehicleType] || f.vehicleType} • {FUEL_TYPES[f.fuelType]?.label || f.fuelType} • {f.color || "Standard Finish"}
-          </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "var(--t-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span>1. Vehicle Identity & Ownership</span>
+                <span style={{ fontSize: 10, color: "var(--t-accent)" }}>* Required</span>
+              </div>
+
+              <div style={g3}>
+                <Field label="Vehicle Type *">
+                  <select
+                    style={inp}
+                    value={f.vehicleType}
+                    onChange={(e) => set("vehicleType", e.target.value)}
+                  >
+                    {Object.entries(VEHICLE_TYPES).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Fuel Type">
+                  <select style={inp} value={f.fuelType} onChange={(e) => set("fuelType", e.target.value)}>
+                    {Object.entries(FUEL_TYPES).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Owner Profile">
+                  <select
+                    style={inp}
+                    value={f.owner || "self"}
+                    onChange={(e) => set("owner", e.target.value)}
+                  >
+                    {familyProfiles.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {formatProfileOption(p)}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              <div style={g2}>
+                <Field label="Make / Manufacturer *">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <VehicleLogo make={f.make} size={32} />
+                      <input
+                        style={{ ...inp, flex: 1 }}
+                        value={f.make}
+                        onChange={(e) => handleMakeChange(e.target.value)}
+                        placeholder="e.g. Tata, Hyundai, Royal Enfield"
+                      />
+                    </div>
+                    {/* Quick Popular Brand Chips */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginTop: 2 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
+                        Popular:
+                      </span>
+                      {(POPULAR_AUTOMAKERS_BY_TYPE[f.vehicleType] || POPULAR_AUTOMAKERS_BY_TYPE["four-wheeler"]).slice(0, 7).map((brand) => (
+                        <button
+                          key={brand}
+                          type="button"
+                          onClick={() => handleMakeChange(brand)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "2px 7px",
+                            borderRadius: 12,
+                            border:
+                              f.make?.toLowerCase() === brand.toLowerCase()
+                                ? `1.5px solid ${THEME.accent}`
+                                : "1px solid var(--t-line)",
+                            background:
+                              f.make?.toLowerCase() === brand.toLowerCase()
+                                ? `color-mix(in srgb, ${THEME.accent} 12%, var(--surface-0))`
+                                : "var(--surface-0)",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: "var(--text)",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <VehicleLogo make={brand} size={14} borderRadius={2} />
+                          <span>{brand}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </Field>
+                <Field label="Model *">
+                  <input
+                    style={inp}
+                    value={f.model}
+                    onChange={(e) => handleModelChange(e.target.value)}
+                    placeholder="e.g. Nexon EV, Creta, Classic 350"
+                  />
+                </Field>
+              </div>
+
+              <div style={g2}>
+                <Field label="Manufacturing Year">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.year}
+                    onChange={(e) => set("year", e.target.value)}
+                    min={1980}
+                    max={2035}
+                  />
+                </Field>
+                <Field label="Exterior Color">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <input
+                      style={inp}
+                      value={f.color}
+                      onChange={(e) => set("color", e.target.value)}
+                      placeholder="e.g. Daytona Grey, Arctic White, Royal Blue"
+                    />
+                    {/* Quick Luxury Color Preset Swatches */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginTop: 2 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
+                        Presets:
+                      </span>
+                      {PRESET_VEHICLE_COLORS.map((preset) => (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => set("color", preset.name)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "2px 7px",
+                            borderRadius: 12,
+                            border:
+                              f.color?.toLowerCase() === preset.name.toLowerCase()
+                                ? `1.5px solid ${THEME.accent}`
+                                : "1px solid var(--t-line)",
+                            background:
+                              f.color?.toLowerCase() === preset.name.toLowerCase()
+                                ? `color-mix(in srgb, ${THEME.accent} 12%, var(--surface-0))`
+                                : "var(--surface-0)",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: "var(--text)",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 7,
+                              height: 7,
+                              borderRadius: "50%",
+                              background: preset.hex,
+                              border: "1px solid rgba(0,0,0,0.2)",
+                              display: "inline-block",
+                            }}
+                          />
+                          {preset.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </Field>
+              </div>
+
+              {activeSection !== "all" && (
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    icon={<ArrowRight size={13} />}
+                    onClick={() => setActiveSection("specs")}
+                  >
+                    Next: Registration & Specs
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section 2: Registration & Technical Specs */}
+          {(activeSection === "specs" || activeSection === "all") && (
+            <div
+              style={{
+                borderRadius: "var(--radius-md, 12px)",
+                border: "1px solid var(--t-line, var(--border))",
+                background: "var(--surface-0, var(--surface))",
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "var(--t-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                2. Registration & Technical Specs
+              </div>
+
+              <Field label="Registration Number (License Plate)">
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <input
+                    style={{ ...inp, flex: 1, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.06em" }}
+                    value={f.registrationNumber}
+                    onChange={(e) => set("registrationNumber", e.target.value.toUpperCase())}
+                    placeholder="e.g. MH02CD1234, DL01AB9999"
+                  />
+                  {f.registrationNumber && (
+                    <IndianNumberPlate
+                      registrationNumber={f.registrationNumber}
+                      isElectric={f.fuelType === "electric"}
+                      size="sm"
+                    />
+                  )}
+                </div>
+              </Field>
+
+              <div style={g2}>
+                <Field label="Chassis Number (VIN)">
+                  <input
+                    style={inp}
+                    value={f.chassisNumber}
+                    onChange={(e) => set("chassisNumber", e.target.value.toUpperCase())}
+                    placeholder="17-character VIN"
+                  />
+                </Field>
+                <Field label="Engine Number">
+                  <input
+                    style={inp}
+                    value={f.engineNumber}
+                    onChange={(e) => set("engineNumber", e.target.value.toUpperCase())}
+                    placeholder="Engine Serial No."
+                  />
+                </Field>
+              </div>
+
+              <div style={g3}>
+                <Field label="Registered Owner (RC Name)">
+                  <input
+                    style={inp}
+                    value={f.registeredOwner || ""}
+                    onChange={(e) => set("registeredOwner", e.target.value)}
+                    placeholder="Owner name as per RC"
+                  />
+                </Field>
+                <Field label="RTO Office & State">
+                  <input
+                    style={inp}
+                    value={f.rto || f.state || ""}
+                    onChange={(e) => set("rto", e.target.value)}
+                    placeholder="e.g. Mumbai South (Tardeo) RTO"
+                  />
+                </Field>
+                <Field label="Engine CC / Power">
+                  <input
+                    style={inp}
+                    value={f.cubicCapacity || ""}
+                    onChange={(e) => set("cubicCapacity", e.target.value)}
+                    placeholder="e.g. 109.51 cc, 1497 cc, 129 kW"
+                  />
+                </Field>
+              </div>
+
+              <div style={g3}>
+                <Field label="Fitness Validity Upto">
+                  <input
+                    style={inp}
+                    type="date"
+                    value={f.fitnessUpto || ""}
+                    onChange={(e) => set("fitnessUpto", e.target.value)}
+                  />
+                </Field>
+                <Field label="Hypothecation / Financed Bank">
+                  <input
+                    style={inp}
+                    value={f.financier || ""}
+                    onChange={(e) => set("financier", e.target.value)}
+                    placeholder="e.g. HDFC Bank Ltd / Unencumbered"
+                  />
+                </Field>
+                <Field label="Emission Norms">
+                  <input
+                    style={inp}
+                    value={f.emissionNorms || ""}
+                    onChange={(e) => set("emissionNorms", e.target.value)}
+                    placeholder="e.g. BS-VI, BS-IV, EV"
+                  />
+                </Field>
+              </div>
+
+              {activeSection !== "all" && (
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    icon={<ArrowLeft size={13} />}
+                    onClick={() => setActiveSection("identity")}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    icon={<ArrowRight size={13} />}
+                    onClick={() => setActiveSection("financials")}
+                  >
+                    Next: Financials & Value
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section 3: Financials & Valuation */}
+          {(activeSection === "financials" || activeSection === "all") && (
+            <div
+              style={{
+                borderRadius: "var(--radius-md, 12px)",
+                border: "1px solid var(--t-line, var(--border))",
+                background: "var(--surface-0, var(--surface))",
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "var(--t-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                3. Financials & Valuation
+              </div>
+
+              <div style={g2}>
+                <Field label="Purchase Date">
+                  <input
+                    style={inp}
+                    type="date"
+                    value={f.purchaseDate}
+                    onChange={(e) => set("purchaseDate", e.target.value)}
+                  />
+                </Field>
+                <Field label="Total On-Road Price (₹) *">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.purchasePrice}
+                    onChange={(e) => set("purchasePrice", e.target.value)}
+                    placeholder="Total invoice amount"
+                  />
+                </Field>
+              </div>
+
+              <div style={g3}>
+                <Field label="Basic Ex-Showroom (₹)">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.purchaseBasicCost}
+                    onChange={(e) => set("purchaseBasicCost", e.target.value)}
+                    placeholder="Basic price"
+                  />
+                </Field>
+                <Field label="CGST + SGST (₹)">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={Number(f.purchaseCgstAmount || 0) + Number(f.purchaseSgstAmount || 0) || ""}
+                    onChange={(e) => {
+                      const half = (Number(e.target.value) || 0) / 2;
+                      set("purchaseCgstAmount", String(half));
+                      set("purchaseSgstAmount", String(half));
+                    }}
+                    placeholder="GST total"
+                  />
+                </Field>
+                <Field label="RTO & Taxes (₹)">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.rtoCharges}
+                    onChange={(e) => set("rtoCharges", e.target.value)}
+                    placeholder="Registration"
+                  />
+                </Field>
+              </div>
+
+              {onRoadTotal > 0 && Number(f.purchasePrice || 0) !== onRoadTotal && (
+                <div style={{ fontSize: 12, color: "var(--t-muted)", marginTop: -4, marginBottom: 4 }}>
+                  Breakdown sum is <Money value={onRoadTotal} variant="full" /> —{" "}
+                  <button
+                    type="button"
+                    onClick={() => set("purchasePrice", String(onRoadTotal))}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: THEME.accent,
+                      fontWeight: 700,
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Apply as On-Road Price
+                  </button>
+                </div>
+              )}
+
+              <div style={g2}>
+                <Field label="Current Resale Estimate (₹)">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.currentValue}
+                    onChange={(e) => set("currentValue", e.target.value)}
+                    placeholder="Current Market Resale"
+                  />
+                </Field>
+                <Field label="Current Odometer (KM)">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.currentOdometer}
+                    onChange={(e) => set("currentOdometer", e.target.value)}
+                    placeholder="e.g. 18500"
+                  />
+                </Field>
+              </div>
+
+              {activeSection !== "all" && (
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    icon={<ArrowLeft size={13} />}
+                    onClick={() => setActiveSection("specs")}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    icon={<ArrowRight size={13} />}
+                    onClick={() => setActiveSection("compliance")}
+                  >
+                    Next: Compliance & Docs
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section 4: Compliance, Documents & Notes */}
+          {(activeSection === "compliance" || activeSection === "all") && (
+            <div
+              style={{
+                borderRadius: "var(--radius-md, 12px)",
+                border: "1px solid var(--t-line, var(--border))",
+                background: "var(--surface-0, var(--surface))",
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "var(--t-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                4. Compliance, Documents & Notes
+              </div>
+
+              <div style={g2}>
+                <Field label="Insurance Expiry Date">
+                  <input
+                    style={inp}
+                    type="date"
+                    value={f.insuranceExpiry}
+                    onChange={(e) => set("insuranceExpiry", e.target.value)}
+                  />
+                </Field>
+                <Field label="PUC Expiry Date">
+                  <input
+                    style={inp}
+                    type="date"
+                    value={f.pucExpiry}
+                    onChange={(e) => set("pucExpiry", e.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <div style={g2}>
+                <Field label="Next Service Due Date">
+                  <input
+                    style={inp}
+                    type="date"
+                    value={f.nextServiceDueDate}
+                    onChange={(e) => set("nextServiceDueDate", e.target.value)}
+                  />
+                </Field>
+                <Field label="Next Service Due (KM)">
+                  <input
+                    style={inp}
+                    type="number"
+                    value={f.nextServiceDueOdometer}
+                    onChange={(e) => set("nextServiceDueOdometer", e.target.value)}
+                    placeholder="e.g. 25000"
+                  />
+                </Field>
+              </div>
+
+              <div style={g3}>
+                <Field label="RC Document Link">
+                  <input
+                    style={inp}
+                    value={f.rcDocumentUrl || ""}
+                    onChange={(e) => set("rcDocumentUrl", e.target.value)}
+                    placeholder="Google Drive / Cloud URL"
+                  />
+                </Field>
+                <Field label="Insurance Policy Link">
+                  <input
+                    style={inp}
+                    value={f.insurancePolicyUrl || ""}
+                    onChange={(e) => set("insurancePolicyUrl", e.target.value)}
+                    placeholder="Policy PDF link"
+                  />
+                </Field>
+                <Field label="PUC Certificate Link">
+                  <input
+                    style={inp}
+                    value={f.pucCertificateUrl || ""}
+                    onChange={(e) => set("pucCertificateUrl", e.target.value)}
+                    placeholder="PUC copy link"
+                  />
+                </Field>
+              </div>
+
+              <Field label="Additional Vehicle Notes">
+                <textarea
+                  style={{ ...inp, height: 60, resize: "vertical" }}
+                  value={f.notes}
+                  onChange={(e) => set("notes", e.target.value)}
+                  placeholder="Warranty, tyre specs, accessories..."
+                />
+              </Field>
+
+              {activeSection !== "all" && (
+                <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 4 }}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    icon={<ArrowLeft size={13} />}
+                    onClick={() => setActiveSection("financials")}
+                  >
+                    Back
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Group 1: Identity */}
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 800,
-          color: "var(--t-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginBottom: 10,
-        }}
-      >
-        1. Vehicle Identity & Ownership
-      </div>
-      <div style={g3}>
-        <Field label="Vehicle Type *">
-          <select
-            style={inp}
-            value={f.vehicleType}
-            onChange={(e) => set("vehicleType", e.target.value)}
-          >
-            {Object.entries(VEHICLE_TYPES).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Fuel Type">
-          <select style={inp} value={f.fuelType} onChange={(e) => set("fuelType", e.target.value)}>
-            {Object.entries(FUEL_TYPES).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Owner Profile">
-          <select
-            style={inp}
-            value={f.owner || "self"}
-            onChange={(e) => set("owner", e.target.value)}
-          >
-            {familyProfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {formatProfileOption(p)}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+        {/* ── RIGHT COLUMN: Digital Garage Visual Studio & Photo Intelligence Engine ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: 0 }}>
+          {/* Live Automotive Stage Card */}
+          <div className="vehicle-modal-stage-card">
+            {/* Top-Left Floating Automaker Brand Emblem */}
+            <div
+              style={{
+                position: "absolute",
+                top: 14,
+                left: 14,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "4px 10px 4px 6px",
+                borderRadius: 24,
+                background: "rgba(15, 23, 42, 0.75)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                zIndex: 2,
+              }}
+            >
+              <VehicleLogo make={f.make || "Vehicle"} size={22} />
+              <span style={{ fontSize: 12, fontWeight: 800, color: "#ffffff" }}>
+                {f.make?.trim() ? f.make : "Automobile"}
+              </span>
+            </div>
 
-      <div style={g2}>
-        <Field label="Make / Manufacturer *">
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <VehicleLogo make={f.make} size={32} />
-              <input
-                style={{ ...inp, flex: 1 }}
-                value={f.make}
-                onChange={(e) => handleMakeChange(e.target.value)}
-                placeholder="e.g. Tata, Hyundai, Royal Enfield"
+            {/* Top-Right Body Style & Year Tag */}
+            <div
+              style={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                zIndex: 2,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  background: "rgba(255, 255, 255, 0.12)",
+                  color: "#ffffff",
+                  backdropFilter: "blur(6px)",
+                  textTransform: "uppercase",
+                }}
+              >
+                {f.year || new Date().getFullYear()}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  background: "color-mix(in srgb, var(--t-accent) 25%, rgba(0,0,0,0.5))",
+                  color: "#ffffff",
+                  backdropFilter: "blur(6px)",
+                  textTransform: "uppercase",
+                }}
+              >
+                {f.fuelType}
+              </span>
+            </div>
+
+            {/* Center Vehicle Showcase Image */}
+            <div style={{ width: "100%", height: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <VehicleImage
+                photoUrl={f.photoUrl}
+                make={f.make || "Vehicle"}
+                model={f.model || ""}
+                color={f.color}
+                vehicleType={f.vehicleType}
+                fuelType={f.fuelType}
+                size="xl"
               />
             </div>
-            {/* Quick Popular Brand Chips */}
-            <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginTop: 2 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
-                Popular:
-              </span>
-              {(POPULAR_AUTOMAKERS_BY_TYPE[f.vehicleType] || POPULAR_AUTOMAKERS_BY_TYPE["four-wheeler"]).slice(0, 7).map((brand) => (
-                <button
-                  key={brand}
-                  type="button"
-                  onClick={() => handleMakeChange(brand)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    padding: "2px 7px",
-                    borderRadius: 12,
-                    border:
-                      f.make?.toLowerCase() === brand.toLowerCase()
-                        ? `1.5px solid ${THEME.accent}`
-                        : "1px solid var(--t-line)",
-                    background:
-                      f.make?.toLowerCase() === brand.toLowerCase()
-                        ? `color-mix(in srgb, ${THEME.accent} 12%, var(--surface-0))`
-                        : "var(--surface-0)",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: "var(--text)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <VehicleLogo make={brand} size={14} borderRadius={2} />
-                  <span>{brand}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </Field>
-        <Field label="Model *">
-          <input
-            style={inp}
-            value={f.model}
-            onChange={(e) => handleModelChange(e.target.value)}
-            placeholder="e.g. Nexon EV, Creta, Classic 350"
-          />
-        </Field>
-      </div>
 
-      <div style={g2}>
-        <Field label="Manufacturing Year">
-          <input
-            style={inp}
-            type="number"
-            value={f.year}
-            onChange={(e) => set("year", e.target.value)}
-            min={1980}
-            max={2035}
-          />
-        </Field>
-        <Field label="Exterior Color">
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <input
-              style={inp}
-              value={f.color}
-              onChange={(e) => set("color", e.target.value)}
-              placeholder="e.g. Daytona Grey, Arctic White, Royal Blue"
-            />
-            {/* Quick Luxury Color Preset Swatches */}
-            <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginTop: 2 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase" }}>
-                Presets:
-              </span>
-              {PRESET_VEHICLE_COLORS.map((preset) => (
-                <button
-                  key={preset.name}
-                  type="button"
-                  onClick={() => set("color", preset.name)}
+            {/* Bottom Floating Info Strip */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: 12,
+                left: 14,
+                right: 14,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+                flexWrap: "wrap",
+                zIndex: 2,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    padding: "2px 7px",
-                    borderRadius: 12,
-                    border:
-                      f.color?.toLowerCase() === preset.name.toLowerCase()
-                        ? `1.5px solid ${THEME.accent}`
-                        : "1px solid var(--t-line)",
-                    background:
-                      f.color?.toLowerCase() === preset.name.toLowerCase()
-                        ? `color-mix(in srgb, ${THEME.accent} 12%, var(--surface-0))`
-                        : "var(--surface-0)",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: "var(--text)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "rgba(255,255,255,0.85)",
+                    textShadow: "0 1px 3px rgba(0,0,0,0.8)",
                   }}
                 >
+                  {f.make ? `${f.make} ${f.model || ""}`.trim() : "New Vehicle Showcase"}
+                </span>
+                {f.color && (
                   <span
                     style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      background: preset.hex,
-                      border: "1px solid rgba(0,0,0,0.2)",
-                      display: "inline-block",
+                      fontSize: 10,
+                      color: "rgba(255,255,255,0.65)",
                     }}
-                  />
-                  {preset.name}
-                </button>
-              ))}
+                  >
+                    • {f.color}
+                  </span>
+                )}
+              </div>
+
+              {f.registrationNumber && (
+                <IndianNumberPlate
+                  registrationNumber={f.registrationNumber}
+                  isElectric={f.fuelType === "electric"}
+                  size="sm"
+                />
+              )}
             </div>
           </div>
-        </Field>
-      </div>
 
-      {/* Group 2: Vehicle Visual Recognition & Photo */}
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 800,
-          color: "var(--t-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginTop: 20,
-          marginBottom: 10,
-          borderTop: "1px solid var(--t-line)",
-          paddingTop: 16,
-        }}
-      >
-        2. Vehicle Visual Recognition & Photo
-      </div>
-
-      <VehicleImagePicker
-        photoUrl={f.photoUrl || ""}
-        make={f.make}
-        model={f.model}
-        color={f.color}
-        vehicleType={f.vehicleType}
-        fuelType={f.fuelType}
-        onChange={(url) => set("photoUrl", url)}
-      />
-
-      {/* Group 3: Registration & Identification */}
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 800,
-          color: "var(--t-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginTop: 20,
-          marginBottom: 10,
-          borderTop: "1px solid var(--t-line)",
-          paddingTop: 16,
-        }}
-      >
-        3. Registration & Identification
-      </div>
-
-      <Field label="Registration Number (License Plate)">
-        <input
-          style={{ ...inp, fontFamily: "monospace", fontWeight: 700 }}
-          value={f.registrationNumber}
-          onChange={(e) => set("registrationNumber", e.target.value.toUpperCase())}
-          placeholder="e.g. MH02CD1234, DL01AB9999"
-        />
-      </Field>
-
-      <div style={g2}>
-        <Field label="Chassis Number (VIN)">
-          <input
-            style={inp}
-            value={f.chassisNumber}
-            onChange={(e) => set("chassisNumber", e.target.value.toUpperCase())}
-            placeholder="17-character VIN"
-          />
-        </Field>
-        <Field label="Engine Number">
-          <input
-            style={inp}
-            value={f.engineNumber}
-            onChange={(e) => set("engineNumber", e.target.value.toUpperCase())}
-            placeholder="Engine Serial No."
-          />
-        </Field>
-      </div>
-
-      <div style={g3}>
-        <Field label="Registered Owner (RC Name)">
-          <input
-            style={inp}
-            value={f.registeredOwner || ""}
-            onChange={(e) => set("registeredOwner", e.target.value)}
-            placeholder="Owner name as per RC"
-          />
-        </Field>
-        <Field label="RTO Office & State">
-          <input
-            style={inp}
-            value={f.rto || f.state || ""}
-            onChange={(e) => set("rto", e.target.value)}
-            placeholder="e.g. Mumbai South (Tardeo) RTO"
-          />
-        </Field>
-        <Field label="Engine CC / Power">
-          <input
-            style={inp}
-            value={f.cubicCapacity || ""}
-            onChange={(e) => set("cubicCapacity", e.target.value)}
-            placeholder="e.g. 109.51 cc, 1497 cc, 129 kW"
-          />
-        </Field>
-      </div>
-
-      <div style={g3}>
-        <Field label="Fitness Validity Upto">
-          <input
-            style={inp}
-            type="date"
-            value={f.fitnessUpto || ""}
-            onChange={(e) => set("fitnessUpto", e.target.value)}
-          />
-        </Field>
-        <Field label="Hypothecation / Financed Bank">
-          <input
-            style={inp}
-            value={f.financier || ""}
-            onChange={(e) => set("financier", e.target.value)}
-            placeholder="e.g. HDFC Bank Ltd / Unencumbered"
-          />
-        </Field>
-        <Field label="Emission Norms">
-          <input
-            style={inp}
-            value={f.emissionNorms || ""}
-            onChange={(e) => set("emissionNorms", e.target.value)}
-            placeholder="e.g. BS-VI, BS-IV, EV"
-          />
-        </Field>
-      </div>
-
-      {/* Group 4: Financials & On-road Cost Breakdown */}
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 800,
-          color: "var(--t-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginTop: 20,
-          marginBottom: 10,
-          borderTop: "1px solid var(--t-line)",
-          paddingTop: 16,
-        }}
-      >
-        4. Financials & Valuation
-      </div>
-
-      <div style={g2}>
-        <Field label="Purchase Date">
-          <input
-            style={inp}
-            type="date"
-            value={f.purchaseDate}
-            onChange={(e) => set("purchaseDate", e.target.value)}
-          />
-        </Field>
-        <Field label="Total On-Road Price (₹) *">
-          <input
-            style={inp}
-            type="number"
-            value={f.purchasePrice}
-            onChange={(e) => set("purchasePrice", e.target.value)}
-            placeholder="Total invoice amount"
-          />
-        </Field>
-      </div>
-
-      <div style={g3}>
-        <Field label="Basic Ex-Showroom (₹)">
-          <input
-            style={inp}
-            type="number"
-            value={f.purchaseBasicCost}
-            onChange={(e) => set("purchaseBasicCost", e.target.value)}
-            placeholder="Basic price"
-          />
-        </Field>
-        <Field label="CGST + SGST (₹)">
-          <input
-            style={inp}
-            type="number"
-            value={Number(f.purchaseCgstAmount || 0) + Number(f.purchaseSgstAmount || 0) || ""}
-            onChange={(e) => {
-              const half = (Number(e.target.value) || 0) / 2;
-              set("purchaseCgstAmount", String(half));
-              set("purchaseSgstAmount", String(half));
-            }}
-            placeholder="GST total"
-          />
-        </Field>
-        <Field label="RTO & Taxes (₹)">
-          <input
-            style={inp}
-            type="number"
-            value={f.rtoCharges}
-            onChange={(e) => set("rtoCharges", e.target.value)}
-            placeholder="Registration"
-          />
-        </Field>
-      </div>
-
-      {onRoadTotal > 0 && Number(f.purchasePrice || 0) !== onRoadTotal && (
-        <div style={{ fontSize: 12, color: "var(--t-muted)", marginTop: -4, marginBottom: 10 }}>
-          Breakdown sum is <Money value={onRoadTotal} variant="full" /> —{" "}
-          <button
-            type="button"
-            onClick={() => set("purchasePrice", String(onRoadTotal))}
+          {/* Key Metric Highlights Bar */}
+          <div
             style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              color: THEME.accent,
-              fontWeight: 700,
-              textDecoration: "underline",
-              cursor: "pointer",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 8,
+              padding: "10px 14px",
+              borderRadius: "var(--radius-md, 10px)",
+              background: "var(--surface-1, rgba(255,255,255,0.03))",
+              border: "1px solid var(--t-line, var(--border))",
             }}
           >
-            Apply as On-Road Price
-          </button>
+            <div>
+              <div style={{ fontSize: 10, color: "var(--t-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                Est. Market Value
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", marginTop: 2 }}>
+                {Number(f.currentValue || f.purchasePrice || 0) > 0 ? (
+                  <Money value={Number(f.currentValue || f.purchasePrice || 0)} variant="full" />
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: "var(--t-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                Current Odometer
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", marginTop: 2 }}>
+                {f.currentOdometer ? `${Number(f.currentOdometer).toLocaleString("en-IN")} KM` : "0 KM"}
+              </div>
+            </div>
+          </div>
+
+          {/* Integrated Visual Recognition & Photo Engine */}
+          <VehicleImagePicker
+            photoUrl={f.photoUrl || ""}
+            make={f.make}
+            model={f.model}
+            color={f.color}
+            vehicleType={f.vehicleType}
+            fuelType={f.fuelType}
+            onChange={(url) => set("photoUrl", url)}
+            onSelectPreset={handleSelectPreset}
+          />
         </div>
-      )}
-
-      <div style={g2}>
-        <Field label="Current Resale Estimate (₹)">
-          <input
-            style={inp}
-            type="number"
-            value={f.currentValue}
-            onChange={(e) => set("currentValue", e.target.value)}
-            placeholder="Current Market Resale"
-          />
-        </Field>
-        <Field label="Current Odometer (KM)">
-          <input
-            style={inp}
-            type="number"
-            value={f.currentOdometer}
-            onChange={(e) => set("currentOdometer", e.target.value)}
-            placeholder="e.g. 18500"
-          />
-        </Field>
       </div>
-
-      {/* Group 5: Compliance & Service Reminders */}
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 800,
-          color: "var(--t-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginTop: 20,
-          marginBottom: 10,
-          borderTop: "1px solid var(--t-line)",
-          paddingTop: 16,
-        }}
-      >
-        5. Compliance & Service Reminders
-      </div>
-
-      <div style={g2}>
-        <Field label="Insurance Expiry Date">
-          <input
-            style={inp}
-            type="date"
-            value={f.insuranceExpiry}
-            onChange={(e) => set("insuranceExpiry", e.target.value)}
-          />
-        </Field>
-        <Field label="PUC Expiry Date">
-          <input
-            style={inp}
-            type="date"
-            value={f.pucExpiry}
-            onChange={(e) => set("pucExpiry", e.target.value)}
-          />
-        </Field>
-      </div>
-
-      <div style={g2}>
-        <Field label="Next Service Due Date">
-          <input
-            style={inp}
-            type="date"
-            value={f.nextServiceDueDate}
-            onChange={(e) => set("nextServiceDueDate", e.target.value)}
-          />
-        </Field>
-        <Field label="Next Service Due (KM)">
-          <input
-            style={inp}
-            type="number"
-            value={f.nextServiceDueOdometer}
-            onChange={(e) => set("nextServiceDueOdometer", e.target.value)}
-            placeholder="e.g. 25000"
-          />
-        </Field>
-      </div>
-
-      {/* Group 6: Documents & Custom Media */}
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 800,
-          color: "var(--t-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginTop: 20,
-          marginBottom: 10,
-          borderTop: "1px solid var(--t-line)",
-          paddingTop: 16,
-        }}
-      >
-        6. Document Links & Notes
-      </div>
-
-      <div style={g3}>
-        <Field label="RC Document Link">
-          <input
-            style={inp}
-            value={f.rcDocumentUrl || ""}
-            onChange={(e) => set("rcDocumentUrl", e.target.value)}
-            placeholder="Google Drive / Cloud URL"
-          />
-        </Field>
-        <Field label="Insurance Policy Link">
-          <input
-            style={inp}
-            value={f.insurancePolicyUrl || ""}
-            onChange={(e) => set("insurancePolicyUrl", e.target.value)}
-            placeholder="Policy PDF link"
-          />
-        </Field>
-        <Field label="PUC Certificate Link">
-          <input
-            style={inp}
-            value={f.pucCertificateUrl || ""}
-            onChange={(e) => set("pucCertificateUrl", e.target.value)}
-            placeholder="PUC copy link"
-          />
-        </Field>
-      </div>
-
-      <Field label="Additional Vehicle Notes">
-        <textarea
-          style={{ ...inp, height: 60, resize: "vertical" }}
-          value={f.notes}
-          onChange={(e) => set("notes", e.target.value)}
-          placeholder="Warranty, tyre specs, accessories..."
-        />
-      </Field>
     </Modal>
   );
 }

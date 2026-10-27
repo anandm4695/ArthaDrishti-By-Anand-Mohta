@@ -30,6 +30,7 @@ export interface VehicleImagePickerProps {
   vehicleType?: string;
   fuelType?: string;
   onChange: (photoUrl: string) => void;
+  onSelectPreset?: (preset: CuratedVehiclePreset) => void;
 }
 
 export function VehicleImagePicker({
@@ -40,6 +41,7 @@ export function VehicleImagePicker({
   vehicleType,
   fuelType,
   onChange,
+  onSelectPreset,
 }: VehicleImagePickerProps) {
   const [activeTab, setActiveTab] = useState<"gallery" | "upload" | "url">("gallery");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -184,7 +186,10 @@ export function VehicleImagePicker({
             type="button"
             variant="accent"
             size="xs"
-            onClick={() => onChange(autoMatch.imageUrl)}
+            onClick={() => {
+              onChange(autoMatch.imageUrl);
+              onSelectPreset?.(autoMatch);
+            }}
           >
             Apply
           </Button>
@@ -292,7 +297,10 @@ export function VehicleImagePicker({
               return (
                 <div
                   key={preset.id}
-                  onClick={() => onChange(preset.imageUrl)}
+                  onClick={() => {
+                    onChange(preset.imageUrl);
+                    onSelectPreset?.(preset);
+                  }}
                   role="button"
                   tabIndex={0}
                   style={{
