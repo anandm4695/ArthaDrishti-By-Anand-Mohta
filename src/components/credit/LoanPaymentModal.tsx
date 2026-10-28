@@ -64,6 +64,8 @@ export function LoanPaymentModal({
   const [reference, setReference] = useState<string>("");
   const [narration, setNarration] = useState<string>("");
   const [note, setNote] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isBusy = Boolean(saving || isSubmitting);
 
   const numAmount = Number(amount) || 0;
   const nextOutstanding = Math.max(0, outstanding - numAmount);
@@ -86,8 +88,9 @@ export function LoanPaymentModal({
     return monthsRemaining;
   })();
 
-  const handleSave = () => {
-    if (numAmount <= 0) return;
+  const handleSave = async () => {
+    if (numAmount <= 0 || isBusy) return;
+    setIsSubmitting(true);
 
     const txnId = uid();
     const paymentRecord = {
@@ -155,7 +158,11 @@ export function LoanPaymentModal({
       };
     }
 
-    onSavePayment(paymentRecord, updatedLoanPatch, bankTxn);
+    try {
+      await onSavePayment(paymentRecord, updatedLoanPatch, bankTxn);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputStyle: React.CSSProperties = {
@@ -498,8 +505,8 @@ export function LoanPaymentModal({
           onSave={handleSave}
           onClose={onClose}
           saveLabel={isTaken ? "Record EMI Payment" : "Record Receipt"}
-          disabled={saving || numAmount <= 0}
-          loading={saving}
+          disabled={isBusy || numAmount <= 0}
+          loading={isBusy}
           style={{ marginTop: 4 }}
         />
       </div>

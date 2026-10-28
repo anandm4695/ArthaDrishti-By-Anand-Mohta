@@ -1050,6 +1050,12 @@ export function CreditTab({
             onAdd={() => setModal("taken")}
             onUpdate={async (id: any, patch: any) => {
               try {
+                if (Array.isArray(patch?.payments)) {
+                  const latestPayment = patch.payments[patch.payments.length - 1];
+                  if (latestPayment && !latestPayment.bankAccountId) {
+                    showToast?.(`EMI payment of ${fmtINR(latestPayment.amount || 0)} recorded`, "success");
+                  }
+                }
                 await updateItem("loansTaken", id, patch);
               } catch (e: any) {
                 showToast?.(`Failed to update loan: ${e?.message || "Unknown error"}`, "error");
@@ -1057,8 +1063,8 @@ export function CreditTab({
             }}
             onAddTransaction={async (txn: any) => {
               try {
+                showToast?.(`Payment of ${fmtINR(txn?.amount || 0)} recorded & debited from bank account`, "success");
                 await addItem("transactions", txn);
-                showToast?.("Payment recorded and debited from bank account", "success");
               } catch (e: any) {
                 showToast?.(`Failed to record bank transaction: ${e?.message || "Unknown error"}`, "error");
               }
@@ -1074,6 +1080,12 @@ export function CreditTab({
             onAdd={() => setModal("given")}
             onUpdate={async (id: any, patch: any) => {
               try {
+                if (Array.isArray(patch?.payments)) {
+                  const latestPayment = patch.payments[patch.payments.length - 1];
+                  if (latestPayment && !latestPayment.bankAccountId) {
+                    showToast?.(`Receipt of ${fmtINR(latestPayment.amount || 0)} recorded`, "success");
+                  }
+                }
                 await updateItem("loansGiven", id, patch);
               } catch (e: any) {
                 showToast?.(`Failed to update loan: ${e?.message || "Unknown error"}`, "error");
@@ -1081,8 +1093,8 @@ export function CreditTab({
             }}
             onAddTransaction={async (txn: any) => {
               try {
+                showToast?.(`Receipt of ${fmtINR(txn?.amount || 0)} recorded & credited to bank account`, "success");
                 await addItem("transactions", txn);
-                showToast?.("Receipt recorded and credited to bank account", "success");
               } catch (e: any) {
                 showToast?.(`Failed to record bank transaction: ${e?.message || "Unknown error"}`, "error");
               }

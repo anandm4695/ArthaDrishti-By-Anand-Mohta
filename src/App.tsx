@@ -2349,6 +2349,22 @@ function FinanceDashboard() {
   const isMissingColErr = (err: any) =>
     err && (err.code === "PGRST204" || err.code === "42703" || !!extractMissingColumn(err));
 
+  // Session cache of columns discovered missing per Supabase table so subsequent writes don't repeat failed round-trips
+  const knownMissingColsRef = useRef<Record<string, Set<string>>>({});
+  const recordMissingCol = (table: string, col: string) => {
+    if (!knownMissingColsRef.current[table]) {
+      knownMissingColsRef.current[table] = new Set();
+    }
+    knownMissingColsRef.current[table].add(col);
+  };
+  const stripKnownMissingCols = (table: string, payload: any) => {
+    const missing = knownMissingColsRef.current[table];
+    if (!missing || !payload) return;
+    missing.forEach((col) => {
+      delete payload[col];
+    });
+  };
+
   const prepareItemForDb = useCallback(
     (key: string, item: any, userId: string, explicitId?: string) => {
       const ownerVal = item.owner || (activeProfile !== "all" ? activeProfile : "self");
@@ -2534,6 +2550,7 @@ function FinanceDashboard() {
           finalItem.note = finalItem.description;
         }
         delete finalItem.description;
+        delete finalItem.linked_principal_amount;
         if (finalItem.type) {
           const rawType = String(finalItem.type).toLowerCase();
           finalItem.type = rawType === "credit" ? "credit" : "debit";
@@ -2685,6 +2702,7 @@ function FinanceDashboard() {
       const table = TABLE_MAP[key];
       if (table) {
         const cleanItem = prepareItemForDb(key, itemWithOwner, userId, newId);
+        stripKnownMissingCols(table, cleanItem);
 
         // Use upsert (INSERT ... ON CONFLICT DO UPDATE) so retries are idempotent.
         // If the first request reached Supabase but the response was lost, a plain INSERT
@@ -2778,6 +2796,7 @@ function FinanceDashboard() {
           while (isMissingColErr(currentErr)) {
             const badCol = extractMissingColumn(currentErr);
             if (!badCol || retryItem[badCol] === undefined) break;
+            recordMissingCol(table, badCol);
             delete retryItem[badCol];
             stripped.push(badCol);
             const { error: retryErr } = await supabase
@@ -3791,6 +3810,7 @@ function FinanceDashboard() {
           if (patch.notes !== undefined && patch.note === undefined) finalPatch.note = patch.notes;
         }
         if (key === "transactions") {
+          delete finalPatch.linked_principal_amount;
           if (finalPatch.type !== undefined) {
             const rawType = String(finalPatch.type).toLowerCase();
             finalPatch.type = rawType === "credit" ? "credit" : "debit";
@@ -3949,6 +3969,7 @@ function FinanceDashboard() {
             msg?.includes("network")
           );
         const doUpdate = (patch: any) => supabase.from(table).update(patch).eq("id", id);
+        stripKnownMissingCols(table, finalPatch);
         pendingWritesRef.current++;
         let error;
         try {
@@ -4044,6 +4065,7 @@ function FinanceDashboard() {
             while (isMissingColErr(currentErr)) {
               const badCol = extractMissingColumn(currentErr);
               if (!badCol || retryPatch[badCol] === undefined) break;
+              recordMissingCol(table, badCol);
               delete retryPatch[badCol];
               strippedU.push(badCol);
               const { error: retryErr } = await doUpdate(retryPatch);

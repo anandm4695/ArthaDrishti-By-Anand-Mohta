@@ -190,10 +190,10 @@ export function LoanGivenSection({
   const fmtLoanDate = (d: string) =>
     d
       ? new Date(d + "T00:00:00").toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
       : "—";
 
   return (
@@ -534,368 +534,367 @@ export function LoanGivenSection({
             : [];
 
           const renderLoanGivenCard = (l: any) => {
-              const principal = Number(l.principal) || 0;
-              const outstanding = loanGivenOutstanding(l);
-              const rate = Number(l.rate) || 0;
-              const isPaidOff = outstanding <= 0;
+            const principal = Number(l.principal) || 0;
+            const outstanding = loanGivenOutstanding(l);
+            const rate = Number(l.rate) || 0;
+            const isPaidOff = outstanding <= 0;
 
-              const dueDateObj = l.dueDate ? new Date(l.dueDate + "T00:00:00") : null;
-              const isOverdue = !isPaidOff && !!dueDateObj && dueDateObj < now;
-              const daysOverdue = isOverdue
-                ? Math.floor((now.getTime() - dueDateObj!.getTime()) / (1000 * 60 * 60 * 24))
-                : 0;
+            const dueDateObj = l.dueDate ? new Date(l.dueDate + "T00:00:00") : null;
+            const isOverdue = !isPaidOff && !!dueDateObj && dueDateObj < now;
+            const daysOverdue = isOverdue
+              ? Math.floor((now.getTime() - dueDateObj!.getTime()) / (1000 * 60 * 60 * 24))
+              : 0;
 
-              const dueSoon =
-                !isPaidOff &&
-                !isOverdue &&
-                !!dueDateObj &&
-                Math.ceil((dueDateObj.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) <= 7;
-              const daysUntilDue = dueSoon
-                ? Math.ceil((dueDateObj!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-                : 0;
+            const dueSoon =
+              !isPaidOff &&
+              !isOverdue &&
+              !!dueDateObj &&
+              Math.ceil((dueDateObj.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) <= 7;
+            const daysUntilDue = dueSoon
+              ? Math.ceil((dueDateObj!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              : 0;
 
-              const startDate = l.date ? new Date(l.date + "T00:00:00") : null;
-              const daysElapsed = startDate
-                ? Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
-                : 0;
+            const startDate = l.date ? new Date(l.date + "T00:00:00") : null;
+            const daysElapsed = startDate
+              ? Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
+              : 0;
 
-              const accruedInterest = (principal * (rate / 100) * daysElapsed) / 365.25;
-              const recovered = Math.max(0, principal - outstanding);
-              const recoveredPct = principal > 0 ? Math.min(100, (recovered / principal) * 100) : 0;
+            const accruedInterest = (principal * (rate / 100) * daysElapsed) / 365.25;
+            const recovered = Math.max(0, principal - outstanding);
+            const recoveredPct = principal > 0 ? Math.min(100, (recovered / principal) * 100) : 0;
 
-              const barColor = isPaidOff
-                ? "var(--t-sage)"
-                : isOverdue
+            const barColor = isPaidOff
+              ? "var(--t-sage)"
+              : isOverdue
                 ? "var(--t-rust)"
                 : "var(--t-accent)";
 
-              const avatarGradient = getAvatarGradient(l.borrower || "B");
-              const firstLetter = l.borrower ? l.borrower.charAt(0).toUpperCase() : "?";
+            const avatarGradient = getAvatarGradient(l.borrower || "B");
+            const firstLetter = l.borrower ? l.borrower.charAt(0).toUpperCase() : "?";
 
-              const ownerProfile = familyProfiles.find((p: any) => p.id === l.owner);
-              const ownerLabel = ownerProfile ? ownerProfile.name : "Self";
+            const ownerProfile = familyProfiles.find((p: any) => p.id === l.owner);
+            const ownerLabel = ownerProfile ? ownerProfile.name : "Self";
 
-              const paymentsCount = (l.payments || []).length;
-              const isSelectedHistory = historyLoan?.id === l.id;
+            const paymentsCount = (l.payments || []).length;
+            const isSelectedHistory = historyLoan?.id === l.id;
 
-              return (
-                <Card
-                  key={l.id}
-                  style={{
-                    padding: "18px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    borderTop: `4px solid ${
-                      isOverdue ? "var(--t-rust)" : isPaidOff ? "var(--t-sage)" : "var(--t-accent)"
+            return (
+              <Card
+                key={l.id}
+                style={{
+                  padding: "18px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  borderTop: `4px solid ${isOverdue ? "var(--t-rust)" : isPaidOff ? "var(--t-sage)" : "var(--t-accent)"
                     }`,
-                    outline: isSelectedHistory ? "2px solid var(--t-accent)" : "none",
-                  }}
-                >
-                  <div>
-                    {/* Card Header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: "50%",
-                            background: avatarGradient,
-                            color: "#FFFFFF",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 14,
-                            fontWeight: 900,
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                          }}
-                        >
-                          {firstLetter}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 16, fontWeight: 900, color: "var(--t-ink)", lineHeight: 1.2 }}>
-                            {l.borrower}
-                          </div>
-                          <div style={{ fontSize: 9, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase", marginTop: 2 }}>
-                            Profile: {ownerLabel} {l.phone ? `· Ph: ${l.phone}` : ""}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Status Badge */}
-                      <div>
-                        {isOverdue ? (
-                          <span
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 800,
-                              color: "#FFFFFF",
-                              background: "var(--t-rust)",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                              letterSpacing: "0.04em",
-                            }}
-                          >
-                            {daysOverdue}D OVERDUE
-                          </span>
-                        ) : dueSoon ? (
-                          <span
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 800,
-                              color: "var(--t-gold)",
-                              background: "color-mix(in srgb, var(--t-gold) 15%, transparent)",
-                              border: "1px solid color-mix(in srgb, var(--t-gold) 30%, transparent)",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                            }}
-                          >
-                            DUE IN {daysUntilDue}D
-                          </span>
-                        ) : isPaidOff ? (
-                          <span
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 800,
-                              color: "var(--t-sage)",
-                              background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
-                              border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
-                              borderRadius: 6,
-                              padding: "3px 8px",
-                            }}
-                          >
-                            SETTLED
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 800,
-                              color: "var(--t-accent)",
-                              background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
-                              border: "1px solid color-mix(in srgb, var(--t-accent) 25%, transparent)",
-                              borderRadius: 6,
-                              padding: "3px 8px",
-                            }}
-                          >
-                            ACTIVE
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Outstanding Balance */}
-                    <div style={{ marginTop: 14 }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)", letterSpacing: "0.05em" }}>
-                        Pending Recovery Balance
-                      </div>
+                  outline: isSelectedHistory ? "2px solid var(--t-accent)" : "none",
+                }}
+              >
+                <div>
+                  {/* Card Header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div
                         style={{
-                          fontFamily: "var(--font-display)",
-                          fontSize: 26,
-                          fontWeight: 700,
-                          color: isPaidOff ? "var(--t-sage)" : isOverdue ? "var(--t-rust)" : "var(--t-ink)",
-                          letterSpacing: "-0.03em",
-                          marginTop: 2,
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          background: avatarGradient,
+                          color: "#FFFFFF",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 14,
+                          fontWeight: 900,
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                         }}
                       >
-                        <Money value={outstanding} variant="full" />
+                        {firstLetter}
                       </div>
-                    </div>
-
-                    {/* Recovery Progress */}
-                    {principal > 0 && (
-                      <div style={{ marginTop: 12 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: 5 }}>
-                          <span>Recovered: {fmtINR(recovered)}</span>
-                          <span style={{ color: barColor, fontWeight: 800 }}>
-                            {recoveredPct.toFixed(1)}% Recovered
-                          </span>
+                      <div>
+                        <div style={{ fontSize: 16, fontWeight: 900, color: "var(--t-ink)", lineHeight: 1.2 }}>
+                          {l.borrower}
                         </div>
-                        <div style={{ height: 6, borderRadius: 99, background: "var(--surface-1)", overflow: "hidden" }}>
-                          <div
-                            style={{
-                              height: "100%",
-                              width: `${Math.min(recoveredPct, 100)}%`,
-                              background: `linear-gradient(90deg, ${barColor}, color-mix(in srgb, ${barColor} 65%, white))`,
-                              borderRadius: 99,
-                              transition: "width 0.4s ease",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Financial Metrics Grid */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
-                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Principal Lent</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-ink)", marginTop: 1 }}>
-                          <Money value={principal} variant="exact" />
-                        </div>
-                      </div>
-                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Interest Terms</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-accent)" : "var(--t-muted)", marginTop: 1 }}>
-                          {rate > 0 ? `${rate}% p.a.` : "0% Friendly"}
-                        </div>
-                      </div>
-                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Accrued Interest</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-sage)" : "var(--t-muted)", marginTop: 1 }}>
-                          {rate > 0 ? <Money value={accruedInterest} variant="exact" /> : "—"}
-                        </div>
-                      </div>
-                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Agreed Due Date</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: isOverdue ? "var(--t-rust)" : "var(--t-ink)", marginTop: 1 }}>
-                          {fmtLoanDate(l.dueDate)}
+                        <div style={{ fontSize: 9, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase", marginTop: 2 }}>
+                          Profile: {ownerLabel} {l.phone ? `· Ph: ${l.phone}` : ""}
                         </div>
                       </div>
                     </div>
 
-                    {l.security && (
-                      <div style={{ fontSize: 10, color: "var(--t-muted)", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
-                        <Shield size={11} color="var(--t-accent)" /> Collateral: {l.security}
+                    {/* Status Badge */}
+                    <div>
+                      {isOverdue ? (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 800,
+                            color: "#FFFFFF",
+                            background: "var(--t-rust)",
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                            letterSpacing: "0.04em",
+                          }}
+                        >
+                          {daysOverdue}D OVERDUE
+                        </span>
+                      ) : dueSoon ? (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 800,
+                            color: "var(--t-gold)",
+                            background: "color-mix(in srgb, var(--t-gold) 15%, transparent)",
+                            border: "1px solid color-mix(in srgb, var(--t-gold) 30%, transparent)",
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          DUE IN {daysUntilDue}D
+                        </span>
+                      ) : isPaidOff ? (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 800,
+                            color: "var(--t-sage)",
+                            background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                            border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
+                            borderRadius: 6,
+                            padding: "3px 8px",
+                          }}
+                        >
+                          SETTLED
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 800,
+                            color: "var(--t-accent)",
+                            background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
+                            border: "1px solid color-mix(in srgb, var(--t-accent) 25%, transparent)",
+                            borderRadius: 6,
+                            padding: "3px 8px",
+                          }}
+                        >
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Outstanding Balance */}
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)", letterSpacing: "0.05em" }}>
+                      Pending Recovery Balance
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: 26,
+                        fontWeight: 700,
+                        color: isPaidOff ? "var(--t-sage)" : isOverdue ? "var(--t-rust)" : "var(--t-ink)",
+                        letterSpacing: "-0.03em",
+                        marginTop: 2,
+                      }}
+                    >
+                      <Money value={outstanding} variant="full" />
+                    </div>
+                  </div>
+
+                  {/* Recovery Progress */}
+                  {principal > 0 && (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: 5 }}>
+                        <span>Recovered: {fmtINR(recovered)}</span>
+                        <span style={{ color: barColor, fontWeight: 800 }}>
+                          {recoveredPct.toFixed(1)}% Recovered
+                        </span>
                       </div>
+                      <div style={{ height: 6, borderRadius: 99, background: "var(--surface-1)", overflow: "hidden" }}>
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${Math.min(recoveredPct, 100)}%`,
+                            background: `linear-gradient(90deg, ${barColor}, color-mix(in srgb, ${barColor} 65%, white))`,
+                            borderRadius: 99,
+                            transition: "width 0.4s ease",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Financial Metrics Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
+                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Principal Lent</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-ink)", marginTop: 1 }}>
+                        <Money value={principal} variant="exact" />
+                      </div>
+                    </div>
+                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Interest Terms</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-accent)" : "var(--t-muted)", marginTop: 1 }}>
+                        {rate > 0 ? `${rate}% p.a.` : "0% Friendly"}
+                      </div>
+                    </div>
+                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Accrued Interest</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-sage)" : "var(--t-muted)", marginTop: 1 }}>
+                        {rate > 0 ? <Money value={accruedInterest} variant="exact" /> : "—"}
+                      </div>
+                    </div>
+                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Agreed Due Date</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: isOverdue ? "var(--t-rust)" : "var(--t-ink)", marginTop: 1 }}>
+                        {fmtLoanDate(l.dueDate)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {l.security && (
+                    <div style={{ fontSize: 10, color: "var(--t-muted)", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                      <Shield size={11} color="var(--t-accent)" /> Collateral: {l.security}
+                    </div>
+                  )}
+
+                  {l.note && (
+                    <div style={{ fontSize: 11, color: "var(--t-muted)", fontStyle: "italic", marginTop: 8, lineHeight: 1.4 }}>
+                      "{l.note}"
+                    </div>
+                  )}
+                </div>
+
+                {/* Card Actions Footer */}
+                <div style={{ marginTop: 16, borderTop: "1px solid var(--t-line)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {/* Action Tools Row */}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {!isPaidOff && (
+                      <button
+                        onClick={() => setPaymentLoan(l)}
+                        style={{
+                          flex: "1 1 auto",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 5,
+                          padding: "6px 10px",
+                          borderRadius: 6,
+                          background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                          color: "var(--t-sage)",
+                          border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <IndianRupee size={12} /> Record Receipt
+                      </button>
                     )}
 
-                    {l.note && (
-                      <div style={{ fontSize: 11, color: "var(--t-muted)", fontStyle: "italic", marginTop: 8, lineHeight: 1.4 }}>
-                        "{l.note}"
-                      </div>
+                    {!isPaidOff && (
+                      <button
+                        onClick={() => setReminderLoan(l)}
+                        style={{
+                          flex: "1 1 auto",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 5,
+                          padding: "6px 10px",
+                          borderRadius: 6,
+                          background: "#25D36615",
+                          color: "#128C7E",
+                          border: "1px solid #25D36630",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Share2 size={12} /> Send Reminder
+                      </button>
                     )}
                   </div>
 
-                  {/* Card Actions Footer */}
-                  <div style={{ marginTop: 16, borderTop: "1px solid var(--t-line)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                    {/* Action Tools Row */}
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {/* Secondary Actions (History, Forgive, Edit, Delete) */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4 }}>
+                    {paymentsCount > 0 ? (
+                      <button
+                        onClick={() => setHistoryLoan(isSelectedHistory ? null : l)}
+                        style={{
+                          fontSize: 11,
+                          color: "var(--t-accent)",
+                          background: isSelectedHistory ? "color-mix(in srgb, var(--t-accent) 12%, transparent)" : "transparent",
+                          padding: isSelectedHistory ? "3px 8px" : 0,
+                          borderRadius: 6,
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <Clock size={12} /> Receipts ({paymentsCount})
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: 11, color: "var(--t-muted)" }}>No receipts logged</span>
+                    )}
+
+                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                       {!isPaidOff && (
                         <button
-                          onClick={() => setPaymentLoan(l)}
+                          onClick={() => setConfirmForgiveLoan(l)}
+                          title="Settle / Forgive remaining debt"
                           style={{
-                            flex: "1 1 auto",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 5,
-                            padding: "6px 10px",
-                            borderRadius: 6,
-                            background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
-                            color: "var(--t-sage)",
-                            border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
-                            fontSize: 11,
-                            fontWeight: 800,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <IndianRupee size={12} /> Record Receipt
-                        </button>
-                      )}
-
-                      {!isPaidOff && (
-                        <button
-                          onClick={() => setReminderLoan(l)}
-                          style={{
-                            flex: "1 1 auto",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 5,
-                            padding: "6px 10px",
-                            borderRadius: 6,
-                            background: "#25D36615",
-                            color: "#128C7E",
-                            border: "1px solid #25D36630",
-                            fontSize: 11,
-                            fontWeight: 800,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <Share2 size={12} /> Send Reminder
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Secondary Actions (History, Forgive, Edit, Delete) */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4 }}>
-                      {paymentsCount > 0 ? (
-                        <button
-                          onClick={() => setHistoryLoan(isSelectedHistory ? null : l)}
-                          style={{
-                            fontSize: 11,
-                            color: "var(--t-accent)",
-                            background: isSelectedHistory ? "color-mix(in srgb, var(--t-accent) 12%, transparent)" : "transparent",
-                            padding: isSelectedHistory ? "3px 8px" : 0,
-                            borderRadius: 6,
-                            border: "none",
-                            cursor: "pointer",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <Clock size={12} /> Receipts ({paymentsCount})
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 11, color: "var(--t-muted)" }}>No receipts logged</span>
-                      )}
-
-                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                        {!isPaidOff && (
-                          <button
-                            onClick={() => setConfirmForgiveLoan(l)}
-                            title="Settle / Forgive remaining debt"
-                            style={{
-                              padding: "3px 6px",
-                              borderRadius: 5,
-                              border: "1px solid var(--t-line)",
-                              background: "transparent",
-                              color: "var(--t-muted)",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            Forgive
-                          </button>
-                        )}
-                        <button
-                          onClick={() => onEdit(l.id)}
-                          title="Edit loan"
-                          style={{
-                            padding: 5,
-                            borderRadius: 6,
-                            border: "none",
+                            padding: "3px 6px",
+                            borderRadius: 5,
+                            border: "1px solid var(--t-line)",
                             background: "transparent",
                             color: "var(--t-muted)",
+                            fontSize: 10,
+                            fontWeight: 700,
                             cursor: "pointer",
                           }}
                         >
-                          <Pencil size={13} />
+                          Forgive
                         </button>
-                        <button
-                          onClick={() => setConfirmDeleteLoan(l)}
-                          title="Delete loan"
-                          style={{
-                            padding: 5,
-                            borderRadius: 6,
-                            border: "none",
-                            background: "transparent",
-                            color: "var(--t-rust)",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
+                      )}
+                      <button
+                        onClick={() => onEdit(l.id)}
+                        title="Edit loan"
+                        style={{
+                          padding: 5,
+                          borderRadius: 6,
+                          border: "none",
+                          background: "transparent",
+                          color: "var(--t-muted)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteLoan(l)}
+                        title="Delete loan"
+                        style={{
+                          padding: 5,
+                          borderRadius: 6,
+                          border: "none",
+                          background: "transparent",
+                          color: "var(--t-rust)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
-                </Card>
-              );
+                </div>
+              </Card>
+            );
           };
 
           return (
@@ -1132,21 +1131,31 @@ export function LoanGivenSection({
       )}
 
       {/* Payment Recording Modal */}
-      {paymentLoan && (
-        <LoanPaymentModal
-          loan={paymentLoan}
-          type="given"
-          bankAccounts={bankAccounts}
-          onClose={() => setPaymentLoan(null)}
-          onSavePayment={async (_record: any, patch: any, bankTxn?: any) => {
-            await onUpdate(paymentLoan.id, patch);
-            if (bankTxn && onAddTransaction) {
-              await onAddTransaction(bankTxn);
-            }
-            setPaymentLoan(null);
-          }}
-        />
-      )}
+      {paymentLoan && (() => {
+        const activePaymentLoan = items.find((item: any) => item.id === paymentLoan.id) || paymentLoan;
+        return (
+          <LoanPaymentModal
+            loan={activePaymentLoan}
+            type="given"
+            bankAccounts={bankAccounts}
+            onClose={() => setPaymentLoan(null)}
+            onSavePayment={async (_record: any, patch: any, bankTxn?: any) => {
+              const targetId = activePaymentLoan.id;
+              setSinglePassbookOpen(true);
+              if (displayItems.length > 1 || historyLoan) {
+                setHistoryLoan({ ...activePaymentLoan, ...patch });
+              }
+              const updatePromise = Promise.resolve(onUpdate(targetId, patch));
+              const txnPromise =
+                bankTxn && onAddTransaction
+                  ? Promise.resolve(onAddTransaction(bankTxn))
+                  : Promise.resolve();
+              setPaymentLoan(null);
+              await Promise.all([updatePromise, txnPromise]);
+            }}
+          />
+        );
+      })()}
 
       {/* Reminder Modal */}
       {reminderLoan && (

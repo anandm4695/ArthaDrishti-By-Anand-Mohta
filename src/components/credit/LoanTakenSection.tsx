@@ -1159,21 +1159,39 @@ export function LoanTakenSection({
       )}
 
       {/* Payment Recording Modal */}
-      {paymentLoan && (
-        <LoanPaymentModal
-          loan={paymentLoan}
-          type="taken"
-          bankAccounts={bankAccounts}
-          onClose={() => setPaymentLoan(null)}
-          onSavePayment={async (_record: any, patch: any, bankTxn?: any) => {
-            await onUpdate(paymentLoan.id, patch);
-            if (bankTxn && onAddTransaction) {
-              await onAddTransaction(bankTxn);
-            }
-            setPaymentLoan(null);
-          }}
-        />
-      )}
+      {paymentLoan && (() => {
+        const rawPaymentLoan = items.find((item: any) => item.id === paymentLoan.id) || paymentLoan;
+        const reconciledMetrics = getReconciledLoanTakenMetrics(rawPaymentLoan);
+        const activePaymentLoan = {
+          ...rawPaymentLoan,
+          outstanding: reconciledMetrics.outstanding,
+          monthsRemaining: reconciledMetrics.months,
+        };
+        return (
+          <LoanPaymentModal
+            loan={activePaymentLoan}
+            type="taken"
+            bankAccounts={bankAccounts}
+            onClose={() => setPaymentLoan(null)}
+            onSavePayment={async (_record: any, patch: any, bankTxn?: any) => {
+              const targetId = activePaymentLoan.id;
+              // Automatically reveal and focus the passbook so the user immediately sees the new EMI entry & reduced balance
+              setSinglePassbookOpen(true);
+              if (displayItems.length > 1 || historyLoan) {
+                setHistoryLoan({ ...activePaymentLoan, ...patch });
+              }
+              const updatePromise = Promise.resolve(onUpdate(targetId, patch));
+              const txnPromise =
+                bankTxn && onAddTransaction
+                  ? Promise.resolve(onAddTransaction(bankTxn))
+                  : Promise.resolve();
+              // Close the modal immediately (optimistic local state is already updated synchronously)
+              setPaymentLoan(null);
+              await Promise.all([updatePromise, txnPromise]);
+            }}
+          />
+        );
+      })()}
 
       {/* Payment History Modal (Rendered below only when in Table View; Grid View renders side-by-side) */}
       {historyLoan && viewMode === "table" && (
