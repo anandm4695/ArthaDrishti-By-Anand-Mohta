@@ -9,6 +9,71 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     {
+      name: "public-asset-budget-guard",
+      buildStart() {
+        if (mode !== "production") return;
+        const publicDir = path.resolve(__dirname, "public");
+        if (!fs.existsSync(publicDir)) return;
+
+        const MAX_SINGLE_FILE_BYTES = 500 * 1024; // 500 KB per asset
+        const MAX_TOTAL_PUBLIC_BYTES = 25 * 1024 * 1024; // 25 MB total public/ budget
+        let totalBytes = 0;
+        const oversizedFiles: string[] = [];
+
+        const walk = (dir: string) => {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          const stemsByExt = new Map<string, Set<string>>();
+
+          for (const entry of entries) {
+            if (entry.name === ".DS_Store") continue;
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              walk(fullPath);
+            } else if (entry.isFile()) {
+              const { size } = fs.statSync(fullPath);
+              totalBytes += size;
+              const relPath = path.relative(publicDir, fullPath);
+              if (size > MAX_SINGLE_FILE_BYTES) {
+                oversizedFiles.push(`${relPath} (${(size / 1024).toFixed(1)} KB > 500 KB)`);
+              }
+              const ext = path.extname(entry.name).toLowerCase();
+              const stem = path.basename(entry.name, ext);
+              if (ext === ".png" || ext === ".webp") {
+                const exts = stemsByExt.get(stem) || new Set<string>();
+                exts.add(ext);
+                stemsByExt.set(stem, exts);
+              }
+            }
+          }
+
+          const relDir = path.relative(publicDir, dir);
+          if (relDir === "cards" || relDir === "vehicles") {
+            for (const [stem, exts] of stemsByExt.entries()) {
+              if (exts.has(".png") && exts.has(".webp")) {
+                throw new Error(
+                  `[public-asset-budget-guard] Duplicate .png and .webp asset detected in public/${relDir}/${stem}.{png,webp}. Keep only one format to prevent Vercel Deployment Storage bloat.`
+                );
+              }
+            }
+          }
+        };
+
+        walk(publicDir);
+
+        if (oversizedFiles.length > 0) {
+          throw new Error(
+            `[public-asset-budget-guard] Oversized static assets in public/ exceed 500 KB budget:\n  - ${oversizedFiles.join("\n  - ")}`
+          );
+        }
+
+        if (totalBytes > MAX_TOTAL_PUBLIC_BYTES) {
+          throw new Error(
+            `[public-asset-budget-guard] Total public/ directory size (${(totalBytes / 1024 / 1024).toFixed(2)} MB) exceeds the 25 MB Vercel Deployment Storage budget.`
+          );
+        }
+      },
+    },
+    {
       name: "strip-console-production",
       transform(code, id) {
         if (mode === "production" && !id.includes("node_modules") && (id.endsWith(".ts") || id.endsWith(".tsx") || id.endsWith(".js"))) {
