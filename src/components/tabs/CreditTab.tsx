@@ -1304,7 +1304,7 @@ function CCEmptyState({ onAdd, onAddPreset }: any) {
       waiverInfo: "Lifetime Free Card",
       rewardPointsBalance: "1200",
       rewardPointValue: "1",
-      cardImageUrl: "/cards/icici-amazon-pay.webp",
+      cardImageUrl: "/cards/icici-amazon-pay.png",
     },
     {
       issuer: "SBI SimplyClick",

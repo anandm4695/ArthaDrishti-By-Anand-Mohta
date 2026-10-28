@@ -2,6 +2,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "regions": ["bom1"],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "live": false,
+      "demo": false,
+      "ui-refresh-2026": false
+    }
+  },
   "functions": {
     "api/health.js":       { "maxDuration": 10 },
     "api/stock-logo.js":   { "maxDuration": 15 },

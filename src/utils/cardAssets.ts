@@ -2698,12 +2698,13 @@ export function resolveCardArtwork(item: {
   const isClosed = (item.status || "active").toLowerCase() === "closed";
   const nameQuery = item.issuer || item.cardName || item.name || item.bankName || "";
   const net = item.network || "Visa";
+  const normalizedCustomUrl = (item.cardImageUrl || "").replace(/^\/cards\/(.+)\.webp$/i, "/cards/$1.png");
 
   // If closed, return muted grayscale theme
   if (isClosed) {
     return {
-      hasCustomImage: !!item.cardImageUrl,
-      imageUrl: item.cardImageUrl || "",
+      hasCustomImage: !!normalizedCustomUrl,
+      imageUrl: normalizedCustomUrl,
       bgGradient: "linear-gradient(135deg, #27272a 0%, #18181b 100%)",
       accentColor: "#71717a",
       textColor: "#a1a1aa",
@@ -2715,14 +2716,14 @@ export function resolveCardArtwork(item: {
   }
 
   // Check custom image first
-  const hasCustom = Boolean(item.cardImageUrl && item.cardImageUrl.trim().length > 0);
+  const hasCustom = Boolean(normalizedCustomUrl && normalizedCustomUrl.trim().length > 0);
   const matched = getMatchingCardPreset(nameQuery, net);
 
   if (matched) {
     return {
       hasCustomImage: hasCustom,
       imageUrl: hasCustom
-        ? item.cardImageUrl || ""
+        ? normalizedCustomUrl
         : matched.imageUrl || matched.officialImageUrl || "",
       bgGradient: matched.bgGradient,
       accentColor: matched.accentColor,
@@ -2737,7 +2738,7 @@ export function resolveCardArtwork(item: {
   // Default fallback
   return {
     hasCustomImage: hasCustom,
-    imageUrl: hasCustom ? item.cardImageUrl || "" : "",
+    imageUrl: hasCustom ? normalizedCustomUrl : "",
     bgGradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #020617 100%)",
     accentColor: "#38bdf8",
     textColor: "#ffffff",
