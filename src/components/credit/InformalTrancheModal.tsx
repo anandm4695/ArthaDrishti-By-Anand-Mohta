@@ -128,8 +128,8 @@ export function InformalTrancheModal({
   };
 
   return (
-    <Modal title={actionTitle} onClose={onClose}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <Modal title={actionTitle} onClose={onClose} maxWidth={780}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {error && (
           <div
             style={{
@@ -146,268 +146,303 @@ export function InformalTrancheModal({
           </div>
         )}
 
-        {/* Amount & Date */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <Field label={isBorrowed ? "Amount Received (₹)" : "Amount Lent (₹)"}>
-            <div style={{ position: "relative" }}>
-              <input
-                style={{
-                  width: "100%",
-                  padding: "10px 12px 10px 36px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--t-line)",
-                  background: "var(--t-card-bg)",
-                  color: "var(--t-ink)",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                type="number"
-                min="1"
-                step="any"
-                placeholder="50000"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  if (error) setError(null);
-                }}
-                autoFocus
-              />
-              <IndianRupee
-                size={15}
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--t-muted)",
-                }}
-              />
-            </div>
-          </Field>
-
-          <Field label="Transaction Date">
-            <div style={{ position: "relative" }}>
-              <input
-                style={{
-                  width: "100%",
-                  padding: "10px 12px 10px 36px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--t-line)",
-                  background: "var(--t-card-bg)",
-                  color: "var(--t-ink)",
-                  fontSize: 13,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-              <Calendar
-                size={15}
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--t-muted)",
-                }}
-              />
-            </div>
-          </Field>
-        </div>
-
-        {/* Due Date (Optional) */}
-        <Field label="Repayment Target / Due Date (optional)">
-          <div style={{ position: "relative" }}>
-            <input
-              style={{
-                width: "100%",
-                padding: "10px 12px 10px 36px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--t-line)",
-                background: "var(--t-card-bg)",
-                color: "var(--t-ink)",
-                fontSize: 13,
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-            <Clock
-              size={15}
-              style={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--t-muted)",
-              }}
-            />
-          </div>
-        </Field>
-
-        {/* Bank Account Selection (Only for new entries) */}
-        {!initial && bankAccounts && bankAccounts.length > 0 && (
-          <Field label={isBorrowed ? "Deposit to Bank Account (optional)" : "Disburse from Bank Account (optional)"}>
-            <div style={{ position: "relative" }}>
-              <select
-                style={{
-                  width: "100%",
-                  padding: "10px 12px 10px 36px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--t-line)",
-                  background: "var(--t-card-bg)",
-                  color: "var(--t-ink)",
-                  fontSize: 13,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                value={selectedBankId}
-                onChange={(e) => setSelectedBankId(e.target.value)}
-              >
-                <option value="">Do not log bank transaction</option>
-                {bankAccounts.map((b: any) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bankName} - {b.accountNumber ? `•••• ${b.accountNumber.slice(-4)}` : "Account"} (₹{fmtINR(b.balance || 0)})
-                  </option>
-                ))}
-              </select>
-              <Landmark
-                size={15}
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--t-muted)",
-                }}
-              />
-            </div>
-            <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 4 }}>
-              {isBorrowed
-                ? "If selected, creates an incoming credit transaction in this bank account."
-                : "If selected, creates an outgoing debit transaction from this bank account."}
-            </div>
-          </Field>
-        )}
-
-        {/* Bank Transaction Metadata Fields */}
-        {selectedBankId && (
+        {/* Two-Column Widescreen Form Layout */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 310px), 1fr))",
+            gap: 16,
+            alignItems: "start",
+          }}
+        >
+          {/* Left Column: Core Tranche & Bank Account */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 12,
-              padding: "12px 14px",
-              background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
-              borderRadius: "var(--radius-md)",
-              border: "1px dashed var(--t-line)",
+              gap: 14,
+              padding: "16px",
+              borderRadius: 12,
+              background: "var(--surface-0)",
+              border: "1px solid var(--t-line)",
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t-accent)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Bank Ledger Details
-            </div>
-
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <Field label="Payment Mode">
-                <select
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--t-line)",
-                    background: "var(--t-card-bg)",
-                    color: "var(--t-ink)",
-                    fontSize: 13,
-                    outline: "none",
-                  }}
-                  value={mode}
-                  onChange={(e) => setMode(e.target.value)}
-                >
-                  <option value="Bank Transfer">Bank Transfer (NEFT / IMPS / RTGS)</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Card">Card</option>
-                  <option value="Other">Other</option>
-                </select>
+              <Field label={isBorrowed ? "Amount Received (₹)" : "Amount Lent (₹)"}>
+                <div style={{ position: "relative" }}>
+                  <input
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px 10px 36px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    type="number"
+                    min="1"
+                    step="any"
+                    placeholder="50000"
+                    value={amount}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      if (error) setError(null);
+                    }}
+                    autoFocus
+                  />
+                  <IndianRupee
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--t-muted)",
+                    }}
+                  />
+                </div>
               </Field>
 
-              <Field label="Reference / Cheque / UTR No.">
+              <Field label="Transaction Date">
+                <div style={{ position: "relative" }}>
+                  <input
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px 10px 36px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 13,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                  <Calendar
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--t-muted)",
+                    }}
+                  />
+                </div>
+              </Field>
+            </div>
+
+            {/* Due Date (Optional) */}
+            <Field label="Repayment Target / Due Date (optional)">
+              <div style={{ position: "relative" }}>
                 <input
                   style={{
                     width: "100%",
-                    padding: "10px 12px",
+                    padding: "10px 12px 10px 36px",
                     borderRadius: "var(--radius-md)",
                     border: "1px solid var(--t-line)",
                     background: "var(--t-card-bg)",
                     color: "var(--t-ink)",
                     fontSize: 13,
                     outline: "none",
+                    boxSizing: "border-box",
                   }}
-                  placeholder="e.g. Cheque #4521 / UTR No."
-                  value={referenceNumber}
-                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                 />
-              </Field>
-            </div>
-
-            <Field label="Narration / Description (for Bank Ledger)">
-              <input
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--t-line)",
-                  background: "var(--t-card-bg)",
-                  color: "var(--t-ink)",
-                  fontSize: 13,
-                  outline: "none",
-                }}
-                placeholder="e.g. IMPS/P2A/524312441/Personal Loan"
-                value={narration}
-                onChange={(e) => setNarration(e.target.value)}
-              />
+                <Clock
+                  size={15}
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--t-muted)",
+                  }}
+                />
+              </div>
             </Field>
-          </div>
-        )}
 
-        {/* Note */}
-        <Field label="Description / Note (optional)">
-          <div style={{ position: "relative" }}>
-            <input
-              style={{
-                width: "100%",
-                padding: "10px 12px 10px 36px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--t-line)",
-                background: "var(--t-card-bg)",
-                color: "var(--t-ink)",
-                fontSize: 13,
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-              placeholder="e.g. Bank Transfer, Cheque #4521, Cash"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-            <FileText
-              size={15}
-              style={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--t-muted)",
-              }}
-            />
+            {/* Bank Account Selection (Only for new entries) */}
+            {!initial && bankAccounts && bankAccounts.length > 0 && (
+              <Field label={isBorrowed ? "Deposit to Bank Account (optional)" : "Disburse from Bank Account (optional)"}>
+                <div style={{ position: "relative" }}>
+                  <select
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px 10px 36px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 13,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    value={selectedBankId}
+                    onChange={(e) => setSelectedBankId(e.target.value)}
+                  >
+                    <option value="">Do not log bank transaction</option>
+                    {bankAccounts.map((b: any) => (
+                      <option key={b.id} value={b.id}>
+                        {b.bankName} - {b.accountNumber ? `•••• ${b.accountNumber.slice(-4)}` : "Account"} (₹{fmtINR(b.balance || 0)})
+                      </option>
+                    ))}
+                  </select>
+                  <Landmark
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--t-muted)",
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 4 }}>
+                  {isBorrowed
+                    ? "If selected, creates an incoming credit transaction in this bank account."
+                    : "If selected, creates an outgoing debit transaction from this bank account."}
+                </div>
+              </Field>
+            )}
           </div>
-        </Field>
+
+          {/* Right Column: Notes & Bank Ledger Metadata */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+              padding: "16px",
+              borderRadius: 12,
+              background: "var(--surface-0)",
+              border: "1px solid var(--t-line)",
+            }}
+          >
+            {/* Note */}
+            <Field label="Description / Note (optional)">
+              <div style={{ position: "relative" }}>
+                <input
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px 10px 36px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--t-line)",
+                    background: "var(--t-card-bg)",
+                    color: "var(--t-ink)",
+                    fontSize: 13,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                  placeholder="e.g. Bank Transfer, Cheque #4521, Cash"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+                <FileText
+                  size={15}
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--t-muted)",
+                  }}
+                />
+              </div>
+            </Field>
+
+            {/* Bank Transaction Metadata Fields */}
+            {selectedBankId && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  padding: "12px 14px",
+                  background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px dashed var(--t-line)",
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t-accent)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Bank Ledger Details
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <Field label="Payment Mode">
+                    <select
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--t-line)",
+                        background: "var(--t-card-bg)",
+                        color: "var(--t-ink)",
+                        fontSize: 13,
+                        outline: "none",
+                      }}
+                      value={mode}
+                      onChange={(e) => setMode(e.target.value)}
+                    >
+                      <option value="Bank Transfer">Bank Transfer (NEFT / IMPS / RTGS)</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Card">Card</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Reference / Cheque / UTR No.">
+                    <input
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--t-line)",
+                        background: "var(--t-card-bg)",
+                        color: "var(--t-ink)",
+                        fontSize: 13,
+                        outline: "none",
+                      }}
+                      placeholder="e.g. Cheque #4521 / UTR No."
+                      value={referenceNumber}
+                      onChange={(e) => setReferenceNumber(e.target.value)}
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Narration / Description (for Bank Ledger)">
+                  <input
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 13,
+                      outline: "none",
+                    }}
+                    placeholder="e.g. IMPS/P2A/524312441/Personal Loan"
+                    value={narration}
+                    onChange={(e) => setNarration(e.target.value)}
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+        </div>
 
         <ModalActions
           onSave={handleSubmit}

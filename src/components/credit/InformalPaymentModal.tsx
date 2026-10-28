@@ -149,8 +149,21 @@ export function InformalPaymentModal({
     }
   };
 
+  const numAmtPreview = Number(amount) || 0;
+  const nextOutstanding = Math.max(0, currentOutstanding - numAmtPreview);
+
+  const sectionCardStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    padding: "14px 16px",
+    background: "color-mix(in srgb, var(--surface-1) 45%, transparent)",
+    borderRadius: 12,
+    border: "1px solid var(--t-line)",
+  };
+
   return (
-    <Modal title={actionTitle} onClose={onClose}>
+    <Modal title={actionTitle} onClose={onClose} maxWidth={780}>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {/* Outstanding Context Banner */}
         <div
@@ -158,28 +171,52 @@ export function InformalPaymentModal({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            padding: "12px 14px",
+            flexWrap: "wrap",
+            gap: 12,
+            padding: "12px 16px",
             background: "color-mix(in srgb, var(--surface-1) 60%, transparent)",
-            borderRadius: 10,
+            borderRadius: 12,
             border: "1px solid var(--t-line)",
           }}
         >
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
-              {isBorrowed ? "Total You Owe" : "Total Owed To You"}
+          <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+                {isBorrowed ? "Total You Owe" : "Total Owed To You"}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: currentOutstanding > 0 ? (isBorrowed ? "var(--t-rust)" : "var(--t-accent)") : "var(--t-sage)",
+                  fontVariantNumeric: "tabular-nums",
+                  marginTop: 2,
+                }}
+              >
+                <Money value={currentOutstanding} variant="full" />
+              </div>
             </div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 18,
-                fontWeight: 800,
-                color: currentOutstanding > 0 ? (isBorrowed ? "var(--t-rust)" : "var(--t-accent)") : "var(--t-sage)",
-                fontVariantNumeric: "tabular-nums",
-                marginTop: 2,
-              }}
-            >
-              <Money value={currentOutstanding} variant="full" />
-            </div>
+
+            {!initial && numAmtPreview > 0 && (
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+                  Balance After Payment
+                </div>
+                <div
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: nextOutstanding === 0 ? "var(--t-sage)" : "var(--t-ink)",
+                    fontVariantNumeric: "tabular-nums",
+                    marginTop: 2,
+                  }}
+                >
+                  <Money value={nextOutstanding} variant="full" />
+                </div>
+              </div>
+            )}
           </div>
 
           {!initial && currentOutstanding > 0 && (
@@ -190,7 +227,7 @@ export function InformalPaymentModal({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "6px 12px",
+                padding: "7px 14px",
                 borderRadius: 8,
                 border: "1px solid color-mix(in srgb, var(--t-sage) 30%, transparent)",
                 background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
@@ -222,249 +259,254 @@ export function InformalPaymentModal({
           </div>
         )}
 
-        {/* Amount & Date */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <Field label={isBorrowed ? "Repayment Amount (₹)" : "Received Amount (₹)"}>
-            <div style={{ position: "relative" }}>
-              <input
-                style={{
-                  width: "100%",
-                  padding: "10px 12px 10px 36px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--t-line)",
-                  background: "var(--t-card-bg)",
-                  color: "var(--t-ink)",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                type="number"
-                min="1"
-                step="any"
-                placeholder="20000"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  if (error) setError(null);
-                }}
-                autoFocus
-              />
-              <IndianRupee
-                size={15}
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--t-muted)",
-                }}
-              />
-            </div>
-          </Field>
-
-          <Field label="Payment Date">
-            <div style={{ position: "relative" }}>
-              <input
-                style={{
-                  width: "100%",
-                  padding: "10px 12px 10px 36px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--t-line)",
-                  background: "var(--t-card-bg)",
-                  color: "var(--t-ink)",
-                  fontSize: 13,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-              <Calendar
-                size={15}
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--t-muted)",
-                }}
-              />
-            </div>
-          </Field>
-        </div>
-
-        {/* Payment Method */}
-        <Field label="Payment Mode / Channel">
-          <div style={{ position: "relative" }}>
-            <select
-              style={{
-                width: "100%",
-                padding: "10px 12px 10px 36px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--t-line)",
-                background: "var(--t-card-bg)",
-                color: "var(--t-ink)",
-                fontSize: 13,
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-              value={method}
-              onChange={(e) => setMethod(e.target.value)}
-            >
-              {PAYMENT_MODES.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <CreditCard
-              size={15}
-              style={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--t-muted)",
-              }}
-            />
-          </div>
-        </Field>
-
-        {/* Bank Account Selection (Only for new entries) */}
-        {!initial && bankAccounts && bankAccounts.length > 0 && (
-          <Field label={isBorrowed ? "Debit from Bank Account (optional)" : "Deposit to Bank Account (optional)"}>
-            <div style={{ position: "relative" }}>
-              <select
-                style={{
-                  width: "100%",
-                  padding: "10px 12px 10px 36px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--t-line)",
-                  background: "var(--t-card-bg)",
-                  color: "var(--t-ink)",
-                  fontSize: 13,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                value={selectedBankId}
-                onChange={(e) => setSelectedBankId(e.target.value)}
-              >
-                <option value="">Do not log bank transaction</option>
-                {bankAccounts.map((b: any) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bankName} - {b.accountNumber ? `•••• ${b.accountNumber.slice(-4)}` : "Account"} (₹{fmtINR(b.balance || 0)})
-                  </option>
-                ))}
-              </select>
-              <Landmark
-                size={15}
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--t-muted)",
-                }}
-              />
-            </div>
-            <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 4 }}>
-              {isBorrowed
-                ? "If selected, automatically logs an expense debit transaction in your bank ledger."
-                : "If selected, automatically logs an income deposit transaction in your bank ledger."}
-            </div>
-          </Field>
-        )}
-
-        {/* Bank Transaction Metadata Fields */}
-        {selectedBankId && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              padding: "12px 14px",
-              background: "color-mix(in srgb, var(--surface-1) 50%, transparent)",
-              borderRadius: "var(--radius-md)",
-              border: "1px dashed var(--t-line)",
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--t-accent)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Bank Ledger Details
-            </div>
-
+        {/* Widescreen 2-Column Layout */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+            gap: 14,
+            alignItems: "stretch",
+          }}
+        >
+          {/* Left Panel: Amount, Date & Bank Account */}
+          <div style={sectionCardStyle}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <Field label="Reference / Cheque / UTR No.">
-                <input
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--t-line)",
-                    background: "var(--t-card-bg)",
-                    color: "var(--t-ink)",
-                    fontSize: 13,
-                    outline: "none",
-                  }}
-                  placeholder="e.g. UPI / Cheque #4521 / UTR"
-                  value={referenceNumber}
-                  onChange={(e) => setReferenceNumber(e.target.value)}
-                />
+              <Field label={isBorrowed ? "Repayment Amount (₹)" : "Received Amount (₹)"}>
+                <div style={{ position: "relative" }}>
+                  <input
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px 10px 36px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    type="number"
+                    min="1"
+                    step="any"
+                    placeholder="20000"
+                    value={amount}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      if (error) setError(null);
+                    }}
+                    autoFocus
+                  />
+                  <IndianRupee
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--t-muted)",
+                    }}
+                  />
+                </div>
               </Field>
 
-              <Field label="Narration / Description (for Bank Ledger)">
-                <input
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--t-line)",
-                    background: "var(--t-card-bg)",
-                    color: "var(--t-ink)",
-                    fontSize: 13,
-                    outline: "none",
-                  }}
-                  placeholder="e.g. UPI/23910391/Debt Settlement"
-                  value={narration}
-                  onChange={(e) => setNarration(e.target.value)}
-                />
+              <Field label="Payment Date">
+                <div style={{ position: "relative" }}>
+                  <input
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px 10px 36px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 13,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                  <Calendar
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--t-muted)",
+                    }}
+                  />
+                </div>
               </Field>
             </div>
-          </div>
-        )}
 
-        {/* Note */}
-        <Field label="Payment Remarks / Reference (optional)">
-          <div style={{ position: "relative" }}>
-            <input
-              style={{
-                width: "100%",
-                padding: "10px 12px 10px 36px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--t-line)",
-                background: "var(--t-card-bg)",
-                color: "var(--t-ink)",
-                fontSize: 13,
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-              placeholder="e.g. GPay UPI ref #829103, Part payment 1"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-            <FileText
-              size={15}
-              style={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--t-muted)",
-              }}
-            />
+            {/* Bank Account Selection (Only for new entries) */}
+            {!initial && bankAccounts && bankAccounts.length > 0 && (
+              <Field label={isBorrowed ? "Debit from Bank Account (optional)" : "Deposit to Bank Account (optional)"}>
+                <div style={{ position: "relative" }}>
+                  <select
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px 10px 36px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 13,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    value={selectedBankId}
+                    onChange={(e) => setSelectedBankId(e.target.value)}
+                  >
+                    <option value="">Do not log bank transaction</option>
+                    {bankAccounts.map((b: any) => (
+                      <option key={b.id} value={b.id}>
+                        {b.bankName} - {b.accountNumber ? `•••• ${b.accountNumber.slice(-4)}` : "Account"} (₹{fmtINR(b.balance || 0)})
+                      </option>
+                    ))}
+                  </select>
+                  <Landmark
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--t-muted)",
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 4 }}>
+                  {isBorrowed
+                    ? "If selected, automatically logs an expense debit transaction in your bank ledger."
+                    : "If selected, automatically logs an income deposit transaction in your bank ledger."}
+                </div>
+              </Field>
+            )}
           </div>
-        </Field>
+
+          {/* Right Panel: Mode, Remarks & Bank Ledger Metadata */}
+          <div style={sectionCardStyle}>
+            <Field label="Payment Mode / Channel">
+              <div style={{ position: "relative" }}>
+                <select
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px 10px 36px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--t-line)",
+                    background: "var(--t-card-bg)",
+                    color: "var(--t-ink)",
+                    fontSize: 13,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value)}
+                >
+                  {PAYMENT_MODES.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <CreditCard
+                  size={15}
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--t-muted)",
+                  }}
+                />
+              </div>
+            </Field>
+
+            <Field label="Payment Remarks / Reference (optional)">
+              <div style={{ position: "relative" }}>
+                <input
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px 10px 36px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--t-line)",
+                    background: "var(--t-card-bg)",
+                    color: "var(--t-ink)",
+                    fontSize: 13,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                  placeholder="e.g. GPay UPI ref #829103, Part payment 1"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+                <FileText
+                  size={15}
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--t-muted)",
+                  }}
+                />
+              </div>
+            </Field>
+
+            {/* Bank Transaction Metadata Fields */}
+            {selectedBankId && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 10,
+                  paddingTop: 6,
+                  borderTop: "1px dashed var(--t-line)",
+                }}
+              >
+                <Field label="Reference / UTR No.">
+                  <input
+                    style={{
+                      width: "100%",
+                      padding: "9px 11px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 12.5,
+                      outline: "none",
+                    }}
+                    placeholder="e.g. UPI / UTR"
+                    value={referenceNumber}
+                    onChange={(e) => setReferenceNumber(e.target.value)}
+                  />
+                </Field>
+
+                <Field label="Narration (Bank Ledger)">
+                  <input
+                    style={{
+                      width: "100%",
+                      padding: "9px 11px",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--t-line)",
+                      background: "var(--t-card-bg)",
+                      color: "var(--t-ink)",
+                      fontSize: 12.5,
+                      outline: "none",
+                    }}
+                    placeholder="e.g. UPI/23910391"
+                    value={narration}
+                    onChange={(e) => setNarration(e.target.value)}
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+        </div>
 
         <ModalActions
           onSave={handleSubmit}
@@ -472,6 +514,7 @@ export function InformalPaymentModal({
           saveLabel={initial ? "Save Changes" : "Record Payment"}
           disabled={saving || !amount || Number(amount) <= 0}
           loading={saving}
+          style={{ marginTop: 4 }}
         />
       </div>
     </Modal>

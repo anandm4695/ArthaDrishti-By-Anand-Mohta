@@ -131,8 +131,8 @@ export function LoanPrepaymentDrawer({
   };
 
   return (
-    <Modal title={`Prepayment & Fast-Payoff Simulator — ${loan.lender || "Loan"}`} onClose={onClose}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 540, maxWidth: "100%" }}>
+    <Modal title={`Prepayment & Fast-Payoff Simulator — ${loan.lender || "Loan"}`} onClose={onClose} maxWidth={780}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", maxWidth: "100%" }}>
         {/* Loan Baseline Bar */}
         <div
           style={{

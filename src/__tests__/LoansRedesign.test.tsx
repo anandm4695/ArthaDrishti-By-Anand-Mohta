@@ -433,6 +433,105 @@ describe("Loans Taken & Given Redesign Suite", () => {
       expect(mappedGiven.security).toBe("Promissory note");
       expect(mappedGiven.is_interest_free).toBe(true);
     });
+
+    it("renders single-loan widescreen passbook companion panel, Principal Borrowed label, and 0% Interest-Free rate", () => {
+      const zeroRateLoan = [
+        {
+          id: "liqui-1",
+          lender: "LiquiLoans",
+          type: "Education",
+          principal: 150000,
+          outstanding: 75000,
+          emi: 12500,
+          rate: 0,
+          monthsRemaining: 6,
+          interestType: "Fixed",
+          accountNumber: "CL00754468",
+          dueDay: 5,
+          startDate: "2022-06-05",
+          owner: "self",
+          payments: [
+            { id: "p1", amount: 12500, date: "2022-11-05", mode: "Auto-Debit (NACH)", referenceNumber: "NACHDB05112200564010", note: "UPGRAD EMI" },
+          ],
+        },
+      ];
+
+      render(
+        <LoanTakenSection
+          items={zeroRateLoan}
+          onAdd={vi.fn()}
+          onEdit={vi.fn()}
+          onUpdate={vi.fn()}
+          onRemove={vi.fn()}
+        />
+      );
+
+      // Verify Principal Borrowed label & 0% (Interest-Free) rate display
+      expect(screen.getByText(/Principal Borrowed/i)).toBeTruthy();
+      expect(screen.getByText(/0% \(Interest-Free\)/i)).toBeTruthy();
+
+      // Verify side-by-side Repayment Ledger & Passbook companion panel renders automatically for single loan
+      expect(screen.getByText(/Payment History — LiquiLoans/i)).toBeTruthy();
+      expect(screen.getByText(/Repayment Ledger & Passbook/i)).toBeTruthy();
+      expect(screen.getByText(/NACHDB05112200564010/i)).toBeTruthy();
+    });
+
+    it("keeps all loans visible in a balanced 50/50 split and moves the selected loan to the top when clicking Payment History", () => {
+      const twoLoans = [
+        {
+          id: "ln-hdfc",
+          lender: "HDFC Bank",
+          type: "Home Loan",
+          principal: 7500000,
+          outstanding: 5055200,
+          emi: 64800,
+          rate: 8.45,
+          monthsRemaining: 112,
+          owner: "self",
+          payments: [{ id: "p-hdfc-1", amount: 64800, date: "2026-10-28", mode: "Auto-Debit (NACH)" }],
+        },
+        {
+          id: "ln-icici",
+          lender: "ICICI Bank",
+          type: "Vehicle Loan",
+          principal: 900000,
+          outstanding: 321500,
+          emi: 18500,
+          rate: 8.75,
+          monthsRemaining: 20,
+          owner: "self",
+          payments: [{ id: "p-icici-1", amount: 18500, date: "2026-10-20", mode: "UPI" }],
+        },
+      ];
+
+      render(
+        <LoanTakenSection
+          items={twoLoans}
+          onAdd={vi.fn()}
+          onEdit={vi.fn()}
+          onUpdate={vi.fn()}
+          onRemove={vi.fn()}
+        />
+      );
+
+      // Initially both loan cards are visible in the grid
+      expect(screen.getByText("Home Loan")).toBeTruthy();
+      expect(screen.getByText("Vehicle Loan")).toBeTruthy();
+
+      // Click Payment History (1) on ICICI Bank (the 2nd loan)
+      const historyButtons = screen.getAllByText(/Payment History \(1\)/i);
+      fireEvent.click(historyButtons[1]);
+
+      // Both loans remain visible, Payment History — ICICI Bank opens, and ICICI Bank moves to the top of the left column
+      expect(screen.getByText(/Payment History — ICICI Bank/i)).toBeTruthy();
+      expect(screen.getByText("Home Loan")).toBeTruthy();
+      expect(screen.getByText("Vehicle Loan")).toBeTruthy();
+
+      const vehicleEl = screen.getByText("Vehicle Loan");
+      const homeEl = screen.getByText("Home Loan");
+      // Vehicle Loan now appears BEFORE Home Loan in DOM order (moved to top)
+      expect(vehicleEl.compareDocumentPosition(homeEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
   });
 });
 

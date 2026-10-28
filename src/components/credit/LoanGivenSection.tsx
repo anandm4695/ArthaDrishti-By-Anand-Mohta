@@ -524,375 +524,438 @@ export function LoanGivenSection({
           )}
         </Card>
       ) : viewMode === "grid" ? (
-        /* GRID VIEW */
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-            gap: 16,
-          }}
-        >
-          {displayItems.map((l: any) => {
-            const principal = Number(l.principal) || 0;
-            const outstanding = loanGivenOutstanding(l);
-            const rate = Number(l.rate) || 0;
-            const isPaidOff = outstanding <= 0;
+        /* GRID VIEW — 2-Row Architecture when Receipts open:
+           Row 1: Selected Loan (50% Left) + Recovery Passbook (50% Right, matched height)
+           Row 2: Remaining Loans in a full-width multi-column grid across 100% width */
+        (() => {
+          const activeHistoryLoan = historyLoan || (displayItems.length === 1 ? displayItems[0] : null);
+          const otherLoans = activeHistoryLoan
+            ? displayItems.filter((l: any) => l.id !== activeHistoryLoan.id)
+            : [];
 
-            const dueDateObj = l.dueDate ? new Date(l.dueDate + "T00:00:00") : null;
-            const isOverdue = !isPaidOff && !!dueDateObj && dueDateObj < now;
-            const daysOverdue = isOverdue
-              ? Math.floor((now.getTime() - dueDateObj!.getTime()) / (1000 * 60 * 60 * 24))
-              : 0;
+          const renderLoanGivenCard = (l: any) => {
+              const principal = Number(l.principal) || 0;
+              const outstanding = loanGivenOutstanding(l);
+              const rate = Number(l.rate) || 0;
+              const isPaidOff = outstanding <= 0;
 
-            const dueSoon =
-              !isPaidOff &&
-              !isOverdue &&
-              !!dueDateObj &&
-              Math.ceil((dueDateObj.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) <= 7;
-            const daysUntilDue = dueSoon
-              ? Math.ceil((dueDateObj!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-              : 0;
+              const dueDateObj = l.dueDate ? new Date(l.dueDate + "T00:00:00") : null;
+              const isOverdue = !isPaidOff && !!dueDateObj && dueDateObj < now;
+              const daysOverdue = isOverdue
+                ? Math.floor((now.getTime() - dueDateObj!.getTime()) / (1000 * 60 * 60 * 24))
+                : 0;
 
-            const startDate = l.date ? new Date(l.date + "T00:00:00") : null;
-            const daysElapsed = startDate
-              ? Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
-              : 0;
+              const dueSoon =
+                !isPaidOff &&
+                !isOverdue &&
+                !!dueDateObj &&
+                Math.ceil((dueDateObj.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) <= 7;
+              const daysUntilDue = dueSoon
+                ? Math.ceil((dueDateObj!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                : 0;
 
-            const accruedInterest = (principal * (rate / 100) * daysElapsed) / 365.25;
-            const recovered = Math.max(0, principal - outstanding);
-            const recoveredPct = principal > 0 ? Math.min(100, (recovered / principal) * 100) : 0;
+              const startDate = l.date ? new Date(l.date + "T00:00:00") : null;
+              const daysElapsed = startDate
+                ? Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
+                : 0;
 
-            const barColor = isPaidOff
-              ? "var(--t-sage)"
-              : isOverdue
-              ? "var(--t-rust)"
-              : "var(--t-accent)";
+              const accruedInterest = (principal * (rate / 100) * daysElapsed) / 365.25;
+              const recovered = Math.max(0, principal - outstanding);
+              const recoveredPct = principal > 0 ? Math.min(100, (recovered / principal) * 100) : 0;
 
-            const avatarGradient = getAvatarGradient(l.borrower || "B");
-            const firstLetter = l.borrower ? l.borrower.charAt(0).toUpperCase() : "?";
+              const barColor = isPaidOff
+                ? "var(--t-sage)"
+                : isOverdue
+                ? "var(--t-rust)"
+                : "var(--t-accent)";
 
-            const ownerProfile = familyProfiles.find((p: any) => p.id === l.owner);
-            const ownerLabel = ownerProfile ? ownerProfile.name : "Self";
+              const avatarGradient = getAvatarGradient(l.borrower || "B");
+              const firstLetter = l.borrower ? l.borrower.charAt(0).toUpperCase() : "?";
 
-            const paymentsCount = (l.payments || []).length;
+              const ownerProfile = familyProfiles.find((p: any) => p.id === l.owner);
+              const ownerLabel = ownerProfile ? ownerProfile.name : "Self";
 
-            return (
-              <Card
-                key={l.id}
-                style={{
-                  padding: "18px 20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  borderTop: `4px solid ${
-                    isOverdue ? "var(--t-rust)" : isPaidOff ? "var(--t-sage)" : "var(--t-accent)"
-                  }`,
-                }}
-              >
-                <div>
-                  {/* Card Header */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          background: avatarGradient,
-                          color: "#FFFFFF",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 14,
-                          fontWeight: 900,
-                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                        }}
-                      >
-                        {firstLetter}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: "var(--t-ink)", lineHeight: 1.2 }}>
-                          {l.borrower}
-                        </div>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase", marginTop: 2 }}>
-                          Profile: {ownerLabel} {l.phone ? `· Ph: ${l.phone}` : ""}
-                        </div>
-                      </div>
-                    </div>
+              const paymentsCount = (l.payments || []).length;
+              const isSelectedHistory = historyLoan?.id === l.id;
 
-                    {/* Status Badge */}
-                    <div>
-                      {isOverdue ? (
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 800,
-                            color: "#FFFFFF",
-                            background: "var(--t-rust)",
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                            letterSpacing: "0.04em",
-                          }}
-                        >
-                          {daysOverdue}D OVERDUE
-                        </span>
-                      ) : dueSoon ? (
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 800,
-                            color: "var(--t-gold)",
-                            background: "color-mix(in srgb, var(--t-gold) 15%, transparent)",
-                            border: "1px solid color-mix(in srgb, var(--t-gold) 30%, transparent)",
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          DUE IN {daysUntilDue}D
-                        </span>
-                      ) : isPaidOff ? (
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 800,
-                            color: "var(--t-sage)",
-                            background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
-                            border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
-                            borderRadius: 6,
-                            padding: "3px 8px",
-                          }}
-                        >
-                          SETTLED
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 800,
-                            color: "var(--t-accent)",
-                            background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
-                            border: "1px solid color-mix(in srgb, var(--t-accent) 25%, transparent)",
-                            borderRadius: 6,
-                            padding: "3px 8px",
-                          }}
-                        >
-                          ACTIVE
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Outstanding Balance */}
-                  <div style={{ marginTop: 14 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)", letterSpacing: "0.05em" }}>
-                      Pending Recovery Balance
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontSize: 26,
-                        fontWeight: 700,
-                        color: isPaidOff ? "var(--t-sage)" : isOverdue ? "var(--t-rust)" : "var(--t-ink)",
-                        letterSpacing: "-0.03em",
-                        marginTop: 2,
-                      }}
-                    >
-                      <Money value={outstanding} variant="full" />
-                    </div>
-                  </div>
-
-                  {/* Recovery Progress */}
-                  {principal > 0 && (
-                    <div style={{ marginTop: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: 5 }}>
-                        <span>Recovered: {fmtINR(recovered)}</span>
-                        <span style={{ color: barColor, fontWeight: 800 }}>
-                          {recoveredPct.toFixed(1)}% Recovered
-                        </span>
-                      </div>
-                      <div style={{ height: 6, borderRadius: 99, background: "var(--surface-1)", overflow: "hidden" }}>
+              return (
+                <Card
+                  key={l.id}
+                  style={{
+                    padding: "18px 20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    borderTop: `4px solid ${
+                      isOverdue ? "var(--t-rust)" : isPaidOff ? "var(--t-sage)" : "var(--t-accent)"
+                    }`,
+                    outline: isSelectedHistory ? "2px solid var(--t-accent)" : "none",
+                  }}
+                >
+                  <div>
+                    {/* Card Header */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div
                           style={{
-                            height: "100%",
-                            width: `${Math.min(recoveredPct, 100)}%`,
-                            background: `linear-gradient(90deg, ${barColor}, color-mix(in srgb, ${barColor} 65%, white))`,
-                            borderRadius: 99,
-                            transition: "width 0.4s ease",
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            background: avatarGradient,
+                            color: "#FFFFFF",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 14,
+                            fontWeight: 900,
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                           }}
-                        />
+                        >
+                          {firstLetter}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: "var(--t-ink)", lineHeight: 1.2 }}>
+                            {l.borrower}
+                          </div>
+                          <div style={{ fontSize: 9, fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase", marginTop: 2 }}>
+                            Profile: {ownerLabel} {l.phone ? `· Ph: ${l.phone}` : ""}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Financial Metrics Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
-                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Principal Lent</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-ink)", marginTop: 1 }}>
-                        <Money value={principal} variant="exact" />
+                      {/* Status Badge */}
+                      <div>
+                        {isOverdue ? (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 800,
+                              color: "#FFFFFF",
+                              background: "var(--t-rust)",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              letterSpacing: "0.04em",
+                            }}
+                          >
+                            {daysOverdue}D OVERDUE
+                          </span>
+                        ) : dueSoon ? (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 800,
+                              color: "var(--t-gold)",
+                              background: "color-mix(in srgb, var(--t-gold) 15%, transparent)",
+                              border: "1px solid color-mix(in srgb, var(--t-gold) 30%, transparent)",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                            }}
+                          >
+                            DUE IN {daysUntilDue}D
+                          </span>
+                        ) : isPaidOff ? (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 800,
+                              color: "var(--t-sage)",
+                              background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                              border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
+                              borderRadius: 6,
+                              padding: "3px 8px",
+                            }}
+                          >
+                            SETTLED
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 800,
+                              color: "var(--t-accent)",
+                              background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
+                              border: "1px solid color-mix(in srgb, var(--t-accent) 25%, transparent)",
+                              borderRadius: 6,
+                              padding: "3px 8px",
+                            }}
+                          >
+                            ACTIVE
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Interest Terms</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-accent)" : "var(--t-muted)", marginTop: 1 }}>
-                        {rate > 0 ? `${rate}% p.a.` : "0% Friendly"}
-                      </div>
-                    </div>
-                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Accrued Interest</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-sage)" : "var(--t-muted)", marginTop: 1 }}>
-                        {rate > 0 ? <Money value={accruedInterest} variant="exact" /> : "—"}
-                      </div>
-                    </div>
-                    <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
-                      <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Agreed Due Date</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: isOverdue ? "var(--t-rust)" : "var(--t-ink)", marginTop: 1 }}>
-                        {fmtLoanDate(l.dueDate)}
-                      </div>
-                    </div>
-                  </div>
 
-                  {l.security && (
-                    <div style={{ fontSize: 10, color: "var(--t-muted)", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
-                      <Shield size={11} color="var(--t-accent)" /> Collateral: {l.security}
-                    </div>
-                  )}
-
-                  {l.note && (
-                    <div style={{ fontSize: 11, color: "var(--t-muted)", fontStyle: "italic", marginTop: 8, lineHeight: 1.4 }}>
-                      "{l.note}"
-                    </div>
-                  )}
-                </div>
-
-                {/* Card Actions Footer */}
-                <div style={{ marginTop: 16, borderTop: "1px solid var(--t-line)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                  {/* Action Tools Row */}
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {!isPaidOff && (
-                      <button
-                        onClick={() => setPaymentLoan(l)}
+                    {/* Outstanding Balance */}
+                    <div style={{ marginTop: 14 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)", letterSpacing: "0.05em" }}>
+                        Pending Recovery Balance
+                      </div>
+                      <div
                         style={{
-                          flex: "1 1 auto",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 5,
-                          padding: "6px 10px",
-                          borderRadius: 6,
-                          background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
-                          color: "var(--t-sage)",
-                          border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
-                          fontSize: 11,
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <IndianRupee size={12} /> Record Receipt
-                      </button>
-                    )}
-
-                    {!isPaidOff && (
-                      <button
-                        onClick={() => setReminderLoan(l)}
-                        style={{
-                          flex: "1 1 auto",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 5,
-                          padding: "6px 10px",
-                          borderRadius: 6,
-                          background: "#25D36615",
-                          color: "#128C7E",
-                          border: "1px solid #25D36630",
-                          fontSize: 11,
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Share2 size={12} /> Send Reminder
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Secondary Actions (History, Forgive, Edit, Delete) */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4 }}>
-                    {paymentsCount > 0 ? (
-                      <button
-                        onClick={() => setHistoryLoan(l)}
-                        style={{
-                          fontSize: 11,
-                          color: "var(--t-accent)",
-                          background: "transparent",
-                          border: "none",
-                          cursor: "pointer",
+                          fontFamily: "var(--font-display)",
+                          fontSize: 26,
                           fontWeight: 700,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
+                          color: isPaidOff ? "var(--t-sage)" : isOverdue ? "var(--t-rust)" : "var(--t-ink)",
+                          letterSpacing: "-0.03em",
+                          marginTop: 2,
                         }}
                       >
-                        <Clock size={12} /> Receipts ({paymentsCount})
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: 11, color: "var(--t-muted)" }}>No receipts logged</span>
+                        <Money value={outstanding} variant="full" />
+                      </div>
+                    </div>
+
+                    {/* Recovery Progress */}
+                    {principal > 0 && (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: 5 }}>
+                          <span>Recovered: {fmtINR(recovered)}</span>
+                          <span style={{ color: barColor, fontWeight: 800 }}>
+                            {recoveredPct.toFixed(1)}% Recovered
+                          </span>
+                        </div>
+                        <div style={{ height: 6, borderRadius: 99, background: "var(--surface-1)", overflow: "hidden" }}>
+                          <div
+                            style={{
+                              height: "100%",
+                              width: `${Math.min(recoveredPct, 100)}%`,
+                              background: `linear-gradient(90deg, ${barColor}, color-mix(in srgb, ${barColor} 65%, white))`,
+                              borderRadius: 99,
+                              transition: "width 0.4s ease",
+                            }}
+                          />
+                        </div>
+                      </div>
                     )}
 
-                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    {/* Financial Metrics Grid */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
+                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Principal Lent</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-ink)", marginTop: 1 }}>
+                          <Money value={principal} variant="exact" />
+                        </div>
+                      </div>
+                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Interest Terms</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-accent)" : "var(--t-muted)", marginTop: 1 }}>
+                          {rate > 0 ? `${rate}% p.a.` : "0% Friendly"}
+                        </div>
+                      </div>
+                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Accrued Interest</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: rate > 0 ? "var(--t-sage)" : "var(--t-muted)", marginTop: 1 }}>
+                          {rate > 0 ? <Money value={accruedInterest} variant="exact" /> : "—"}
+                        </div>
+                      </div>
+                      <div style={{ padding: "8px 10px", borderRadius: 8, background: "color-mix(in srgb, var(--surface-1) 50%, transparent)", border: "1px solid var(--t-line)" }}>
+                        <div style={{ fontSize: 9, color: "var(--t-muted)", fontWeight: 700, textTransform: "uppercase" }}>Agreed Due Date</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: isOverdue ? "var(--t-rust)" : "var(--t-ink)", marginTop: 1 }}>
+                          {fmtLoanDate(l.dueDate)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {l.security && (
+                      <div style={{ fontSize: 10, color: "var(--t-muted)", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                        <Shield size={11} color="var(--t-accent)" /> Collateral: {l.security}
+                      </div>
+                    )}
+
+                    {l.note && (
+                      <div style={{ fontSize: 11, color: "var(--t-muted)", fontStyle: "italic", marginTop: 8, lineHeight: 1.4 }}>
+                        "{l.note}"
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Actions Footer */}
+                  <div style={{ marginTop: 16, borderTop: "1px solid var(--t-line)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                    {/* Action Tools Row */}
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {!isPaidOff && (
                         <button
-                          onClick={() => setConfirmForgiveLoan(l)}
-                          title="Settle / Forgive remaining debt"
+                          onClick={() => setPaymentLoan(l)}
                           style={{
-                            padding: "3px 6px",
-                            borderRadius: 5,
-                            border: "1px solid var(--t-line)",
-                            background: "transparent",
-                            color: "var(--t-muted)",
-                            fontSize: 10,
-                            fontWeight: 700,
+                            flex: "1 1 auto",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 5,
+                            padding: "6px 10px",
+                            borderRadius: 6,
+                            background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                            color: "var(--t-sage)",
+                            border: "1px solid color-mix(in srgb, var(--t-sage) 25%, transparent)",
+                            fontSize: 11,
+                            fontWeight: 800,
                             cursor: "pointer",
                           }}
                         >
-                          Forgive
+                          <IndianRupee size={12} /> Record Receipt
                         </button>
                       )}
-                      <button
-                        onClick={() => onEdit(l.id)}
-                        title="Edit loan"
-                        style={{
-                          padding: 5,
-                          borderRadius: 6,
-                          border: "none",
-                          background: "transparent",
-                          color: "var(--t-muted)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteLoan(l)}
-                        title="Delete loan"
-                        style={{
-                          padding: 5,
-                          borderRadius: 6,
-                          border: "none",
-                          background: "transparent",
-                          color: "var(--t-rust)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
+
+                      {!isPaidOff && (
+                        <button
+                          onClick={() => setReminderLoan(l)}
+                          style={{
+                            flex: "1 1 auto",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 5,
+                            padding: "6px 10px",
+                            borderRadius: 6,
+                            background: "#25D36615",
+                            color: "#128C7E",
+                            border: "1px solid #25D36630",
+                            fontSize: 11,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Share2 size={12} /> Send Reminder
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Secondary Actions (History, Forgive, Edit, Delete) */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4 }}>
+                      {paymentsCount > 0 ? (
+                        <button
+                          onClick={() => setHistoryLoan(isSelectedHistory ? null : l)}
+                          style={{
+                            fontSize: 11,
+                            color: "var(--t-accent)",
+                            background: isSelectedHistory ? "color-mix(in srgb, var(--t-accent) 12%, transparent)" : "transparent",
+                            padding: isSelectedHistory ? "3px 8px" : 0,
+                            borderRadius: 6,
+                            border: "none",
+                            cursor: "pointer",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <Clock size={12} /> Receipts ({paymentsCount})
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 11, color: "var(--t-muted)" }}>No receipts logged</span>
+                      )}
+
+                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        {!isPaidOff && (
+                          <button
+                            onClick={() => setConfirmForgiveLoan(l)}
+                            title="Settle / Forgive remaining debt"
+                            style={{
+                              padding: "3px 6px",
+                              borderRadius: 5,
+                              border: "1px solid var(--t-line)",
+                              background: "transparent",
+                              color: "var(--t-muted)",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Forgive
+                          </button>
+                        )}
+                        <button
+                          onClick={() => onEdit(l.id)}
+                          title="Edit loan"
+                          style={{
+                            padding: 5,
+                            borderRadius: 6,
+                            border: "none",
+                            background: "transparent",
+                            color: "var(--t-muted)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteLoan(l)}
+                          title="Delete loan"
+                          style={{
+                            padding: 5,
+                            borderRadius: 6,
+                            border: "none",
+                            background: "transparent",
+                            color: "var(--t-rust)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   </div>
+                </Card>
+              );
+          };
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {activeHistoryLoan ? (
+                <>
+                  {/* TOP SPOTLIGHT ROW: Selected Loan (Left 50%) + Recovery Passbook (Right 50%) */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+                      gap: 18,
+                      alignItems: "stretch",
+                    }}
+                  >
+                    {renderLoanGivenCard(activeHistoryLoan)}
+                    <LoanHistoryModal
+                      loan={activeHistoryLoan}
+                      allLoans={displayItems}
+                      onSelectLoan={(targetLoan: any) => setHistoryLoan(targetLoan)}
+                      isAutoPreview={!historyLoan && displayItems.length === 1}
+                      onClose={() => setHistoryLoan(null)}
+                      onRecordReceipt={(targetLoan: any) => setPaymentLoan(targetLoan)}
+                      onSendReminder={(targetLoan: any) => setReminderLoan(targetLoan)}
+                      onUndoPayment={(undoTarget: any) => {
+                        setConfirmUndoPayment(undoTarget);
+                      }}
+                    />
+                  </div>
+
+                  {/* BOTTOM FULL-WIDTH ROW: Remaining Loans in Multi-Column Grid across 100% width */}
+                  {otherLoans.length > 0 && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                        gap: 16,
+                        alignItems: "stretch",
+                      }}
+                    >
+                      {otherLoans.map((l: any) => renderLoanGivenCard(l))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* DEFAULT FULL-WIDTH MULTI-COLUMN GRID */
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                    gap: 16,
+                    alignItems: "stretch",
+                  }}
+                >
+                  {displayItems.map((l: any) => renderLoanGivenCard(l))}
                 </div>
-              </Card>
-            );
-          })}
-        </div>
+              )}
+            </div>
+          );
+        })()
       ) : (
         /* TABLE VIEW */
         <Card style={{ padding: 0, overflow: "hidden" }}>
@@ -1090,11 +1153,13 @@ export function LoanGivenSection({
         <LoanReminderModal loan={reminderLoan} onClose={() => setReminderLoan(null)} />
       )}
 
-      {/* Payment History Modal */}
-      {historyLoan && (
+      {/* Payment History Modal (Rendered below only when in Table View; Grid View renders side-by-side) */}
+      {historyLoan && viewMode === "table" && (
         <LoanHistoryModal
           loan={historyLoan}
           onClose={() => setHistoryLoan(null)}
+          onRecordReceipt={(targetLoan: any) => setPaymentLoan(targetLoan)}
+          onSendReminder={(targetLoan: any) => setReminderLoan(targetLoan)}
           onUndoPayment={(undoTarget: any) => {
             setConfirmUndoPayment(undoTarget);
           }}
@@ -1151,56 +1216,273 @@ export function LoanGivenSection({
   );
 }
 
-// History modal sub-component for Loan Given
-function LoanHistoryModal({ loan, onClose, onUndoPayment }: any) {
+// Recovery Passbook & Receipts Companion sub-component for Loan Given
+function LoanHistoryModal({
+  loan,
+  allLoans = [],
+  onSelectLoan,
+  isAutoPreview,
+  onClose,
+  onRecordReceipt,
+  onSendReminder,
+  onUndoPayment,
+}: any) {
   const payments: any[] = loan.payments || [];
   const outstanding = loanGivenOutstanding(loan);
+  const principal = Number(loan.principal) || 0;
+  const totalRecoveredLogged = payments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+  const isPaidOff = outstanding <= 0;
 
   return (
-    <Card style={{ padding: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <div style={{ fontSize: 15, fontWeight: 900, color: "var(--t-ink)" }}>
-          Payment Receipts — {loan.borrower || "Borrower"}
-        </div>
-        <button
-          onClick={onClose}
-          style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--t-line)", background: "transparent", cursor: "pointer", fontSize: 11, fontWeight: 700 }}
+    <Card
+      style={{
+        padding: "18px 20px",
+        borderTop: "4px solid var(--t-accent)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+      }}
+    >
+      {/* Focused Multi-Loan Quick Switcher & Back Bar */}
+      {!isAutoPreview && allLoans.length > 1 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 8,
+            paddingBottom: 12,
+            borderBottom: "1px solid var(--t-line)",
+          }}
         >
-          Close
-        </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <button
+              onClick={onClose}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "5px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--t-line)",
+                background: "var(--surface-1)",
+                color: "var(--t-ink)",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            >
+              ← All Borrowers ({allLoans.length})
+            </button>
+            <span style={{ fontSize: 11, color: "var(--t-muted)", fontWeight: 600, margin: "0 2px" }}>|</span>
+            {allLoans.map((item: any) => {
+              const active = item.id === loan.id;
+              const count = (item.payments || []).length;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelectLoan && onSelectLoan(item)}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: active ? 800 : 600,
+                    border: active ? "1px solid var(--t-accent)" : "1px solid var(--t-line)",
+                    background: active ? "color-mix(in srgb, var(--t-accent) 12%, transparent)" : "var(--surface-0)",
+                    color: active ? "var(--t-accent)" : "var(--t-muted)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {item.borrower || item.borrowerName} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "var(--t-accent)", letterSpacing: "0.06em" }}>
+            Recovery Ledger & Passbook
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 900, color: "var(--t-ink)", marginTop: 2 }}>
+            Payment Receipts — {loan.borrower || "Borrower"}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {!isPaidOff && onRecordReceipt && (
+            <button
+              onClick={() => onRecordReceipt(loan)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "5px 10px",
+                borderRadius: 6,
+                border: "1px solid color-mix(in srgb, var(--t-sage) 30%, transparent)",
+                background: "color-mix(in srgb, var(--t-sage) 12%, transparent)",
+                color: "var(--t-sage)",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            >
+              <Plus size={12} /> Log Receipt
+            </button>
+          )}
+          {!isPaidOff && onSendReminder && (
+            <button
+              onClick={() => onSendReminder(loan)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "5px 10px",
+                borderRadius: 6,
+                border: "1px solid #25D36630",
+                background: "#25D36615",
+                color: "#128C7E",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            >
+              <Share2 size={12} /> Remind
+            </button>
+          )}
+          {!isAutoPreview && (
+            <button
+              onClick={onClose}
+              style={{
+                padding: "5px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--t-line)",
+                background: "transparent",
+                color: "var(--t-muted)",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mini Recovery Summary Strip */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 10,
+          padding: "10px 14px",
+          borderRadius: 10,
+          background: "color-mix(in srgb, var(--surface-1) 60%, transparent)",
+          border: "1px solid var(--t-line)",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+            Logged Receipts
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: "var(--t-ink)", marginTop: 2 }}>
+            {payments.length} Receipt{payments.length !== 1 ? "s" : ""}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+            Total Recovered
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: "var(--t-sage)", marginTop: 2 }}>
+            <Money value={totalRecoveredLogged || Math.max(0, principal - outstanding)} variant="exact" />
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", color: "var(--t-muted)" }}>
+            Pending Balance
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: isPaidOff ? "var(--t-sage)" : "var(--t-ink)", marginTop: 2 }}>
+            <Money value={outstanding} variant="exact" />
+          </div>
+        </div>
       </div>
 
       {payments.length === 0 ? (
-        <div style={{ padding: "20px 0", textAlign: "center", color: "var(--t-muted)", fontSize: 12 }}>
-          No repayment receipts recorded yet.
+        <div
+          style={{
+            padding: "28px 16px",
+            textAlign: "center",
+            color: "var(--t-muted)",
+            fontSize: 12,
+            borderRadius: 10,
+            border: "1px dashed var(--t-line)",
+            background: "color-mix(in srgb, var(--surface-1) 30%, transparent)",
+          }}
+        >
+          No repayment receipts recorded yet. Click <strong>Record Receipt</strong> when you receive a repayment to credit your bank account.
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 340, overflowY: "auto", paddingRight: 2 }}>
           {payments
             .slice()
             .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
-            .map((p) => (
+            .map((p, idx) => (
               <div
-                key={p.id}
+                key={p.id || idx}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "10px 12px",
-                  borderRadius: 8,
+                  padding: "10px 14px",
+                  borderRadius: 10,
                   background: "var(--surface-1)",
                   border: "1px solid var(--t-line)",
+                  gap: 12,
                 }}
               >
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "var(--t-sage)" }}>
-                    <Money value={p.amount} variant="exact" />
-                    <span style={{ fontSize: 10, color: "var(--t-muted)", marginLeft: 6, fontWeight: 700, textTransform: "uppercase" }}>
-                      {p.mode || "Receipt"}
-                    </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: "color-mix(in srgb, var(--t-sage) 14%, transparent)",
+                      color: "var(--t-sage)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      flexShrink: 0,
+                    }}
+                  >
+                    #{payments.length - idx}
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 2 }}>
-                    {p.date} {p.reference ? `· Ref: ${p.reference}` : ""} {p.note ? `· ${p.note}` : ""}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--t-sage)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <Money value={p.amount} variant="exact" />
+                      <span
+                        style={{
+                          fontSize: 9.5,
+                          color: "var(--t-ink)",
+                          background: "var(--surface-0)",
+                          border: "1px solid var(--t-line)",
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {p.mode || "Receipt"}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--t-muted)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {p.date} {p.reference || p.referenceNumber ? `· Ref: ${p.reference || p.referenceNumber}` : ""} {p.note ? `· ${p.note}` : ""}
+                    </div>
                   </div>
                 </div>
 
@@ -1214,12 +1496,13 @@ function LoanHistoryModal({ loan, onClose, onUndoPayment }: any) {
                   }
                   title="Undo this receipt"
                   style={{
-                    padding: 5,
+                    padding: 6,
                     borderRadius: 6,
                     border: "none",
                     background: "transparent",
                     color: "var(--t-rust)",
                     cursor: "pointer",
+                    flexShrink: 0,
                   }}
                 >
                   <Trash2 size={13} />
