@@ -786,10 +786,10 @@ export function CreditTab({
           )}
           {sub !== "borrowed" &&
             sub !== "lent" &&
+            sub !== "taken" &&
+            sub !== "given" &&
             sub !== "optimizer" &&
             sub !== "cardInsights" &&
-            !(sub === "taken" && !(state.loansTaken || []).length) &&
-            !(sub === "given" && !(state.loansGiven || []).length) &&
             !(sub === "cc" && !(state.creditCards || []).length) &&
             !(sub === "prepaid" && !(state.prepaidCards || []).length) && (
               <Button variant="accent" icon={<Plus size={14} />} onClick={() => setModal(sub)}>

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   TrendingDown,
   Wallet,
@@ -47,6 +47,56 @@ function loanOrdinalSuffix(d: number) {
   return "th";
 }
 
+function getReconciledLoanTakenMetrics(l: any) {
+  const principal = Number(l?.principal) || 0;
+  const rate = Number(l?.rate ?? l?.interestRate) || 0;
+  const emi = Number(l?.emi) || 0;
+  const payments: any[] = Array.isArray(l?.payments) ? l.payments : [];
+  const rawOutstanding = loanOutstanding(l);
+  const rawMonths = Number(l?.monthsRemaining ?? l?.tenureMonths) || 0;
+
+  if ((l?.status || "").toLowerCase() === "closed") {
+    return { outstanding: 0, months: 0, totalLoggedPaid: payments.reduce((s, p) => s + Number(p?.amount || 0), 0) };
+  }
+
+  const totalLoggedPaid = payments.reduce((s, p) => s + Number(p?.amount || 0), 0);
+  const totalLoggedPrincipal = payments.reduce(
+    (s, p) => s + (Number(rate === 0 ? p?.amount : p?.principalPortion ?? 0) || 0),
+    0
+  );
+
+  if (principal > 0 && totalLoggedPrincipal > 0) {
+    const maxPossibleOutstanding = Math.max(0, principal - totalLoggedPrincipal);
+    if (rawOutstanding > maxPossibleOutstanding) {
+      const reconciledOutstanding = maxPossibleOutstanding;
+      const reconciledMonths =
+        reconciledOutstanding <= 0
+          ? 0
+          : rate === 0 && emi > 0
+          ? Math.ceil(reconciledOutstanding / emi)
+          : rawMonths;
+      return {
+        outstanding: reconciledOutstanding,
+        months: reconciledMonths,
+        totalLoggedPaid,
+      };
+    }
+  }
+
+  const resolvedMonths =
+    rawOutstanding <= 0
+      ? 0
+      : rate === 0 && emi > 0
+      ? Math.ceil(rawOutstanding / emi)
+      : rawMonths;
+
+  return {
+    outstanding: rawOutstanding,
+    months: resolvedMonths,
+    totalLoggedPaid,
+  };
+}
+
 interface LoanTakenSectionProps {
   items: any[];
   bankAccounts?: any[];
@@ -83,16 +133,39 @@ export function LoanTakenSection({
   const [prepayLoan, setPrepayLoan] = useState<any | null>(null);
   const [paymentLoan, setPaymentLoan] = useState<any | null>(null);
   const [historyLoan, setHistoryLoan] = useState<any | null>(null);
+  const [singlePassbookOpen, setSinglePassbookOpen] = useState<boolean>(true);
   const [confirmDeleteLoan, setConfirmDeleteLoan] = useState<any | null>(null);
   const [confirmUndoPayment, setConfirmUndoPayment] = useState<any | null>(null);
+  const healedLoanIdsRef = useRef<Set<string>>(new Set());
+
+  // Auto-reconcile any 0%-interest loan whose stored outstanding/monthsRemaining drifted from its payments ledger
+  useEffect(() => {
+    items.forEach((l: any) => {
+      if (!l?.id || healedLoanIdsRef.current.has(l.id)) return;
+      const rate = Number(l.rate ?? l.interestRate) || 0;
+      const principal = Number(l.principal) || 0;
+      const payments: any[] = Array.isArray(l.payments) ? l.payments : [];
+      if (rate === 0 && principal > 0 && payments.length > 0 && (l.status || "active").toLowerCase() !== "closed") {
+        const { outstanding: expectedOut, months: expectedMonths } = getReconciledLoanTakenMetrics(l);
+        if (Number(l.outstanding) !== expectedOut || (Number(l.emi) > 0 && Number(l.monthsRemaining) !== expectedMonths)) {
+          healedLoanIdsRef.current.add(l.id);
+          onUpdate(l.id, {
+            outstanding: expectedOut,
+            monthsRemaining: expectedMonths,
+            ...(expectedOut <= 0 ? { status: "closed" } : {}),
+          });
+        }
+      }
+    });
+  }, [items, onUpdate]);
 
   // Aggregates & Analytics
   const activeLoans = useMemo(
-    () => items.filter((l: any) => (l.status || "active").toLowerCase() !== "closed" && loanOutstanding(l) > 0),
+    () => items.filter((l: any) => (l.status || "active").toLowerCase() !== "closed" && getReconciledLoanTakenMetrics(l).outstanding > 0),
     [items]
   );
   const closedLoans = useMemo(
-    () => items.filter((l: any) => (l.status || "active").toLowerCase() === "closed" || loanOutstanding(l) <= 0),
+    () => items.filter((l: any) => (l.status || "active").toLowerCase() === "closed" || getReconciledLoanTakenMetrics(l).outstanding <= 0),
     [items]
   );
 
@@ -101,7 +174,7 @@ export function LoanTakenSection({
     [items]
   );
   const totalOutstanding = useMemo(
-    () => activeLoans.reduce((s: number, l: any) => s + loanOutstanding(l), 0),
+    () => activeLoans.reduce((s: number, l: any) => s + getReconciledLoanTakenMetrics(l).outstanding, 0),
     [activeLoans]
   );
   const totalEMI = useMemo(
@@ -112,9 +185,8 @@ export function LoanTakenSection({
   // Total Interest Remaining calculation
   const totalInterestRemaining = useMemo(() => {
     return activeLoans.reduce((acc: number, l: any) => {
-      const out = loanOutstanding(l);
+      const { outstanding: out, months } = getReconciledLoanTakenMetrics(l);
       const emi = Number(l.emi) || 0;
-      const months = Number(l.monthsRemaining ?? l.tenureMonths) || 0;
       if (out <= 0 || emi <= 0 || months <= 0) return acc;
       return acc + Math.max(0, emi * months - out);
     }, 0);
@@ -124,7 +196,7 @@ export function LoanTakenSection({
   const weightedAvgRate = useMemo(() => {
     if (totalOutstanding <= 0) return 0;
     const weightedSum = activeLoans.reduce((s: number, l: any) => {
-      const out = loanOutstanding(l);
+      const { outstanding: out } = getReconciledLoanTakenMetrics(l);
       const rate = Number(l.rate ?? l.interestRate) || 0;
       return s + out * rate;
     }, 0);
@@ -483,27 +555,37 @@ export function LoanTakenSection({
            Row 1: Selected Loan (50% Left) + Payment History Passbook (50% Right, matched height)
            Row 2: Remaining Loans in a full-width multi-column grid (50%/50% or 33%/33%/33%) so no blank space on right! */
         (() => {
-          const activeHistoryLoan = historyLoan || (displayItems.length === 1 ? displayItems[0] : null);
+          const resolvedHistoryLoan = historyLoan
+            ? displayItems.find((l: any) => l.id === historyLoan.id) || historyLoan
+            : null;
+          const activeHistoryLoan =
+            resolvedHistoryLoan || (displayItems.length === 1 && singlePassbookOpen ? displayItems[0] : null);
           const otherLoans = activeHistoryLoan
             ? displayItems.filter((l: any) => l.id !== activeHistoryLoan.id)
             : [];
 
           const renderLoanCard = (l: any) => {
               const principal = Number(l.principal) || 0;
-              const outstanding = loanOutstanding(l);
+              const { outstanding, months } = getReconciledLoanTakenMetrics(l);
               const emi = Number(l.emi) || 0;
               const rate = Number(l.rate ?? l.interestRate) || 0;
               const loanType = l.type || l.loanType || "Personal Loan";
               const dueDay = l.dueDay ?? l.emiDay;
               const isPaidOff = outstanding <= 0;
-              const months = isPaidOff ? 0 : Number(l.monthsRemaining ?? l.tenureMonths) || 0;
               const paid = Math.max(0, principal - outstanding);
               const paidPct = principal > 0 ? Math.min(100, (paid / principal) * 100) : 0;
 
               const payoffDate =
                 months > 0
                   ? (() => {
-                      const startVal = l.startDate || l.emiStartDate;
+                      const sortedPayments = (l.payments || [])
+                        .filter((p: any) => p?.date)
+                        .slice()
+                        .sort((a: any, b: any) => (b.date || "").localeCompare(a.date || ""));
+                      const startVal =
+                        sortedPayments.length > 0
+                          ? sortedPayments[0].date
+                          : l.startDate || l.emiStartDate;
                       const d = startVal ? new Date(startVal + "T00:00:00") : new Date();
                       d.setMonth(d.getMonth() + months);
                       return d.toLocaleString("en-IN", { month: "short", year: "numeric" });
@@ -522,7 +604,7 @@ export function LoanTakenSection({
               const ownerLabel = ownerProfile ? ownerProfile.name : "Self";
 
               const paymentsCount = (l.payments || []).length;
-              const isSelectedHistory = historyLoan?.id === l.id;
+              const isSelectedHistory = activeHistoryLoan?.id === l.id;
 
               return (
                 <Card
@@ -756,7 +838,14 @@ export function LoanTakenSection({
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4 }}>
                       {paymentsCount > 0 ? (
                         <button
-                          onClick={() => setHistoryLoan(isSelectedHistory ? null : l)}
+                          onClick={() => {
+                            if (displayItems.length === 1) {
+                              setSinglePassbookOpen((prev) => !prev);
+                              setHistoryLoan(null);
+                            } else {
+                              setHistoryLoan(isSelectedHistory ? null : l);
+                            }
+                          }}
                           style={{
                             fontSize: 11,
                             color: "var(--t-accent)",
@@ -823,7 +912,7 @@ export function LoanTakenSection({
                       display: "grid",
                       gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
                       gap: 18,
-                      alignItems: "stretch",
+                      alignItems: "start",
                     }}
                   >
                     {renderLoanCard(activeHistoryLoan)}
@@ -832,7 +921,12 @@ export function LoanTakenSection({
                       allLoans={displayItems}
                       onSelectLoan={(targetLoan: any) => setHistoryLoan(targetLoan)}
                       isAutoPreview={!historyLoan && displayItems.length === 1}
-                      onClose={() => setHistoryLoan(null)}
+                      onClose={() => {
+                        if (displayItems.length === 1) {
+                          setSinglePassbookOpen(false);
+                        }
+                        setHistoryLoan(null);
+                      }}
                       onRecordPayment={(targetLoan: any) => setPaymentLoan(targetLoan)}
                       onOpenSchedule={(targetLoan: any) => setAmortizationLoan(targetLoan)}
                       onUndoPayment={(undoTarget: any) => {
@@ -1115,10 +1209,12 @@ export function LoanTakenSection({
             await onUpdate(confirmUndoPayment.loanId, {
               payments: confirmUndoPayment.updatedPayments,
               outstanding: confirmUndoPayment.restoredBalance,
+              ...(confirmUndoPayment.restoredMonths !== undefined
+                ? { monthsRemaining: confirmUndoPayment.restoredMonths }
+                : {}),
               status: confirmUndoPayment.restoredBalance > 0 ? "active" : undefined,
             });
             setConfirmUndoPayment(null);
-            setHistoryLoan(null);
           }}
           onCancel={() => setConfirmUndoPayment(null)}
         />
@@ -1139,7 +1235,7 @@ function LoanHistoryModal({
   onUndoPayment,
 }: any) {
   const payments: any[] = loan.payments || [];
-  const outstanding = loanOutstanding(loan);
+  const { outstanding, months } = getReconciledLoanTakenMetrics(loan);
   const principal = Number(loan.principal) || 0;
   const totalPaidLogged = payments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
   const isPaidOff = outstanding <= 0;
@@ -1337,7 +1433,7 @@ function LoanHistoryModal({
           No payments recorded yet for this loan. Click <strong>Pay EMI</strong> to log your first installment and sync with your bank account.
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 340, overflowY: "auto", paddingRight: 2 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 248, overflowY: "auto", paddingRight: 2 }}>
           {payments
             .slice()
             .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
@@ -1402,7 +1498,8 @@ function LoanHistoryModal({
                     onUndoPayment({
                       loanId: loan.id,
                       updatedPayments: payments.filter((x) => x.id !== p.id),
-                      restoredBalance: outstanding + Number(p.amount || 0),
+                      restoredBalance: outstanding + Number(p.principalPortion ?? p.amount ?? 0),
+                      restoredMonths: months + (p.type === "prepayment" ? 0 : 1),
                     })
                   }
                   title="Undo this payment"

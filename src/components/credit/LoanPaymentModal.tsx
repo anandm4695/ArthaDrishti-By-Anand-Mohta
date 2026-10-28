@@ -89,8 +89,10 @@ export function LoanPaymentModal({
   const handleSave = () => {
     if (numAmount <= 0) return;
 
+    const txnId = uid();
     const paymentRecord = {
-      id: uid(),
+      id: selectedAccountId ? `bank-${txnId}` : txnId,
+      txnId: selectedAccountId ? txnId : undefined,
       date,
       amount: numAmount,
       type: paymentType,
@@ -129,6 +131,7 @@ export function LoanPaymentModal({
     let bankTxn: any = undefined;
     if (selectedAccountId) {
       bankTxn = {
+        id: txnId,
         owner: loan.owner || "self",
         date,
         accountId: selectedAccountId,

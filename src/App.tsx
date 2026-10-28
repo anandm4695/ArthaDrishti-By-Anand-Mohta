@@ -3203,9 +3203,45 @@ function FinanceDashboard() {
         // than the full transaction amount, which would over-restore the balance.
         const principalAmt =
           txn.linkedPrincipalAmount != null ? Number(txn.linkedPrincipalAmount) : amt;
+        const existingPayments: any[] = Array.isArray(loan.payments) ? loan.payments : [];
+        let matched = false;
+        const updatedPayments = existingPayments.filter((p: any) => {
+          if (p.id === entryId || p.id === txn.id || p.txnId === txn.id) {
+            matched = true;
+            return false;
+          }
+          if (!matched && p.date === txn.date && Number(p.amount) === amt) {
+            matched = true;
+            return false;
+          }
+          return true;
+        });
         updateItem("loansTaken", lid, {
           outstanding: loanOutstanding(loan) + principalAmt,
           monthsRemaining: Number(loan.monthsRemaining || 0) + 1,
+          payments: updatedPayments,
+        });
+      }
+    } else if (lt === "loansGiven") {
+      const loan = (state.loansGiven || []).find((l: any) => l.id === lid);
+      if (loan) {
+        const existingPayments: any[] = Array.isArray(loan.payments) ? loan.payments : [];
+        let matched = false;
+        const updatedPayments = existingPayments.filter((p: any) => {
+          if (p.id === entryId || p.id === txn.id || p.txnId === txn.id) {
+            matched = true;
+            return false;
+          }
+          if (!matched && p.date === txn.date && Number(p.amount) === amt) {
+            matched = true;
+            return false;
+          }
+          return true;
+        });
+        updateItem("loansGiven", lid, {
+          outstanding: Number(loan.outstanding || 0) + amt,
+          payments: updatedPayments,
+          status: "active",
         });
       }
     } else if (["lic", "termPlans", "investmentPlans"].includes(lt)) {
