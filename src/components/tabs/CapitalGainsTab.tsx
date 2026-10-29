@@ -30,7 +30,13 @@ import {
   Tooltip,
 } from "recharts";
 import { THEME } from "../../utils/constants";
-import { fmtINRFull, today, exportArrayToCSV } from "../../utils/finance";
+import {
+  fmtINRFull,
+  today,
+  exportArrayToCSV,
+  isEquityOrientedFund,
+  debtLTCGRule,
+} from "../../utils/finance";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -48,29 +54,7 @@ import { CapitalGainsExemptionStudio } from "../tax/CapitalGainsExemptionStudio"
    CONSTANTS & HELPERS
    ══════════════════════════════════════════════════════════════════ */
 
-const EQUITY_CATEGORIES = [
-  "equity",
-  "elss",
-  "flexi",
-  "large cap",
-  "mid cap",
-  "small cap",
-  "multi cap",
-  "focused",
-  "sectoral",
-  "thematic",
-  "index",
-  "hybrid",
-  "balanced advantage",
-  "aggressive hybrid",
-  "nifty",
-  "sensex",
-];
-
-export const isEquityMF = (mf: any): boolean => {
-  const cat = (mf.category || mf.type || mf.scheme || mf.name || "").toLowerCase();
-  return EQUITY_CATEGORIES.some((k) => cat.includes(k));
-};
+export const isEquityMF = isEquityOrientedFund;
 
 const mfKey = (name: string, owner: string) =>
   `${(name || "").trim().toLowerCase()}|${owner || "self"}`;
@@ -178,7 +162,6 @@ const getEquityLTCGRate = (sellDate: string) =>
   isOnOrAfterEquityRateChange(sellDate) ? 0.125 : 0.1;
 const getEquityLTCGExemption = (fy: number) => (fy >= 2024 ? 125000 : 100000);
 const DEBT_STCG_SLAB_RATE = 0.3;
-const DEBT_LTCG_RATE = 0.2;
 
 const referenceDateForFY = (fyStartYear: number): string => {
   if (fyStartYear >= getCurrentFYStartYear()) return today();
@@ -311,11 +294,10 @@ const classifySells = (
         gainType = "DEBT_STCG";
         taxRate = DEBT_STCG_SLAB_RATE;
       } else {
-        const isPostBudget2024 = parseLocalDate(m.sellDate) >= parseLocalDate(BUDGET_2024_CUTOFF_DATE);
-        const holdingThresholdMonths = isPostBudget2024 ? 24 : 36;
-        const isLTCG = isLongTerm(m.buyDate, m.sellDate, holdingThresholdMonths);
+        const rule = debtLTCGRule(m.sellDate);
+        const isLTCG = isLongTerm(m.buyDate, m.sellDate, rule.months);
         gainType = isLTCG ? "DEBT_LTCG" : "DEBT_STCG";
-        taxRate = isLTCG ? (isPostBudget2024 ? 0.125 : DEBT_LTCG_RATE) : DEBT_STCG_SLAB_RATE;
+        taxRate = isLTCG ? rule.rate : DEBT_STCG_SLAB_RATE;
       }
     }
 
@@ -874,7 +856,7 @@ export const CapitalGainsTab = ({
       const unrealizedPL = currentTotal - buyTotal;
       const unrealizedPLPct = buyTotal > 0 ? (unrealizedPL / buyTotal) * 100 : 0;
       const equity = isEquityMF(m);
-      const ltcgThreshold = equity ? 12 : 36;
+      const ltcgThreshold = equity ? 12 : debtLTCGRule(todayStr).months;
 
       let wouldBeType: GainType;
       let monthsToLTCG: number | null | "never";
@@ -899,7 +881,7 @@ export const CapitalGainsTab = ({
           wouldBeType = isLTCG ? "DEBT_LTCG" : "DEBT_STCG";
           monthsToLTCG = isLTCG ? null : ltcgThreshold - months;
           const buyD = parseLocalDate(bd);
-          const anniversary = new Date(buyD.getFullYear() + 3, buyD.getMonth(), buyD.getDate());
+          const anniversary = new Date(buyD.getFullYear(), buyD.getMonth() + ltcgThreshold, buyD.getDate());
           const diffMs = anniversary.getTime() - todayDate.getTime();
           daysToLTCG = isLTCG ? 0 : Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
         }
@@ -1189,9 +1171,10 @@ export const CapitalGainsTab = ({
         taxRate = DEBT_STCG_SLAB_RATE;
         taxAmount = profit > 0 ? Math.round(profit * taxRate) : 0;
       } else {
-        isLTCG = isLongTerm(simBuyDate, simSellDate, 36);
+        const rule = debtLTCGRule(simSellDate);
+        isLTCG = isLongTerm(simBuyDate, simSellDate, rule.months);
         gainType = isLTCG ? "DEBT_LTCG" : "DEBT_STCG";
-        taxRate = isLTCG ? DEBT_LTCG_RATE : DEBT_STCG_SLAB_RATE;
+        taxRate = isLTCG ? rule.rate : DEBT_STCG_SLAB_RATE;
         taxAmount = profit > 0 ? Math.round(profit * taxRate) : 0;
       }
     }

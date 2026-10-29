@@ -9,7 +9,12 @@ import {
   calcTaxNewByFY,
   calcTaxOldByFY,
   isBondOutstanding,
+  calcXIRR,
+  loanMonthsRemaining,
+  isEquityOrientedFund,
+  debtLTCGRule,
 } from "../utils/finance";
+import { classifyMFHolding } from "../components/tabs/TaxVaultTab";
 import { computeNetWorthAsOf } from "../utils/netWorthAsOf";
 
 const FY = "2025-26";
@@ -82,6 +87,18 @@ describe("HRA Rule 2A and Sec 80GG", () => {
       rentedProperties: rented("Pune"),
     };
     expect(getAutoDetectedDeductions(state, FY).hra).toBe(300_000);
+  });
+
+  it("honours the per-FY metro choice saved from Tax Vault over auto-detection", () => {
+    const state = {
+      masterData: { taxDeductions: { [FY]: { hraMetro: false } } },
+      salarySlips: slips(50_000, 30_000),
+      rentedProperties: rented("Mumbai"),
+    };
+    const auto = getAutoDetectedDeductions(state, FY);
+    expect(auto.hra).toBe(240_000);
+    expect(auto.hraMetro).toBe(false);
+    expect(auto.hraMetroSource).toBe("user");
   });
 
   it("gives nil HRA exemption when salary slips carry no HRA, routing rent to 80GG", () => {
@@ -183,5 +200,71 @@ describe("Matured bonds drop out of net worth", () => {
     const state = { bonds: [bond] };
     expect(computeNetWorthAsOf(state, "2023-12", {}).totalAssets).toBe(100_000);
     expect(computeNetWorthAsOf(state, "2025-01", {}).totalAssets).toBe(0);
+  });
+});
+
+describe("XIRR", () => {
+  it("returns a sensible rate for a normal investment", () => {
+    const r = calcXIRR([
+      { date: "2024-01-01", amount: -100_000 },
+      { date: "2025-01-01", amount: 112_000 },
+    ]);
+    expect(r).toBeGreaterThan(11.5);
+    expect(r).toBeLessThan(12.5);
+  });
+
+  it("returns null — not a false 0% — when no real rate exists", () => {
+    // Alternating flows with no sign change in NPV anywhere in the search range.
+    const r = calcXIRR([
+      { date: "2024-01-01", amount: 100 },
+      { date: "2024-06-01", amount: -1 },
+      { date: "2025-01-01", amount: 100 },
+    ]);
+    expect(r).toBeNull();
+  });
+});
+
+describe("Loan months remaining", () => {
+  it("prefers tracked monthsRemaining", () => {
+    expect(loanMonthsRemaining({ monthsRemaining: 37, tenureMonths: 240 })).toBe(37);
+  });
+
+  it("solves NPER from the EMI instead of reusing the original tenure", () => {
+    // ₹10L outstanding @ 9%, EMI ₹20,758 ≈ 60 months left (original tenure 240).
+    const n = loanMonthsRemaining({ outstanding: 1_000_000, rate: 9, emi: 20_758, tenureMonths: 240 });
+    expect(n).toBeGreaterThanOrEqual(59);
+    expect(n).toBeLessThanOrEqual(61);
+  });
+
+  it("falls back to tenure less months elapsed", () => {
+    const n = loanMonthsRemaining({ outstanding: 500_000, tenureMonths: 120, startDate: "2025-01-01" }, "2026-01-01");
+    expect(n).toBe(108);
+  });
+});
+
+describe("Equity-oriented fund test & debt holding period", () => {
+  it.each([
+    ["Parag Parikh Flexi Cap Fund", true],
+    ["UTI Nifty 50 Index Fund", true],
+    ["ICICI Prudential Equity Arbitrage Fund", true],
+    ["Edelweiss Nifty SDL Apr 2027 Index Fund", false],
+    ["Bandhan CRISIL IBX Gilt June 2027 Index Fund", false],
+    ["SBI Conservative Hybrid Fund", false],
+    ["Motilal Oswal S&P 500 Index Fund", false],
+    ["Motilal Oswal Nasdaq 100 FoF", false],
+    ["HDFC Liquid Fund", false],
+  ])("%s → equity-oriented: %s", (name, expected) => {
+    expect(isEquityOrientedFund({ name })).toBe(expected);
+  });
+
+  it("uses 24 months / 12.5% for debt sold on or after 23 Jul 2024", () => {
+    expect(debtLTCGRule("2024-07-22")).toEqual({ months: 36, rate: 0.2 });
+    expect(debtLTCGRule("2025-01-10")).toEqual({ months: 24, rate: 0.125 });
+  });
+
+  it("classifies a pre-Apr-2023 debt fund held ~26 months and sold in 2025 as LTCG", () => {
+    const m = { name: "HDFC Corporate Bond Fund", buyDate: "2023-01-10", sellDate: "2025-03-20" };
+    expect(classifyMFHolding(m, 800).isLtcg).toBe(true);
+    expect(classifyMFHolding({ ...m, sellDate: "2024-05-01" }, 800).isLtcg).toBe(false);
   });
 });

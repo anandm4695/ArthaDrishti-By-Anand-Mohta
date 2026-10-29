@@ -41,7 +41,13 @@ import {
   Legend,
 } from "recharts";
 import { THEME } from "../../utils/constants";
-import { fmtINR, fmtINRFull, fmtINRExact, loanOutstanding } from "../../utils/finance";
+import {
+  fmtINR,
+  fmtINRFull,
+  fmtINRExact,
+  loanOutstanding,
+  loanMonthsRemaining,
+} from "../../utils/finance";
 import { Card } from "../ui/Card";
 import { SectionTitle } from "../ui/SectionTitle";
 import { Badge } from "../ui/Badge";
@@ -378,7 +384,7 @@ export const LoanAmortizationTab: React.FC<{ state: any }> = ({ state }) => {
       return {
         principal: loanOutstanding(activeLoanObj),
         rate: Number(activeLoanObj.rate || 0),
-        tenure: Number(activeLoanObj.monthsRemaining || activeLoanObj.tenureMonths || 240),
+        tenure: loanMonthsRemaining(activeLoanObj),
         name: activeLoanObj.type || activeLoanObj.lender || "Loan",
         lender: activeLoanObj.lender || "Bank",
         type: activeLoanObj.type || "Loan",
@@ -884,7 +890,7 @@ export const LoanAmortizationTab: React.FC<{ state: any }> = ({ state }) => {
                             RATE / TENURE
                           </div>
                           <div style={{ fontSize: 12, fontWeight: 700, color: THEME.ink }}>
-                            {l.rate}% • {l.monthsRemaining || l.tenureMonths || 240}m
+                            {l.rate}% • {loanMonthsRemaining(l)}m
                           </div>
                         </div>
                       </div>

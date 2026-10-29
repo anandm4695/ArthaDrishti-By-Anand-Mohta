@@ -997,6 +997,30 @@ export const loanOutstanding = (l: any): number => {
   return Number(l?.principal || 0);
 };
 
+// Months left on a loan, for amortizing its *current* outstanding. Prefers the tracked
+// `monthsRemaining`; otherwise solves NPER from the EMI (the same formula the loan
+// modals use); and only then falls back to the original tenure less months elapsed.
+export const loanMonthsRemaining = (l: any, asOfDate: string = today()): number => {
+  const tracked = Number(l?.monthsRemaining || 0);
+  if (tracked > 0) return Math.round(tracked);
+  const outstanding = loanOutstanding(l);
+  const emi = Number(l?.emi || 0);
+  const r = Number(l?.rate || 0) / 100 / 12;
+  if (outstanding > 0 && emi > 0) {
+    if (r === 0) return Math.ceil(outstanding / emi);
+    if (emi > r * outstanding) {
+      return Math.ceil(-Math.log(1 - (r * outstanding) / emi) / Math.log(1 + r));
+    }
+  }
+  const tenure = Number(l?.tenureMonths || 0);
+  const start = l?.emiStartDate || l?.startDate;
+  if (tenure > 0) {
+    const elapsed = start ? Math.max(0, monthsBetween(start, asOfDate)) : 0;
+    return Math.max(1, tenure - elapsed);
+  }
+  return 240;
+};
+
 export const loanGivenOutstanding = (l: any): number => {
   if ((l?.status || "").toLowerCase() === "closed") return 0;
   if (l?.outstanding != null && l.outstanding !== "") return Number(l.outstanding) || 0;
@@ -1232,6 +1256,9 @@ export interface AutoDetectedDeductions {
   salaryBasicDA: number;
   /** Rent paid in the FY by a salaried taxpayer who receives no HRA — the 80GG base. */
   rentWithoutHra: number;
+  /** Whether Rule 2A's 50% (metro) limit applied, and whether the user chose it explicitly. */
+  hraMetro: boolean;
+  hraMetroSource: "user" | "auto";
 }
 
 // The taxpayer's age for slab / 80TTB / 80D / Sec 207(2) purposes. DOB lives on the
@@ -1516,9 +1543,12 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
     0
   );
 
+  // An explicit per-FY choice (Tax Vault → HRA) wins; otherwise infer from the rented
+  // property's city/address, defaulting to the conservative non-metro 40%.
+  const explicitMetro = state.masterData?.taxDeductions?.[fy]?.hraMetro ?? state.profile?.hraMetro;
   const isMetro =
-    typeof state.profile?.hraMetro === "boolean"
-      ? state.profile.hraMetro
+    typeof explicitMetro === "boolean"
+      ? explicitMetro
       : (state.rentedProperties || []).some((p: any) =>
           HRA_METRO_RE.test(`${p.city || ""} ${p.address || ""} ${p.name || ""}`)
         );
@@ -1646,6 +1676,8 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
     d80TTA_source,
     salaryBasicDA: annualBasic,
     rentWithoutHra,
+    hraMetro: isMetro,
+    hraMetroSource: typeof explicitMetro === "boolean" ? "user" : "auto",
   };
 };
 
@@ -1898,7 +1930,7 @@ export const calcXIRR = (cashFlows: CashFlow[]): number | null => {
   // Bisection Method Fallback
   let low = -0.99;
   let high = 50.0; // 5000%
-  let mid = 0.0;
+  let mid = (low + high) / 2;
 
   let valLow = npv(low);
   let valHigh = npv(high);
@@ -1927,28 +1959,56 @@ export const calcXIRR = (cashFlows: CashFlow[]): number | null => {
     }
   }
 
-  if (valLow * valHigh < 0) {
-    for (let i = 0; i < 100; i++) {
-      mid = (low + high) / 2;
-      const val = npv(mid);
-      if (Math.abs(val) < tol) {
-        return mid * 100;
-      }
-      if (valLow * val < 0) {
-        high = mid;
-      } else {
-        low = mid;
-        valLow = val;
-      }
+  // No sign change anywhere in the search range means no real root exists — report
+  // "not computable" rather than the untouched `mid` (0), which would read as 0% XIRR.
+  if (!(valLow * valHigh < 0)) return null;
+
+  for (let i = 0; i < 100; i++) {
+    mid = (low + high) / 2;
+    const val = npv(mid);
+    if (Math.abs(val) < tol) {
+      return mid * 100;
+    }
+    if (valLow * val < 0) {
+      high = mid;
+    } else {
+      low = mid;
+      valLow = val;
     }
   }
 
-  if (mid > -0.99 && !isNaN(mid) && isFinite(mid)) {
-    return mid * 100;
-  }
-
-  return null;
+  return isFinite(mid) && mid > -0.99 ? mid * 100 : null;
 };
+
+// ── Equity-oriented fund test (Sec 112A / 111A) ───────────────────────────────
+// A fund qualifies only if ≥65% of its corpus is in *domestic* equity. Name keywords
+// like "index", "nifty" or "hybrid" are not enough on their own: a Nifty SDL or
+// CRISIL-IBX gilt index fund is debt, a conservative hybrid holds ≤35% equity, and
+// international FoFs (Nasdaq, S&P 500) are taxed as non-equity. Check those first.
+const NON_EQUITY_FUND_MARKERS = [
+  "debt", "gilt", "g-sec", "gsec", "sdl", "crisil ibx", "bharat bond", "target maturity",
+  "liquid", "overnight", "money market", "ultra short", "low duration", "short duration",
+  "medium duration", "long duration", "dynamic bond", "corporate bond", "credit risk",
+  "banking and psu", "banking & psu", "floater", "conservative hybrid",
+  "gold", "silver", "international", "global", "overseas", "nasdaq", "s&p 500",
+  "nyse", "fang", "hang seng", "us equity",
+];
+const EQUITY_FUND_KEYWORDS = [
+  "equity", "elss", "flexi", "large cap", "mid cap", "small cap", "multi cap", "focused",
+  "sectoral", "thematic", "index", "hybrid", "balanced advantage", "arbitrage", "nifty",
+  "sensex", "value", "contra", "dividend yield",
+];
+export const isEquityOrientedFund = (mf: any): boolean => {
+  const cat = `${mf?.category || mf?.type || ""} ${mf?.scheme || mf?.name || ""}`.toLowerCase();
+  if (NON_EQUITY_FUND_MARKERS.some((k) => cat.includes(k))) return false;
+  return EQUITY_FUND_KEYWORDS.some((k) => cat.includes(k));
+};
+
+// Non-equity assets bought before 1 Apr 2023 (Sec 50AA cut-off): Finance (No.2) Act 2024
+// cut the long-term holding period from 36 to 24 months and set LTCG at 12.5% without
+// indexation for transfers on or after 23 Jul 2024 (20% with indexation before).
+export const debtLTCGRule = (sellDate: string): { months: number; rate: number } =>
+  sellDate >= "2024-07-23" ? { months: 24, rate: 0.125 } : { months: 36, rate: 0.2 };
 
 // ── Section 2(42A) Long Term Holding Period Checker ──────────────────────────
 export const isLongTerm = (

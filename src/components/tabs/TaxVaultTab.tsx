@@ -59,6 +59,8 @@ import {
   getTaxpayerAge,
   cap80CCD2,
   compute80GG,
+  isEquityOrientedFund,
+  debtLTCGRule,
 } from "../../utils/finance";
 import { Card } from "../ui/Card";
 import { StatCard } from "../ui/StatCard";
@@ -142,30 +144,7 @@ export const calcSection234CPenalty = (
   return total;
 };
 
-// Equity-oriented fund detection
-const EQUITY_MF_KEYWORDS = [
-  "equity",
-  "elss",
-  "flexi",
-  "large cap",
-  "mid cap",
-  "small cap",
-  "multi cap",
-  "focused",
-  "sectoral",
-  "thematic",
-  "index",
-  "hybrid",
-  "balanced advantage",
-  "aggressive hybrid",
-  "nifty",
-  "sensex",
-];
-
-const isEquityMF = (m: any): boolean => {
-  const cat = (m.category || m.type || m.scheme || m.name || "").toLowerCase();
-  return EQUITY_MF_KEYWORDS.some((k) => cat.includes(k));
-};
+const isEquityMF = isEquityOrientedFund;
 
 /**
  * Classify a mutual fund sale/holding's capital-gains bucket for a given holding period in days.
@@ -177,7 +156,8 @@ export const classifyMFHolding = (
   const isEquity = isEquityMF(m);
   const isPostApr2023 = !!m.buyDate && m.buyDate >= "2023-04-01";
   const isSlabTaxed = !isEquity && isPostApr2023;
-  const ltcgDayThreshold = isEquity ? 365 : 1095; // ~12mo equity vs ~36mo debt
+  // 12 months for equity; 24 months (36 before 23 Jul 2024) for pre-Apr-2023 debt.
+  const ltcgDayThreshold = isEquity ? 365 : debtLTCGRule(m.sellDate || today()).months === 24 ? 730 : 1095;
   const isLtcg = isSlabTaxed ? false : days > ltcgDayThreshold;
   return { isEquity, isSlabTaxed, isLtcg };
 };
@@ -1536,6 +1516,15 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
         [fy]: updatedOverrides,
       });
     }
+  };
+
+  const setHraMetro = (metro: boolean) => {
+    if (!updateMasterData) return;
+    const currentOverrides = state.masterData?.taxDeductions?.[fy] || {};
+    updateMasterData("taxDeductions", {
+      ...(state.masterData?.taxDeductions || {}),
+      [fy]: { ...currentOverrides, hraMetro: metro },
+    });
   };
 
   const toggleD80DSenior = () => {
@@ -2941,6 +2930,34 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                     <Zap size={10} style={{ verticalAlign: -1 }} /> Auto: {autoDetected.hra_source}
                   </div>
                 )}
+                <div
+                  role="group"
+                  aria-label="HRA city type"
+                  style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, flexWrap: "wrap" }}
+                >
+                  {[
+                    { metro: true, label: "Metro (50%)" },
+                    { metro: false, label: "Non-metro (40%)" },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.label}
+                      size="sm"
+                      variant={autoDetected.hraMetro === opt.metro ? "accent" : "ghost"}
+                      aria-pressed={autoDetected.hraMetro === opt.metro}
+                      onClick={() => setHraMetro(opt.metro)}
+                      disabled={!updateMasterData}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                  <span style={{ fontSize: 10, color: THEME.muted, fontWeight: 600 }}>
+                    {autoDetected.hraMetro === true && autoDetected.hraMetroSource === "auto"
+                      ? "Detected from rented property city"
+                      : autoDetected.hraMetroSource === "auto"
+                        ? "Default — Mumbai, Delhi, Kolkata & Chennai are metros"
+                        : "Your choice for FY " + fy}
+                  </span>
+                </div>
                 {d80GG > 0 && (
                   <div style={{ fontSize: 10, color: THEME.sage, fontWeight: 700, marginTop: 2 }}>
                     <Zap size={10} style={{ verticalAlign: -1 }} /> Sec 80GG applied:{" "}
