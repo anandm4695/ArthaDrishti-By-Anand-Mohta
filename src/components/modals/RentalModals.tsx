@@ -403,6 +403,7 @@ export function RentalPropertyModal({ initial, onClose, onSave, saving, bankAcco
     agreementEnd: initial?.agreementEnd || initial?.leaseEnd || "",
     isActive: initial?.isActive !== false,
     municipalTax: initial?.municipalTax || "",
+    homeLoanInterest: initial?.homeLoanInterest || "",
     propertyValue: initial?.propertyValue || "",
     dueDay: initial?.dueDay || 5,
     defaultBankAccountId: initial?.defaultBankAccountId || "",
@@ -447,6 +448,8 @@ export function RentalPropertyModal({ initial, onClose, onSave, saving, bankAcco
     const primaryTenant = tenants[0] || {};
     onSave({
       ...f,
+      municipalTax: Number(f.municipalTax) || 0,
+      homeLoanInterest: Number(f.homeLoanInterest) || 0,
       propertyValue: Number(f.propertyValue) || 0,
       tenants,
       monthlyRent: totalMonthlyRent,
@@ -569,6 +572,15 @@ export function RentalPropertyModal({ initial, onClose, onSave, saving, bankAcco
             type="number"
             value={f.municipalTax}
             onChange={(e) => setF({ ...f, municipalTax: e.target.value })}
+            placeholder="0"
+          />
+        </Field>
+        <Field label="Annual Home Loan Interest - Sec 24(b) (₹)">
+          <input
+            style={input}
+            type="number"
+            value={f.homeLoanInterest}
+            onChange={(e) => setF({ ...f, homeLoanInterest: e.target.value })}
             placeholder="0"
           />
         </Field>

@@ -1150,6 +1150,7 @@ export function DividendsSection({
           ]}
           data={filteredRows}
           hideSearch
+          exportFilename="dividend-income-ledger.csv"
           keyExtractor={(r) => r.id || `${r.symbol}-${r.paymentDate}`}
           emptyState={
             <div style={{ padding: "36px 16px", textAlign: "center", color: THEME.muted, fontSize: 13 }}>

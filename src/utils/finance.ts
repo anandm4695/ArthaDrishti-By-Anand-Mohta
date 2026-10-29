@@ -1828,3 +1828,169 @@ export const exportArrayToCSV = (
   URL.revokeObjectURL(url);
 };
 
+/* ══════════════════════════════════════════════════════════════════
+   STATUTORY ADVANCE TAX & SECTION 234 PENALTY PROJECTOR
+   Income Tax Act 1961 — Sections 207, 208, 211, 234A, 234B, 234C, 234F
+   ══════════════════════════════════════════════════════════════════ */
+
+export interface AdvanceTaxQuarter {
+  quarter: "Q1" | "Q2" | "Q3" | "Q4";
+  dueDate: string; // YYYY-MM-DD
+  label: string; // e.g. "15 Jun"
+  cumulativePct: number; // 15, 45, 75, 100
+  safeHarborPct: number; // 12, 36, 75, 100
+  statutoryMonths: number; // 3, 3, 3, 1
+  requiredAmount: number;
+  paidAmount: number;
+  shortfall: number;
+  isPast: boolean;
+  penalty234C: number;
+}
+
+export interface AdvanceTaxAnalysis {
+  isSubjectToAdvanceTax: boolean;
+  exemptionReason?: string;
+  grossTaxLiability: number;
+  tdsCredit: number;
+  netTaxPayable: number;
+  totalAdvancePaid: number;
+  remainingTaxPayable: number;
+  quarters: AdvanceTaxQuarter[];
+  penalty234C: number;
+  penalty234B: number;
+  penalty234F: number;
+  totalStatutoryPenalty: number;
+}
+
+export function computeAdvanceTaxSchedule(
+  fyStartYear: number,
+  grossTax: number,
+  tdsCredit: number,
+  totalAdvancePaid: number,
+  asOfDateStr: string = today(),
+  isSeniorCitizenWithoutBusinessIncome: boolean = false,
+  quarterlyAdvancePaid?: { Q1?: number; Q2?: number; Q3?: number; Q4?: number }
+): AdvanceTaxAnalysis {
+  const netTaxPayable = Math.max(0, Math.round(grossTax - tdsCredit));
+  const remainingTaxPayable = Math.max(0, netTaxPayable - totalAdvancePaid);
+
+  // Section 207(2): Resident Senior Citizen without business income is exempt
+  if (isSeniorCitizenWithoutBusinessIncome) {
+    return {
+      isSubjectToAdvanceTax: false,
+      exemptionReason: "Senior citizen (aged 60+) without business/profession income is exempt u/s 207(2).",
+      grossTaxLiability: grossTax,
+      tdsCredit,
+      netTaxPayable,
+      totalAdvancePaid,
+      remainingTaxPayable,
+      quarters: [],
+      penalty234C: 0,
+      penalty234B: 0,
+      penalty234F: 0,
+      totalStatutoryPenalty: 0,
+    };
+  }
+
+  // Section 208: Advance tax applies only if net tax payable >= ₹10,000
+  const isSubject = netTaxPayable >= 10_000;
+
+  const rawQuarters: Array<{
+    quarter: "Q1" | "Q2" | "Q3" | "Q4";
+    datePart: string;
+    label: string;
+    pct: number;
+    safeHarbor: number;
+    months: number;
+  }> = [
+    { quarter: "Q1", datePart: "06-15", label: "15 Jun", pct: 15, safeHarbor: 12, months: 3 },
+    { quarter: "Q2", datePart: "09-15", label: "15 Sep", pct: 45, safeHarbor: 36, months: 3 },
+    { quarter: "Q3", datePart: "12-15", label: "15 Dec", pct: 75, safeHarbor: 75, months: 3 },
+    { quarter: "Q4", datePart: "03-15", label: "15 Mar", pct: 100, safeHarbor: 100, months: 1 },
+  ];
+
+  let total234C = 0;
+
+  const quarters: AdvanceTaxQuarter[] = rawQuarters.map((q) => {
+    const year = q.quarter === "Q4" ? fyStartYear + 1 : fyStartYear;
+    const dueDate = `${year}-${q.datePart}`;
+    const isPast = dueDate < asOfDateStr;
+
+    // Determine cumulative amount paid by this quarter
+    let paidByQuarter = 0;
+    if (quarterlyAdvancePaid) {
+      if (q.quarter === "Q1") paidByQuarter = quarterlyAdvancePaid.Q1 || 0;
+      else if (q.quarter === "Q2") paidByQuarter = (quarterlyAdvancePaid.Q1 || 0) + (quarterlyAdvancePaid.Q2 || 0);
+      else if (q.quarter === "Q3") paidByQuarter = (quarterlyAdvancePaid.Q1 || 0) + (quarterlyAdvancePaid.Q2 || 0) + (quarterlyAdvancePaid.Q3 || 0);
+      else paidByQuarter = totalAdvancePaid;
+    } else {
+      paidByQuarter = isPast ? totalAdvancePaid : 0;
+    }
+
+    const requiredAmount = Math.round((netTaxPayable * q.pct) / 100);
+    const safeHarborAmount = Math.round((netTaxPayable * q.safeHarbor) / 100);
+
+    let penalty = 0;
+    let shortfall = 0;
+
+    if (isSubject && isPast) {
+      if (paidByQuarter < safeHarborAmount) {
+        shortfall = Math.max(0, requiredAmount - paidByQuarter);
+        // Section 234C: 1% simple interest per month for statutory months
+        penalty = Math.round(shortfall * 0.01 * q.months);
+      }
+    } else if (isSubject && !isPast) {
+      shortfall = Math.max(0, requiredAmount - paidByQuarter);
+    }
+
+    total234C += penalty;
+
+    return {
+      quarter: q.quarter,
+      dueDate,
+      label: q.label,
+      cumulativePct: q.pct,
+      safeHarborPct: q.safeHarbor,
+      statutoryMonths: q.months,
+      requiredAmount,
+      paidAmount: paidByQuarter,
+      shortfall,
+      isPast,
+      penalty234C: penalty,
+    };
+  });
+
+  // Section 234B penalty: applies after 31 March of FY if total advance paid < 90% of assessed net tax
+  const march31OfFY = `${fyStartYear + 1}-03-31`;
+  let penalty234B = 0;
+  if (isSubject && asOfDateStr > march31OfFY && totalAdvancePaid < netTaxPayable * 0.9) {
+    const assessedShortfall = Math.max(0, netTaxPayable - totalAdvancePaid);
+    const ayStart = new Date(`${fyStartYear + 1}-04-01T00:00:00`);
+    const curr = new Date(`${asOfDateStr}T00:00:00`);
+    const monthsElapsed = Math.max(1, Math.ceil((curr.getTime() - ayStart.getTime()) / (30.44 * 86400000)));
+    penalty234B = Math.round(assessedShortfall * 0.01 * monthsElapsed);
+  }
+
+  // Section 234F fee: ₹5,000 (or ₹1,000 if income <= 5L) if filed after 31 July
+  const july31OfAY = `${fyStartYear + 1}-07-31`;
+  let penalty234F = 0;
+  if (asOfDateStr > july31OfAY && remainingTaxPayable > 0) {
+    penalty234F = 5000;
+  }
+
+  return {
+    isSubjectToAdvanceTax: isSubject,
+    exemptionReason: isSubject ? undefined : "Net tax liability after TDS is under ₹10,000 threshold u/s 208.",
+    grossTaxLiability: grossTax,
+    tdsCredit,
+    netTaxPayable,
+    totalAdvancePaid,
+    remainingTaxPayable,
+    quarters,
+    penalty234C: total234C,
+    penalty234B,
+    penalty234F,
+    totalStatutoryPenalty: total234C + penalty234B + penalty234F,
+  };
+}
+

@@ -24,6 +24,7 @@ import {
   today,
   calcTaxNewByFY,
   calcTaxOldByFY,
+  computeAdvanceTaxSchedule,
   isHomeLoan,
   loanOutstanding,
   getEffectiveRent,
@@ -80,6 +81,12 @@ const DEFAULT_ITR_CHECKLIST: ChecklistItem[] = [
     label: "AIS (Annual Information Statement) review",
     category: "TDS",
     description: "Comprehensive financial activity record including high-value transactions, stock trades, and dividends.",
+  },
+  {
+    id: "sft_cross_reference",
+    label: "SFT High-Value Transaction Cross-Reference",
+    category: "TDS",
+    description: "Verify credit card spend > ₹10L, bank cash > ₹10L, and property >= ₹30L against AIS/TIS to prevent mismatch notices.",
   },
   {
     id: "bank_interest",
@@ -711,30 +718,36 @@ export const TaxFilingHelperTab = ({
   }, [state, selectedFY, taxCalculations.activeTax.total]);
 
   /* ══════════════════════════════════════════════════════════════════
-     ADVANCE TAX 4-QUARTER SCHEDULE
+     ADVANCE TAX 4-QUARTER SCHEDULE & STATUTORY PENALTY PROJECTOR
      ══════════════════════════════════════════════════════════════════ */
-  const advanceTaxSchedule = useMemo(() => {
+  const advanceTaxAnalysis = useMemo(() => {
     const now = today();
     const fy = selectedFY;
     const [startYear] = fy.split("-").map(Number);
     const regime = state.profile?.regime || selectedRegime;
     const grossIncome = incomeSummary.totalIncome;
+    const isSenior = isSeniorCitizen(state.profile?.dob);
     const estimatedTax =
       regime === "new"
         ? calcTaxNewByFY(grossIncome, fy).total
         : calcTaxOldByFY(
             grossIncome,
             (startYear >= 2020 ? 50_000 : 40_000) + deductions.totalDeductions,
-            fy
+            fy,
+            isSenior ? 65 : 30
           ).total;
 
-    return ADVANCE_TAX_DATES.map((d) => {
-      const fullDate = `${d.date.startsWith("03") ? startYear + 1 : startYear}-${d.date}`;
-      const isPast = fullDate < now;
-      const due = Math.round((estimatedTax * d.pct) / 100);
-      return { ...d, fullDate, isPast, due };
-    });
-  }, [selectedFY, incomeSummary, deductions, state.profile, selectedRegime]);
+    return computeAdvanceTaxSchedule(
+      startYear,
+      estimatedTax,
+      taxPaid.tds,
+      taxPaid.advanceTax,
+      now,
+      isSenior
+    );
+  }, [selectedFY, incomeSummary, deductions, state.profile, selectedRegime, taxPaid.tds, taxPaid.advanceTax]);
+
+  const advanceTaxSchedule = advanceTaxAnalysis.quarters;
 
   /* ══════════════════════════════════════════════════════════════════
      FILING DEADLINE LOGIC
@@ -766,10 +779,10 @@ export const TaxFilingHelperTab = ({
   const itrGuide = useMemo(() => {
     const reasons: string[] = [];
     if (incomeSummary.totalIncome > 5000000) {
-      reasons.push("Total income is above ₹50 lakh");
+      reasons.push("Total income exceeds ₹50 lakh statutory threshold");
     }
     if (incomeSummary.hasCapitalGainRecords) {
-      reasons.push("You have capital gains/losses from stocks or mutual funds this FY");
+      reasons.push("Realized capital gains/losses from stocks, mutual funds or property this FY");
     }
     const ownedCount = (state.realEstateProperties || []).filter(
       (p: any) => p.status !== "sold"
@@ -779,13 +792,25 @@ export const TaxFilingHelperTab = ({
     if (housePropertyCount > 1) {
       reasons.push(`You have ${housePropertyCount} house properties on record`);
     }
-    const form = reasons.length > 0 ? "ITR-2" : "ITR-1 (Sahaj)";
+    const hasUnlistedShares = (state.stocks || []).some((s: any) => s.exchange === "UNLISTED" || s.isUnlisted);
+    if (hasUnlistedShares) {
+      reasons.push("Holdings in unlisted equity shares");
+    }
+    const hasBusinessIncome = (state.income || []).some((i: any) =>
+      ["business", "freelance", "consulting", "professional"].includes((i.category || "").toLowerCase())
+    );
+    if (hasBusinessIncome) {
+      reasons.push("Income from business or profession (requires ITR-3 or ITR-4)");
+    }
+    const form = hasBusinessIncome ? "ITR-3 / ITR-4" : reasons.length > 0 ? "ITR-2" : "ITR-1 (Sahaj)";
     return { form, reasons, housePropertyCount };
   }, [
     incomeSummary.totalIncome,
     incomeSummary.hasCapitalGainRecords,
     state.realEstateProperties,
     state.rentalProperties,
+    state.stocks,
+    state.income,
   ]);
 
   /* ══════════════════════════════════════════════════════════════════
@@ -875,10 +900,21 @@ export const TaxFilingHelperTab = ({
     lines.push(`Advance Tax Paid: ${fmtINRFull(taxPaid.advanceTax)}`);
     lines.push(`Total Tax Paid: ${fmtINRFull(taxPaid.total)}`);
     lines.push("");
-    lines.push("-- ADVANCE TAX SCHEDULE --");
-    advanceTaxSchedule.forEach((d) => {
-      lines.push(`${d.label} (${d.pct}% cumulative): ${fmtINRFull(d.due)}${d.isPast ? " [past]" : ""}`);
-    });
+    lines.push("-- ADVANCE TAX SCHEDULE & SECTION 234 STATUS --");
+    if (!advanceTaxAnalysis.isSubjectToAdvanceTax) {
+      lines.push(`Advance tax status: EXEMPT (${advanceTaxAnalysis.exemptionReason || "Net tax < ₹10k"})`);
+    } else {
+      advanceTaxSchedule.forEach((d) => {
+        lines.push(
+          `${d.label} (${d.cumulativePct}% cumulative): ${fmtINRFull(d.requiredAmount)}${
+            d.isPast ? " [past]" : ""
+          }${d.penalty234C > 0 ? ` [Penalty 234C: ${fmtINRFull(d.penalty234C)}]` : ""}`
+        );
+      });
+      if (advanceTaxAnalysis.totalStatutoryPenalty > 0) {
+        lines.push(`Total Section 234 Penalty Accrued: ${fmtINRFull(advanceTaxAnalysis.totalStatutoryPenalty)}`);
+      }
+    }
     lines.push("");
     lines.push("-- ITR FORM GUIDE (indicative only) --");
     lines.push(`Suggested: ${itrGuide.form}`);
@@ -1616,54 +1652,124 @@ export const TaxFilingHelperTab = ({
         </Card>
 
         <Card style={{ padding: 24 }}>
-          <CardHeading
-            icon={Calendar}
-            hint="If your total tax due (after TDS) exceeds ₹10,000, it's payable in these 4 installments instead of at filing time."
-          >
-            Advance Tax Schedule
-          </CardHeading>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {advanceTaxSchedule.map((d) => (
-              <div
-                key={d.date}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  background: d.isPast
-                    ? THEME.bg
-                    : "color-mix(in srgb, var(--t-accent) 8%, transparent)",
-                  border: `1px solid ${
-                    d.isPast
-                      ? THEME.border
-                      : "color-mix(in srgb, var(--t-accent) 30%, transparent)"
-                  }`,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {d.isPast ? (
-                    <CheckCircle size={16} color={THEME.sage} />
-                  ) : (
-                    <Clock size={16} color={THEME.accent} />
-                  )}
-                  <span style={{ fontSize: 13, color: THEME.text }}>
-                    {d.label} ({d.pct}% due)
-                  </span>
-                </div>
-                <span
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+            <CardHeading
+              icon={Calendar}
+              hint="Under Section 208, advance tax is mandatory if net tax after TDS exceeds ₹10,000. Under Section 234C, interest @ 1% per month is charged on quarterly shortfall."
+            >
+              Advance Tax Schedule
+            </CardHeading>
+            {!advanceTaxAnalysis.isSubjectToAdvanceTax ? (
+              <Badge variant="sage" style={{ fontSize: 11 }}>
+                Exempt u/s 208
+              </Badge>
+            ) : advanceTaxAnalysis.penalty234C > 0 ? (
+              <Badge variant="rust" style={{ fontSize: 11 }}>
+                Sec 234C Penalty Accruing
+              </Badge>
+            ) : (
+              <Badge variant="accent" style={{ fontSize: 11 }}>
+                Section 208 Compliant
+              </Badge>
+            )}
+          </div>
+
+          {!advanceTaxAnalysis.isSubjectToAdvanceTax ? (
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: 8,
+                background: "color-mix(in srgb, var(--t-sage) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--t-sage) 30%, transparent)",
+                fontSize: 12.5,
+                color: THEME.text,
+              }}
+            >
+              {advanceTaxAnalysis.exemptionReason || "Your net tax liability after TDS is below ₹10,000, so advance tax is not applicable."}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {advanceTaxSchedule.map((d) => (
+                <div
+                  key={d.dueDate}
                   style={{
-                    fontWeight: 600,
-                    fontSize: 13,
-                    color: d.isPast ? THEME.sage : THEME.text,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    background: d.isPast
+                      ? d.penalty234C > 0
+                        ? "color-mix(in srgb, var(--t-rust) 8%, transparent)"
+                        : THEME.bg
+                      : "color-mix(in srgb, var(--t-accent) 8%, transparent)",
+                    border: `1px solid ${
+                      d.isPast
+                        ? d.penalty234C > 0
+                          ? "color-mix(in srgb, var(--t-rust) 30%, transparent)"
+                          : THEME.border
+                        : "color-mix(in srgb, var(--t-accent) 30%, transparent)"
+                    }`,
                   }}
                 >
-                  <Money value={d.due} variant="full" />
-                </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {d.isPast ? (
+                      d.penalty234C > 0 ? (
+                        <AlertTriangle size={16} color={THEME.rust} />
+                      ) : (
+                        <CheckCircle size={16} color={THEME.sage} />
+                      )
+                    ) : (
+                      <Clock size={16} color={THEME.accent} />
+                    )}
+                    <div>
+                      <span style={{ fontSize: 13, color: THEME.text, fontWeight: 600 }}>
+                        {d.label} ({d.cumulativePct}% due)
+                      </span>
+                      {d.penalty234C > 0 && (
+                        <span style={{ fontSize: 11, color: THEME.rust, marginLeft: 8 }}>
+                          (Penalty: <Money value={d.penalty234C} variant="full" />)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 13,
+                      color: d.isPast && d.penalty234C === 0 ? THEME.sage : THEME.text,
+                    }}
+                  >
+                    <Money value={d.requiredAmount} variant="full" />
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {advanceTaxAnalysis.isSubjectToAdvanceTax && advanceTaxAnalysis.totalStatutoryPenalty > 0 && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "color-mix(in srgb, var(--t-rust) 12%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--t-rust) 35%, transparent)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontSize: 12,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <AlertTriangle size={15} color={THEME.rust} />
+                <span style={{ color: THEME.text, fontWeight: 600 }}>Total Section 234 Penalty Accrued:</span>
               </div>
-            ))}
-          </div>
+              <span style={{ color: THEME.rust, fontWeight: 800, fontSize: 13 }}>
+                <Money value={advanceTaxAnalysis.totalStatutoryPenalty} variant="full" />
+              </span>
+            </div>
+          )}
         </Card>
       </div>
 

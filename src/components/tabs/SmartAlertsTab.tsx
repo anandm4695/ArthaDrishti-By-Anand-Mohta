@@ -23,9 +23,22 @@ import {
   Download,
   ShieldAlert,
   ArrowUpDown,
+  FileText,
+  Scale,
+  Receipt,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
-import { today, monthsBetween } from "../../utils/finance";
+import {
+  today,
+  monthsBetween,
+  fmtINR,
+  fmtINRFull,
+  calcTaxNewByFY,
+  calcTaxOldByFY,
+  computeAdvanceTaxSchedule,
+} from "../../utils/finance";
+import { getCurrentFY, getCurrentFYStartYear } from "../../utils/appConstants";
+import { isSeniorCitizen } from "../../utils/masterData";
 import { Card } from "../ui/Card";
 import { SectionTitle } from "../ui/SectionTitle";
 import { StatCard } from "../ui/StatCard";
@@ -655,9 +668,232 @@ export const SmartAlertsTab = ({
           });
         }
       }
+
+      // Overdraft & Solvency Check on Bank Accounts
+      (state?.bankAccounts || []).forEach((b: any, idx: number) => {
+        const bal = Number(b.balance || 0);
+        if (bal < 0) {
+          alerts.push({
+            id: `overdraft_bank_${b.id || idx}`,
+            level: "error",
+            category: "security",
+            title: `Bank Overdraft: ${b.bankName || b.bank || "Account"}`,
+            detail: `Account has a negative balance of ${fmtINRFull(bal)}. Immediate deposit is required to prevent daily penal interest and bounce charges.`,
+            plainDetail: `Overdrawn by ₹${Math.abs(Math.round(bal)).toLocaleString("en-IN")}`,
+            icon: AlertTriangle,
+            action: "Fund your account",
+            targetTab: "banks",
+            impactValue: Math.abs(bal),
+            impactLabel: "Overdrawn",
+            tags: ["Overdraft", "Solvency Risk"],
+          });
+        }
+      });
     }
 
-    // 9. Data Quality & Inactivity
+    // ── 9. Statutory Indian Taxation, Advance Tax & SFT Radar ──
+    if (prefs.enabledModules.tax) {
+      const activeFY = getCurrentFY();
+      const fyStartYear = getCurrentFYStartYear();
+      const fyStartStr = `${fyStartYear}-04-01`;
+      const fyEndStr = `${fyStartYear + 1}-03-31`;
+
+      const detectedInc =
+        Number(metrics?.annualIncome || 0) ||
+        (state?.income || []).reduce((s: number, i: any) => s + Number(i.amount || 0), 0);
+      const isSenior = isSeniorCitizen(state?.profile?.dob);
+      const regime = state?.profile?.regime || "new";
+
+      if (detectedInc > 0) {
+        // Compute estimated tax
+        const estTax =
+          regime === "new"
+            ? calcTaxNewByFY(detectedInc, activeFY).total
+            : calcTaxOldByFY(detectedInc, 50000, activeFY, isSenior ? 65 : 30).total;
+
+        // TDS Paid
+        const tdsFromPayments = (state?.taxPayments || [])
+          .filter((t: any) => t.type === "tds" && (!t.fy || t.fy === activeFY))
+          .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+        const tdsFromSlips = (state?.salarySlips || [])
+          .filter(
+            (s: any) =>
+              !s.slipMonth ||
+              (s.slipMonth >= fyStartStr.slice(0, 7) && s.slipMonth <= fyEndStr.slice(0, 7))
+          )
+          .reduce((s: number, p: any) => s + Number(p.tds || 0), 0);
+        const totalTds = tdsFromPayments > 0 ? tdsFromPayments : tdsFromSlips;
+
+        // Advance Tax Paid
+        const advTaxPaid = (state?.taxPayments || [])
+          .filter(
+            (t: any) =>
+              (t.type === "advance_tax" || t.type === "advance") && (!t.fy || t.fy === activeFY)
+          )
+          .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+
+        const advAnalysis = computeAdvanceTaxSchedule(
+          fyStartYear,
+          estTax,
+          totalTds,
+          advTaxPaid,
+          todayStr,
+          isSenior
+        );
+
+        if (advAnalysis.isSubjectToAdvanceTax) {
+          // If 234C penalty is accruing
+          if (advAnalysis.penalty234C > 0) {
+            alerts.push({
+              id: "tax_advance_shortfall_234c",
+              level: "error",
+              category: "tax",
+              title: `Statutory Section 234C Advance Tax Penalty Accruing (₹${advAnalysis.penalty234C.toLocaleString("en-IN")})`,
+              detail: (
+                <>
+                  {`Advance tax paid (${fmtINRFull(advTaxPaid)}) is below statutory thresholds. Estimated interest penalty is `}
+                  <Money value={advAnalysis.penalty234C} variant="full" />
+                  {` u/s 234C. Pay the remaining tax of `}
+                  <Money value={advAnalysis.remainingTaxPayable} variant="full" />
+                  {` to prevent further penal interest.`}
+                </>
+              ),
+              plainDetail: `Section 234C penalty of ₹${advAnalysis.penalty234C} accruing on tax shortfall`,
+              icon: Receipt,
+              action: "Pay advance tax challan",
+              targetTab: "taxfiling",
+              impactValue: advAnalysis.penalty234C,
+              impactLabel: "Penalty Accruing",
+              tags: ["Advance Tax", "Section 234C", "Compliance"],
+            });
+          } else {
+            // Check next upcoming quarter
+            const upcomingQ = advAnalysis.quarters.find((q) => !q.isPast);
+            if (upcomingQ && advAnalysis.remainingTaxPayable > 0) {
+              const daysLeft = Math.round(
+                (new Date(upcomingQ.dueDate + "T00:00:00").getTime() -
+                  new Date(todayStr + "T00:00:00").getTime()) /
+                  86400000
+              );
+              if (daysLeft >= 0 && daysLeft <= 45) {
+                alerts.push({
+                  id: `tax_advance_upcoming_${upcomingQ.quarter}`,
+                  level: daysLeft <= 10 ? "warn" : "info",
+                  category: "tax",
+                  title: `Advance Tax ${upcomingQ.quarter} Due in ${daysLeft} days (${upcomingQ.label})`,
+                  detail: (
+                    <>
+                      {`Advance tax ${upcomingQ.quarter} installment due on ${upcomingQ.label}. Target: cumulative `}
+                      <Money value={upcomingQ.requiredAmount} variant="full" />
+                      {` (${upcomingQ.cumulativePct}% of net tax). Pay on or before the due date to avoid 1% monthly interest.`}
+                    </>
+                  ),
+                  plainDetail: `${upcomingQ.quarter} advance tax due on ${upcomingQ.dueDate}`,
+                  icon: Calendar,
+                  action: "Review advance tax schedule",
+                  targetTab: "taxfiling",
+                  daysRemaining: daysLeft,
+                  impactValue: upcomingQ.shortfall,
+                  impactLabel: `₹${Math.round(upcomingQ.shortfall).toLocaleString("en-IN")} Due`,
+                  tags: ["Advance Tax", upcomingQ.quarter, "Deadline"],
+                });
+              }
+            }
+          }
+        }
+
+        // Section 80C Headroom (Only for Old Regime or evaluation)
+        if (regime === "old") {
+          const ppf = (state?.ppf || []).reduce(
+            (s: number, p: any) =>
+              s + Number(p.thisYearContribution || p.yearlyContribution || 0),
+            0
+          );
+          const elss = (state?.mutualFunds || [])
+            .filter(
+              (m: any) =>
+                (m.category || m.type || "").toLowerCase().includes("elss") &&
+                (m.buyDate || "").startsWith(activeFY.slice(0, 4))
+            )
+            .reduce((s: number, m: any) => s + Number(m.invested || 0), 0);
+          const lic = (state?.lic || []).reduce(
+            (s: number, l: any) => s + Number(l.annualPremium || 0),
+            0
+          );
+          const total80CClaimed = ppf + elss + lic;
+          const headroom80C = Math.max(0, 150000 - total80CClaimed);
+
+          const daysTillMarch31 = Math.max(
+            0,
+            Math.ceil(
+              (new Date(`${fyStartYear + 1}-03-31T23:59:59`).getTime() - now.getTime()) / 86400000
+            )
+          );
+
+          if (headroom80C > 10000 && daysTillMarch31 <= 90) {
+            const potentialTaxSavings = Math.round(headroom80C * 0.312); // 30% slab + 4% cess
+            alerts.push({
+              id: "tax_80c_headroom",
+              level: "opportunity",
+              category: "tax",
+              title: `Unclaimed Section 80C Headroom (₹${Math.round(headroom80C).toLocaleString("en-IN")})`,
+              detail: (
+                <>
+                  {`You have `}
+                  <Money value={headroom80C} variant="full" />
+                  {` unutilized in Section 80C. Investing in ELSS, PPF, or NPS before March 31 can save up to `}
+                  <Money value={potentialTaxSavings} variant="full" />
+                  {` in taxes.`}
+                </>
+              ),
+              plainDetail: `₹${headroom80C} unutilized Section 80C headroom`,
+              icon: Sparkles,
+              action: "Optimize Section 80 deductions",
+              targetTab: "section80",
+              daysRemaining: daysTillMarch31,
+              impactValue: potentialTaxSavings,
+              impactLabel: `Save ~₹${potentialTaxSavings.toLocaleString("en-IN")}`,
+              tags: ["Section 80C", "Tax Savings", "March 31"],
+            });
+          }
+        }
+      }
+
+      // SFT Compliance High-Value Alerts: SFT-005 Credit Card Payments >= 10 Lakhs in FY
+      const annualCcPayments = (state?.transactions || [])
+        .filter((t: any) => {
+          const cat = (t.category || "").toLowerCase();
+          const desc = (t.description || "").toLowerCase();
+          return (
+            (cat.includes("credit card") ||
+              desc.includes("credit card") ||
+              desc.includes("cc bill")) &&
+            t.date &&
+            t.date >= fyStartStr &&
+            t.date <= fyEndStr
+          );
+        })
+        .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+
+      if (annualCcPayments >= 1000000) {
+        alerts.push({
+          id: "sft_005_cc_threshold",
+          level: "warn",
+          category: "tax",
+          title: "SFT-005 High-Value Notice: Credit Card Payments ≥ ₹10 Lakh",
+          detail: `Your aggregate credit card payments of ₹${Math.round(annualCcPayments).toLocaleString("en-IN")} reach the SFT-005 statutory reporting threshold (Rule 114E) and will be reported to the IT Department in Form 61A. Reconcile this with your AIS/TIS.`,
+          plainDetail: `Credit card payments of ₹${annualCcPayments} reported under SFT-005`,
+          icon: Scale,
+          action: "Review SFT Radar",
+          targetTab: "audit",
+          impactValue: annualCcPayments,
+          impactLabel: "SFT-005 Tracked",
+          tags: ["SFT-005", "AIS / TIS", "Form 61A"],
+        });
+      }
+    }
+
+    // 10. Data Quality & Inactivity
     if (prefs.enabledModules.data) {
       const latestTxn = (state?.transactions || []).reduce((latest: string, t: any) => {
         if (!t.date) return latest;

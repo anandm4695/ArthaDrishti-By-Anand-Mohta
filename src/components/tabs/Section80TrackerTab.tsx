@@ -947,7 +947,8 @@ export const Section80TrackerTab: React.FC<Section80TrackerTabProps> = ({
     const stdDedOld = fyStart >= 2020 ? 50000 : 40000;
     const totalOldDeductions = data.totalDeductions;
     const totalDeductionsWithStd = totalOldDeductions + stdDedOld;
-    const taxOldResult = calcTaxOldByFY(grossIncome, totalDeductionsWithStd, selectedFY);
+    const citizenAge = data.sec80TTA.is80TTB ? 65 : 30;
+    const taxOldResult = calcTaxOldByFY(grossIncome, totalDeductionsWithStd, selectedFY, citizenAge);
 
     const diff = Math.abs(taxNewResult.total - taxOldResult.total);
     const betterRegime: "new" | "old" | "equal" =
@@ -963,7 +964,7 @@ export const Section80TrackerTab: React.FC<Section80TrackerTabProps> = ({
     let breakevenDeduction = 0;
     for (let iter = 0; iter < 35; iter++) {
       const mid = (low + high) / 2;
-      const testTax = calcTaxOldByFY(grossIncome, mid + stdDedOld, selectedFY).total;
+      const testTax = calcTaxOldByFY(grossIncome, mid + stdDedOld, selectedFY, citizenAge).total;
       if (testTax <= taxNewResult.total) {
         breakevenDeduction = mid;
         high = mid;

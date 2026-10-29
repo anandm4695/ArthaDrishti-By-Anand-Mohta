@@ -186,6 +186,7 @@ const SoldTable = ({
   return (
     <>
       <DataTable
+        exportFilename={`${type}-sales-${fyLabel}.csv`}
         columns={[
           {
             key: "company",
@@ -1245,6 +1246,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, mfMarketData
             />
           ) : (
             <DataTable
+              exportFilename={`unified-journal-${fyLabel}.csv`}
               columns={[
                 {
                   key: "date",
@@ -1477,6 +1479,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, mfMarketData
             />
           ) : (
             <DataTable
+              exportFilename={`stock-purchases-${fyLabel}.csv`}
               columns={[
                 {
                   key: "company",
@@ -1849,6 +1852,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, mfMarketData
             />
           ) : (
             <DataTable
+              exportFilename={`mutual-fund-purchases-${fyLabel}.csv`}
               columns={[
                 {
                   key: "scheme",
@@ -2214,6 +2218,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, mfMarketData
             />
           ) : (
             <DataTable
+              exportFilename={`bank-cash-ledger-${fyLabel}.csv`}
               columns={[
                 {
                   key: "note",

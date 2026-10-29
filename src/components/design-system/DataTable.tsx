@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Search, ArrowUpDown, ChevronUp, ChevronDown, X } from "lucide-react";
+import { Search, ArrowUpDown, ChevronUp, ChevronDown, X, Download } from "lucide-react";
+import { exportArrayToCSV } from "../../utils/finance";
 
 export interface Column<T> {
   key: string;
@@ -47,6 +48,9 @@ interface DataTableProps<T> {
   sortKey?: string | null;
   sortDirection?: "asc" | "desc";
   onSortChange?: (key: string) => void;
+  /** If provided, renders an Export CSV button in the table header. */
+  exportFilename?: string;
+  onExportCSV?: () => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -65,6 +69,8 @@ export function DataTable<T extends Record<string, any>>({
   sortKey: controlledSortKey,
   sortDirection: controlledSortDirection,
   onSortChange,
+  exportFilename,
+  onExportCSV,
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const [internalSortKey, setInternalSortKey] = useState<string | null>(null);
@@ -214,8 +220,45 @@ export function DataTable<T extends Record<string, any>>({
           </div>
         )}
 
-        <div style={{ fontSize: "12px", color: "var(--t-muted, #71717a)", fontWeight: 600, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
-          {sortedData.length} {sortedData.length === 1 ? "entry" : "entries"}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {exportFilename && (
+            <button
+              onClick={() => {
+                if (onExportCSV) {
+                  onExportCSV();
+                } else {
+                  exportArrayToCSV(
+                    sortedData,
+                    columns.map((c) => ({ key: c.key, label: c.header })),
+                    exportFilename
+                  );
+                }
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                background: "var(--surface-1, rgba(255, 255, 255, 0.04))",
+                border: "1px solid var(--t-line, rgba(255, 255, 255, 0.08))",
+                borderRadius: "var(--radius-md, 6px)",
+                padding: "5px 10px",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "var(--t-ink, #f4f4f5)",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title="Export table records as CSV"
+              aria-label="Export table records as CSV"
+            >
+              <Download size={13} style={{ color: "var(--t-accent)" }} />
+              <span>Export CSV</span>
+            </button>
+          )}
+
+          <div style={{ fontSize: "12px", color: "var(--t-muted, #71717a)", fontWeight: 600, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+            {sortedData.length} {sortedData.length === 1 ? "entry" : "entries"}
+          </div>
         </div>
       </div>
 
@@ -330,10 +373,27 @@ export function DataTable<T extends Record<string, any>>({
                   style={{
                     borderBottom: "1px solid var(--t-line, rgba(255, 255, 255, 0.04))",
                     cursor: onRowClick ? "pointer" : "default",
-                    transition: "background 0.15s ease",
+                    transition: "background 0.15s ease, box-shadow 0.15s ease",
+                    outline: "none",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--t-accent) 4%, transparent)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  onMouseLeave={(e) => {
+                    if (document.activeElement !== e.currentTarget) {
+                      e.currentTarget.style.background = "transparent";
+                    }
+                  }}
+                  onFocus={(e) => {
+                    if (onRowClick) {
+                      e.currentTarget.style.background = "color-mix(in srgb, var(--t-accent) 8%, transparent)";
+                      e.currentTarget.style.boxShadow = "inset 3px 0 0 var(--t-accent)";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (onRowClick) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.boxShadow = "none";
+                    }
+                  }}
                 >
                   {columns.map((col) => (
                     <td

@@ -2845,6 +2845,12 @@ export function BanksTab({
                 ]}
                 data={pagedTxns}
                 hideSearch
+                exportFilename={
+                  filterAcc && filterAcc !== "all"
+                    ? `${((state.bankAccounts || []).find((b: any) => b.id === filterAcc)?.bankName || "bank").toLowerCase().replace(/\s+/g, "-")}-passbook.csv`
+                    : "bank-ledger.csv"
+                }
+                onExportCSV={exportTxnsToCSV}
                 keyExtractor={(t: any) => t.id}
                 sortKey={sortField}
                 sortDirection={sortDirection}

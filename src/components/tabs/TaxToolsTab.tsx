@@ -29,6 +29,7 @@ import {
 } from "recharts";
 import { THEME } from "../../utils/constants";
 import { getCurrentFY } from "../../utils/appConstants";
+import { isSeniorCitizen } from "../../utils/masterData";
 import {
   fmtINRFull,
   today,
@@ -155,6 +156,12 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
   const [manualIncome, setManualIncome] = useState("");
   const income = manualIncome ? Number(manualIncome) : projectedIncome;
 
+  const isSenior = isSeniorCitizen(state.profile?.dob);
+  const hasBusinessIncome = (state.income || []).some((i: any) =>
+    ["business", "freelance", "consulting", "professional"].includes((i.category || "").toLowerCase())
+  );
+  const isSeniorExemptSec207 = isSenior && !hasBusinessIncome;
+
   const taxLiability = useMemo(() => {
     if (!income) return 0;
     if (regime === "new") {
@@ -175,16 +182,16 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
     const totalOldDeductions =
       stdDedOld +
       Math.min(d80C, 150000) +
-      Math.min(d80D, 100000) +
+      Math.min(d80D, isSenior ? 100000 : 75000) +
       hra +
       Math.min(homeLoan, 200000) +
       Math.min(nps, 50000) +
       (d80CCD2 || 0) +
       (d80G || 0) +
       (d80E || 0) +
-      Math.min(d80TTA || 0, 10000);
-    return calcTaxOldByFY(income, totalOldDeductions, fy).total;
-  }, [income, regime, fy, fyStart, state]);
+      Math.min(d80TTA || 0, isSenior ? 50000 : 10000);
+    return calcTaxOldByFY(income, totalOldDeductions, fy, isSenior ? 65 : 30).total;
+  }, [income, regime, fy, fyStart, state, isSenior]);
 
   const tdsPaid = useMemo(() => {
     return (state.taxPayments || [])
@@ -207,8 +214,8 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
     return advanceTaxEntries.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
   }, [advanceTaxEntries]);
 
-  const isSec208Exempt = taxLiability - tdsPaid < 10000;
-  const netTaxDue = Math.max(0, taxLiability - tdsPaid);
+  const isSec208Exempt = isSeniorExemptSec207 || taxLiability - tdsPaid < 10000;
+  const netTaxDue = isSeniorExemptSec207 ? 0 : Math.max(0, taxLiability - tdsPaid);
   const totalPaid = advanceTaxPaid;
   const remaining = Math.max(0, netTaxDue - totalPaid);
 
@@ -223,6 +230,29 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
 
   // Section 234C & 234B calculations
   const { schedule, total234CInterest, is234BApplicable, est234BInterest } = useMemo(() => {
+    if (isSeniorExemptSec207) {
+      return {
+        schedule: ADVANCE_TAX_DEADLINES.map((q, idx) => ({
+          ...q,
+          idx,
+          installment: 0,
+          qRequiredCum: 0,
+          deadlineFull: `${q.date.startsWith("03") ? fyStart + 1 : fyStart}-${q.date}`,
+          daysLeft: 0,
+          isPast: true,
+          paidByQuarter: 0,
+          isSafeHarborMet: true,
+          safeThresholdPct: q.cumPct,
+          shortfall: 0,
+          interest234C: 0,
+          isCurrent: false,
+        })),
+        total234CInterest: 0,
+        is234BApplicable: false,
+        est234BInterest: 0,
+      };
+    }
+
     let sum234C = 0;
     const rows = ADVANCE_TAX_DEADLINES.map((q, idx) => {
       const qRequiredCum = (netTaxDue * q.cumPct) / 100;
@@ -279,7 +309,7 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
       is234BApplicable: is234B,
       est234BInterest: est234B,
     };
-  }, [netTaxDue, fyStart, nowDate, totalPaid]);
+  }, [netTaxDue, fyStart, nowDate, totalPaid, advanceTaxEntries, isSeniorExemptSec207]);
 
   // Record Payment Modal State
   const [recordModalOpen, setRecordModalOpen] = useState(false);

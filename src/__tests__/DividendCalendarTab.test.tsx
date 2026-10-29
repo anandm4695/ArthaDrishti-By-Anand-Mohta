@@ -7,6 +7,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DividendCalendarTab } from "../components/tabs/DividendCalendarTab";
 import { PrivacyProvider } from "../context/PrivacyContext";
 
+const activeRoots: Array<{ root: any; container: HTMLElement }> = [];
+
 // Mounts the component into a real DOM (via act) so useEffect-driven fetches fire,
 // unlike renderToString which only produces static markup.
 async function mount(ui: React.ReactElement) {
@@ -17,6 +19,7 @@ async function mount(ui: React.ReactElement) {
   await act(async () => {
     root.render(ui);
   });
+  activeRoots.push({ root, container });
   return container;
 }
 
@@ -69,7 +72,16 @@ describe("DividendCalendarTab data-fetch correctness", () => {
     (globalThis as any).fetch = fetchMock;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    while (activeRoots.length > 0) {
+      const item = activeRoots.pop();
+      if (item) {
+        await act(async () => {
+          item.root.unmount();
+        });
+        item.container.remove();
+      }
+    }
     vi.restoreAllMocks();
   });
 

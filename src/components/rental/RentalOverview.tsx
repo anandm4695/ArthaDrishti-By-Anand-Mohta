@@ -36,6 +36,7 @@ interface RentalOverviewProps {
   outPropertyValuation: number;
   outTaxableIHP: number;
   municipalTaxPaid: number;
+  homeLoanInterestPaid?: number;
   fyLabel: string;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
@@ -72,6 +73,7 @@ export const RentalOverview: React.FC<RentalOverviewProps> = ({
   outPropertyValuation,
   outTaxableIHP,
   municipalTaxPaid,
+  homeLoanInterestPaid = 0,
   searchQuery,
   setSearchQuery,
   statusFilter,
@@ -314,17 +316,19 @@ export const RentalOverview: React.FC<RentalOverviewProps> = ({
                 color={THEME.gold}
               />
               <StatCard
-                label="Taxable IHP"
-                value={fmtINRFull(outTaxableIHP)}
+                label={outTaxableIHP < 0 ? "House Property Loss" : "Taxable IHP"}
+                value={fmtINRFull(Math.abs(outTaxableIHP))}
                 numericValue={outTaxableIHP}
                 formatValue={fmtINRFull}
                 sub={
-                  municipalTaxPaid > 0
-                    ? "After muni tax & 30% std ded"
-                    : "Post 30% standard deduction"
+                  outTaxableIHP < 0
+                    ? "Sec 71(3A) capped at -₹2L against other heads"
+                    : municipalTaxPaid > 0 || homeLoanInterestPaid > 0
+                      ? "Net of Sec 24(a) 30% std ded & 24(b) interest"
+                      : "Post 30% statutory deduction (Sec 24a)"
                 }
                 icon={<Percent />}
-                color={THEME.accent}
+                color={outTaxableIHP < 0 ? THEME.rust : THEME.accent}
               />
             </>
           ) : (

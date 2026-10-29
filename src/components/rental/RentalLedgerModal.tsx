@@ -21,6 +21,7 @@ import {
   Check,
   Building2,
   ArrowDownRight,
+  Info,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -29,7 +30,7 @@ import { Money } from "../ui/Money";
 interface RentalLedgerModalProps {
   property: any;
   type: "out" | "in";
-  initialTab?: "rent" | "deposit" | "csv" | "hra";
+  initialTab?: "rent" | "deposit" | "csv" | "hra" | "hp_tax";
   bankAccounts?: any[];
   fyStart: string;
   fyEnd: string;
@@ -106,7 +107,8 @@ export const RentalLedgerModal: React.FC<RentalLedgerModalProps> = ({
 }) => {
   const isOut = type === "out";
   const primaryColor = isOut ? THEME.accent : THEME.rust;
-  const [tab, setTab] = useState<"rent" | "deposit" | "csv" | "hra">(initialTab);
+  const [tab, setTab] = useState<"rent" | "deposit" | "csv" | "hra" | "hp_tax">(initialTab);
+  const [copiedHp, setCopiedHp] = useState(false);
 
   // CSV Import State
   const [csvText, setCsvText] = useState("");
@@ -211,6 +213,28 @@ export const RentalLedgerModal: React.FC<RentalLedgerModalProps> = ({
     setTimeout(() => setCopiedHra(false), 2500);
   };
 
+  // Schedule HP (House Property) Tax Calculations for Let-Out Property
+  const fyReceipts = isOut
+    ? rentItems.filter((r: any) => r.date >= fyStart && r.date <= fyEnd)
+    : [];
+  const grossRentFY = isOut
+    ? fyReceipts.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0)
+    : 0;
+  const muniTax = isOut ? Number(p.municipalTax || 0) : 0;
+  const nav = Math.max(0, grossRentFY - muniTax);
+  const sec24aStdDed = nav * 0.3;
+  const sec24bInterest = isOut ? Number(p.homeLoanInterest || 0) : 0;
+  const rawIHP = nav - sec24aStdDed - sec24bInterest;
+  const eligibleSetOff = rawIHP >= 0 ? rawIHP : Math.max(-200000, rawIHP);
+  const unabsorbedLossSec71B = rawIHP < -200000 ? Math.abs(rawIHP) - 200000 : 0;
+
+  const handleCopyHpSummary = () => {
+    const summary = `=== ITR SCHEDULE HP (HOUSE PROPERTY) COMPUTATION ===\nProperty: ${p.propertyName} (${p.propertyType || "Commercial/Residential"})\nFY Period: ${fyStart} to ${fyEnd}\n\n1. Gross Annual Value (Rent Received): ₹${grossRentFY.toLocaleString("en-IN")}\n2. Less: Municipal Taxes Paid (Sec 23): ₹${muniTax.toLocaleString("en-IN")}\n--------------------------------------------------\n3. Net Annual Value (NAV): ₹${nav.toLocaleString("en-IN")}\n4. Less: Standard Deduction (Sec 24(a) @ 30%): ₹${sec24aStdDed.toLocaleString("en-IN")}\n5. Less: Interest on Borrowed Capital (Sec 24(b)): ₹${sec24bInterest.toLocaleString("en-IN")}\n--------------------------------------------------\n6. Net Income / (Loss) from House Property: ₹${rawIHP.toLocaleString("en-IN")}\n7. Eligible Current FY Set-off (Sec 71(3A) cap ₹2,00,000): ₹${eligibleSetOff.toLocaleString("en-IN")}${unabsorbedLossSec71B > 0 ? `\n8. Unabsorbed Loss Carried Forward (Sec 71B, up to 8 AYs): ₹${unabsorbedLossSec71B.toLocaleString("en-IN")}` : ""}`;
+    navigator.clipboard.writeText(summary);
+    setCopiedHp(true);
+    setTimeout(() => setCopiedHp(false), 2500);
+  };
+
   return (
     <Modal
       title={`${p.propertyName} — Ledger & Audit Details`}
@@ -232,6 +256,7 @@ export const RentalLedgerModal: React.FC<RentalLedgerModalProps> = ({
           { id: "deposit", label: "Security Deposit", icon: Shield, count: (p.depositTransactions || []).length + (p.depositDeductions || []).length },
           { id: "csv", label: "Bulk CSV Import", icon: Upload },
           ...(!isOut ? [{ id: "hra", label: "HRA Tax Proof", icon: FileText }] : []),
+          ...(isOut ? [{ id: "hp_tax", label: "Schedule HP (Tax Filing)", icon: FileText }] : []),
         ].map((t) => {
           const Icon = t.icon;
           const active = tab === t.id;
@@ -960,6 +985,191 @@ export const RentalLedgerModal: React.FC<RentalLedgerModalProps> = ({
                         <Money value={r.amount} variant="exact" />
                       </td>
                       <td style={{ padding: "8px 12px", color: THEME.muted }}>{r.note || "Verified Receipt"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 5: SCHEDULE HP TAX COMPUTATION (FOR LET-OUT PROPERTY) ── */}
+      {tab === "hp_tax" && isOut && (
+        <div>
+          <div
+            style={{
+              padding: "16px 20px",
+              borderRadius: 12,
+              background: `color-mix(in srgb, ${THEME.accent} 6%, var(--surface-1))`,
+              border: `1px solid color-mix(in srgb, ${THEME.accent} 20%, transparent)`,
+              marginBottom: 16,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: THEME.ink }}>
+                ITR Schedule HP — Income from House Property (Sec 22-24)
+              </div>
+              <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                Statutory Net Annual Value (NAV) & standard deduction computation for FY {fyStart.slice(0, 4)}-{fyEnd.slice(2, 4)}
+              </div>
+            </div>
+            <button
+              onClick={handleCopyHpSummary}
+              style={{
+                fontSize: 12,
+                padding: "6px 14px",
+                borderRadius: 8,
+                border: "none",
+                background: THEME.accent,
+                color: "#fff",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              {copiedHp ? <Check size={14} /> : <Copy size={14} />}
+              {copiedHp ? "Copied!" : "Copy Summary"}
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              gap: 10,
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ padding: "12px", background: "var(--surface-1)", borderRadius: 10, border: `1px solid ${THEME.line}` }}>
+              <div style={{ fontSize: 10, color: THEME.muted, fontWeight: 700 }}>Gross Rent Received (GAV)</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: THEME.ink, marginTop: 4 }}>
+                <Money value={grossRentFY} variant="full" />
+              </div>
+              <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>{fyReceipts.length} receipt(s) in FY</div>
+            </div>
+
+            <div style={{ padding: "12px", background: "var(--surface-1)", borderRadius: 10, border: `1px solid ${THEME.line}` }}>
+              <div style={{ fontSize: 10, color: THEME.muted, fontWeight: 700 }}>Municipal Taxes Paid</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: THEME.rust, marginTop: 4 }}>
+                - <Money value={muniTax} variant="full" />
+              </div>
+              <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>Paid to Local Authority (Sec 23)</div>
+            </div>
+
+            <div style={{ padding: "12px", background: "var(--surface-1)", borderRadius: 10, border: `1px solid ${THEME.line}` }}>
+              <div style={{ fontSize: 10, color: THEME.muted, fontWeight: 700 }}>Net Annual Value (NAV)</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: THEME.ink, marginTop: 4 }}>
+                <Money value={nav} variant="full" />
+              </div>
+              <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>Gross rent less municipal taxes</div>
+            </div>
+
+            <div style={{ padding: "12px", background: "var(--surface-1)", borderRadius: 10, border: `1px solid ${THEME.line}` }}>
+              <div style={{ fontSize: 10, color: THEME.muted, fontWeight: 700 }}>Sec 24(a) Standard Ded. (30%)</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: THEME.sage, marginTop: 4 }}>
+                - <Money value={sec24aStdDed} variant="full" />
+              </div>
+              <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>Statutory flat 30% on NAV</div>
+            </div>
+
+            <div style={{ padding: "12px", background: "var(--surface-1)", borderRadius: 10, border: `1px solid ${THEME.line}` }}>
+              <div style={{ fontSize: 10, color: THEME.muted, fontWeight: 700 }}>Sec 24(b) Loan Interest</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: THEME.rust, marginTop: 4 }}>
+                - <Money value={sec24bInterest} variant="full" />
+              </div>
+              <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>Interest on borrowed capital</div>
+            </div>
+
+            <div
+              style={{
+                padding: "12px",
+                background: `color-mix(in srgb, ${rawIHP < 0 ? THEME.rust : THEME.sage} 8%, var(--surface-1))`,
+                borderRadius: 10,
+                border: `1px solid color-mix(in srgb, ${rawIHP < 0 ? THEME.rust : THEME.sage} 25%, transparent)`,
+              }}
+            >
+              <div style={{ fontSize: 10, color: rawIHP < 0 ? THEME.rust : THEME.sage, fontWeight: 800 }}>
+                {rawIHP < 0 ? "House Property Loss" : "Net Taxable IHP"}
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 900, color: rawIHP < 0 ? THEME.rust : THEME.sage, marginTop: 4 }}>
+                <Money value={rawIHP} variant="full" />
+              </div>
+              <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>
+                Eligible set-off: <Money value={eligibleSetOff} variant="compact" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 71(3A) and 71B Statutory Compliance Radar */}
+          {rawIHP < 0 && (
+            <div
+              style={{
+                padding: "12px 16px",
+                borderRadius: 10,
+                background: `color-mix(in srgb, ${THEME.gold} 10%, var(--surface-1))`,
+                border: `1px solid color-mix(in srgb, ${THEME.gold} 25%, transparent)`,
+                marginBottom: 16,
+                fontSize: 11.5,
+                lineHeight: 1.5,
+                color: THEME.ink,
+              }}
+            >
+              <div style={{ fontWeight: 800, color: THEME.gold, display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <Info size={14} /> Section 71(3A) & Section 71B Loss Provisions
+              </div>
+              <div>
+                • Under <b>Section 71(3A)</b> of the Income Tax Act 1961, the maximum loss under &apos;Income from House Property&apos; that can be set off against other heads (Salary, Business, Capital Gains) in the current Assessment Year is capped at <b>₹2,00,000</b>.
+              </div>
+              {unabsorbedLossSec71B > 0 && (
+                <div style={{ marginTop: 4, color: THEME.rust, fontWeight: 700 }}>
+                  • Unabsorbed house property loss of <b><Money value={unabsorbedLossSec71B} variant="full" /></b> must be carried forward under <b>Section 71B</b> for up to 8 subsequent Assessment Years to be set off exclusively against future house property income.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Itemized Rent Receipts in FY */}
+          <div style={{ border: `1px solid ${THEME.line}`, borderRadius: 10, overflow: "hidden" }}>
+            <div style={{ padding: "10px 14px", background: "var(--surface-1)", fontSize: 12, fontWeight: 800, color: THEME.ink, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Verified FY Receipts ({fyReceipts.length})</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span>
+                  Total Collected:{" "}
+                  <b style={{ color: THEME.sage }}>
+                    <Money value={grossRentFY} variant="full" />
+                  </b>
+                </span>
+                {fyReceipts.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onExportCsv(p, "receipts")}
+                    style={{ fontSize: 11, padding: "3px 8px" }}
+                  >
+                    <Download size={12} style={{ marginRight: 4 }} /> Export CSV
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div style={{ maxHeight: 220, overflowY: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                <tbody>
+                  {fyReceipts.map((r: any) => (
+                    <tr key={r.id} style={{ borderBottom: `1px solid ${THEME.line}` }}>
+                      <td style={{ padding: "8px 12px", fontWeight: 700 }}>{r.month}</td>
+                      <td style={{ padding: "8px 12px", color: THEME.muted }}>Credited on {fmtDate(r.date)}</td>
+                      <td style={{ padding: "8px 12px", fontWeight: 800, color: THEME.sage }}>
+                        <Money value={r.amount} variant="exact" />
+                      </td>
+                      <td style={{ padding: "8px 12px", color: THEME.muted }}>
+                        {r.paymentMethod ? `${r.paymentMethod} • ` : ""}{r.tenantName || p.tenantName || "Tenant"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

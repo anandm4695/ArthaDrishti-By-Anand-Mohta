@@ -62,7 +62,7 @@ export const RentalTab: React.FC<RentalTabProps> = ({
     open?: boolean;
     property: any;
     type?: "out" | "in";
-    initialTab?: "rent" | "deposit" | "csv" | "hra";
+    initialTab?: "rent" | "deposit" | "csv" | "hra" | "hp_tax";
   } | null>(null);
 
   // Quick Log Transaction Modals State
@@ -175,11 +175,20 @@ export const RentalTab: React.FC<RentalTabProps> = ({
     (s: number, p: any) => s + Number(p.municipalTax || 0),
     0
   );
+  const homeLoanInterestPaid = propertiesOut.reduce(
+    (s: number, p: any) => s + Number(p.homeLoanInterest || 0),
+    0
+  );
   const outPropertyValuation = propertiesOut.reduce(
     (s: number, p: any) => s + Number(p.propertyValue || 0),
     0
   );
-  const outTaxableIHP = Math.max(0, outThisFY - municipalTaxPaid) * 0.7;
+  // Statutory Income from House Property (IHP): NAV - 30% standard deduction (Sec 24a) - Home loan interest (Sec 24b)
+  const nav = Math.max(0, outThisFY - municipalTaxPaid);
+  const sec24aStdDed = nav * 0.3;
+  const rawIHP = nav - sec24aStdDed - homeLoanInterestPaid;
+  // Under Section 71(3A), loss under House Property can be set off against other heads up to ₹2,00,000 per AY
+  const outTaxableIHP = rawIHP >= 0 ? rawIHP : Math.max(-200000, rawIHP);
 
   // Animated Numbers for the Hero Header
   const animOutMonthlyRent = useAnimatedNumber(outMonthlyRent);
@@ -909,6 +918,7 @@ export const RentalTab: React.FC<RentalTabProps> = ({
         outPropertyValuation={outPropertyValuation}
         outTaxableIHP={outTaxableIHP}
         municipalTaxPaid={municipalTaxPaid}
+        homeLoanInterestPaid={homeLoanInterestPaid}
         fyLabel={fyLabel}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}

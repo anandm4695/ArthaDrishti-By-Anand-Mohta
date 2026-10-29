@@ -25,6 +25,7 @@ import {
   saveStateLocal,
   addMonthsToDateStr,
   loanOutstanding,
+  calculateEpfBalance,
 } from "./utils/finance";
 import {
   getCurrentFY,

@@ -163,7 +163,8 @@ const isInFY = (dateStr: string, fyStartYear: number): boolean => {
 };
 
 /* ── Tax Rate constants & helpers ────────────────────────────────── */
-const EQUITY_RATE_CHANGE_DATE = "2024-07-23";
+export const BUDGET_2024_CUTOFF_DATE = "2024-07-23";
+const EQUITY_RATE_CHANGE_DATE = BUDGET_2024_CUTOFF_DATE;
 const DEBT_INDEXATION_CUTOFF_DATE = "2023-04-01";
 
 const isOnOrAfterEquityRateChange = (dateStr: string): boolean =>
@@ -339,7 +340,7 @@ const classifySells = (
   return result;
 };
 
-const computeGainTotals = (classified: ClassifiedSell[], fyStartYear: number) => {
+export const computeGainTotals = (classified: ClassifiedSell[], fyStartYear: number) => {
   const groups: Record<GainType, ClassifiedSell[]> = {
     EQUITY_STCG: [],
     EQUITY_LTCG: [],
@@ -360,39 +361,78 @@ const computeGainTotals = (classified: ClassifiedSell[], fyStartYear: number) =>
   const stcgRate = getEquitySTCGRate(refDate);
   const ltcgRate = getEquityLTCGRate(refDate);
 
-  // Section 70 Loss Set-Off Rules:
-  // 1. STCL (Short Term Loss) can set off STCG and LTCG.
-  // 2. LTCL (Long Term Loss) can only set off LTCG.
+  // Section 70 Comprehensive Intra-Head Loss Set-Off Rules:
+  // 1. Long-Term Capital Loss (LTCL) can ONLY set off Long-Term Capital Gain (LTCG).
+  // 2. Short-Term Capital Loss (STCL) can set off BOTH STCG and LTCG.
   const rawEqSTCG = totals.EQUITY_STCG;
   const rawEqLTCG = totals.EQUITY_LTCG;
   const rawDebtSTCG = totals.DEBT_STCG;
   const rawDebtLTCG = totals.DEBT_LTCG;
 
-  const stclAvailable = rawEqSTCG < 0 ? Math.abs(rawEqSTCG) : 0;
-  const ltclAvailable = rawEqLTCG < 0 ? Math.abs(rawEqLTCG) : 0;
+  const eqSTCL = rawEqSTCG < 0 ? Math.abs(rawEqSTCG) : 0;
+  const debtSTCL = rawDebtSTCG < 0 ? Math.abs(rawDebtSTCG) : 0;
+  const stclAvailable = eqSTCL + debtSTCL;
 
-  const netSTCG = Math.max(0, rawEqSTCG);
+  const eqLTCL = rawEqLTCG < 0 ? Math.abs(rawEqLTCG) : 0;
+  const debtLTCL = rawDebtLTCG < 0 ? Math.abs(rawDebtLTCG) : 0;
+  const ltclAvailable = eqLTCL + debtLTCL;
+
+  let posDebtSTCG = Math.max(0, rawDebtSTCG);
+  let posEqSTCG = Math.max(0, rawEqSTCG);
+  let posDebtLTCG = Math.max(0, rawDebtLTCG);
+  let posEqLTCG = Math.max(0, rawEqLTCG);
+
   let stclRemaining = stclAvailable;
+  let ltclRemaining = ltclAvailable;
 
-  let netEqLTCG = Math.max(0, rawEqLTCG);
-
-  // Apply remaining STCL against Equity LTCG (u/s 70)
-  let stclOffsetAgainstLTCG = 0;
-  if (stclRemaining > 0 && netEqLTCG > 0) {
-    stclOffsetAgainstLTCG = Math.min(stclRemaining, netEqLTCG);
-    netEqLTCG -= stclOffsetAgainstLTCG;
-    stclRemaining -= stclOffsetAgainstLTCG;
+  // Step 1: Set off LTCL against LTCG pools (Debt LTCG, then Equity LTCG)
+  if (ltclRemaining > 0 && posDebtLTCG > 0) {
+    const offset = Math.min(ltclRemaining, posDebtLTCG);
+    posDebtLTCG -= offset;
+    ltclRemaining -= offset;
+  }
+  if (ltclRemaining > 0 && posEqLTCG > 0) {
+    const offset = Math.min(ltclRemaining, posEqLTCG);
+    posEqLTCG -= offset;
+    ltclRemaining -= offset;
   }
 
-  // Section 112A exemption (1.25L / 1L) to net Equity LTCG
-  const exemptionUsed = Math.min(netEqLTCG, ltcgExemptionLimit);
-  const taxableEquityLTCG = Math.max(0, netEqLTCG - exemptionUsed);
-  const taxableEquitySTCG = netSTCG;
-  const taxableDebtSTCG = Math.max(0, rawDebtSTCG);
-  const taxableDebtLTCG = Math.max(0, rawDebtLTCG);
+  // Step 2: Set off STCL against STCG pools (Debt STCG at 30% first, then Equity STCG at 20%)
+  if (stclRemaining > 0 && posDebtSTCG > 0) {
+    const offset = Math.min(stclRemaining, posDebtSTCG);
+    posDebtSTCG -= offset;
+    stclRemaining -= offset;
+  }
+  if (stclRemaining > 0 && posEqSTCG > 0) {
+    const offset = Math.min(stclRemaining, posEqSTCG);
+    posEqSTCG -= offset;
+    stclRemaining -= offset;
+  }
+
+  // Step 3: Any remaining STCL sets off remaining LTCG (Debt LTCG first, then Equity LTCG)
+  let stclOffsetAgainstLTCG = 0;
+  if (stclRemaining > 0 && posDebtLTCG > 0) {
+    const offset = Math.min(stclRemaining, posDebtLTCG);
+    posDebtLTCG -= offset;
+    stclRemaining -= offset;
+    stclOffsetAgainstLTCG += offset;
+  }
+  if (stclRemaining > 0 && posEqLTCG > 0) {
+    const offset = Math.min(stclRemaining, posEqLTCG);
+    posEqLTCG -= offset;
+    stclRemaining -= offset;
+    stclOffsetAgainstLTCG += offset;
+  }
+
+  // Step 4: Section 112A exemption (₹1.25L / ₹1L) on net Equity LTCG
+  const exemptionUsed = Math.min(posEqLTCG, ltcgExemptionLimit);
+  const taxableEquityLTCG = Math.max(0, posEqLTCG - exemptionUsed);
+  const taxableEquitySTCG = posEqSTCG;
+  const taxableDebtSTCG = posDebtSTCG;
+  const taxableDebtLTCG = posDebtLTCG;
 
   const carryForwardSTCL = stclRemaining;
-  const carryForwardLTCL = ltclAvailable;
+  const carryForwardLTCL = ltclRemaining;
 
   // Distribute tax back to individual transaction rows
   const distributeTax = (rows: ClassifiedSell[], taxablePool: number) => {
