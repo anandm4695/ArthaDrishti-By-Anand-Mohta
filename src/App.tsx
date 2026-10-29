@@ -1058,10 +1058,15 @@ function FinanceDashboard() {
           // Only overwrite each array if the query succeeded (no error + data is not null)
           ...(!banks.error && banks.data != null
             ? {
-                bankAccounts: snakeToCamel(banks.data).map((b: any) => ({
-                  ...b,
-                  type: b.accountType || b.type || "Savings",
-                })),
+                bankAccounts: snakeToCamel(banks.data).map((b: any) => {
+                  const rawBal = Number(b.balance || 0);
+                  const roundedBal = Math.round(rawBal * 100) / 100;
+                  return {
+                    ...b,
+                    balance: Math.abs(roundedBal) < 0.5 ? 0 : roundedBal,
+                    type: b.accountType || b.type || "Savings",
+                  };
+                }),
               }
             : {}),
           ...(!txns.error && txns.data != null

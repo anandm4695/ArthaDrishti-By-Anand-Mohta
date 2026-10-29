@@ -31,6 +31,7 @@ export const fmtINR = (n: number | string | null | undefined) => {
   if (n === null || n === undefined || isNaN(Number(n))) return "₹0";
   const num = Number(n);
   const abs = Math.abs(num);
+  if (Math.round(abs) === 0) return "₹0";
   const sign = num < 0 ? "-" : "";
   // parseFloat strips trailing zeros: 50.0 → "50", 1.50 → "1.5", 2.00 → "2"
   const fmt = (val: number, dec: number) => parseFloat(val.toFixed(dec)).toString();
@@ -42,17 +43,19 @@ export const fmtINR = (n: number | string | null | undefined) => {
 
 export const fmtINRFull = (n: number | string | null | undefined) => {
   if (n === null || n === undefined || isNaN(Number(n))) return "₹0";
-  const num = Number(n);
-  const sign = num < 0 ? "-" : "";
-  return `${sign}₹${Math.abs(num).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+  const rounded = Math.round(Number(n));
+  if (rounded === 0) return "₹0";
+  const sign = rounded < 0 ? "-" : "";
+  return `${sign}₹${Math.abs(rounded).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 };
 
 export const fmtINRExact = (n: number | string | null | undefined) => {
   if (n === null || n === undefined || isNaN(Number(n))) return "₹0";
-  const num = Number(n);
-  const abs = Math.abs(num);
-  const sign = num < 0 ? "-" : "";
-  const hasPaisa = abs % 1 !== 0;
+  const rounded = Math.round(Number(n) * 100) / 100;
+  if (rounded === 0) return "₹0";
+  const abs = Math.abs(rounded);
+  const sign = rounded < 0 ? "-" : "";
+  const hasPaisa = Math.round(abs * 100) % 100 !== 0;
   return `${sign}₹${abs.toLocaleString("en-IN", { minimumFractionDigits: hasPaisa ? 2 : 0, maximumFractionDigits: 2 })}`;
 };
 

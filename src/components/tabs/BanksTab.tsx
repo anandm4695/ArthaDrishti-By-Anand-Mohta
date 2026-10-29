@@ -817,6 +817,10 @@ export function BanksTab({
       if (!t.accountId) return;
       (byAccount[t.accountId] ||= []).push(t);
     });
+    const round2 = (v: number) => {
+      const r = Math.round(v * 100) / 100;
+      return Math.abs(r) < 0.005 || (r < 0 && r > -0.5) ? 0 : r;
+    };
     Object.entries(byAccount).forEach(([accountId, txns]) => {
       const acc = (balanceSource.bankAccounts || []).find((a: any) => a.id === accountId);
       if (!acc) return;
@@ -825,7 +829,7 @@ export function BanksTab({
         if (t.statementBalance === undefined || t.statementBalance === null || t.statementBalance === "")
           return null;
         const n = Number(t.statementBalance);
-        return isNaN(n) ? null : n;
+        return isNaN(n) ? null : round2(n);
       };
       const createdAtOf = (t: any): number | null => {
         if (!t.createdAt) return null;
@@ -855,7 +859,7 @@ export function BanksTab({
         if (firstTruthIdx > 0) {
           let runningBefore = statementBalanceOf(ordered[firstTruthIdx])!;
           for (let i = firstTruthIdx - 1; i >= 0; i--) {
-            runningBefore -= signed(ordered[i + 1]);
+            runningBefore = round2(runningBefore - signed(ordered[i + 1]));
             map[ordered[i].id] = { value: runningBefore, confirmed: true };
           }
         }
@@ -866,14 +870,14 @@ export function BanksTab({
             running = stmt;
             map[t.id] = { value: running, confirmed: true };
           } else if (running !== null) {
-            running += signed(t);
+            running = round2(running + signed(t));
             map[t.id] = { value: running, confirmed: true };
           }
         });
       } else {
         let running = 0;
         ordered.forEach((t) => {
-          running += signed(t);
+          running = round2(running + signed(t));
           map[t.id] = { value: running, confirmed: true };
         });
       }
@@ -913,14 +917,17 @@ export function BanksTab({
         .map((x) => x.t);
 
       const newest = sorted[sorted.length - 1];
+      let rawBal: number;
       if (newest && balanceAfterTxn[newest.id]) {
-        map[accountId] = balanceAfterTxn[newest.id].value;
+        rawBal = balanceAfterTxn[newest.id].value;
       } else {
-        map[accountId] = txns.reduce(
+        rawBal = txns.reduce(
           (sum, t) => sum + (t.type === "credit" ? Number(t.amount || 0) : -Number(t.amount || 0)),
           0
         );
       }
+      const rounded = Math.round(rawBal * 100) / 100;
+      map[accountId] = Math.abs(rounded) < 0.5 ? 0 : rounded;
     });
     return map;
   }, [balanceSource.transactions, balanceAfterTxn, txnIndexMap]);
@@ -928,10 +935,12 @@ export function BanksTab({
   const getDisplayBalance = useCallback(
     (acc: any): number => {
       if (!acc) return 0;
-      if (accountLatestBalance[acc.id] !== undefined) {
-        return accountLatestBalance[acc.id];
-      }
-      return Number(acc.balance || 0);
+      const raw =
+        accountLatestBalance[acc.id] !== undefined
+          ? accountLatestBalance[acc.id]
+          : Number(acc.balance || 0);
+      const rounded = Math.round(raw * 100) / 100;
+      return Math.abs(rounded) < 0.5 ? 0 : rounded;
     },
     [accountLatestBalance]
   );
@@ -941,7 +950,11 @@ export function BanksTab({
     if (!updateItem || !state.bankAccounts) return;
     state.bankAccounts.forEach((acc: any) => {
       const latest = accountLatestBalance[acc.id];
-      if (latest !== undefined && Math.abs(Number(acc.balance || 0) - latest) > 0.001) {
+      const currentBal = Number(acc.balance || 0);
+      if (
+        latest !== undefined &&
+        (Math.abs(currentBal - latest) > 0.001 || (latest === 0 && currentBal !== 0))
+      ) {
         updateItem("bankAccounts", acc.id, { balance: latest });
       }
     });
@@ -974,7 +987,8 @@ export function BanksTab({
   const monthlyExpense = monthlyTxns
     .filter((t: any) => t.type === "debit" && !isTransferCat(t.category))
     .reduce((acc: number, t: any) => acc + (Number(t.amount) || 0), 0);
-  const netMonthlySavings = monthlyIncome - monthlyExpense;
+  const rawNetMonthlySavings = monthlyIncome - monthlyExpense;
+  const netMonthlySavings = Math.abs(rawNetMonthlySavings) < 0.5 ? 0 : rawNetMonthlySavings;
   const monthlySavingsRate =
     monthlyIncome > 0
       ? Math.max(0, Math.min(100, (netMonthlySavings / monthlyIncome) * 100))

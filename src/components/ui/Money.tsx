@@ -27,9 +27,11 @@ export const Money: React.FC<MoneyProps> = ({
 }) => {
   const { privacyMode } = usePrivacy();
   const num = Number(value);
+  const effectiveNum =
+    variant === "exact" ? Math.round(num * 100) / 100 : Math.round(num);
   const color =
-    colorByValue && Number.isFinite(num) && num !== 0
-      ? num < 0
+    colorByValue && Number.isFinite(effectiveNum) && effectiveNum !== 0
+      ? effectiveNum < 0
         ? "var(--state-danger)"
         : "var(--state-success)"
       : undefined;

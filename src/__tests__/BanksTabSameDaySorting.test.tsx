@@ -252,4 +252,71 @@ describe("BanksTab Same-Day Credit & Debit Sorting and Passbook Balances", () =>
     expect(rows[3].textContent).toContain("Shrinath");
     expect(rows[3].textContent).toContain("₹96,628");
   });
+
+  it("displays ₹0 (not -₹0) when floating-point arithmetic or sub-rupee paise drift occurs", async () => {
+    // 100.1 + 200.2 - 300.3 === -5.684341886080802e-14 in IEEE-754 floating point
+    const floatDriftState = {
+      bankAccounts: [
+        {
+          id: "kotak-2513",
+          bankName: "Kotak Mahindra Bank",
+          accountNumber: "2513",
+          type: "salary",
+          balance: -0.25,
+          owner: "Anand Mohta",
+        },
+      ],
+      transactions: [
+        {
+          id: "tx-f1",
+          accountId: "kotak-2513",
+          date: "2025-01-01",
+          type: "credit",
+          amount: 100.1,
+          note: "Credit 1",
+        },
+        {
+          id: "tx-f2",
+          accountId: "kotak-2513",
+          date: "2025-01-02",
+          type: "credit",
+          amount: 200.2,
+          note: "Credit 2",
+        },
+        {
+          id: "tx-f3",
+          accountId: "kotak-2513",
+          date: "2025-01-03",
+          type: "debit",
+          amount: 300.3,
+          note: "Debit all",
+        },
+      ],
+      profile: { name: "Anand Mohta", baseCurrency: "INR" },
+    };
+
+    const updateItem = vi.fn();
+    const container = await mount(
+      <PrivacyProvider>
+        <BanksTab
+          state={floatDriftState}
+          fullState={floatDriftState}
+          addItem={vi.fn()}
+          updateItem={updateItem}
+          deleteItem={vi.fn()}
+          showToast={vi.fn()}
+        />
+      </PrivacyProvider>
+    );
+
+    // Extract Live Balance text specifically (excluding the hardcoded "-₹0" on "THIS MONTH OUT")
+    const liveBalanceSection = Array.from(container.querySelectorAll("span"))
+      .find((s) => s.textContent === "Live Balance")
+      ?.parentElement?.parentElement;
+    expect(liveBalanceSection?.textContent).toContain("₹0");
+    expect(liveBalanceSection?.textContent).not.toContain("-₹0");
+
+    // Also heals the stored negative sub-rupee balance in DB to 0
+    expect(updateItem).toHaveBeenCalledWith("bankAccounts", "kotak-2513", { balance: 0 });
+  });
 });

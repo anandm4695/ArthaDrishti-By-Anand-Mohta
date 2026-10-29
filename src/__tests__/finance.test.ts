@@ -1,6 +1,7 @@
 import {
   fmtINR,
   fmtINRFull,
+  fmtINRExact,
   monthsBetween,
   calcCAGR,
   fdMaturity,
@@ -67,6 +68,12 @@ describe("fmtINR", () => {
     expect(fmtINR("1000")).toBe("₹1K");
     expect(fmtINR("100000")).toBe("₹1L");
   });
+
+  it("never produces -₹0 for -0, floating-point drift, or sub-50-paise negative values", () => {
+    expect(fmtINR(-0)).toBe("₹0");
+    expect(fmtINR(-1e-13)).toBe("₹0");
+    expect(fmtINR(-0.35)).toBe("₹0");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -81,6 +88,17 @@ describe("fmtINRFull", () => {
   it("formats with en-IN locale commas", () => {
     expect(fmtINRFull(1000000)).toBe("₹10,00,000");
     expect(fmtINRFull(100000)).toBe("₹1,00,000");
+  });
+
+  it("never produces -₹0 or -₹0.00 for -0, floating-point drift, or sub-50-paise negative values", () => {
+    expect(fmtINRFull(-0)).toBe("₹0");
+    expect(fmtINRFull(-1.1368683772161603e-13)).toBe("₹0");
+    expect(fmtINRFull(-0.25)).toBe("₹0");
+    expect(fmtINRFull(-0.49)).toBe("₹0");
+    expect(fmtINRExact(-0)).toBe("₹0");
+    expect(fmtINRExact(-1.1368683772161603e-13)).toBe("₹0");
+    expect(fmtINRExact(-0.004)).toBe("₹0");
+    expect(fmtINRExact(100 + 1e-13)).toBe("₹100");
   });
 });
 
