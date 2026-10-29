@@ -1488,7 +1488,7 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
     d80CCD2: overrides.d80CCD2 !== undefined ? overrides.d80CCD2 : autoDetected.d80CCD2,
     d80G: overrides.d80G !== undefined ? overrides.d80G : 0,
     d80E: overrides.d80E !== undefined ? overrides.d80E : 0,
-    d80TTA: overrides.d80TTA !== undefined ? overrides.d80TTA : 0,
+    d80TTA: overrides.d80TTA !== undefined ? overrides.d80TTA : autoDetected.d80TTA,
   }));
 
   useEffect(() => {
@@ -1503,7 +1503,7 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
       d80CCD2: ov.d80CCD2 !== undefined ? ov.d80CCD2 : autoDetected.d80CCD2,
       d80G: ov.d80G !== undefined ? ov.d80G : 0,
       d80E: ov.d80E !== undefined ? ov.d80E : 0,
-      d80TTA: ov.d80TTA !== undefined ? ov.d80TTA : 0,
+      d80TTA: ov.d80TTA !== undefined ? ov.d80TTA : autoDetected.d80TTA,
     });
   }, [
     fy,
@@ -1514,6 +1514,7 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
     autoDetected.homeLoan,
     autoDetected.nps,
     autoDetected.d80CCD2,
+    autoDetected.d80TTA,
   ]);
 
   const setDed = (key: string, val: string) =>

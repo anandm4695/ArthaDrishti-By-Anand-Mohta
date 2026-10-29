@@ -1209,6 +1209,8 @@ export interface AutoDetectedDeductions {
   nps_source: string | null;
   d80CCD2: number;
   d80CCD2_source: string | null;
+  d80TTA: number;
+  d80TTA_source: string | null;
 }
 
 export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedDeductions => {
@@ -1365,9 +1367,33 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
         (m: any) => PARENT_RELATION_RE.test(m?.relation || "") && isSeniorCitizen(m?.dob)
       )
     );
+  // Section 80D(2)(d) — Senior citizen parents medical expenditure (up to ₹50,000 if uninsured)
+  const parentsMedicalExpenses =
+    parentsHealthPremium === 0 && isAnyParentSenior
+      ? (state.transactions || [])
+          .filter((t: any) => {
+            if (!t.date || t.date < fyStartStr || t.date > fyEndStr) return false;
+            const cat = (t.category || "").toLowerCase();
+            const desc = (t.description || t.note || "").toLowerCase();
+            const isMed =
+              cat.includes("medical") ||
+              cat.includes("health") ||
+              cat.includes("hospital") ||
+              cat.includes("doctor") ||
+              cat.includes("pharmacy");
+            const isParent =
+              PARENT_RELATION_RE.test(desc) ||
+              PARENT_RELATION_RE.test(t.beneficiary || "") ||
+              PARENT_RELATION_RE.test(t.person || "");
+            return isMed && isParent;
+          })
+          .reduce((s: number, t: any) => s + Number(t.amount || 0), 0)
+      : 0;
+
+  const effectiveParentsAmount = parentsHealthPremium > 0 ? parentsHealthPremium : parentsMedicalExpenses;
   const sec80D_parents_limit = isAnyParentSenior ? 50_000 : 25_000;
   const sec80D_self_used = Math.min(selfHealthPremium, sec80D_self_limit);
-  const sec80D_parents_used = Math.min(parentsHealthPremium, sec80D_parents_limit);
+  const sec80D_parents_used = Math.min(effectiveParentsAmount, sec80D_parents_limit);
   const d80D_raw = sec80D_self_used + sec80D_parents_used;
   const d80D_sources =
     [
@@ -1375,7 +1401,9 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
         ? `Self/Family ₹${Math.round(sec80D_self_used).toLocaleString("en-IN")}`
         : null,
       sec80D_parents_used > 0
-        ? `Parents ₹${Math.round(sec80D_parents_used).toLocaleString("en-IN")}`
+        ? parentsHealthPremium > 0
+          ? `Parents ₹${Math.round(sec80D_parents_used).toLocaleString("en-IN")}`
+          : `Parents Medical Exp. u/s 80D(2)(d) ₹${Math.round(sec80D_parents_used).toLocaleString("en-IN")}`
         : null,
     ]
       .filter(Boolean)
@@ -1398,12 +1426,36 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
     0
   );
   const hra_raw = hraPayments > 0 ? hraPayments : hraMonthly > 0 ? hraMonthly * 12 : 0;
-  const hra_source =
+  let hra_source =
     hra_raw > 0
       ? hraPayments > 0
         ? `Rent payments logged in FY ${fyStartStr.slice(0, 4)}-${fyEndStr.slice(2, 4)}`
         : "Monthly rent × 12"
       : null;
+
+  // Statutory Section 10(13A) Rule 2A 3-way calculation if salary slips exist
+  let finalHra = Math.round(hra_raw);
+  const fySalarySlips = (state.salarySlips || []).filter(
+    (s: any) =>
+      s.slipMonth &&
+      s.slipMonth >= fyStartStr.slice(0, 7) &&
+      s.slipMonth <= fyEndStr.slice(0, 7)
+  );
+  const annualBasic = fySalarySlips.reduce(
+    (sum: number, s: any) => sum + Number(s.basic || 0) + Number(s.da || 0),
+    0
+  );
+  const annualHraReceived = fySalarySlips.reduce(
+    (sum: number, s: any) => sum + Number(s.hra || 0),
+    0
+  );
+
+  if (annualBasic > 0 && annualHraReceived > 0 && hra_raw > 0) {
+    const rentMinusTenPct = Math.max(0, hra_raw - 0.1 * annualBasic);
+    const fiftyPctBasic = 0.5 * annualBasic;
+    finalHra = Math.round(Math.min(annualHraReceived, rentMinusTenPct, fiftyPctBasic));
+    hra_source = `Sec 10(13A) Rule 2A: Least of HRA (₹${Math.round(annualHraReceived).toLocaleString("en-IN")}), Rent-10% Basic (₹${Math.round(rentMinusTenPct).toLocaleString("en-IN")}), & 50% Basic`;
+  }
 
   // Home Loan Interest — from loansTaken type "Home", approx annual interest = outstanding × rate / 100
   const homeLoanData = (state.loansTaken || [])
@@ -1457,12 +1509,39 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
   const d80CCD2_source =
     npsEmployer > 0 ? `Employer NPS ₹${Math.round(npsEmployer).toLocaleString("en-IN")}` : null;
 
+  // 80TTA / 80TTB — Savings & Deposit Interest
+  const savingsInterest = (state.bankAccounts || []).reduce((s: number, a: any) => {
+    if ((a.type || "").toLowerCase() === "savings" || !a.type) {
+      return s + Number(a.balance || 0) * (Number(a.interestRate || 3.0) / 100);
+    }
+    return s;
+  }, 0);
+  const depositInterest = isSelfSenior
+    ? (state.fixedDeposits || []).reduce(
+        (s: number, d: any) => s + Number(d.principal || 0) * (Number(d.interestRate || 6.5) / 100),
+        0
+      ) +
+      (state.recurringDeposits || []).reduce(
+        (s: number, r: any) =>
+          s + Number(r.monthly || r.monthlyDeposit || 0) * 12 * (Number(r.interestRate || 6.5) / 100),
+        0
+      )
+    : 0;
+  const sec80TTA_limit = isSelfSenior ? 50_000 : 10_000;
+  const d80TTA_raw = Math.min(sec80TTA_limit, Math.round(savingsInterest + depositInterest));
+  const d80TTA_source =
+    d80TTA_raw > 0
+      ? isSelfSenior
+        ? `Sec 80TTB: Deposit & Savings Interest ₹${d80TTA_raw.toLocaleString("en-IN")}`
+        : `Sec 80TTA: Savings Bank Interest ₹${d80TTA_raw.toLocaleString("en-IN")}`
+      : null;
+
   return {
     d80C: Math.min(d80C_raw, 150_000),
     d80C_sources,
     d80D: d80D_raw,
     d80D_source: d80D_sources,
-    hra: Math.round(hra_raw),
+    hra: finalHra,
     hra_source,
     homeLoan: Math.min(homeLoan_raw, 200_000),
     homeLoan_source,
@@ -1470,6 +1549,8 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
     nps_source,
     d80CCD2: npsEmployer,
     d80CCD2_source,
+    d80TTA: d80TTA_raw,
+    d80TTA_source,
   };
 };
 
@@ -1493,7 +1574,7 @@ export const getTaxDueForDashboard = (state: any, annualIncome: number): number 
     const nps = overrides.nps !== undefined ? overrides.nps : auto.nps;
     const d80G = overrides.d80G !== undefined ? overrides.d80G : 0;
     const d80E = overrides.d80E !== undefined ? overrides.d80E : 0;
-    const d80TTA = overrides.d80TTA !== undefined ? overrides.d80TTA : 0;
+    const d80TTA = overrides.d80TTA !== undefined ? overrides.d80TTA : auto.d80TTA;
 
     const fyParts = fy.split("-");
     const fyStartYear = Number(fyParts[0]) || getCurrentFYStartYear();

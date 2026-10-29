@@ -7,6 +7,7 @@ import {
   calcTaxNewByFY,
   calcTaxOldByFY,
   getTaxDueForDashboard,
+  getAutoDetectedDeductions,
   exportArrayToCSV,
 } from "../utils/finance";
 import { SmartAlertsTab } from "../components/tabs/SmartAlertsTab";
@@ -489,5 +490,99 @@ describe("Senior Accountant Audit: Section 70 Capital Gains Loss Set-Off & Carry
 
     expect(screen.getByText(/High-Value Tenant Rent & Section 194-IB Compliance/i)).toBeInTheDocument();
     expect(screen.getByText(/SFT-009/i)).toBeInTheDocument();
+  });
+
+  it("calculates statutory Section 10(13A) Rule 2A HRA exemption when salary slips exist", () => {
+    // Annual Rent Paid: 3,60,000 (30,000/mo)
+    // 12 months salary slips: Basic = 50,000/mo (6,00,000/yr), HRA = 25,000/mo (3,00,000/yr)
+    // Rule 2A 3 conditions:
+    // 1. Actual HRA received: 3,00,000
+    // 2. Rent paid - 10% of Basic: 3,60,000 - 60,000 = 3,00,000
+    // 3. 50% of Basic: 3,00,000
+    // If Rent is 40,000/mo (4,80,000/yr) and HRA received is 2,00,000:
+    // 1. Actual HRA = 2,00,000
+    // 2. Rent - 10% Basic = 4,80,000 - 60,000 = 4,20,000
+    // 3. 50% Basic = 3,00,000
+    // Statutory exemption must be LEAST of 3 = 2,00,000!
+    const months = [
+      "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09",
+      "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03",
+    ];
+    const slips = months.map((m, i) => ({
+      id: `s-${i}`,
+      slipMonth: m,
+      basic: 50000,
+      hra: 16666.67, // ~2,00,000/yr
+    }));
+
+    const mockState = {
+      profile: { fy: "2025-26", regime: "old" },
+      salarySlips: slips,
+      rentedProperties: [
+        {
+          id: "r1",
+          propertyName: "Metro Apartment",
+          monthlyRent: 40000,
+          isActive: true,
+        },
+      ],
+      bankAccounts: [],
+    };
+
+    const auto = getAutoDetectedDeductions(mockState, "2025-26");
+    // Actual HRA is ~2,00,000, rent paid is 4,80,000. Statutory least should be ~2,00,000, NOT 4,80,000!
+    expect(auto.hra).toBeLessThanOrEqual(200001);
+    expect(auto.hra).toBeGreaterThanOrEqual(199990);
+    expect(auto.hra_source).toContain("Sec 10(13A) Rule 2A");
+  });
+
+  it("claims Section 80D(2)(d) medical expenses up to ₹50,000 for uninsured senior citizen parents", () => {
+    const mockState = {
+      profile: { fy: "2025-26", regime: "old" },
+      masterData: {
+        familyProfiles: [
+          { id: "self", dob: "1990-01-01" },
+          { id: "father", relation: "Father", dob: "1955-01-01" }, // age 70 (senior citizen)
+        ],
+      },
+      healthInsurance: [], // No parent insurance policy
+      transactions: [
+        {
+          id: "t1",
+          date: "2025-08-10",
+          amount: 45000,
+          category: "Medical",
+          description: "Father Hospital Bill Apollo",
+          type: "debit",
+        },
+      ],
+    };
+
+    const auto = getAutoDetectedDeductions(mockState, "2025-26");
+    expect(auto.d80D).toBe(45000);
+    expect(auto.d80D_source).toContain("80D(2)(d)");
+  });
+
+  it("auto-detects Section 80TTA and Section 80TTB interest deductions from bank and deposit accounts", () => {
+    // Non-senior with 15,000 savings interest -> capped at 10,000 u/s 80TTA
+    const nonSeniorState = {
+      profile: { fy: "2025-26", regime: "old", age: 30 },
+      masterData: { familyProfiles: [{ id: "self", dob: "1995-01-01" }] },
+      bankAccounts: [{ id: "b1", type: "Savings", balance: 500000, interestRate: 3.0 }], // 15,000 interest
+    };
+    const autoNonSenior = getAutoDetectedDeductions(nonSeniorState, "2025-26");
+    expect(autoNonSenior.d80TTA).toBe(10000);
+    expect(autoNonSenior.d80TTA_source).toContain("80TTA");
+
+    // Senior citizen with 40,000 FD interest + 5,000 savings interest -> allowed 45,000 u/s 80TTB
+    const seniorState = {
+      profile: { fy: "2025-26", regime: "old", age: 65 },
+      masterData: { familyProfiles: [{ id: "self", dob: "1960-01-01" }] },
+      bankAccounts: [{ id: "b1", type: "Savings", balance: 100000, interestRate: 3.0 }], // 3,000
+      fixedDeposits: [{ id: "fd1", principal: 500000, interestRate: 7.0, status: "active" }], // 35,000
+    };
+    const autoSenior = getAutoDetectedDeductions(seniorState, "2025-26");
+    expect(autoSenior.d80TTA).toBe(38000); // 3,000 + 35,000
+    expect(autoSenior.d80TTA_source).toContain("80TTB");
   });
 });

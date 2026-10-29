@@ -1228,6 +1228,11 @@ You have access to local tools/functions to retrieve real-time and detailed tran
           used: auto.d80CCD2,
           source: auto.d80CCD2_source,
         },
+        "80TTA_80TTB": {
+          used: auto.d80TTA,
+          limit: isSenior ? 50000 : 10000,
+          source: auto.d80TTA_source,
+        },
         HRA: { rentPaidAnnually: rentPaid, eligible: rentPaid > 0, source: auto.hra_source },
         "Sec_24b_HomeLoan": { interest: homeLoanInterest, limit: 200000, source: auto.homeLoan_source },
       },
