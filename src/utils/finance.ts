@@ -553,6 +553,35 @@ export const fdMaturity = (principal: number, rate: number, years: number, freq 
   return principal * Math.pow(1 + rate / 100 / freq, freq * years);
 };
 
+export const isDepositClosed = (d: any): boolean => {
+  if (!d) return true;
+  const status = String(d.status || "").toLowerCase();
+  const payoutStatus = String(d.payoutStatus || "").toLowerCase();
+  return status === "closed" || status === "matured" || payoutStatus === "credited";
+};
+
+export const fdCurrentValue = (f: any, asOfDate: string = today()): number => {
+  if (!f || isDepositClosed(f)) return 0;
+  const principal = Number(f.principal || 0);
+  if (principal <= 0) return 0;
+  const payout = String(f.interestPayout || "cumulative").toLowerCase();
+  // Periodic payout FDs (monthly, quarterly, half_yearly, annual) pay interest out to bank;
+  // their principal balance remains flat at `principal`.
+  if (payout !== "cumulative" && payout !== "at_maturity" && payout !== "reinvest") {
+    return principal;
+  }
+  const rate = Number(f.rate || 0);
+  if (!f.startDate || rate <= 0 || f.startDate > asOfDate) return principal;
+  const capDate = f.maturityDate && f.maturityDate < asOfDate ? f.maturityDate : asOfDate;
+  const elapsedDays = Math.max(
+    0,
+    (new Date(capDate).getTime() - new Date(f.startDate).getTime()) / 86400000
+  );
+  if (isNaN(elapsedDays) || elapsedDays <= 0) return principal;
+  const freq = Number(f.compoundingFrequency) || 4;
+  return Math.round(fdMaturity(principal, rate, elapsedDays / 365.25, freq));
+};
+
 export const rdMaturity = (monthly: number, rate: number, months: number) => {
   const n = 4,
     r = rate / 100;
@@ -676,7 +705,12 @@ export interface TaxResult {
 }
 
 // FY-aware new regime: handles FY 2025-26, 2024-25, 2023-24, 2020-23
-export function calcTaxNewByFY(grossIncome: number, fy: string): TaxResult {
+// Section 80CCD(2) (Employer NPS contribution) is deductible under Section 115BAC(2) in BOTH regimes.
+export function calcTaxNewByFY(
+  grossIncome: number,
+  fy: string,
+  deductions80CCD2: number = 0
+): TaxResult {
   const fyStart = Number((fy || getCurrentFY()).split("-")[0]) || getCurrentFYStartYear();
 
   let stdDed: number;
@@ -750,7 +784,8 @@ export function calcTaxNewByFY(grossIncome: number, fy: string): TaxResult {
     marginalReliefThreshold = 0; // no marginal relief in early new regime
   }
 
-  const taxable = Math.max(0, grossIncome - stdDed);
+  const eligible80CCD2 = Math.max(0, Number(deductions80CCD2 || 0));
+  const taxable = Math.max(0, grossIncome - stdDed - eligible80CCD2);
   let tax = 0;
   let prev = 0;
   const slabItems: SlabItem[] = [];
@@ -813,23 +848,14 @@ export function calcTaxNewByFY(grossIncome: number, fy: string): TaxResult {
     // Marginal relief: tax capped at (taxable - rebateThreshold)
     const capped = taxable - rebateThreshold;
     if (tax > capped) {
-      // Bug fix: rebateAmount was previously hardcoded to 0 here even though
-      // real relief is being granted (tax is being reduced from the raw slab
-      // total down to `capped`). Callers that reconstruct the pre-relief tax
-      // as `tax + rebateAmount` (e.g. TaxVaultTab's slab breakdown display)
-      // silently showed the already-capped tax as if it were the raw amount,
-      // and then displayed a "-₹0 rebate" — or worse, TaxVaultTab.tsx's
-      // `rebateAmount || tax` fallback then showed the entire post-relief
-      // tax figure a second time as the "rebate", making the on-screen
-      // Tax − Rebate + Cess arithmetic undercount the real total by the
-      // full capped tax amount. Report the actual relief granted instead.
       rebateAmount = tax - capped;
       tax = capped;
       rebateApplied = true;
     }
   }
 
-  const surcharge = calcSurcharge(grossIncome, tax, "new");
+  // Statutory surcharge thresholds (₹50L/₹1Cr/₹2Cr/₹5Cr) apply to Total Taxable Income
+  const surcharge = calcSurcharge(taxable, tax, "new");
   const cess = Math.round((tax + surcharge) * 0.04);
   const total = tax + surcharge + cess;
 
@@ -848,11 +874,12 @@ export function calcTaxNewByFY(grossIncome: number, fy: string): TaxResult {
   };
 };
 
-// FY-aware old regime: slabs unchanged since FY 2014-15, deductions vary
+// FY-aware old regime: supports Senior Citizen (60-79: ₹3L exempt) & Super-Senior (80+: ₹5L exempt)
 export function calcTaxOldByFY(
   grossIncome: number,
   totalDeductions: number,
-  fy: string
+  fy: string,
+  citizenAge: number = 0
 ): TaxResult {
   const fyStart = Number((fy || getCurrentFY()).split("-")[0]) || getCurrentFYStartYear();
   // Old regime std deduction: ₹40K (FY 2018-19 to 2019-20), ₹50K (FY 2020-21 onwards)
@@ -860,12 +887,20 @@ export function calcTaxOldByFY(
   // totalDeductions passed in already includes stdDed (callers compute: stdDed + 80C + 80D + …)
   const taxable = Math.max(0, grossIncome - totalDeductions);
 
-  const rawSlabs: Array<[number, number]> = [
-    [250_000, 0],
-    [500_000, 0.05],
-    [1_000_000, 0.2],
-    [Infinity, 0.3],
-  ];
+  const exemptLimit = citizenAge >= 80 ? 500_000 : citizenAge >= 60 ? 300_000 : 250_000;
+  const rawSlabs: Array<[number, number]> =
+    citizenAge >= 80
+      ? [
+          [500_000, 0],
+          [1_000_000, 0.2],
+          [Infinity, 0.3],
+        ]
+      : [
+          [exemptLimit, 0],
+          [500_000, 0.05],
+          [1_000_000, 0.2],
+          [Infinity, 0.3],
+        ];
 
   let tax = 0;
   let prev = 0;
@@ -881,7 +916,7 @@ export function calcTaxOldByFY(
         range:
           limit === Infinity
             ? `Above ₹${(prev / 100000).toFixed(0)}L`
-            : `₹${(prev / 100000).toFixed(0)}L – ₹${(limit / 100000).toFixed(0)}L`,
+            : `₹${(prev / 100000).toFixed(1).replace(/\.0$/, "")}L – ₹${(limit / 100000).toFixed(1).replace(/\.0$/, "")}L`,
         rate,
         incomeInSlab,
         taxInSlab,
@@ -893,7 +928,7 @@ export function calcTaxOldByFY(
         range:
           limit === Infinity
             ? `Above ₹${(prev / 100000).toFixed(0)}L`
-            : `₹${(prev / 100000).toFixed(0)}L – ₹${(limit / 100000).toFixed(0)}L`,
+            : `₹${(prev / 100000).toFixed(1).replace(/\.0$/, "")}L – ₹${(limit / 100000).toFixed(1).replace(/\.0$/, "")}L`,
         rate,
         incomeInSlab: 0,
         taxInSlab: 0,
@@ -911,7 +946,7 @@ export function calcTaxOldByFY(
     rebateApplied = true;
   }
 
-  const surcharge = calcSurcharge(grossIncome, tax, "old");
+  const surcharge = calcSurcharge(taxable, tax, "old");
   const cess = Math.round((tax + surcharge) * 0.04);
   const total = tax + surcharge + cess;
 
@@ -1441,22 +1476,21 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
 export const getTaxDueForDashboard = (state: any, annualIncome: number): number => {
   const fy = state.profile?.fy || getCurrentFY();
   const regime = state.profile?.regime || "new";
+  const auto = getAutoDetectedDeductions(state, fy);
+  const overrides = state.masterData?.taxDeductions?.[fy] || {};
+  const d80CCD2 = overrides.d80CCD2 !== undefined ? overrides.d80CCD2 : auto.d80CCD2;
 
   if (regime === "new") {
-    // Standard deduction for new regime is handled inside calcTaxNewByFY
-    const taxRes = calcTaxNewByFY(annualIncome, fy);
+    // Standard deduction + Sec 80CCD(2) employer NPS are allowed in the New Regime u/s 115BAC(2)
+    const taxRes = calcTaxNewByFY(annualIncome, fy, d80CCD2 || 0);
     return taxRes.total;
   } else {
     // Old regime: standard deduction + auto-detected deductions + manual overrides
-    const auto = getAutoDetectedDeductions(state, fy);
-    const overrides = state.masterData?.taxDeductions?.[fy] || {};
-
     const d80C = overrides.d80C !== undefined ? overrides.d80C : auto.d80C;
     const d80D = overrides.d80D !== undefined ? overrides.d80D : auto.d80D;
     const hra = overrides.hra !== undefined ? overrides.hra : auto.hra;
     const homeLoan = overrides.homeLoan !== undefined ? overrides.homeLoan : auto.homeLoan;
     const nps = overrides.nps !== undefined ? overrides.nps : auto.nps;
-    const d80CCD2 = overrides.d80CCD2 !== undefined ? overrides.d80CCD2 : auto.d80CCD2;
     const d80G = overrides.d80G !== undefined ? overrides.d80G : 0;
     const d80E = overrides.d80E !== undefined ? overrides.d80E : 0;
     const d80TTA = overrides.d80TTA !== undefined ? overrides.d80TTA : 0;
@@ -1477,7 +1511,8 @@ export const getTaxDueForDashboard = (state: any, annualIncome: number): number 
       (d80E || 0) +
       Math.min(d80TTA || 0, 10_000);
 
-    const taxRes = calcTaxOldByFY(annualIncome, totalOldDeductions, fy);
+    const citizenAge = Number(state.profile?.age || 0);
+    const taxRes = calcTaxOldByFY(annualIncome, totalOldDeductions, fy, citizenAge);
     return taxRes.total;
   }
 };

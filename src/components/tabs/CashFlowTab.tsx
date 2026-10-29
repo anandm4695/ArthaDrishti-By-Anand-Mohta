@@ -961,47 +961,20 @@ export const CashFlowTab = ({
         });
     }
 
-    // 4. Interest Income — FDs
+    // 4. Interest Income — FDs with regular interest payout to bank account
     const fdInterest = (state?.fixedDeposits || []).reduce((sum: number, fd: any) => {
+      const payout = String(fd.interestPayout || "").toLowerCase();
+      // Cumulative FDs compound internally and pay out in a lump-sum maturity event; only regular payout FDs yield monthly cash
+      if (payout === "cumulative" || payout === "at_maturity" || payout === "reinvest") return sum;
       const principal = Number(fd.principal || fd.amount || 0);
       const rate = Number(fd.rate || fd.interestRate || 0);
       return sum + (principal * rate) / 100 / 12;
     }, 0);
     if (fdInterest > 0)
       sources.push({
-        name: "FD Interest",
+        name: "FD Regular Interest Payout",
         monthly: fdInterest,
         icon: Landmark,
-        category: "Interest",
-      });
-
-    // Interest Income — RDs
-    const rdInterest = (state?.recurringDeposits || []).reduce((sum: number, rd: any) => {
-      const monthly = Number(rd.monthly || 0);
-      const rate = Number(rd.rate || rd.interestRate || 0);
-      const tenure = Number(rd.tenureMonths || 12);
-      const avgBalance = (monthly * tenure) / 2;
-      return sum + (avgBalance * rate) / 100 / 12;
-    }, 0);
-    if (rdInterest > 0)
-      sources.push({
-        name: "RD Interest",
-        monthly: rdInterest,
-        icon: Landmark,
-        category: "Interest",
-      });
-
-    // Interest Income — PPF
-    const ppfInterest = (state?.ppf || []).reduce((sum: number, p: any) => {
-      const balance = Number(p.currentBalance || p.balance || 0);
-      const rate = Number(p.interestRate || 7.1);
-      return sum + (balance * rate) / 100 / 12;
-    }, 0);
-    if (ppfInterest > 0)
-      sources.push({
-        name: "PPF Interest",
-        monthly: ppfInterest,
-        icon: PiggyBank,
         category: "Interest",
       });
 

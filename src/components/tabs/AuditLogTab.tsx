@@ -51,6 +51,7 @@ export interface AuditLogTabProps {
   session?: any;
   state?: any;
   metrics?: any;
+  marketData?: any;
   setTab?: (tab: string) => void;
   showToast?: (msg: string, type?: string) => void;
 }
@@ -381,6 +382,7 @@ export const AuditLogTab: React.FC<AuditLogTabProps> = ({
   session,
   state = {},
   metrics = {},
+  marketData,
   setTab,
   showToast,
 }) => {
@@ -1069,7 +1071,7 @@ export const AuditLogTab: React.FC<AuditLogTabProps> = ({
       </div>
 
       {auditSubTab === "trial_balance" && (
-        <DoubleEntryTrialBalance state={state} metrics={metrics} setTab={setTab} showToast={showToast} />
+        <DoubleEntryTrialBalance state={state} metrics={metrics} marketData={marketData} setTab={setTab} showToast={showToast} />
       )}
 
       {auditSubTab === "sft_radar" && (

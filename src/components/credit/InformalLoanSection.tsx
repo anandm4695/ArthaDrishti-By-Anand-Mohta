@@ -221,7 +221,7 @@ export function InformalLoanSection({
   // Aggregated KPIs for Active Direction
   const totalBorrowed = enrichedItems.reduce((s, p) => s + p.totalT, 0);
   const totalPaid = enrichedItems.reduce((s, p) => s + p.totalP, 0);
-  const totalOutstanding = Math.max(0, totalBorrowed - totalPaid);
+  const totalOutstanding = enrichedItems.reduce((s, p) => s + Math.max(0, p.outstanding), 0);
   const overdueItems = enrichedItems.filter((x) => x.isOverdue);
   const overdueCount = overdueItems.length;
   const overdueAmount = overdueItems.reduce((s, x) => s + Math.max(0, x.outstanding), 0);
@@ -233,7 +233,7 @@ export function InformalLoanSection({
   // Other Direction Totals for Consolidated View
   const otherTotalBorrowed = otherEnrichedItems.reduce((s, p) => s + p.totalT, 0);
   const otherTotalPaid = otherEnrichedItems.reduce((s, p) => s + p.totalP, 0);
-  const otherTotalOutstanding = Math.max(0, otherTotalBorrowed - otherTotalPaid);
+  const otherTotalOutstanding = otherEnrichedItems.reduce((s, p) => s + Math.max(0, p.outstanding), 0);
 
   // Consolidated Net Informal Position: (Lent - Borrowed)
   // If positive -> Net Creditor (you are owed net)

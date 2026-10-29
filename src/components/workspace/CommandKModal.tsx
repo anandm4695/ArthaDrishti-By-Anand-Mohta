@@ -23,6 +23,7 @@ export interface CommandKModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectTab: (tabId: string, subTab?: string) => void;
+  onSelectSubTab?: (subTab: string | null) => void;
   togglePrivacy?: () => void;
   isPrivacyMode?: boolean;
   onQuickAdd?: () => void;
@@ -90,6 +91,7 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
   isOpen,
   onClose,
   onSelectTab,
+  onSelectSubTab,
   togglePrivacy,
   isPrivacyMode,
   onQuickAdd,
@@ -232,8 +234,10 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
     // 3. Navigation Groups
     NAV_GROUPS.forEach((group) => {
       group.items.forEach((item) => {
+        const isDirect = Boolean((item as any).directChildren && item.children?.length);
         items.push({
-          id: item.id,
+          id: isDirect ? item.children![0].id : item.id,
+          subTab: undefined,
           label: item.label,
           group: group.title,
           icon: item.icon,
@@ -242,8 +246,8 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
         if (item.children) {
           item.children.forEach((child) => {
             items.push({
-              id: item.id,
-              subTab: child.id,
+              id: isDirect ? child.id : item.id,
+              subTab: isDirect ? undefined : child.id,
               label: `${item.label} › ${child.label}`,
               group: group.title,
               icon: child.icon || item.icon,
@@ -308,6 +312,11 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
       item.action();
     } else {
       onSelectTab(item.id, item.subTab);
+      if (item.subTab) {
+        onSelectSubTab?.(item.subTab);
+      } else {
+        onSelectSubTab?.(null as any);
+      }
     }
     onClose();
   };

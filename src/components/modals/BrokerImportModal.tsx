@@ -6,6 +6,7 @@ import { Button } from "../ui/Button";
 import { Field } from "../ui/Form";
 import { THEME } from "../../utils/constants";
 import { Money } from "../ui/Money";
+import { getLocalDateString } from "../../utils/finance";
 
 /* ── Broker CSV column profiles ──────────────────────────────────── */
 const BROKER_PROFILES = [
@@ -88,7 +89,7 @@ const parseDate = (dateStr: string): string | null => {
     }
   }
   const parsed = new Date(dateStr.trim());
-  if (!isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  if (!isNaN(parsed.getTime())) return getLocalDateString(parsed);
   return null;
 };
 

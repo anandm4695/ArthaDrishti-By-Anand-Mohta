@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 import { useAsyncAction } from "../../hooks/useAsyncAction";
 import {
@@ -318,6 +318,10 @@ export function BudgetTab({
   // Category Detail Drawer state
   const [selectedCategoryDetail, setSelectedCategoryDetail] = useState<string | null>(null);
   const [drawerSearch, setDrawerSearch] = useState("");
+
+  useEffect(() => {
+    setDrawerSearch("");
+  }, [selectedCategoryDetail]);
 
   // Recurring filter states
   const [recurringSearch, setRecurringSearch] = useState("");
@@ -683,8 +687,13 @@ export function BudgetTab({
       .filter((e: any) => e.date && e.date.startsWith(selectedMonth))
       .reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
     if (fromIncome > 0) return fromIncome;
+    const TRANSFER_CATS = new Set(["transfer", "self transfer", "self-transfer", "investment"]);
     return state.transactions
-      .filter((t: any) => t.date && t.date.startsWith(selectedMonth) && t.type === "credit")
+      .filter((t: any) => {
+        if (!t.date || !t.date.startsWith(selectedMonth) || t.type !== "credit") return false;
+        const cat = (t.category || "").toLowerCase();
+        return !TRANSFER_CATS.has(cat);
+      })
       .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
   }, [state.income, state.transactions, selectedMonth]);
 

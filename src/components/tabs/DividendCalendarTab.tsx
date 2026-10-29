@@ -137,7 +137,7 @@ const urgencyLabel = (days: number | null): string => {
 // Convert Unix timestamp (seconds) → YYYY-MM-DD or null
 const tsToDate = (ts: number | null | undefined): string | null => {
   if (!ts || ts <= 0) return null;
-  return new Date(Number(ts) * 1000).toISOString().slice(0, 10);
+  return getLocalDateString(new Date(Number(ts) * 1000));
 };
 
 export interface DividendCalendarTabProps {

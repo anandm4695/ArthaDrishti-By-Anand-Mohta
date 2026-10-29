@@ -11,7 +11,7 @@ import {
   Info,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
-import { fmtINR, fmtINRFull } from "../../utils/finance";
+import { fmtINR, fmtINRFull, today } from "../../utils/finance";
 import { useMasterData, formatProfileOption } from "../../utils/masterData";
 import { Modal, ModalActions } from "../ui/Modal";
 import { Field } from "../ui/Form";
@@ -146,7 +146,7 @@ export function LoanTakenModal({
       const selectedBank = bankAccounts.find((b: any) => b.id === selectedBankId);
       bankTxn = {
         id: `txn-${Date.now()}`,
-        date: new Date().toISOString().slice(0, 10),
+        date: today(),
         amount: principalAmt,
         type: "credit",
         category: "Loan Received",

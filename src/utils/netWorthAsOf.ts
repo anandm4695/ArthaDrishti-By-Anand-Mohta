@@ -29,6 +29,7 @@
 import {
   monthsBetween,
   rdMaturity,
+  isDepositClosed,
   calculateEpfBalance,
   today,
   getGoldPricePerGram,
@@ -157,7 +158,14 @@ export function computeNetWorthAsOf(
 
   // Tier 2 — single current value, gated by an unused start/purchase/open/order date.
   const fdValue = (s.fixedDeposits || [])
-    .filter((f: any) => gateInclude(f.startDate, asOfYm))
+    .filter((f: any) => {
+      if (!gateInclude(f.startDate, asOfYm)) return false;
+      if (isDepositClosed(f)) {
+        if (!f.payoutDate) return false;
+        if (ym(f.payoutDate) <= asOfYm) return false;
+      }
+      return true;
+    })
     .reduce((sum: number, f: any) => sum + Number(f.principal || 0), 0);
 
   const govtSchemesValue = (s.govtSchemes || [])

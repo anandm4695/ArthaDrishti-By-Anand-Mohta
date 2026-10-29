@@ -418,20 +418,28 @@ export const TaxFilingHelperTab = ({
     const mfGains = mfSellsThisFY.reduce((s: number, t: any) => s + Number(t.profit || 0), 0);
     const hasCapitalGainRecords = stockSellsThisFY.length > 0 || mfSellsThisFY.length > 0;
 
-    const totalIncome =
+    // Rental Income under Section 24(a) gets a statutory 30% standard deduction
+    const rentalDeduction24a = Math.round(rentalIncome * 0.3);
+    const netRentalIncome = Math.max(0, rentalIncome - rentalDeduction24a);
+
+    const ordinaryIncome =
       salaryIncome +
       otherIncome +
       bankInterest +
-      rentalIncome +
-      dividendIncome +
-      Math.max(0, stockGains + mfGains);
+      netRentalIncome +
+      dividendIncome;
+
+    const totalIncome = ordinaryIncome + Math.max(0, stockGains + mfGains);
 
     return {
       salaryIncome,
       otherIncome,
       bankInterest,
       rentalIncome,
+      rentalDeduction24a,
+      netRentalIncome,
       dividendIncome,
+      ordinaryIncome,
       stockGains,
       mfGains,
       hasCapitalGainRecords,
@@ -586,6 +594,21 @@ export const TaxFilingHelperTab = ({
     const sec80TTA_limit = isSelfSenior ? 50000 : 10000;
     const sec80TTA = Math.min(sec80TTA_limit, savingsInterest + depositInterest);
 
+    // Section 80CCD(2) — Employer NPS (allowed in both New and Old regimes)
+    const npsEmployerTxn = (state.nps || []).reduce(
+      (sum: number, n: any) =>
+        sum +
+        (n.transactions || [])
+          .filter((t: any) => inFY(t.date))
+          .reduce((s: number, t: any) => s + Number(t.employerAmount || 0), 0),
+      0
+    );
+    const npsEmployerBal = (state.nps || []).reduce(
+      (s: number, n: any) => s + Number(n.employerContribution || 0),
+      0
+    );
+    const sec80CCD2 = npsEmployerTxn > 0 ? npsEmployerTxn : npsEmployerBal;
+
     const totalDeductions = sec80C + sec80CCD1B + sec80D + sec24 + sec80TTA;
 
     return {
@@ -596,6 +619,7 @@ export const TaxFilingHelperTab = ({
       epfContrib,
       sec80CCD1B,
       npsContrib,
+      sec80CCD2,
       sec80D,
       sec80D_self_limit,
       sec80D_parents_limit,
@@ -613,11 +637,17 @@ export const TaxFilingHelperTab = ({
   const taxCalculations = useMemo(() => {
     const fy = selectedFY;
     const [startYear] = fy.split("-").map(Number);
-    const gross = incomeSummary.totalIncome;
+    // Ordinary slab income excludes special-rate capital gains and reflects Sec 24(a) 30% rental deduction
+    const ordinary = incomeSummary.ordinaryIncome ?? incomeSummary.totalIncome;
 
     const oldStdDed = startYear >= 2020 ? 50_000 : 40_000;
-    const newTax = calcTaxNewByFY(gross, fy);
-    const oldTax = calcTaxOldByFY(gross, oldStdDed + deductions.totalDeductions, fy);
+    const newTax = calcTaxNewByFY(ordinary, fy, deductions.sec80CCD2 || 0);
+    const oldTax = calcTaxOldByFY(
+      ordinary,
+      oldStdDed + deductions.totalDeductions + (deductions.sec80CCD2 || 0),
+      fy,
+      deductions.isSelfSenior ? 60 : 0
+    );
 
     const activeTax = selectedRegime === "new" ? newTax : oldTax;
     const taxSavingsByNew = oldTax.total - newTax.total;
@@ -630,7 +660,7 @@ export const TaxFilingHelperTab = ({
       taxSavingsByNew,
       recommendedRegime,
     };
-  }, [incomeSummary.totalIncome, selectedFY, deductions.totalDeductions, selectedRegime]);
+  }, [incomeSummary.ordinaryIncome, incomeSummary.totalIncome, selectedFY, deductions, selectedRegime]);
 
   /* ══════════════════════════════════════════════════════════════════
      TAXES PAID (TDS + ADVANCE TAX)

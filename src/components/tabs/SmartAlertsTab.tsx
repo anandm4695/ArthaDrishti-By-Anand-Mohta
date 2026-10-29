@@ -76,6 +76,7 @@ export interface SmartAlertItem {
   icon: any;
   action?: string;
   targetTab?: string;
+  targetSubTab?: string;
   impactValue?: number;
   impactLabel?: string;
   daysRemaining?: number;
@@ -93,11 +94,13 @@ export const SmartAlertsTab = ({
   state,
   metrics,
   setTab,
+  setSubTab,
   showToast,
 }: {
   state: any;
   metrics: any;
   setTab?: (tab: string) => void;
+  setSubTab?: (subTab: string | null) => void;
   showToast?: (msg: string, type?: "success" | "error" | "info") => void;
 }) => {
   // State for search, filters, views
@@ -229,10 +232,11 @@ export const SmartAlertsTab = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleNavigate = (targetTab?: string) => {
+  const handleNavigate = (targetTab?: string, targetSubTab?: string) => {
     if (!targetTab) return;
     if (setTab) {
       setTab(targetTab);
+      if (setSubTab) setSubTab(targetSubTab || null);
     } else if (showToast) {
       showToast(`Navigate to "${targetTab}" tab to review this alert.`, "info");
     }
@@ -303,7 +307,7 @@ export const SmartAlertsTab = ({
             plainDetail: `So far this month ₹${Math.round(thisMonthSpend).toLocaleString("en-IN")} vs expected ₹${Math.round(expectedToDate).toLocaleString("en-IN")}`,
             icon: TrendingUp,
             action: "Review your expenses",
-            targetTab: "expenses",
+            targetTab: "banks",
             impactValue: overrun,
             impactLabel: `+${((thisMonthSpend / expectedToDate - 1) * 100).toFixed(0)}% pace overrun`,
             tags: ["Pacing", "Budget Risk"],
@@ -328,7 +332,7 @@ export const SmartAlertsTab = ({
             plainDetail: `So far this month ₹${Math.round(thisMonthSpend).toLocaleString("en-IN")} vs expected ₹${Math.round(expectedToDate).toLocaleString("en-IN")}`,
             icon: TrendingDown,
             action: "Check if transactions are missing",
-            targetTab: "expenses",
+            targetTab: "banks",
             tags: ["Audit", "Data Hygiene"],
           });
         }
@@ -376,7 +380,7 @@ export const SmartAlertsTab = ({
               plainDetail: `${cat} spend ₹${Math.round(thisMonth).toLocaleString("en-IN")} vs avg ₹${Math.round(avg).toLocaleString("en-IN")}`,
               icon: AlertTriangle,
               action: `Review ${cat} transactions`,
-              targetTab: "expenses",
+              targetTab: "banks",
               impactValue: thisMonth - avg,
               impactLabel: `+${((thisMonth / avg - 1) * 100).toFixed(0)}% Surge`,
               tags: [cat, "Category Spike"],
@@ -413,7 +417,7 @@ export const SmartAlertsTab = ({
           plainDetail: `₹${Math.round(monthlySubs).toLocaleString("en-IN")}/month on subscriptions`,
           icon: Zap,
           action: "Review subscriptions",
-          targetTab: "recurring",
+          targetTab: "subs",
           impactValue: monthlySubs * 12,
           impactLabel: `₹${Math.round(monthlySubs * 12).toLocaleString("en-IN")}/yr Outflow`,
           tags: ["Subscriptions", "Cost Optimization"],
@@ -441,7 +445,7 @@ export const SmartAlertsTab = ({
             plainDetail: `${txns.length} charges of ₹${txns[0].amount} on ${txns[0].date}`,
             icon: AlertTriangle,
             action: "Check transaction history",
-            targetTab: "expenses",
+            targetTab: "banks",
             impactValue: Number(txns[0].amount) * (txns.length - 1),
             impactLabel: "Duplicate Risk",
             tags: ["Audit", "Duplicate"],
@@ -470,7 +474,8 @@ export const SmartAlertsTab = ({
               plainDetail: `${b.name || "Bond"} maturing in ${days} days`,
               icon: Clock,
               action: "Decide: reinvest or withdraw",
-              targetTab: "bonds",
+              targetTab: "investments",
+              targetSubTab: "bond",
               daysRemaining: days,
               impactValue: Number(b.faceValue || b.totalInvestmentAmount || 0),
               impactLabel: `Maturity in ${days}d`,
@@ -594,7 +599,7 @@ export const SmartAlertsTab = ({
               plainDetail: `Utilization is ${util.toFixed(0)}% on limit ₹${Math.round(limit).toLocaleString("en-IN")}`,
               icon: CreditCard,
               action: "Pay down credit card bill",
-              targetTab: "creditcards",
+              targetTab: "cc",
               impactValue: outstanding,
               impactLabel: `${util.toFixed(0)}% Utilized`,
               tags: ["Credit Score", "CIBIL Risk"],
@@ -642,7 +647,8 @@ export const SmartAlertsTab = ({
             plainDetail: `Surplus idle cash of ₹${Math.round(surplus).toLocaleString("en-IN")}`,
             icon: Wallet,
             action: "Explore liquid & debt investments",
-            targetTab: "mf",
+            targetTab: "investments",
+            targetSubTab: "mf",
             impactValue: surplus * 0.04,
             impactLabel: `~₹${Math.round((surplus * 0.04) / 12).toLocaleString("en-IN")}/mo Yield Opportunity`,
             tags: ["Yield Drag", "Cash Optimization"],
@@ -673,7 +679,7 @@ export const SmartAlertsTab = ({
             plainDetail: `No transactions logged in ${daysSince} days`,
             icon: Info,
             action: "Add transactions",
-            targetTab: "expenses",
+            targetTab: "banks",
             daysRemaining: daysSince,
             tags: ["Data Freshness", "Import"],
           });
@@ -1318,7 +1324,7 @@ export const SmartAlertsTab = ({
                       <Button
                         size="sm"
                         variant="primary"
-                        onClick={() => handleNavigate(alert.targetTab)}
+                        onClick={() => handleNavigate(alert.targetTab, alert.targetSubTab)}
                         style={{ fontSize: 12, padding: "4px 10px", display: "flex", alignItems: "center", gap: 4 }}
                       >
                         Action <ArrowUpRight size={13} />
@@ -1514,7 +1520,7 @@ export const SmartAlertsTab = ({
                             <Button
                               size="sm"
                               variant="primary"
-                              onClick={() => handleNavigate(alert.targetTab)}
+                              onClick={() => handleNavigate(alert.targetTab, alert.targetSubTab)}
                               style={{
                                 display: "flex",
                                 alignItems: "center",

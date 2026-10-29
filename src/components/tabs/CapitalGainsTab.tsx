@@ -308,9 +308,11 @@ const classifySells = (
         gainType = "DEBT_STCG";
         taxRate = DEBT_STCG_SLAB_RATE;
       } else {
-        const isLTCG = isLongTerm(m.buyDate, m.sellDate, 36);
+        const isPostBudget2024 = parseLocalDate(m.sellDate) >= parseLocalDate(BUDGET_2024_CUTOFF_DATE);
+        const holdingThresholdMonths = isPostBudget2024 ? 24 : 36;
+        const isLTCG = isLongTerm(m.buyDate, m.sellDate, holdingThresholdMonths);
         gainType = isLTCG ? "DEBT_LTCG" : "DEBT_STCG";
-        taxRate = isLTCG ? DEBT_LTCG_RATE : DEBT_STCG_SLAB_RATE;
+        taxRate = isLTCG ? (isPostBudget2024 ? 0.125 : DEBT_LTCG_RATE) : DEBT_STCG_SLAB_RATE;
       }
     }
 

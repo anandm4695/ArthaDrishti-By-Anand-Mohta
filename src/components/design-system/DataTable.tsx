@@ -91,16 +91,32 @@ export function DataTable<T extends Record<string, any>>({
   // sorting only the current page here would silently break).
   const sortedData = React.useMemo(() => {
     if (isControlledSort || !internalSortKey) return filteredData;
+    const activeCol = columns.find((c) => (c.sortGroup || c.key) === internalSortKey);
     return [...filteredData].sort((a, b) => {
       const aVal = a[internalSortKey];
       const bVal = b[internalSortKey];
       if (aVal === bVal) return 0;
       if (aVal === null || aVal === undefined) return 1;
       if (bVal === null || bVal === undefined) return -1;
-      const res = aVal < bVal ? -1 : 1;
+
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        const res = aVal - bVal;
+        return internalSortDirection === "asc" ? res : -res;
+      }
+
+      if (activeCol?.isNumeric || (typeof aVal !== "boolean" && typeof bVal !== "boolean")) {
+        const aClean = String(aVal).replace(/[^0-9.-]/g, "");
+        const bClean = String(bVal).replace(/[^0-9.-]/g, "");
+        if (aClean !== "" && bClean !== "" && !isNaN(Number(aClean)) && !isNaN(Number(bClean))) {
+          const res = Number(aClean) - Number(bClean);
+          return internalSortDirection === "asc" ? res : -res;
+        }
+      }
+
+      const res = String(aVal).localeCompare(String(bVal), undefined, { numeric: true, sensitivity: "base" });
       return internalSortDirection === "asc" ? res : -res;
     });
-  }, [filteredData, internalSortKey, internalSortDirection, isControlledSort]);
+  }, [filteredData, internalSortKey, internalSortDirection, isControlledSort, columns]);
 
   const handleSort = (col: Column<T>) => {
     if (!col.sortable) return;

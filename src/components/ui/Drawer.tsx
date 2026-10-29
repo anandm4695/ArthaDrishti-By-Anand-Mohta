@@ -35,6 +35,10 @@ export const Drawer: React.FC<DrawerProps> = ({ title, onClose, children, footer
 
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        const panels = document.querySelectorAll("[data-overlay-panel]");
+        if (panels.length > 0 && panels[panels.length - 1] !== panelRef.current) {
+          return;
+        }
         onCloseRef.current();
         return;
       }
@@ -81,6 +85,7 @@ export const Drawer: React.FC<DrawerProps> = ({ title, onClose, children, footer
     >
       <div
         ref={panelRef}
+        data-overlay-panel="true"
         className="drawer-panel"
         role="dialog"
         aria-modal="true"

@@ -40,11 +40,24 @@ export interface SftItem {
 export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "SFT_TRIGGERED" | "ATTENTION" | "CLEAN">("ALL");
+  const [selectedFY, setSelectedFY] = useState<string>(() => state?.profile?.fy || "2026-27");
 
   const sftChecks = useMemo((): SftItem[] => {
+    const fyParts = (selectedFY === "ALL" ? "" : selectedFY).split("-");
+    const fyStartYear = Number(fyParts[0]) || 2026;
+    const fyStart = `${fyStartYear}-04-01`;
+    const fyEnd = `${fyStartYear + 1}-03-31`;
+
+    const inSelectedFY = (dateStr?: string): boolean => {
+      if (selectedFY === "ALL") return true;
+      if (!dateStr) return true; // Legacy / unmigrated entries or fixtures without dates are included in the active FY check
+      return dateStr >= fyStart && dateStr <= fyEnd;
+    };
+
     // 1. SFT-001: Cash Deposits / Withdrawals in Bank Accounts (Threshold: >= ₹10 Lakhs in a FY)
     const totalBankCashTxns = (state.transactions || [])
       .filter((t: any) => {
+        if (!inSelectedFY(t.date)) return false;
         const desc = (t.description || t.note || "").toLowerCase();
         const cat = (t.category || "").toLowerCase();
         const mode = (t.mode || "").toLowerCase();
@@ -61,6 +74,7 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
     // 2. SFT-002: Credit Card Bill Payments (Threshold: >= ₹1 Lakh Cash or >= ₹10 Lakhs any mode)
     const totalCCPayments = (state.transactions || [])
       .filter((t: any) => {
+        if (!inSelectedFY(t.date)) return false;
         const desc = (t.description || t.note || "").toLowerCase();
         const cat = (t.category || "").toLowerCase();
         return desc.includes("credit card") || desc.includes("cc payment") || cat.includes("credit card");
@@ -68,44 +82,43 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
       .reduce((sum: number, t: any) => sum + Math.abs(Number(t.amount || 0)), 0);
 
     // 3. SFT-003: Mutual Funds & Equities Purchase (Threshold: >= ₹10 Lakhs in a FY)
-    const totalMFInvestments = (state.mutualFunds || []).reduce(
-      (sum: number, m: any) => sum + Number(m.invested || 0),
-      0
-    );
-    const totalStockInvestments = (state.stocks || []).reduce(
-      (sum: number, s: any) => sum + Number(s.avgPrice || 0) * Number(s.qty || 0),
-      0
-    );
+    const totalMFInvestments = (state.mutualFunds || [])
+      .filter((m: any) => inSelectedFY(m.buyDate))
+      .reduce((sum: number, m: any) => sum + Number(m.invested || 0), 0);
+    const totalStockInvestments = (state.stocks || [])
+      .filter((s: any) => inSelectedFY(s.buyDate))
+      .reduce((sum: number, s: any) => sum + Number(s.avgPrice || 0) * Number(s.qty || 0), 0);
     const totalSecuritiesInvestment = totalMFInvestments + totalStockInvestments;
 
     // 4. SFT-004: Purchase or Sale of Immovable Property (Threshold: >= ₹30 Lakhs)
-    const totalPropertyValue = (state.realEstateProperties || []).reduce(
-      (sum: number, r: any) =>
-        sum +
-        Math.max(
-          Number(r.marketValue || 0),
-          Number(r.agreementValue || 0),
-          Number(r.propertyValue || 0),
-          Number(r.purchasePrice || 0)
-        ),
-      0
-    );
+    const totalPropertyValue = (state.realEstateProperties || [])
+      .filter((r: any) => inSelectedFY(r.purchaseDate || r.agreementDate))
+      .reduce(
+        (sum: number, r: any) =>
+          sum +
+          Math.max(
+            Number(r.marketValue || 0),
+            Number(r.agreementValue || 0),
+            Number(r.propertyValue || 0),
+            Number(r.purchasePrice || 0)
+          ),
+        0
+      );
 
     // 5. SFT-005: Fixed Deposits / Time Deposits Creation (Threshold: >= ₹10 Lakhs in a FY)
-    const totalFDInvestments = (state.fixedDeposits || []).reduce(
-      (sum: number, f: any) => sum + Number(f.principal || 0),
-      0
-    );
+    const totalFDInvestments = (state.fixedDeposits || [])
+      .filter((f: any) => inSelectedFY(f.startDate || f.createdDate))
+      .reduce((sum: number, f: any) => sum + Number(f.principal || 0), 0);
 
     // 6. SFT-006: High Value Informal Borrowing / Lending & Cash Transactions u/s 269ST / 269SS (Threshold: >= ₹2 Lakhs)
     const computeLargeInformal = (list: any[]) =>
       (list || []).reduce((sum: number, item: any) => {
         const largeTranches = (item.tranches || [])
-          .filter((tr: any) => Number(tr.amount || 0) >= 200000)
+          .filter((tr: any) => inSelectedFY(tr.date) && Number(tr.amount || 0) >= 200000)
           .reduce((s: number, tr: any) => s + Number(tr.amount || 0), 0);
         if (largeTranches > 0) return sum + largeTranches;
         const out = Math.max(informalPersonOutstanding(item), Number(item.amount || 0));
-        return out >= 200000 ? sum + out : sum;
+        return inSelectedFY(item.givenDate || item.date) && out >= 200000 ? sum + out : sum;
       }, 0);
 
     const totalInformalLarge =
@@ -113,28 +126,32 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
       computeLargeInformal(state.informalLent || []);
 
     // 7. SFT-007: Bonds & Debentures Subscription (Threshold: >= ₹10 Lakhs u/s 285BA Rule 114E Item 3)
-    const totalBondsInvestment = (state.bonds || []).reduce(
-      (sum: number, b: any) =>
-        sum +
-        Number(
-          b.totalInvestmentAmount ||
-            b.totalPrincipalAmount ||
-            Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0) ||
-            b.faceValue ||
-            b.principal ||
-            0
-        ),
-      0
-    );
+    const totalBondsInvestment = (state.bonds || [])
+      .filter((b: any) => inSelectedFY(b.orderDate))
+      .reduce(
+        (sum: number, b: any) =>
+          sum +
+          Number(
+            b.totalInvestmentAmount ||
+              b.totalPrincipalAmount ||
+              Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0) ||
+              b.faceValue ||
+              b.principal ||
+              0
+          ),
+        0
+      );
 
     // 8. SFT-008: High-Value Bullion / Gold Holdings (Rule 114B PAN Mandatory >= ₹2 Lakhs per bill)
     const goldPrice = getGoldPricePerGram(state);
-    const totalGoldValue = (state.goldHoldings || []).reduce((sum: number, g: any) => {
-      const grams = Number(g.grams || g.weightGrams || 0);
-      const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
-      const val = Number(g.currentValue || 0) > 0 ? Number(g.currentValue) : grams * goldPrice * purityMul;
-      return sum + val;
-    }, 0);
+    const totalGoldValue = (state.goldHoldings || [])
+      .filter((g: any) => inSelectedFY(g.purchaseDate))
+      .reduce((sum: number, g: any) => {
+        const grams = Number(g.grams || g.weightGrams || 0);
+        const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
+        const val = Number(g.currentValue || 0) > 0 ? Number(g.currentValue) : grams * goldPrice * purityMul;
+        return sum + val;
+      }, 0);
 
     return [
       {
@@ -242,7 +259,7 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         documentationRequired: ["GST tax invoices with PAN", "SGB holding certificate", "Purity hallmarking receipts"],
       },
     ];
-  }, [state]);
+  }, [state, selectedFY]);
 
   const filteredChecks = useMemo(() => {
     return sftChecks.filter((c) => {
@@ -321,6 +338,26 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              aria-label="Filter by Financial Year"
+              value={selectedFY}
+              onChange={(e) => setSelectedFY(e.target.value)}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "6px 10px",
+                borderRadius: 8,
+                border: `1px solid ${THEME.line}`,
+                background: "var(--t-paper)",
+                color: THEME.ink,
+                cursor: "pointer",
+              }}
+            >
+              <option value="2026-27">FY 2026-27 (Current)</option>
+              <option value="2025-26">FY 2025-26</option>
+              <option value="2024-25">FY 2024-25</option>
+              <option value="ALL">All-Time Cumulative</option>
+            </select>
             <Button variant="secondary" size="sm" icon={<Download size={14} />} onClick={handleExportCSV}>
               Export SFT Audit Report
             </Button>

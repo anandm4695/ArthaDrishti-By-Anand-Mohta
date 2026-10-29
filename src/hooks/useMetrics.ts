@@ -5,6 +5,8 @@ import {
   monthsBetween,
   calculateEpfBalance,
   rdMaturity,
+  rdElapsed,
+  isDepositClosed,
   loanOutstanding,
   loanGivenOutstanding,
   getCcOutstanding,
@@ -160,19 +162,17 @@ export function calculateProfileNWAndCover(pState: any, marketData: any, profile
     (s: number, a: any) => s + Number(a.balance || 0),
     0
   );
-  const fdValue = (pState.fixedDeposits || []).reduce(
-    (s: number, f: any) => s + Number(f.principal || 0),
-    0
-  );
+  const fdValue = (pState.fixedDeposits || []).reduce((s: number, f: any) => {
+    if (isDepositClosed(f)) return s;
+    return s + Number(f.principal || 0);
+  }, 0);
   const govtSchemesValue = (pState.govtSchemes || []).reduce(
     (s: number, sc: any) => s + Number(sc.currentBalance || 0),
     0
   );
   const rdValue = (pState.recurringDeposits || []).reduce((s: number, r: any) => {
     if (r.payoutStatus === "credited" || r.status === "closed") return s;
-    const elapsed = r.startDate
-      ? Math.min(Number(r.tenureMonths || 0), Math.max(0, monthsBetween(r.startDate, today())))
-      : Number(r.tenureMonths || 0);
+    const elapsed = rdElapsed(r, today());
     return s + rdMaturity(Number(r.monthly || 0), Number(r.rate || 0), elapsed);
   }, 0);
   const bondValue = (pState.bonds || []).reduce(
@@ -414,19 +414,17 @@ export function useMetrics(
       (s: number, a: any) => s + Number(a.balance || 0),
       0
     );
-    const fdValue = (sState.fixedDeposits || []).reduce(
-      (s: number, f: any) => s + Number(f.principal || 0),
-      0
-    );
+    const fdValue = (sState.fixedDeposits || []).reduce((s: number, f: any) => {
+      if (isDepositClosed(f)) return s;
+      return s + Number(f.principal || 0);
+    }, 0);
     const govtSchemesValue = (sState.govtSchemes || []).reduce(
       (s: number, sc: any) => s + Number(sc.currentBalance || 0),
       0
     );
     const rdValue = (sState.recurringDeposits || []).reduce((s: number, r: any) => {
       if (r.payoutStatus === "credited" || r.status === "closed") return s;
-      const elapsed = r.startDate
-        ? Math.min(Number(r.tenureMonths || 0), Math.max(0, monthsBetween(r.startDate, today())))
-        : Number(r.tenureMonths || 0);
+      const elapsed = rdElapsed(r, today());
       return s + rdMaturity(Number(r.monthly || 0), Number(r.rate || 0), elapsed);
     }, 0);
     const bondValue = (sState.bonds || []).reduce(

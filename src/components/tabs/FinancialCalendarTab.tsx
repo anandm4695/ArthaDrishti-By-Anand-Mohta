@@ -37,6 +37,7 @@ import {
   fmtINRFull,
   fmtINRExact,
   today,
+  getLocalDateString,
 } from "../../utils/finance";
 import { useMilestoneEvents } from "../../hooks/useFinancialEvents";
 import { Card } from "../ui/Card";
@@ -268,7 +269,7 @@ export const FinancialCalendarTab = ({
     const y = d.getFullYear() + Math.floor(total / 12);
     const m = ((total % 12) + 12) % 12;
     const daysInMonth = new Date(y, m + 1, 0).getDate();
-    return new Date(y, m, Math.min(day, daysInMonth)).toISOString().slice(0, 10);
+    return getLocalDateString(new Date(y, m, Math.min(day, daysInMonth)));
   }, [horizon]);
 
   const rawEvents = useMilestoneEvents(state, cutoffDate);

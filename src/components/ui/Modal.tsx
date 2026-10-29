@@ -47,6 +47,10 @@ export const Modal: React.FC<ModalProps> = ({
 
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        const panels = document.querySelectorAll("[data-overlay-panel]");
+        if (panels.length > 0 && panels[panels.length - 1] !== panelRef.current) {
+          return;
+        }
         onCloseRef.current();
         return;
       }
@@ -92,6 +96,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={panelRef}
+        data-overlay-panel="true"
         className="modal-panel"
         role="dialog"
         aria-modal="true"

@@ -42,6 +42,10 @@ export function ConfirmDialog({
 
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        const panels = document.querySelectorAll("[data-overlay-panel]");
+        if (panels.length > 0 && panels[panels.length - 1] !== panelRef.current) {
+          return;
+        }
         onCancelRef.current();
         return;
       }
@@ -86,6 +90,7 @@ export function ConfirmDialog({
     >
       <div
         ref={panelRef}
+        data-overlay-panel="true"
         className="modal-panel"
         role="dialog"
         aria-modal="true"

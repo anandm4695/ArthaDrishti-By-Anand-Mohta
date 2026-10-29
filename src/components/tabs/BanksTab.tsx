@@ -353,6 +353,7 @@ export function BanksTab({
   const TXN_PAGE_SIZE = 40;
   const [txnPage, setTxnPage] = useState(1);
   const ledgerTableRef = useRef<HTMLDivElement>(null);
+  const accountLatestBalanceRef = useRef<Record<string, number>>({});
 
   const { transactionCategories: txnCats } = useMasterData();
 
@@ -664,13 +665,30 @@ export function BanksTab({
     async (id: string, v: any) => {
       setEditBankId(null);
       try {
+        const currentLatest = accountLatestBalanceRef.current[id];
+        const newBal = v.balance !== undefined ? Number(v.balance) : undefined;
         await updateItem("bankAccounts", id, v);
+        // If the account has transactions and the manual balance differs from passbook sum,
+        // create a reconciliation adjustment transaction anchored to the statement balance
+        // so the auto-sync useEffect does not silently overwrite the user's manual balance!
+        if (newBal !== undefined && currentLatest !== undefined && Math.abs(newBal - currentLatest) >= 0.01) {
+          const delta = newBal - currentLatest;
+          await addItem("transactions", {
+            accountId: id,
+            date: today(),
+            type: delta > 0 ? "credit" : "debit",
+            amount: Math.abs(delta),
+            category: "Adjustment",
+            note: "Balance Reconciliation Adjustment",
+            statementBalance: newBal,
+          });
+        }
         showToast?.("Bank account updated successfully", "success");
       } catch (e: any) {
         showToast?.(`Saved locally: ${e?.message || "Syncing in background"}`, "warn");
       }
     },
-    [updateItem, showToast]
+    [updateItem, addItem, showToast]
   );
 
   const saveTxnEdit = useCallback(
@@ -748,11 +766,22 @@ export function BanksTab({
           const linkedType = ci >= 0 ? linkedKey.slice(0, ci) : undefined;
           const linkedId = ci >= 0 ? linkedKey.slice(ci + 1) : undefined;
           const txnId = uid();
+          let principalPortion: number | undefined;
+          if (linkedType === "loansTaken" && linkedId && (v.type || "debit") === "debit") {
+            const loan = (state.loansTaken || []).find((l: any) => l.id === linkedId);
+            if (loan) {
+              const currentOutstanding = loanOutstanding(loan);
+              const monthlyRate = Number(loan.rate || 0) / 100 / 12;
+              const interestPortion = Math.round(currentOutstanding * monthlyRate);
+              principalPortion = Math.max(0, amt - interestPortion);
+            }
+          }
           await addItem("transactions", {
             ...txnBase,
             amount: amt || txnBase.amount,
             id: txnId,
             ...(linkedType ? { linkedType, linkedId } : {}),
+            ...(principalPortion !== undefined ? { linkedPrincipalAmount: principalPortion } : {}),
           });
           if (linkedKey) await autoPostLinkedTransaction(linkedKey, v, txnId);
         }
@@ -929,6 +958,7 @@ export function BanksTab({
       const rounded = Math.round(rawBal * 100) / 100;
       map[accountId] = Math.abs(rounded) < 0.5 ? 0 : rounded;
     });
+    accountLatestBalanceRef.current = map;
     return map;
   }, [balanceSource.transactions, balanceAfterTxn, txnIndexMap]);
 
@@ -5493,8 +5523,9 @@ function TxnEditModal({ txn, accounts, getDisplayBalance, onClose, onSave, savin
   const wasDebit = (txn?.type || "debit") === "debit";
 
   // Calculate projected balance after edit
-  // Revert old effect, then apply new effect
-  const balanceWithoutTxn = currentBalance + (wasDebit ? originalAmt : -originalAmt);
+  // Revert old effect if editing transaction on the same account, then apply new effect
+  const isSameAccount = String(f.accountId) === String(txn?.accountId);
+  const balanceWithoutTxn = isSameAccount ? currentBalance + (wasDebit ? originalAmt : -originalAmt) : currentBalance;
   const projectedBalance = balanceWithoutTxn + (isDebit ? -numAmount : numAmount);
 
   const addAmount = (delta: number) => {

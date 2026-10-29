@@ -44,6 +44,7 @@ import { Money } from "../ui/Money";
 import {
   fmtINRFull,
   fdMaturity,
+  isDepositClosed,
   today,
   monthsBetween,
   addMonthsToDateStr,
@@ -173,15 +174,21 @@ export function FixedDepositsSection({
   };
 
   const getAccruedValue = (f: any) => {
-    const maturity = fdMaturity(Number(f.principal || 0), Number(f.rate || 0), Number(f.years || 0));
+    if (isDepositClosed(f)) return 0;
+    const principal = Number(f.principal || 0);
+    const payout = String(f.interestPayout || "cumulative").toLowerCase();
+    if (payout !== "cumulative" && payout !== "at_maturity" && payout !== "reinvest") {
+      return principal;
+    }
+    const maturity = fdMaturity(principal, Number(f.rate || 0), Number(f.years || 0));
     const daysLeft = fdDaysLeft(f);
     if (daysLeft !== null && daysLeft <= 0) return maturity;
-    if (!f.startDate || !f.years) return Number(f.principal) || 0;
+    if (!f.startDate || !f.years) return principal;
     const elapsed = Math.min(
       Number(f.years),
       Math.max(0, monthsBetween(f.startDate, today()) / 12)
     );
-    return fdMaturity(Number(f.principal || 0), Number(f.rate || 0), elapsed);
+    return fdMaturity(principal, Number(f.rate || 0), elapsed);
   };
 
   const getProgress = (f: any) => {

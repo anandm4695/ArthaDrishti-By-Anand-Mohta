@@ -1623,53 +1623,58 @@ function FinanceDashboard() {
         "0": "calendar",
       };
 
+      const navShortcut = (nextTab: string) => {
+        setTab(nextTab);
+        setSubTab(null);
+      };
+
       // Letter shortcuts
       if (e.key === "q") {
         setShowQuickAdd(true);
         return;
       }
       if (e.key === "d") {
-        setTab("analytics");
+        navShortcut("analytics");
         return;
       }
       if (e.key === "b") {
-        setTab("banks");
+        navShortcut("banks");
         return;
       }
       if (e.key === "s") {
-        setTab("demat");
+        navShortcut("demat");
         return;
       }
       if (e.key === "i") {
-        setTab("investments");
+        navShortcut("investments");
         return;
       }
       if (e.key === "t") {
-        setTab("tax");
+        navShortcut("tax");
         return;
       }
       if (e.key === "g") {
-        setTab("goals");
+        navShortcut("goals");
         return;
       }
       if (e.key === "r") {
-        setTab("annualreport");
+        navShortcut("annualreport");
         return;
       }
       if (e.key === "c") {
-        setTab("cashflow");
+        navShortcut("cashflow");
         return;
       }
       if (e.key === "e") {
-        setTab("expensetrends");
+        navShortcut("expensetrends");
         return;
       }
       if (e.key === "f") {
-        setTab("familyview");
+        navShortcut("familyview");
         return;
       }
       if (e.key === "n") {
-        setTab("nominees");
+        navShortcut("nominees");
         return;
       }
       if (e.key === "/") {
@@ -1691,7 +1696,7 @@ function FinanceDashboard() {
       }
 
       if (shortcuts[e.key]) {
-        setTab(shortcuts[e.key]);
+        navShortcut(shortcuts[e.key]);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -1779,15 +1784,13 @@ function FinanceDashboard() {
           return a;
         }, 0);
 
-        const epfAtMonth = (s.ppfNps || [])
-          .filter((p: any) => p.type === "epf")
-          .reduce((a: number, p: any) => {
-            const startYm = p.startDate ? p.startDate.slice(0, 7) : null;
-            if (!startYm || startYm <= h.month) {
-              return a + (Number(p.currentBalance) || Number(p.balance) || 0);
-            }
-            return a;
-          }, 0);
+        const epfAtMonth = (s.epf || []).reduce((a: number, p: any) => {
+          const startYm = p.startDate ? p.startDate.slice(0, 7) : null;
+          if (!startYm || startYm <= h.month) {
+            return a + (calculateEpfBalance(p, h.month) || Number(p.currentBalance) || Number(p.balance) || 0);
+          }
+          return a;
+        }, 0);
 
         if (investAtMonth > 0 || epfAtMonth > 0) {
           const newDebt = Math.max(0, (Number(h.debt) || 0) + investAtMonth + epfAtMonth);
@@ -2124,52 +2127,35 @@ function FinanceDashboard() {
       const ym = `${nowSnap.getFullYear()}-${String(nowSnap.getMonth() + 1).padStart(2, "0")}`;
       setState((s: any) => {
         const history = (s.netWorthHistory || []).filter((h: any) => h.month !== ym);
-        const cashVal = (s.bankAccounts || []).reduce(
-          (sum: number, b: any) => sum + (Number(b.balance) || 0),
-          0
+        const cashVal = Math.round((metrics.cashInBanks || 0) + (metrics.prepaidValue || 0));
+        const equityVal = Math.round((metrics.stockValue || 0) + (metrics.mfValue || 0));
+        const debtVal = Math.round(
+          (metrics.fdValue || 0) +
+            (metrics.rdValue || 0) +
+            (metrics.bondValue || 0) +
+            (metrics.ppfValue || 0) +
+            (metrics.npsValue || 0) +
+            (metrics.epfValue || 0) +
+            (metrics.licValue || 0) +
+            (metrics.investmentValue || 0) +
+            (metrics.goldValue || 0) +
+            (metrics.govtSchemesValue || 0) +
+            (metrics.loansGivenValue || 0) +
+            (metrics.informalLentValue || 0) +
+            (metrics.rentedDepositAsset || 0)
         );
-        const stockVal = (s.stocks || []).reduce(
-          (sum: number, st: any) =>
-            sum + (Number(st.qty) || 0) * (Number(st.currentPrice) || Number(st.avgPrice) || 0),
-          0
+        const realEstateVal = Math.round(
+          (metrics.realEstateAsset || 0) + (metrics.rentalPropertiesAsset || 0)
         );
-        const mfVal = (s.mutualFunds || []).reduce(
-          (sum: number, m: any) =>
-            sum + (Number(m.units) || 0) * (Number(m.currentNav) || Number(m.buyNav) || 0),
-          0
-        );
-        const fdVal = (s.fixedDeposits || []).reduce(
-          (sum: number, f: any) => sum + (Number(f.principal) || 0),
-          0
-        );
-        // Field names/ownership-share must match useMetrics.ts's realEstateAsset (marketValue/
-        // agreementValue, scaled by tracked ownership share) — this used to read nonexistent
-        // currentValuation/valuation fields (always 0) and ignored co-ownership %, so the
-        // "realEstate" slice saved into netWorthHistory silently diverged from the real figure.
-        const realEstateVal = (s.realEstateProperties || [])
-          .filter((p: any) => p.status !== "sold")
-          .reduce((sum: number, p: any) => {
-            const value = Number(p.marketValue || p.agreementValue || 0);
-            const owners = Array.isArray(p.owners) ? p.owners : null;
-            const share = owners && owners.length > 0
-              ? owners.reduce(
-                  (acc: number, o: any) => (o?.id !== "external" ? acc + Number(o.sharePct || 0) : acc),
-                  0
-                ) / 100
-              : 1;
-            return sum + value * share;
-          }, 0);
-        const vehiclesVal = (s.vehicles || []).reduce(
-          (sum: number, v: any) => sum + Number(v.currentValue || v.value || 0),
-          0
-        );
+        const vehiclesVal = Math.round(metrics.vehicleAsset || 0);
+        const liabilitiesVal = Math.round(metrics.totalLiabilities || 0);
         const breakdown = {
           cash: cashVal,
-          equity: stockVal + mfVal,
-          debt: fdVal,
+          equity: equityVal,
+          debt: debtVal,
           realEstate: realEstateVal,
           vehicles: vehiclesVal,
-          liabilities: 0,
+          liabilities: liabilitiesVal,
         };
         const newHistory = [...history, { month: ym, netWorth: nw, ...breakdown }].slice(-36);
         const uid2 = session?.user?.id;
@@ -2555,7 +2541,6 @@ function FinanceDashboard() {
           finalItem.note = finalItem.description;
         }
         delete finalItem.description;
-        delete finalItem.linked_principal_amount;
         if (finalItem.type) {
           const rawType = String(finalItem.type).toLowerCase();
           finalItem.type = rawType === "credit" ? "credit" : "debit";
@@ -3815,7 +3800,6 @@ function FinanceDashboard() {
           if (patch.notes !== undefined && patch.note === undefined) finalPatch.note = patch.notes;
         }
         if (key === "transactions") {
-          delete finalPatch.linked_principal_amount;
           if (finalPatch.type !== undefined) {
             const rawType = String(finalPatch.type).toLowerCase();
             finalPatch.type = rawType === "credit" ? "credit" : "debit";
@@ -4617,6 +4601,9 @@ function FinanceDashboard() {
       localStorage.removeItem("finance_credit_scores");
       localStorage.removeItem("finance_ai_notes");
       localStorage.removeItem("pf_dismissed_alerts");
+      localStorage.removeItem("finance-dismissed-alerts");
+      localStorage.removeItem("finance-smart-alerts-preferences");
+      localStorage.removeItem("finance_estate_checklist");
       localStorage.removeItem("arthadrishti_cf_salary_pref");
       if (typeof sessionStorage !== "undefined") sessionStorage.clear();
     } catch {}
@@ -5331,6 +5318,7 @@ function FinanceDashboard() {
                   assetBreakdown={assetBreakdown}
                   setState={setState}
                   marketData={marketData}
+                  mfMarketData={mfMarketData}
                   marketDataTs={marketDataTs}
                   updateMasterData={updateMasterData}
                   updateItem={updateItem}
@@ -5439,6 +5427,7 @@ function FinanceDashboard() {
                   state={filteredState}
                   removeItem={removeItem}
                   marketData={marketData}
+                  mfMarketData={mfMarketData}
                   showToast={showToast}
                 />
               )}
@@ -5588,6 +5577,7 @@ function FinanceDashboard() {
                   state={filteredState}
                   metrics={metrics}
                   setTab={setTab}
+                  setSubTab={setSubTab}
                   showToast={showToast}
                 />
               )}
@@ -5657,6 +5647,7 @@ function FinanceDashboard() {
                   state={filteredState}
                   metrics={metrics}
                   setTab={setTab}
+                  setSubTab={setSubTab}
                   showToast={showToast}
                 />
               )}
@@ -5737,7 +5728,9 @@ function FinanceDashboard() {
                   showToast={showToast}
                 />
               )}
-              {tab === "xirrreport" && <XIRRReportTab state={filteredState} metrics={metrics} />}
+              {tab === "xirrreport" && (
+                <XIRRReportTab state={filteredState} metrics={metrics} marketData={marketData} />
+              )}
               {tab === "dividendcal" && (
                 <DividendCalendarTab state={filteredState} metrics={metrics} marketData={marketData} />
               )}
@@ -5755,6 +5748,7 @@ function FinanceDashboard() {
                   session={session}
                   state={filteredState}
                   metrics={metrics}
+                  marketData={marketData}
                   setTab={setTab}
                   showToast={showToast}
                 />

@@ -387,7 +387,7 @@ const SoldTable = ({
   );
 };
 
-export function TxnHistoryTab({ state, removeItem, marketData = {}, showToast }: any) {
+export function TxnHistoryTab({ state, removeItem, marketData = {}, mfMarketData = {}, showToast }: any) {
   const currentFY = (() => {
     const now = new Date();
     const y = now.getFullYear();
@@ -644,7 +644,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, showToast }:
       const inv = Number(m.units) * buyNav;
       invested += inv;
       if (!m.isSold) {
-        const currNav = Number(m.currentNav || 0);
+        const currNav = Number(mfMarketData?.[m.mfCode]?.nav ?? m.currentNav ?? 0);
         if (currNav) {
           pnl += Number(m.units) * currNav - inv;
           hasCurr = true;
@@ -1824,7 +1824,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, showToast }:
                           "Realized",
                         ];
                       }
-                      const currNav = Number(m.currentNav || 0);
+                      const currNav = Number(mfMarketData?.[m.mfCode]?.nav ?? m.currentNav ?? 0);
                       return [
                         m.name || m.scheme,
                         m.category || m.mfType || m.type || "Equity",
@@ -1964,7 +1964,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, showToast }:
                         </span>
                       );
                     }
-                    const currNav = Number(m.currentNav || 0);
+                    const currNav = Number(mfMarketData?.[m.mfCode]?.nav ?? m.currentNav ?? 0);
                     return (
                       <span style={{ fontWeight: 600 }}>
                         {currNav ? <Prv>₹{currNav.toFixed(4)}</Prv> : "—"}
@@ -1985,7 +1985,7 @@ export function TxnHistoryTab({ state, removeItem, marketData = {}, showToast }:
                       : m.invested && m.units
                         ? Number(m.invested) / Number(m.units)
                         : 0;
-                    const currNav = Number(m.currentNav || 0);
+                    const currNav = Number(mfMarketData?.[m.mfCode]?.nav ?? m.currentNav ?? 0);
                     const inv = Number(m.units) * buyNav;
                     const val = Number(m.units) * currNav;
                     const pnl = val - inv;

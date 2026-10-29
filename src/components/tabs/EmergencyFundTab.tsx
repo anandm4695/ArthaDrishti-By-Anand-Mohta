@@ -54,6 +54,7 @@ interface EmergencyFundTabProps {
   state: any;
   metrics: any;
   setTab?: (tab: string) => void;
+  setSubTab?: (subTab: string | null) => void;
   showToast?: (msg: string, type?: "success" | "error" | "info") => void;
 }
 
@@ -61,6 +62,7 @@ export const EmergencyFundTab: React.FC<EmergencyFundTabProps> = ({
   state,
   metrics,
   setTab,
+  setSubTab,
   showToast,
 }) => {
   const ef = metrics?.emergencyFund || {};
@@ -989,7 +991,10 @@ export const EmergencyFundTab: React.FC<EmergencyFundTabProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setTab("bankaccounts")}
+                  onClick={() => {
+                    setTab("banks");
+                    setSubTab?.(null);
+                  }}
                   style={{ marginTop: 12, fontSize: 11, alignSelf: "flex-start", gap: 4 }}
                 >
                   Manage Bank Accounts <ArrowUpRight size={12} />
@@ -1080,7 +1085,10 @@ export const EmergencyFundTab: React.FC<EmergencyFundTabProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setTab("mutualfunds")}
+                  onClick={() => {
+                    setTab("investments");
+                    setSubTab?.("mf");
+                  }}
                   style={{ marginTop: 12, fontSize: 11, alignSelf: "flex-start", gap: 4 }}
                 >
                   Explore Liquid Mutual Funds <ArrowUpRight size={12} />
@@ -1205,7 +1213,10 @@ export const EmergencyFundTab: React.FC<EmergencyFundTabProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setTab("fixeddeposits")}
+                  onClick={() => {
+                    setTab("investments");
+                    setSubTab?.("fd");
+                  }}
                   style={{ marginTop: 12, fontSize: 11, alignSelf: "flex-start", gap: 4 }}
                 >
                   Manage Fixed Deposits <ArrowUpRight size={12} />

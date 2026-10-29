@@ -181,7 +181,9 @@ export const GoldSGBTab = ({
 
       if (h.type === "sgb") {
         const couponRate = Number(h.interestRate || 2.5);
-        annualCouponAmount = (invested * couponRate) / 100;
+        const couponBase =
+          Number(h.issuePrice || 0) > 0 ? Number(h.issuePrice) * grams : invested;
+        annualCouponAmount = (couponBase * couponRate) / 100;
 
         if (h.purchaseDate) {
           const nowMs = new Date().getTime();
@@ -192,7 +194,7 @@ export const GoldSGBTab = ({
             ? Math.min(nowMs, new Date(h.maturityDate + "T00:00:00").getTime())
             : nowMs;
           const activeYears = Math.max(0, (accrualEndTime - pDateMs) / (365.25 * 86400000));
-          interest = invested * (couponRate / 100) * activeYears;
+          interest = couponBase * (couponRate / 100) * activeYears;
 
           // RBI 5-year premature redemption rule
           if (yearsHeld >= 5 && (!h.maturityDate || monthsBetween(today(), h.maturityDate) > 0)) {

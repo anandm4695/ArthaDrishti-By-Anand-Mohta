@@ -245,6 +245,7 @@ export const NUMERIC_COLS = new Set([
   "equity",
   "debt",
   "real_estate",
+  "vehicles",
   "liabilities",
 ]);
 

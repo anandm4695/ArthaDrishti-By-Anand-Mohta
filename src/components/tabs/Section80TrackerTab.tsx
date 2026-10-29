@@ -942,7 +942,7 @@ export const Section80TrackerTab: React.FC<Section80TrackerTabProps> = ({
     const stdDedNew = fyStart >= 2024 ? 75000 : fyStart >= 2023 ? 50000 : 0;
     const employerNpsDeduction = data.sec80CCD2.total; // Section 80CCD(2) allowed in BOTH regimes!
 
-    const taxNewResult = calcTaxNewByFY(grossIncome, selectedFY);
+    const taxNewResult = calcTaxNewByFY(grossIncome, selectedFY, employerNpsDeduction);
 
     const stdDedOld = fyStart >= 2020 ? 50000 : 40000;
     const totalOldDeductions = data.totalDeductions;

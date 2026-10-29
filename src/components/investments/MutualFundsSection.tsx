@@ -50,6 +50,7 @@ import { Money } from "../ui/Money";
 import {
   fmtINRFull,
   today,
+  getLocalDateString,
   calcXIRR,
   calcCAGR,
   isLongTerm,
@@ -2562,7 +2563,7 @@ function MFTaxHarvestingView({ items, getLiveNav }: any) {
           id: m.id,
           scheme: m.name || m.scheme,
           buyDate: m.buyDate,
-          unlockDate: unlockDate ? unlockDate.toISOString().slice(0, 10) : "—",
+          unlockDate: unlockDate ? getLocalDateString(unlockDate) : "—",
           units,
           inv,
           currVal,

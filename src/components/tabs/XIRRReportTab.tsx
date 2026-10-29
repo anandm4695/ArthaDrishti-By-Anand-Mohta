@@ -71,6 +71,8 @@ import {
   exportArrayToCSV,
   monthsBetween,
   calcCAGR,
+  getGoldPricePerGram,
+  GOLD_PURITY_FACTOR,
 } from "../../utils/finance";
 import { Card } from "../ui/Card";
 import { SectionTitle } from "../ui/SectionTitle";
@@ -400,7 +402,7 @@ export function XIRRReportTab({ state, initialTab = "overview" }: any) {
       .filter((p: any) => !p.type || p.type === "PPF")
       .forEach((p: any) => {
         const txns = (p.transactions || []).filter(
-          (t: any) => t.date && (t.type === "deposit" || Number(t.amount) > 0)
+          (t: any) => t.date && (t.type === "deposit" || t.type === "withdrawal" || (!t.type && Number(t.amount) > 0))
         );
         if (txns.length === 0 && (!p.startDate || !p.balance)) return;
 
@@ -409,13 +411,14 @@ export function XIRRReportTab({ state, initialTab = "overview" }: any) {
 
         if (txns.length > 0) {
           cashFlows = txns.map((t: any, idx: number) => {
+            const isWithdrawal = t.type === "withdrawal";
             const amt = Math.abs(Number(t.amount));
-            invested += amt;
+            if (!isWithdrawal) invested += amt;
             return {
               date: t.date,
-              amount: -amt,
-              type: "PPF Deposit",
-              note: t.description || `Deposit #${idx + 1}`,
+              amount: isWithdrawal ? amt : -amt,
+              type: isWithdrawal ? "PPF Withdrawal" : "PPF Deposit",
+              note: t.description || (isWithdrawal ? `Withdrawal #${idx + 1}` : `Deposit #${idx + 1}`),
             };
           });
           cashFlows.push({
@@ -654,6 +657,75 @@ export function XIRRReportTab({ state, initialTab = "overview" }: any) {
         status: isMature ? "matured" : "active",
         owner: b.owner || "self",
         raw: b,
+      });
+    });
+
+    // ── 8b. Gold & Bullion Holdings ─────────────────────────────────────
+    const goldPricePerGram = getGoldPricePerGram(state);
+    (state?.goldHoldings || []).forEach((g: any) => {
+      const purchaseDate = g.purchaseDate || g.buyDate || g.date;
+      const grams = Number(g.grams || g.weightGrams || 0);
+      const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
+      const currentVal = Number(g.currentValue || 0) > 0 ? Number(g.currentValue) : grams * goldPricePerGram * purityMul;
+      const invested = Number(g.purchasePrice || g.cost || g.invested || 0) || (grams * 5000);
+      if (!purchaseDate || invested <= 0 || currentVal <= 0) return;
+
+      const cashFlows: any[] = [
+        {
+          date: purchaseDate,
+          amount: -invested,
+          type: "Gold Acquisition",
+          note: `${grams}g ${g.purity || "24K"} @ ₹${Math.round(invested / (grams || 1))}/g`,
+        },
+      ];
+
+      // SGB annual coupon inflows if applicable
+      if (g.type === "sgb") {
+        const couponRate = Number(g.interestRate || 2.5) / 100;
+        const couponBase = Number(g.issuePrice || 0) > 0 ? Number(g.issuePrice) * grams : invested;
+        const annualCoupon = couponBase * couponRate;
+        if (annualCoupon > 0) {
+          const couponEnd = g.maturityDate && g.maturityDate < todayStr ? g.maturityDate : todayStr;
+          const purchaseD = new Date(purchaseDate + "T00:00:00");
+          let yearOffset = 1;
+          let ds = getLocalDateString(addMonthsClamped(purchaseD, yearOffset * 12));
+          while (ds <= couponEnd) {
+            cashFlows.push({
+              date: ds,
+              amount: annualCoupon,
+              type: "SGB Coupon Payment",
+              note: "2.5% Annual SGB Inflow",
+            });
+            yearOffset++;
+            ds = getLocalDateString(addMonthsClamped(purchaseD, yearOffset * 12));
+          }
+        }
+      }
+
+      cashFlows.push({
+        date: todayStr,
+        amount: currentVal,
+        type: "Current Market Valuation",
+        note: `Valued @ ₹${goldPricePerGram}/g`,
+      });
+
+      const xirr = calcXIRR(cashFlows);
+      results.push({
+        id: g.id || `gold-${g.name || g.type}-${purchaseDate}`,
+        name: g.name || `${g.type === "sgb" ? "SGB" : "Gold"} (${grams}g)`,
+        type: "Gold & SGB",
+        assetCategory: "Commodities",
+        icon: Gem,
+        color: THEME.gold,
+        invested,
+        currentValue: currentVal,
+        startDate: purchaseDate,
+        endDate: todayStr,
+        xirr,
+        cashFlows,
+        status: "active",
+        owner: g.owner || "self",
+        raw: g,
       });
     });
 

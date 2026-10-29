@@ -192,11 +192,20 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
       .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
   }, [state.taxPayments, fy]);
 
-  const advanceTaxPaid = useMemo(() => {
-    return (state.taxPayments || [])
-      .filter((t: any) => t.fy === fy && (t.taxType === "Advance Tax" || t.type === "Advance Tax" || t.taxType === "Advance" || t.type === "Advance"))
-      .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+  const advanceTaxEntries = useMemo(() => {
+    return (state.taxPayments || []).filter(
+      (t: any) =>
+        t.fy === fy &&
+        (t.taxType === "Advance Tax" ||
+          t.type === "Advance Tax" ||
+          t.taxType === "Advance" ||
+          t.type === "Advance")
+    );
   }, [state.taxPayments, fy]);
+
+  const advanceTaxPaid = useMemo(() => {
+    return advanceTaxEntries.reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+  }, [advanceTaxEntries]);
 
   const isSec208Exempt = taxLiability - tdsPaid < 10000;
   const netTaxDue = Math.max(0, taxLiability - tdsPaid);
@@ -229,7 +238,11 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
       // Minimum safe thresholds: Q1: 12% (instead of 15%), Q2: 36% (instead of 45%), Q3: 75%, Q4: 100%
       const safeThresholdPct = idx === 0 ? 12 : idx === 1 ? 36 : q.cumPct;
       const safeThresholdAmt = (netTaxDue * safeThresholdPct) / 100;
-      const shortfall = isPast && netTaxDue >= 10000 ? Math.max(0, qRequiredCum - totalPaid) : 0;
+      const paidByQuarter = advanceTaxEntries
+        .filter((p: any) => !p.date || p.date <= deadlineFull)
+        .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+      const isSafeHarborMet = (idx === 0 || idx === 1) && paidByQuarter >= safeThresholdAmt;
+      const shortfall = isPast && netTaxDue >= 10000 && !isSafeHarborMet ? Math.max(0, qRequiredCum - paidByQuarter) : 0;
       const interest234C = shortfall > 0 ? Math.round(shortfall * 0.01 * q.monthsInterest) : 0;
       sum234C += interest234C;
 
@@ -241,6 +254,9 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
         deadlineFull,
         daysLeft,
         isPast,
+        paidByQuarter,
+        isSafeHarborMet,
+        safeThresholdPct,
         shortfall,
         interest234C,
       };

@@ -14,6 +14,8 @@ import {
   today,
   monthsBetween,
   rdMaturity,
+  rdElapsed,
+  isDepositClosed,
   calculateEpfBalance,
   loanOutstanding,
   loanGivenOutstanding,
@@ -99,17 +101,15 @@ export const SolvencyScorecard: React.FC<SolvencyScorecardProps> = ({ state, met
       (sum: number, b: any) => sum + Number(b.balance || 0),
       0
     );
-    const fdVal = (state.fixedDeposits || []).reduce(
-      (sum: number, f: any) => sum + Number(f.principal || 0),
-      0
-    );
+    const fdVal = (state.fixedDeposits || []).reduce((sum: number, f: any) => {
+      if (isDepositClosed(f)) return sum;
+      return sum + Number(f.principal || 0);
+    }, 0);
     const rdVal = (state.recurringDeposits || []).reduce((sum: number, r: any) => {
       if (r.payoutStatus === "credited" || r.status === "closed") return sum;
       const monthly = Number(r.monthly || 0);
       const rate = Number(r.rate || 0);
-      const elapsed = r.startDate
-        ? Math.min(Number(r.tenureMonths || 0), Math.max(0, monthsBetween(r.startDate, today())))
-        : Number(r.tenureMonths || 12);
+      const elapsed = rdElapsed(r, today());
       return sum + (rate > 0 ? rdMaturity(monthly, rate, elapsed) : monthly * elapsed);
     }, 0);
     const prepaidVal = (state.prepaidCards || [])
@@ -201,11 +201,18 @@ export const SolvencyScorecard: React.FC<SolvencyScorecardProps> = ({ state, met
     // 4. Real Assets & Receivables
     const realEstateVal = (state.realEstateProperties || [])
       .filter((r: any) => r.status !== "sold")
-      .reduce(
-        (sum: number, r: any) =>
-          sum + Number(r.marketValue || r.agreementValue || r.propertyValue || r.purchasePrice || 0),
-        0
-      );
+      .reduce((sum: number, r: any) => {
+        const val = Number(r.marketValue || r.agreementValue || r.propertyValue || r.purchasePrice || 0);
+        const owners = Array.isArray(r.owners) ? r.owners : null;
+        const share =
+          owners && owners.length > 0
+            ? owners.reduce(
+                (acc: number, o: any) => (o?.id !== "external" ? acc + Number(o.sharePct || 0) : acc),
+                0
+              ) / 100
+            : 1;
+        return sum + val * share;
+      }, 0);
     const rentalPropVal = (state.rentalProperties || []).reduce(
       (sum: number, r: any) => sum + Number(r.propertyValue || 0),
       0
@@ -216,10 +223,10 @@ export const SolvencyScorecard: React.FC<SolvencyScorecardProps> = ({ state, met
     );
     const receivablesVal =
       (state.loansGiven || []).reduce((sum: number, l: any) => sum + loanGivenOutstanding(l), 0) +
-      (state.informalLent || []).reduce((sum: number, i: any) => {
-        const calc = informalPersonOutstanding(i);
-        return sum + (calc > 0 ? calc : Number(i.outstanding ?? i.amount ?? 0));
-      }, 0) +
+      (state.informalLent || []).reduce(
+        (sum: number, i: any) => sum + informalPersonOutstanding(i),
+        0
+      ) +
       (state.rentedProperties || []).reduce((sum: number, rp: any) => {
         const actual =
           rp.depositTransactions && rp.depositTransactions.length > 0
@@ -237,16 +244,50 @@ export const SolvencyScorecard: React.FC<SolvencyScorecardProps> = ({ state, met
       (state.creditCards || [])
         .filter((c: any) => (c.status || "").toLowerCase() !== "closed")
         .reduce((sum: number, c: any) => sum + getCcOutstanding(c), 0) +
-      (state.informalBorrowed || []).reduce((sum: number, i: any) => {
-        const calc = informalPersonOutstanding(i);
-        return sum + (calc > 0 ? calc : Number(i.outstanding || i.amount || 0));
+      (state.informalBorrowed || []).reduce(
+        (sum: number, i: any) => sum + informalPersonOutstanding(i),
+        0
+      );
+
+    const rentalDepositLiability = (state.rentalProperties || []).reduce((s: number, p: any) => {
+      const actualDeposit =
+        p.depositTransactions && p.depositTransactions.length > 0
+          ? p.depositTransactions.reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0)
+          : Number(p.securityDeposit || 0);
+      const deducted = (p.depositDeductions || []).reduce(
+        (a: number, d: any) => a + Number(d.amount || 0),
+        0
+      );
+      const returned = Number(p.depositReturned || 0);
+      return s + Math.max(0, actualDeposit - deducted - returned);
+    }, 0);
+
+    const realEstateOutstanding = (state.realEstateProperties || [])
+      .filter((p: any) => p.status === "under-construction")
+      .reduce((total: number, p: any) => {
+        const demanded = (state.realEstateDemands || [])
+          .filter((d: any) => d.propertyId === p.id)
+          .reduce((s: number, d: any) => s + Number(d.totalAmount || d.amount || 0), 0);
+        const paid = (state.realEstatePayments || [])
+          .filter((pm: any) => pm.propertyId === p.id)
+          .reduce((s: number, pm: any) => s + Number(pm.amount || 0), 0);
+        const owners = Array.isArray(p.owners) ? p.owners : null;
+        const share =
+          owners && owners.length > 0
+            ? owners.reduce(
+                (acc: number, o: any) => (o?.id !== "external" ? acc + Number(o.sharePct || 0) : acc),
+                0
+              ) / 100
+            : 1;
+        return total + Math.max(0, demanded - paid) * share;
       }, 0);
 
     const totalLongTermDebt = (state.loansTaken || []).reduce(
       (sum: number, l: any) => sum + loanOutstanding(l),
       0
     );
-    const totalLiabilities = shortTermLiabilities + totalLongTermDebt;
+    const totalLiabilities =
+      shortTermLiabilities + totalLongTermDebt + rentalDepositLiability + realEstateOutstanding;
 
     const netWorth = totalGrossAssets - totalLiabilities;
 

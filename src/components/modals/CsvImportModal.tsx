@@ -3,7 +3,7 @@ import { Download, Upload, Zap, FileText, CheckCircle, AlertTriangle, Loader2 } 
 import { Modal, ModalActions } from "../ui/Modal";
 import { SkeletonTableRows } from "../ui/Skeleton";
 import { THEME } from "../../utils/constants";
-import { fmtINRFull } from "../../utils/finance";
+import { fmtINRFull, getLocalDateString } from "../../utils/finance";
 import { Money } from "../ui/Money";
 import { usePrivacy } from "../../context/PrivacyContext";
 
@@ -187,7 +187,7 @@ const parseSmartDate = (dateStr: string): string | null => {
 
   // Fallback: try native Date parse
   const parsed = new Date(dateStr.trim());
-  if (!isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  if (!isNaN(parsed.getTime())) return getLocalDateString(parsed);
   return null;
 };
 

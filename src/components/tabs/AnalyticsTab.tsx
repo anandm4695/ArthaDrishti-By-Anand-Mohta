@@ -574,6 +574,7 @@ interface AnalyticsTabProps {
   trendData: any[];
   setState: any;
   marketData?: any;
+  mfMarketData?: any;
   marketDataTs?: number | null;
   updateMasterData?: any;
   updateItem?: any;
@@ -670,6 +671,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
   trendData,
   setState,
   marketData,
+  mfMarketData,
   marketDataTs,
   updateMasterData,
   updateItem,
@@ -1345,11 +1347,19 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
 
       case "Mutual Funds":
         return (state.mutualFunds || [])
-          .map((m: any) => ({
-            name: m.name || "Mutual Fund",
-            sub: `${Number(m.units || 0).toFixed(3)} units @ Nav ${privacyMode ? "••••" : fmtINRFull(Number(m.currentNav || 0))}`,
-            value: Number(m.units || 0) * Number(m.currentNav || 0),
-          }))
+          .map((m: any) => {
+            const liveNav = Number(mfMarketData?.[m.mfCode]?.nav ?? m.currentNav ?? 0);
+            const fallbackNav =
+              liveNav ||
+              Number(m.buyNav || 0) ||
+              (Number(m.units || 1) > 0 ? Number(m.invested || 0) / Number(m.units || 1) : 0);
+            const val = Number(m.units || 0) * fallbackNav || Number(m.invested || 0);
+            return {
+              name: m.name || m.scheme || "Mutual Fund",
+              sub: `${Number(m.units || 0).toFixed(3)} units @ Nav ${privacyMode ? "••••" : fmtINRFull(fallbackNav)}`,
+              value: val,
+            };
+          })
           .sort((a: any, b: any) => b.value - a.value);
 
       case "Stocks":

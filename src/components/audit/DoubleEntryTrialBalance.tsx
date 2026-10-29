@@ -13,7 +13,8 @@ import {
   fmtINRFull,
   exportArrayToCSV,
   today,
-  monthsBetween,
+  isDepositClosed,
+  rdElapsed,
   rdMaturity,
   calculateEpfBalance,
   loanOutstanding,
@@ -31,6 +32,7 @@ import { Money } from "../ui/Money";
 interface DoubleEntryTrialBalanceProps {
   state: any;
   metrics: any;
+  marketData?: any;
   setTab?: (tab: string) => void;
   showToast?: (msg: string, type?: string) => void;
 }
@@ -66,6 +68,7 @@ function realEstateTrackedShare(property: any): number {
 export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = ({
   state,
   metrics,
+  marketData,
   setTab,
   showToast,
 }) => {
@@ -142,6 +145,7 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
 
     // 3. FIXED & RECURRING DEPOSITS (Asset -> Debit)
     (state.fixedDeposits || []).forEach((fd: any, idx: number) => {
+      if (isDepositClosed(fd)) return;
       const amt = Number(fd.principal || 0);
       list.push({
         id: fd.id || `fd-${idx}`,
@@ -161,12 +165,10 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     });
 
     (state.recurringDeposits || []).forEach((rd: any, idx: number) => {
-      if (rd.payoutStatus === "credited" || rd.status === "closed") return;
+      if (isDepositClosed(rd)) return;
       const monthly = Number(rd.monthly || 0);
       const rate = Number(rd.rate || 0);
-      const elapsed = rd.startDate
-        ? Math.min(Number(rd.tenureMonths || 0), Math.max(0, monthsBetween(rd.startDate, today())))
-        : Number(rd.tenureMonths || 12);
+      const elapsed = rdElapsed(rd, today());
       const amt = rate > 0 ? rdMaturity(monthly, rate, elapsed) : monthly * elapsed;
       list.push({
         id: rd.id || `rd-${idx}`,
@@ -216,9 +218,12 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     let totalStockVal = 0;
     let totalStockCost = 0;
     (state.stocks || []).forEach((s: any) => {
-      const cur = Number(s.currentPrice || s.avgPrice || 0) * Number(s.qty || 0);
+      const yfSym = `${(s.symbol || "").replace(/\.(NS|BO)$/i, "")}.${(s.exchange || "NSE") === "BSE" ? "BO" : "NS"}`;
+      const livePrice = marketData?.[yfSym]?.price ?? Number(s.currentPrice || 0);
+      const fallbackPrice = livePrice || Number(s.avgPrice || 0);
+      const val = fallbackPrice * Number(s.qty || 0);
       const cost = Number(s.avgPrice || 0) * Number(s.qty || 0);
-      totalStockVal += cur;
+      totalStockVal += val;
       totalStockCost += cost;
     });
     if (totalStockVal > 0 || (state.stocks || []).length > 0) {
@@ -344,7 +349,7 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     });
 
     (state.govtSchemes || []).forEach((sc: any, idx: number) => {
-      const bal = Number(sc.currentBalance || sc.investedAmount || 0);
+      const bal = Number(sc.currentBalance || 0);
       list.push({
         id: sc.id || `govt-${idx}`,
         code: `1460-${String(idx + 1).padStart(2, "0")}`,
@@ -408,10 +413,7 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     (state.goldHoldings || []).forEach((g: any, idx: number) => {
       const grams = Number(g.grams || g.weightGrams || 0);
       const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
-      const val =
-        Number(g.currentValue || 0) > 0
-          ? Number(g.currentValue)
-          : grams * goldPrice * purityMul;
+      const val = grams * goldPrice * purityMul;
       list.push({
         id: g.id || `gold-${idx}`,
         code: `1500-${String(idx + 1).padStart(2, "0")}`,
@@ -547,8 +549,7 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     });
 
     (state.informalLent || []).forEach((i: any, idx: number) => {
-      const calcOut = informalPersonOutstanding(i);
-      const out = calcOut > 0 ? calcOut : Number(i.outstanding ?? i.amount ?? 0);
+      const out = informalPersonOutstanding(i);
       list.push({
         id: i.id || `inf-lent-${idx}`,
         code: `1850-${String(idx + 1).padStart(2, "0")}`,
@@ -622,8 +623,7 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
       });
 
     (state.informalBorrowed || []).forEach((i: any, idx: number) => {
-      const calcOut = informalPersonOutstanding(i);
-      const out = calcOut > 0 ? calcOut : Number(i.outstanding ?? i.amount ?? 0);
+      const out = informalPersonOutstanding(i);
       list.push({
         id: i.id || `inf-borr-${idx}`,
         code: `2200-${String(idx + 1).padStart(2, "0")}`,
@@ -748,7 +748,7 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
       },
       anomalies: detectedAnomalies,
     };
-  }, [state]);
+  }, [state, marketData]);
 
   // Unique Owners for Owner Filter
   const availableOwners = useMemo(() => {

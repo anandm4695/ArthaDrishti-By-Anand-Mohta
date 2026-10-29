@@ -166,7 +166,7 @@ export function useSearch(state: any, search: string): SearchResult[] {
           type: "Govt Scheme",
           name: label,
           detail: fmtINRFull(sc.currentBalance || sc.investedAmount || 0),
-          tab: "investments",
+          tab: "govtschemes",
         });
       }
     });
@@ -336,7 +336,7 @@ export function useSearch(state: any, search: string): SearchResult[] {
           type: "Health Insurance",
           name: hName || "Health Policy",
           detail: fmtINRFull(h.sumInsured || h.coverAmount || 0),
-          tab: "insurance",
+          tab: "healthinsurance",
         });
       }
     });

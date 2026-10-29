@@ -3,6 +3,7 @@ import {
   fmtINR,
   fmtINRFull,
   today,
+  getLocalDateString,
   monthsBetween,
   getCCDueDate,
   calcTaxNewByFY,
@@ -542,7 +543,7 @@ export function useAlerts(state: any, metrics: any, marketData?: Record<string, 
         seenExDate.add(yfSym);
         const exTs = marketData[yfSym]?.exDividendDate;
         if (!exTs) return;
-        const exDate = new Date(Number(exTs) * 1000).toISOString().slice(0, 10);
+        const exDate = getLocalDateString(new Date(Number(exTs) * 1000));
         const days = Math.ceil(
           (new Date(exDate + "T00:00:00").getTime() - new Date(today() + "T00:00:00").getTime()) /
             86400000
