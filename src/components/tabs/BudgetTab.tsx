@@ -66,7 +66,13 @@ import {
   Cell,
 } from "recharts";
 import { THEME } from "../../utils/constants";
-import { fmtINR, fmtINRFull, today, getEffectiveRent } from "../../utils/finance";
+import {
+  fmtINR,
+  fmtINRFull,
+  today,
+  getEffectiveRent,
+  getMonthCategorySpending,
+} from "../../utils/finance";
 import { useMasterData, formatProfileOption } from "../../utils/masterData";
 import { Modal, ModalActions } from "../ui/Modal";
 import { Drawer } from "../ui/Drawer";
@@ -430,74 +436,18 @@ export function BudgetTab({
     return date.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
   }, [selectedMonth]);
 
-  // Compute month spending dynamically based on selected month
-  const monthSpending = useMemo(() => {
-    const spending = state.transactions
-      .filter(
-        (t: any) =>
-          t.date &&
-          t.date.startsWith(selectedMonth) &&
-          t.type === "debit" &&
-          t.category !== "Transfer" &&
-          t.category !== "Self Transfer" &&
-          t.category !== "Self-Transfer"
-      )
-      .reduce((acc: any, t: any) => {
-        const cat = t.category || "Uncategorized";
-        acc[cat] = (acc[cat] || 0) + Number(t.amount || 0);
-        return acc;
-      }, {});
-
-    const rentPaidThisMonth = (state.rentedProperties || []).reduce((sum: number, p: any) => {
-      const paymentsThisMonth = (p.payments || [])
-        .filter((pay: any) => pay.date && pay.date.startsWith(selectedMonth))
-        .reduce((s: number, pay: any) => s + Number(pay.amount || 0), 0);
-      return sum + paymentsThisMonth;
-    }, 0);
-
-    if (rentPaidThisMonth > 0 && !spending["Rent"]) {
-      spending["Rent"] = rentPaidThisMonth;
-    }
-
-    return spending;
-  }, [state.transactions, state.rentedProperties, selectedMonth]);
+  // Compute month spending dynamically based on selected month (bank + card purchases)
+  const monthSpending = useMemo(
+    () => getMonthCategorySpending(state, selectedMonth),
+    [state.transactions, state.rentedProperties, state.creditCards, selectedMonth]
+  );
 
   // Previous month spending for MoM comparisons
   const prevMonthSpending = useMemo(() => {
     const [y, m] = selectedMonth.split("-").map(Number);
-    let pm = m - 1,
-      py = y;
-    if (pm < 1) {
-      pm = 12;
-      py = y - 1;
-    }
-    const prevMonthStr = `${py}-${String(pm).padStart(2, "0")}`;
-    const spending = state.transactions
-      .filter(
-        (t: any) =>
-          t.date &&
-          t.date.startsWith(prevMonthStr) &&
-          t.type === "debit" &&
-          t.category !== "Transfer" &&
-          t.category !== "Self Transfer" &&
-          t.category !== "Self-Transfer"
-      )
-      .reduce((acc: any, t: any) => {
-        const cat = t.category || "Uncategorized";
-        acc[cat] = (acc[cat] || 0) + Number(t.amount || 0);
-        return acc;
-      }, {});
-    const prevRent = (state.rentedProperties || []).reduce((sum: number, p: any) => {
-      return (
-        sum +
-        (p.payments || [])
-          .filter((pay: any) => pay.date && pay.date.startsWith(prevMonthStr))
-          .reduce((s: number, pay: any) => s + Number(pay.amount || 0), 0)
-      );
-    }, 0);
-    if (prevRent > 0 && !spending["Rent"]) spending["Rent"] = prevRent;
-    return spending;
-  }, [state.transactions, state.rentedProperties, selectedMonth]);
+    const prev = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
+    return getMonthCategorySpending(state, prev);
+  }, [state.transactions, state.rentedProperties, state.creditCards, selectedMonth]);
 
   // 3-Month Historical Spending Average per Category
   const historicalAverages = useMemo(() => {
@@ -513,18 +463,13 @@ export function BudgetTab({
       prevMonths.push(`${py}-${String(pm).padStart(2, "0")}`);
     }
 
-    const catTotals: Record<string, { total: number; count: number; byMonth: Record<string, number> }> = {};
-    state.transactions.forEach((t: any) => {
-      if (!t.date || t.type !== "debit") return;
-      const tMonth = t.date.slice(0, 7);
-      if (prevMonths.includes(tMonth)) {
-        const cat = t.category || "Uncategorized";
-        if (!catTotals[cat]) {
-          catTotals[cat] = { total: 0, count: 0, byMonth: {} };
-        }
-        catTotals[cat].total += Number(t.amount || 0);
-        catTotals[cat].byMonth[tMonth] = (catTotals[cat].byMonth[tMonth] || 0) + Number(t.amount || 0);
-      }
+    const catTotals: Record<string, { total: number; byMonth: Record<string, number> }> = {};
+    prevMonths.forEach((pm) => {
+      Object.entries(getMonthCategorySpending(state, pm)).forEach(([cat, amt]) => {
+        if (!catTotals[cat]) catTotals[cat] = { total: 0, byMonth: {} };
+        catTotals[cat].total += amt;
+        catTotals[cat].byMonth[pm] = amt;
+      });
     });
 
     const result: Record<string, { avg: number; byMonth: Record<string, number> }> = {};
@@ -535,7 +480,7 @@ export function BudgetTab({
       };
     });
     return { averages: result, prevMonths };
-  }, [state.transactions, selectedMonth]);
+  }, [state.transactions, state.rentedProperties, state.creditCards, selectedMonth]);
 
   // Month-Wise Budget Selection & Inheritance Logic
   const { budgetsToUse, isInherited, inheritedFrom } = useMemo(() => {
@@ -1045,16 +990,30 @@ export function BudgetTab({
   // Category Detail Transactions
   const categoryTransactions = useMemo(() => {
     if (!selectedCategoryDetail) return [];
-    return state.transactions
-      .filter(
-        (t: any) =>
-          t.date &&
-          t.date.startsWith(selectedMonth) &&
-          t.type === "debit" &&
-          (t.category || "Uncategorized") === selectedCategoryDetail
-      )
-      .sort((a: any, b: any) => (b.date || "").localeCompare(a.date || ""));
-  }, [state.transactions, selectedCategoryDetail, selectedMonth]);
+    const inCategory = (t: any) =>
+      t.date &&
+      String(t.date).startsWith(selectedMonth) &&
+      (t.category || "Uncategorized") === selectedCategoryDetail;
+    const bankRows = state.transactions.filter((t: any) => t.type === "debit" && inCategory(t));
+    // Card purchases count toward budgets too (see getMonthCategorySpending).
+    const cardRows = (state.creditCards || []).flatMap((c: any) =>
+      (c.transactions || [])
+        .filter(
+          (t: any) =>
+            inCategory(t) && t.category !== "Payment" && t.merchant !== "Opening Balance"
+        )
+        .map((t: any) => ({
+          ...t,
+          id: `${c.id}:${t.id}`,
+          note: [t.merchant, t.note].filter(Boolean).join(" — ") || "Card purchase",
+          amount: Number(t.amount || 0),
+          sourceLabel: `${c.issuer || c.name || "Card"}${c.last4 ? ` •••• ${c.last4}` : ""}`,
+        }))
+    );
+    return [...bankRows, ...cardRows].sort((a: any, b: any) =>
+      (b.date || "").localeCompare(a.date || "")
+    );
+  }, [state.transactions, state.creditCards, selectedCategoryDetail, selectedMonth]);
 
   const filteredCategoryTransactions = useMemo(() => {
     if (!drawerSearch.trim()) return categoryTransactions;
@@ -3348,7 +3307,7 @@ export function BudgetTab({
                         border: "1px dashed var(--t-line)",
                       }}
                     >
-                      No debit transactions recorded for this category in {selectedMonthLabel}.
+                      No bank or card spending recorded for this category in {selectedMonthLabel}.
                     </div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -3382,10 +3341,10 @@ export function BudgetTab({
                                 }}
                               >
                                 <span>{fmtDate(t.date)}</span>
-                                {bank && (
+                                {(bank?.bankName || t.sourceLabel) && (
                                   <>
                                     <span>·</span>
-                                    <span>{bank.bankName}</span>
+                                    <span>{bank?.bankName || t.sourceLabel}</span>
                                   </>
                                 )}
                               </div>

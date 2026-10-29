@@ -839,13 +839,33 @@ function computeSummary(state, refDate = new Date()) {
   const monthElapsedPct = Math.min(100, Math.round((dayOfMonth / totalDaysInMonth) * 100));
 
   // ── Top spending categories this month ────────────────────────────────────
+  // Accrual basis, mirroring getMonthCategorySpending in src/utils/finance.ts: card
+  // purchases count under their own category, and the bank debit that pays the card
+  // bill is dropped (it only settles the card) when card charges are being recorded.
+  const isCardCharge = (t) =>
+    t && t.category !== "Payment" && t.merchant !== "Opening Balance" && !String(t.id || "").startsWith("ob-");
+  const cardsList = state.creditCards || [];
+  const tracksCardCharges = cardsList.some((c) =>
+    (c.transactions || []).some((t) => isCardCharge(t) && Number(t.amount) > 0)
+  );
   const catMap = {};
   monthTxns
     .filter((t) => t.type === "debit" && !isTransferCat(t.category) && t.category !== "Investment")
+    .filter((t) => !(tracksCardCharges && (t.linkedType === "creditCards" || t.category === "Credit Card")))
     .forEach((t) => {
       const cat = t.category || "Other";
       catMap[cat] = (catMap[cat] || 0) + Math.abs(Number(t.amount) || 0);
     });
+  cardsList.forEach((c) => {
+    (c.transactions || []).forEach((t) => {
+      if (!t.date || !String(t.date).startsWith(curYm) || !isCardCharge(t)) return;
+      const cat = t.category || "Other";
+      catMap[cat] = (catMap[cat] || 0) + Number(t.amount || 0);
+    });
+  });
+  Object.keys(catMap).forEach((k) => {
+    if (catMap[k] <= 0) delete catMap[k];
+  });
   const topCats = Object.entries(catMap)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)

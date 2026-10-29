@@ -494,6 +494,62 @@ export const getCCDueDate = (c: any, referenceDate?: Date): string | null => {
   return null;
 };
 
+const SELF_TRANSFER_CATEGORIES = new Set(["Transfer", "Self Transfer", "Self-Transfer"]);
+
+const isCardCharge = (t: any): boolean =>
+  !!t &&
+  t.category !== "Payment" &&
+  t.merchant !== "Opening Balance" &&
+  !String(t.id || "").startsWith("ob-");
+
+// Spending by category for a month (YYYY-MM), on an accrual basis: a purchase counts
+// when it is made, whichever account paid. Card charges are taken from each card's own
+// ledger (refunds net off their category); the bank debit that later pays the card bill
+// only settles that liability, so it is dropped — but only for users who actually
+// record card charges, otherwise the bill payment is the sole record of that spend.
+export const getMonthCategorySpending = (state: any, ym: string): Record<string, number> => {
+  const cards = state?.creditCards || [];
+  const tracksCardCharges = cards.some((c: any) =>
+    (c.transactions || []).some((t: any) => isCardCharge(t) && Number(t.amount) > 0)
+  );
+  const isCardSettlement = (t: any) =>
+    t.linkedType === "creditCards" || (t.category === "Credit Card" && tracksCardCharges);
+
+  const spending: Record<string, number> = {};
+  const add = (cat: string, amt: number) => {
+    spending[cat] = (spending[cat] || 0) + amt;
+  };
+
+  (state?.transactions || []).forEach((t: any) => {
+    if (!t.date || !t.date.startsWith(ym) || t.type !== "debit") return;
+    if (SELF_TRANSFER_CATEGORIES.has(t.category)) return;
+    if (tracksCardCharges && isCardSettlement(t)) return;
+    add(t.category || "Uncategorized", Number(t.amount || 0));
+  });
+
+  cards.forEach((c: any) => {
+    (c.transactions || []).forEach((t: any) => {
+      if (!t.date || !String(t.date).startsWith(ym) || !isCardCharge(t)) return;
+      add(t.category || "Uncategorized", Number(t.amount || 0));
+    });
+  });
+
+  const rentPaid = (state?.rentedProperties || []).reduce(
+    (sum: number, p: any) =>
+      sum +
+      (p.payments || [])
+        .filter((pay: any) => pay.date && pay.date.startsWith(ym))
+        .reduce((s: number, pay: any) => s + Number(pay.amount || 0), 0),
+    0
+  );
+  if (rentPaid > 0 && !spending["Rent"]) spending["Rent"] = rentPaid;
+
+  Object.keys(spending).forEach((k) => {
+    if (spending[k] <= 0) delete spending[k];
+  });
+  return spending;
+};
+
 export const autoCateg = (note: string): string | null => {
   if (!note) return null;
   const n = note.toLowerCase();
