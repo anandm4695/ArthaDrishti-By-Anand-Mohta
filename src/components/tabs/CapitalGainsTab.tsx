@@ -9,6 +9,7 @@ import {
   BarChart3,
   Scissors,
   Shield,
+  ShieldCheck,
   IndianRupee,
   Info,
   Search,
@@ -41,6 +42,7 @@ import { Modal, ModalActions } from "../ui/Modal";
 import { EmptyState } from "../ui/EmptyState";
 import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 import { TaxSuiteHeader } from "../tax/TaxSuiteHeader";
+import { CapitalGainsExemptionStudio } from "../tax/CapitalGainsExemptionStudio";
 
 /* ══════════════════════════════════════════════════════════════════
    CONSTANTS & HELPERS
@@ -726,7 +728,7 @@ export const CapitalGainsTab = ({
 
   // Sub-navigation workspace views
   const [activeView, setActiveView] = useState<
-    "overview" | "ledger" | "unrealized" | "harvesting" | "calculator" | "rules"
+    "overview" | "ledger" | "unrealized" | "harvesting" | "exemptions" | "calculator" | "rules"
   >("overview");
 
   // Filter & Search states for Ledger
@@ -1492,6 +1494,11 @@ export const CapitalGainsTab = ({
               harvestingCalculations.totalPotentialSavings > 0
                 ? `Save ₹${Math.round(harvestingCalculations.totalPotentialSavings / 1000)}k`
                 : undefined,
+          },
+          {
+            id: "exemptions",
+            label: "Sec 54 / 54EC / 54F Exemption Studio",
+            icon: ShieldCheck,
           },
           { id: "calculator", label: "What-If Simulator", icon: Calculator },
           { id: "rules", label: "Tax Rules & Guide", icon: BookOpen },
@@ -3121,7 +3128,22 @@ export const CapitalGainsTab = ({
       )}
 
       {/* ═════════════════════════════════════════════════════════════
-         VIEW 5: CAPITAL GAINS WHAT-IF SIMULATOR
+         VIEW 5: STATUTORY CAPITAL GAINS EXEMPTION STUDIO (SEC 54 / 54EC / 54F / CGAS)
+         ═════════════════════════════════════════════════════════════ */}
+      {activeView === "exemptions" && (
+        <CapitalGainsExemptionStudio
+          state={state}
+          currentFYLTCG={Math.max(
+            0,
+            Number(byType?.totals?.EQUITY_LTCG || 0) + Number(byType?.totals?.DEBT_LTCG || 0)
+          )}
+          showToast={showToast}
+          setTab={setTab}
+        />
+      )}
+
+      {/* ═════════════════════════════════════════════════════════════
+         VIEW 6: CAPITAL GAINS WHAT-IF SIMULATOR
          ═════════════════════════════════════════════════════════════ */}
       {activeView === "calculator" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

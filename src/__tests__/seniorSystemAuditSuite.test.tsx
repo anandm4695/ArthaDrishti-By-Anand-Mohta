@@ -13,6 +13,7 @@ import {
 import { SmartAlertsTab } from "../components/tabs/SmartAlertsTab";
 import { TaxFilingHelperTab } from "../components/tabs/TaxFilingHelperTab";
 import { SftTaxRadar } from "../components/audit/SftTaxRadar";
+import { DoubleEntryTrialBalance } from "../components/audit/DoubleEntryTrialBalance";
 import { DataTable, Column } from "../components/design-system/DataTable";
 import { PrivacyProvider } from "../context/PrivacyContext";
 
@@ -584,5 +585,44 @@ describe("Senior Accountant Audit: Section 70 Capital Gains Loss Set-Off & Carry
     const autoSenior = getAutoDetectedDeductions(seniorState, "2025-26");
     expect(autoSenior.d80TTA).toBe(38000); // 3,000 + 35,000
     expect(autoSenior.d80TTA_source).toContain("80TTB");
+  });
+
+  it("DoubleEntryTrialBalance renders Auditor Statement Certificate action and displays corrective journal entries for anomalies", () => {
+    const showToast = vi.fn();
+    const mockState = {
+      bankAccounts: [
+        { id: "b1", bankName: "SBI", type: "Savings", balance: -25000, owner: "self" },
+      ],
+      loansGiven: [
+        { id: "lg1", borrower: "Tech Startup", principal: 100000, amountPaidBack: 0, dueDate: "2024-01-01", owner: "self" },
+      ],
+      creditCards: [],
+      stocks: [],
+      mutualFunds: [],
+    };
+
+    render(
+      <DoubleEntryTrialBalance
+        state={mockState}
+        metrics={{ netWorth: 75000 }}
+        showToast={showToast}
+      />
+    );
+
+    // Verify copy auditor certificate button exists
+    const copyCertBtn = screen.getByText(/Copy Auditor Certificate/i);
+    expect(copyCertBtn).toBeInTheDocument();
+
+    // Verify the anomalies header
+    expect(screen.getByText(/Ledger Exception & Audit Observations/i)).toBeInTheDocument();
+
+    // Toggle Corrective Journal Entries
+    const toggleBtn = screen.getByText(/Show Corrective Journal Entries/i);
+    expect(toggleBtn).toBeInTheDocument();
+    fireEvent.click(toggleBtn);
+
+    // Check that standard Ind AS / Double-Entry journal adjustments appear
+    expect(screen.getByText(/Bank Charges & Overdraft Interest/i)).toBeInTheDocument();
+    expect(screen.getByText(/Provision for Doubtful Debts/i)).toBeInTheDocument();
   });
 });

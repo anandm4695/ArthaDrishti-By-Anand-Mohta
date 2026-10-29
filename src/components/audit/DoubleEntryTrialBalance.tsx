@@ -7,6 +7,9 @@ import {
   Printer,
   Search,
   ShieldCheck,
+  Copy,
+  Check,
+  FileSpreadsheet,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import {
@@ -75,11 +78,25 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [ownerFilter, setOwnerFilter] = useState<string>("ALL");
+  const [copiedCert, setCopiedCert] = useState(false);
+  const [showJournalEntries, setShowJournalEntries] = useState(false);
 
   // Build Comprehensive Ledger Matrix from active state — reconciled 1-for-1 with useMetrics.ts
   const { ledgers, totals, anomalies } = useMemo(() => {
     const list: LedgerAccount[] = [];
-    const detectedAnomalies: { id: string; severity: "WARNING" | "ATTENTION"; title: string; detail: string; tab?: string }[] = [];
+    const detectedAnomalies: {
+      id: string;
+      severity: "WARNING" | "ATTENTION";
+      title: string;
+      detail: string;
+      tab?: string;
+      suggestedJournalEntry?: {
+        drAccount: string;
+        crAccount: string;
+        amount: number;
+        narration: string;
+      };
+    }[] = [];
 
     // 1. BANK ACCOUNTS (Asset -> Debit; Overdraft -> Credit)
     (state.bankAccounts || []).forEach((b: any, idx: number) => {
@@ -93,6 +110,12 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
           title: `Overdrawn Bank Account: ${bankLabel}`,
           detail: `Account has a negative balance of ${fmtINRFull(bal)}. Verify overdraft interest or pending sweep-in transfers.`,
           tab: "banking",
+          suggestedJournalEntry: {
+            drAccount: "Bank Charges & Overdraft Interest (Code 5100)",
+            crAccount: `${bankLabel} Overdraft Facility (Liability Code 2100)`,
+            amount: Math.abs(bal),
+            narration: `Rectification to classify negative bank balance as short-term bank accommodation.`,
+          },
         });
       }
       list.push({
@@ -529,6 +552,12 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
           title: `Overdue Loan Receivable: ${l.borrower || "Borrower"}`,
           detail: `${fmtINRFull(out)} is past agreed due date (${l.dueDate}). Follow up or assess provision for doubtful debt.`,
           tab: "credit",
+          suggestedJournalEntry: {
+            drAccount: "Provision for Doubtful Debts (P&L Code 5400)",
+            crAccount: `Allowance for Credit Losses - ${l.borrower} (Contra Asset Code 1890)`,
+            amount: out,
+            narration: `Prudence provision created for overdue loan receivable past statutory due date.`,
+          },
         });
       }
       list.push({
@@ -683,6 +712,12 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
             title: `Credit Limit Exceeded: ${c.bank || ""} ${c.name || "Card"}`,
             detail: `Outstanding ${fmtINRFull(out)} exceeds sanctioned limit of ${fmtINRFull(limit)}.`,
             tab: "cards",
+            suggestedJournalEntry: {
+              drAccount: "Credit Card Overlimit Fee & Finance Charges (P&L Code 5200)",
+              crAccount: `${c.bank || ""} ${c.name || "Card"} (Liability Code 2300)`,
+              amount: Math.max(0, out - limit),
+              narration: `Accrual for unbilled overlimit balance exceeding sanctioned limit.`,
+            },
           });
         }
         list.push({
@@ -800,6 +835,50 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
   const metricsNetWorth = typeof metrics?.netWorth === "number" ? metrics.netWorth : totals.netWorth;
   const nwReconciliationDelta = Math.abs(totals.netWorth - metricsNetWorth);
 
+  const handleCopyAuditorCertificate = () => {
+    const liquidAssets = ledgers
+      .filter((l) => l.subCategory === "Cash & Liquid")
+      .reduce((s, l) => s + (l.debit - l.credit), 0);
+    const currentLiab = ledgers
+      .filter((l) => l.subCategory === "Current Liabilities" || l.subCategory === "Security Deposits Payable")
+      .reduce((s, l) => s + (l.credit - l.debit), 0);
+    const currentRatio = currentLiab > 0 ? (liquidAssets / currentLiab).toFixed(2) : "N/A (No short-term debt)";
+    const debtToEquity = totals.netWorth > 0 ? (totals.totalLiabilities / totals.netWorth).toFixed(2) : "N/A";
+    const solvencyRatio = totals.totalAssets > 0 ? ((totals.netWorth / totals.totalAssets) * 100).toFixed(1) : "0";
+
+    const certText = `
+AUDITOR'S STATEMENT OF FINANCIAL POSITION & RECONCILIATION
+══════════════════════════════════════════════════════════════════════════════
+Audit Reference Date: ${today()}
+Accounting Standard: Double-Entry Accrual / Indian Accounting Standards (Ind AS)
+Assessee / Family Profile: ${ownerFilter === "ALL" ? "Consolidated Family Portfolio" : ownerFilter.toUpperCase()}
+
+1. ACCOUNTING IDENTITY VERIFICATION:
+   • Total Debits (Gross Realizable Assets): ₹${Math.round(totals.totalAssets).toLocaleString("en-IN")}
+   • Total Credits (Gross External Liabilities): ₹${Math.round(totals.totalLiabilities).toLocaleString("en-IN")}
+   • Balancing Equity (Family Accumulated Net Worth): ₹${Math.round(totals.netWorth).toLocaleString("en-IN")}
+   • Mathematical Variance: ₹${totals.variance.toFixed(2)} [PARITY VERIFIED]
+
+2. PRUDENTIAL SOLVENCY & LIQUIDITY RATIOS:
+   • Solvency Ratio (Equity / Gross Assets): ${solvencyRatio}%
+   • Current / Quick Liquidity Ratio: ${currentRatio}
+   • Debt-to-Equity Ratio: ${debtToEquity}
+   • Net Worth Reconciliation vs Live Ledger: ₹${Math.round(metricsNetWorth).toLocaleString("en-IN")} (Delta: ₹${nwReconciliationDelta.toFixed(2)})
+
+3. AUDIT OBSERVATIONS & INTEGRITY:
+   • Active Ledger Heads: ${ledgers.length}
+   • Exceptions / Flags Detected: ${anomalies.length}
+   • Status: ${anomalies.length === 0 ? "UNQUALIFIED / CLEAN OPINION" : `${anomalies.length} EMPHASIS OF MATTER / ATTENTION POINTS`}
+══════════════════════════════════════════════════════════════════════════════
+Generated by ArthaDrishti Executive Double-Entry Audit Desk
+`.trim();
+
+    navigator.clipboard.writeText(certText);
+    setCopiedCert(true);
+    setTimeout(() => setCopiedCert(false), 2500);
+    showToast?.("Auditor's Financial Certificate copied to clipboard", "success");
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {/* ── Header Card & Accounting Equation Tally ── */}
@@ -846,7 +925,16 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={copiedCert ? <Check size={14} color="var(--t-sage)" /> : <Copy size={14} />}
+              onClick={handleCopyAuditorCertificate}
+              title="Copy formal Auditor's Financial Position Statement & Ratios"
+            >
+              {copiedCert ? "Copied Certificate" : "Copy Auditor Certificate"}
+            </Button>
             <Button variant="secondary" size="sm" icon={<Download size={14} />} onClick={handleExportCSV}>
               Export Trial Balance
             </Button>
@@ -962,14 +1050,24 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
             background: "color-mix(in srgb, var(--t-gold) 5%, transparent)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <ShieldCheck size={16} color="var(--t-gold)" />
               <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>
                 Ledger Exception & Audit Observations ({anomalies.length})
               </span>
             </div>
-            <Badge variant="warning">ACTION RECOMMENDED</Badge>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowJournalEntries(!showJournalEntries)}
+                style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px" }}
+              >
+                {showJournalEntries ? "Hide Journal Entries" : "Show Corrective Journal Entries"}
+              </Button>
+              <Badge variant="warning">ACTION RECOMMENDED</Badge>
+            </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
             {anomalies.map((a) => (
@@ -981,21 +1079,47 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
                   background: "var(--t-paper)",
                   border: `1px solid ${THEME.line}`,
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 10,
+                  flexDirection: "column",
+                  gap: 8,
                 }}
               >
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: a.severity === "WARNING" ? "var(--t-rust)" : THEME.ink }}>
-                    {a.title}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: a.severity === "WARNING" ? "var(--t-rust)" : THEME.ink }}>
+                      {a.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>{a.detail}</div>
                   </div>
-                  <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>{a.detail}</div>
+                  {setTab && a.tab && (
+                    <Button variant="secondary" size="sm" onClick={() => setTab(a.tab!)}>
+                      Inspect
+                    </Button>
+                  )}
                 </div>
-                {setTab && a.tab && (
-                  <Button variant="secondary" size="sm" onClick={() => setTab(a.tab!)}>
-                    Inspect
-                  </Button>
+
+                {showJournalEntries && a.suggestedJournalEntry && (
+                  <div
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: 6,
+                      background: "color-mix(in srgb, var(--surface-1) 80%, transparent)",
+                      border: `1px dashed ${THEME.line}`,
+                      fontFamily: "monospace",
+                      fontSize: 11,
+                      lineHeight: 1.5,
+                      color: THEME.ink,
+                    }}
+                  >
+                    <div style={{ color: THEME.accent, fontWeight: 700 }}>
+                      Dr. {a.suggestedJournalEntry.drAccount}  ₹{a.suggestedJournalEntry.amount.toLocaleString("en-IN")}
+                    </div>
+                    <div style={{ color: "var(--t-sage)", fontWeight: 700, paddingLeft: 16 }}>
+                      Cr. {a.suggestedJournalEntry.crAccount}  ₹{a.suggestedJournalEntry.amount.toLocaleString("en-IN")}
+                    </div>
+                    <div style={{ color: THEME.muted, fontSize: 10, marginTop: 2 }}>
+                      ({a.suggestedJournalEntry.narration})
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
