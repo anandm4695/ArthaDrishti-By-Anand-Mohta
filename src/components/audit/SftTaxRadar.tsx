@@ -1,10 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  ShieldAlert,
-  Download,
-  Info,
-  Search,
-} from "lucide-react";
+import { ShieldAlert, Download, Info, Search } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import {
   exportArrayToCSV,
@@ -39,7 +34,9 @@ export interface SftItem {
 
 export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "SFT_TRIGGERED" | "ATTENTION" | "CLEAN">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "SFT_TRIGGERED" | "ATTENTION" | "CLEAN">(
+    "ALL"
+  );
   const [selectedFY, setSelectedFY] = useState<string>(() => state?.profile?.fy || "2026-27");
 
   const sftChecks = useMemo((): SftItem[] => {
@@ -77,7 +74,9 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         if (!inSelectedFY(t.date)) return false;
         const desc = (t.description || t.note || "").toLowerCase();
         const cat = (t.category || "").toLowerCase();
-        return desc.includes("credit card") || desc.includes("cc payment") || cat.includes("credit card");
+        return (
+          desc.includes("credit card") || desc.includes("cc payment") || cat.includes("credit card")
+        );
       })
       .reduce((sum: number, t: any) => sum + Math.abs(Number(t.amount || 0)), 0);
 
@@ -149,7 +148,8 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
       .reduce((sum: number, g: any) => {
         const grams = Number(g.grams || g.weightGrams || 0);
         const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
-        const val = Number(g.currentValue || 0) > 0 ? Number(g.currentValue) : grams * goldPrice * purityMul;
+        const val =
+          Number(g.currentValue || 0) > 0 ? Number(g.currentValue) : grams * goldPrice * purityMul;
         return sum + val;
       }, 0);
 
@@ -165,6 +165,27 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
       return rent > 50000;
     });
 
+    // 10. SFT-010: Foreign Outward Remittance under RBI LRS & Section 206C(1G) TCS (Threshold: > ₹7 Lakhs)
+    const totalForeignRemittance = (state.transactions || [])
+      .filter((t: any) => {
+        if (!inSelectedFY(t.date)) return false;
+        const desc = (t.description || t.note || "").toLowerCase();
+        const cat = (t.category || "").toLowerCase();
+        const mode = (t.mode || "").toLowerCase();
+        return (
+          desc.includes("lrs") ||
+          desc.includes("forex") ||
+          desc.includes("foreign remittance") ||
+          desc.includes("outward remittance") ||
+          desc.includes("wire transfer") ||
+          desc.includes("swift") ||
+          cat.includes("international") ||
+          cat.includes("forex") ||
+          mode === "forex"
+        );
+      })
+      .reduce((sum: number, t: any) => sum + Math.abs(Number(t.amount || 0)), 0);
+
     return [
       {
         id: "sft-001",
@@ -174,10 +195,20 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         ruleThreshold: 1000000,
         detectedAmount: totalBankCashTxns,
         thresholdDisplay: "₹10,00,000 / Financial Year",
-        status: totalBankCashTxns >= 1000000 ? "SFT_TRIGGERED" : totalBankCashTxns >= 500000 ? "ATTENTION" : "CLEAN",
-        description: "Aggregate cash deposits or withdrawals in one or more accounts (other than current accounts) of a person.",
+        status:
+          totalBankCashTxns >= 1000000
+            ? "SFT_TRIGGERED"
+            : totalBankCashTxns >= 500000
+              ? "ATTENTION"
+              : "CLEAN",
+        description:
+          "Aggregate cash deposits or withdrawals in one or more accounts (other than current accounts) of a person.",
         reportingEntity: "Banking Company / Co-operative Bank",
-        documentationRequired: ["Cash deposit slips", "Source of cash ledger", "Bank statement reconciliations"],
+        documentationRequired: [
+          "Cash deposit slips",
+          "Source of cash ledger",
+          "Bank statement reconciliations",
+        ],
       },
       {
         id: "sft-002",
@@ -187,10 +218,20 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         ruleThreshold: 1000000,
         detectedAmount: totalCCPayments,
         thresholdDisplay: "₹1,00,000 (Cash) / ₹10,00,000 (Any Mode)",
-        status: totalCCPayments >= 1000000 ? "SFT_TRIGGERED" : totalCCPayments >= 500000 ? "ATTENTION" : "CLEAN",
-        description: "Payment made by any person aggregating to ₹1L+ in cash or ₹10L+ by any other mode against credit card bills.",
+        status:
+          totalCCPayments >= 1000000
+            ? "SFT_TRIGGERED"
+            : totalCCPayments >= 500000
+              ? "ATTENTION"
+              : "CLEAN",
+        description:
+          "Payment made by any person aggregating to ₹1L+ in cash or ₹10L+ by any other mode against credit card bills.",
         reportingEntity: "Credit Card Issuing Banks (HDFC, SBI, ICICI, Axis, etc.)",
-        documentationRequired: ["Credit card statements", "Bank debit entries", "Expense business vs personal vouchers"],
+        documentationRequired: [
+          "Credit card statements",
+          "Bank debit entries",
+          "Expense business vs personal vouchers",
+        ],
       },
       {
         id: "sft-003",
@@ -200,10 +241,21 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         ruleThreshold: 1000000,
         detectedAmount: totalSecuritiesInvestment,
         thresholdDisplay: "₹10,00,000 / Financial Year",
-        status: totalSecuritiesInvestment >= 1000000 ? "SFT_TRIGGERED" : totalSecuritiesInvestment >= 600000 ? "ATTENTION" : "CLEAN",
-        description: "Receipt from any person for acquiring units of one or more schemes of a Mutual Fund or shares/bonds of a company.",
+        status:
+          totalSecuritiesInvestment >= 1000000
+            ? "SFT_TRIGGERED"
+            : totalSecuritiesInvestment >= 600000
+              ? "ATTENTION"
+              : "CLEAN",
+        description:
+          "Receipt from any person for acquiring units of one or more schemes of a Mutual Fund or shares/bonds of a company.",
         reportingEntity: "Asset Management Companies (AMCs) & Stock Brokers",
-        documentationRequired: ["CAS Statement", "Contract notes", "Bank fund outflow trail", "AIS entry match"],
+        documentationRequired: [
+          "CAS Statement",
+          "Contract notes",
+          "Bank fund outflow trail",
+          "AIS entry match",
+        ],
       },
       {
         id: "sft-004",
@@ -214,9 +266,15 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         detectedAmount: totalPropertyValue,
         thresholdDisplay: "₹30,00,000 (Stamp Duty / Registered Value)",
         status: totalPropertyValue >= 3000000 ? "SFT_TRIGGERED" : "CLEAN",
-        description: "Purchase or sale by any person of immovable property of an amount or value exceeding ₹30 Lakhs. Triggers 1% TDS u/s 194-IA if >= ₹50L.",
+        description:
+          "Purchase or sale by any person of immovable property of an amount or value exceeding ₹30 Lakhs. Triggers 1% TDS u/s 194-IA if >= ₹50L.",
         reportingEntity: "Inspector-General of Registration / Sub-Registrar",
-        documentationRequired: ["Registered Sale Deed", "Form 26QB (1% TDS)", "Bank loan disbursement letter", "Capital gains computation"],
+        documentationRequired: [
+          "Registered Sale Deed",
+          "Form 26QB (1% TDS)",
+          "Bank loan disbursement letter",
+          "Capital gains computation",
+        ],
       },
       {
         id: "sft-005",
@@ -226,10 +284,20 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         ruleThreshold: 1000000,
         detectedAmount: totalFDInvestments,
         thresholdDisplay: "₹10,00,000 / Financial Year",
-        status: totalFDInvestments >= 1000000 ? "SFT_TRIGGERED" : totalFDInvestments >= 500000 ? "ATTENTION" : "CLEAN",
-        description: "Receipt from any person for acquiring time deposits (other than renewals) aggregating to ₹10 Lakhs or more.",
+        status:
+          totalFDInvestments >= 1000000
+            ? "SFT_TRIGGERED"
+            : totalFDInvestments >= 500000
+              ? "ATTENTION"
+              : "CLEAN",
+        description:
+          "Receipt from any person for acquiring time deposits (other than renewals) aggregating to ₹10 Lakhs or more.",
         reportingEntity: "Banking Company / Post Office",
-        documentationRequired: ["FD advice certificates", "Form 26AS TDS credits u/s 194A", "Bank debit confirmations"],
+        documentationRequired: [
+          "FD advice certificates",
+          "Form 26AS TDS credits u/s 194A",
+          "Bank debit confirmations",
+        ],
       },
       {
         id: "sft-006",
@@ -240,9 +308,14 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         detectedAmount: totalInformalLarge,
         thresholdDisplay: "₹2,00,000 per Event / ₹20,000 Cash Loan",
         status: totalInformalLarge > 0 ? "ATTENTION" : "CLEAN",
-        description: "Prohibits receipt of ₹2 Lakhs or more in cash (Sec 269ST) and cash loans/deposits >= ₹20,000 (Sec 269SS/269T).",
+        description:
+          "Prohibits receipt of ₹2 Lakhs or more in cash (Sec 269ST) and cash loans/deposits >= ₹20,000 (Sec 269SS/269T).",
         reportingEntity: "Income Tax Department Scrutiny Flag / Tax Audit Form 3CD",
-        documentationRequired: ["Account payee cheque/NEFT/RTGS UTR trail", "Confirmation of accounts", "Promissory note / Agreement"],
+        documentationRequired: [
+          "Account payee cheque/NEFT/RTGS UTR trail",
+          "Confirmation of accounts",
+          "Promissory note / Agreement",
+        ],
       },
       {
         id: "sft-007",
@@ -252,10 +325,20 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         ruleThreshold: 1000000,
         detectedAmount: totalBondsInvestment,
         thresholdDisplay: "₹10,00,000 / Financial Year",
-        status: totalBondsInvestment >= 1000000 ? "SFT_TRIGGERED" : totalBondsInvestment >= 500000 ? "ATTENTION" : "CLEAN",
-        description: "Receipt from any person for acquiring bonds or debentures issued by a company or institution (including RBI bonds).",
+        status:
+          totalBondsInvestment >= 1000000
+            ? "SFT_TRIGGERED"
+            : totalBondsInvestment >= 500000
+              ? "ATTENTION"
+              : "CLEAN",
+        description:
+          "Receipt from any person for acquiring bonds or debentures issued by a company or institution (including RBI bonds).",
         reportingEntity: "Bond Issuing Company / RBI / Depository",
-        documentationRequired: ["Bond allotment advice", "Demat holding statement", "Form 16A for interest TDS u/s 193"],
+        documentationRequired: [
+          "Bond allotment advice",
+          "Demat holding statement",
+          "Form 16A for interest TDS u/s 193",
+        ],
       },
       {
         id: "sft-008",
@@ -265,10 +348,20 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         ruleThreshold: 1000000,
         detectedAmount: totalGoldValue,
         thresholdDisplay: "₹2,00,000 (PAN Rule 114B) / ₹10,00,000 (SFT)",
-        status: totalGoldValue >= 1000000 ? "SFT_TRIGGERED" : totalGoldValue >= 200000 ? "ATTENTION" : "CLEAN",
-        description: "Sale or purchase of goods/services (including bullion & jewellery) exceeding ₹2 Lakhs per transaction requires mandatory PAN quoting.",
+        status:
+          totalGoldValue >= 1000000
+            ? "SFT_TRIGGERED"
+            : totalGoldValue >= 200000
+              ? "ATTENTION"
+              : "CLEAN",
+        description:
+          "Sale or purchase of goods/services (including bullion & jewellery) exceeding ₹2 Lakhs per transaction requires mandatory PAN quoting.",
         reportingEntity: "Bullion Dealer / Authorised Bank / RBI (SGB)",
-        documentationRequired: ["GST tax invoices with PAN", "SGB holding certificate", "Purity hallmarking receipts"],
+        documentationRequired: [
+          "GST tax invoices with PAN",
+          "SGB holding certificate",
+          "Purity hallmarking receipts",
+        ],
       },
       {
         id: "sft-009",
@@ -278,10 +371,44 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         ruleThreshold: 600000,
         detectedAmount: totalHighRentPaid,
         thresholdDisplay: "Rent > ₹50,000/mo (₹6,00,000/year)",
-        status: hasMonthlyRentAbove50k ? "SFT_TRIGGERED" : totalHighRentPaid >= 400000 ? "ATTENTION" : "CLEAN",
-        description: "Mandatory 2% TDS on rent paid by individuals/HUFs exceeding ₹50,000 per month. Form 26QC challan-cum-statement must be filed within 30 days of March or vacating.",
+        status: hasMonthlyRentAbove50k
+          ? "SFT_TRIGGERED"
+          : totalHighRentPaid >= 400000
+            ? "ATTENTION"
+            : "CLEAN",
+        description:
+          "Mandatory 2% TDS on rent paid by individuals/HUFs exceeding ₹50,000 per month. Form 26QC challan-cum-statement must be filed within 30 days of March or vacating.",
         reportingEntity: "Tenant (Form 26QC) / Landlord Form 26AS & AIS/TIS",
-        documentationRequired: ["Rent agreement", "Landlord PAN copy", "Form 26QC challan receipt", "Form 16C TDS certificate"],
+        documentationRequired: [
+          "Rent agreement",
+          "Landlord PAN copy",
+          "Form 26QC challan receipt",
+          "Form 16C TDS certificate",
+        ],
+      },
+      {
+        id: "sft-010",
+        code: "SFT-010",
+        title: "Foreign Remittance under RBI LRS & Section 206C(1G) TCS",
+        section: "Section 206C(1G) · Rule 114E · Liberalised Remittance Scheme",
+        ruleThreshold: 700000,
+        detectedAmount: totalForeignRemittance,
+        thresholdDisplay: "₹7,00,000 / Financial Year (20% TCS applies above ₹7L)",
+        status:
+          totalForeignRemittance >= 700000
+            ? "SFT_TRIGGERED"
+            : totalForeignRemittance >= 350000
+              ? "ATTENTION"
+              : "CLEAN",
+        description:
+          "Authorised Dealers report foreign remittances under RBI's Liberalised Remittance Scheme (LRS). Outward remittances exceeding ₹7 Lakhs attract 20% TCS under Section 206C(1G) (or 5% for education funded via loan).",
+        reportingEntity: "Authorised Dealer (AD Bank) / Form 27EQ",
+        documentationRequired: [
+          "Form A2 Declaration",
+          "LRS Bank Debit Advice",
+          "Form 27D TCS Certificate",
+          "Form 26AS TCS Credit",
+        ],
       },
     ];
   }, [state, selectedFY]);
@@ -357,7 +484,8 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
                 Statement of Financial Transactions (SFT) & Scrutiny Radar
               </h2>
               <p style={{ fontSize: 12, color: THEME.muted, margin: "2px 0 0" }}>
-                Section 285BA · Rule 114E Automated Compliance Scanner & Annual Information Statement (AIS) Readiness
+                Section 285BA · Rule 114E Automated Compliance Scanner & Annual Information
+                Statement (AIS) Readiness
               </p>
             </div>
           </div>
@@ -383,7 +511,12 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
               <option value="2024-25">FY 2024-25</option>
               <option value="ALL">All-Time Cumulative</option>
             </select>
-            <Button variant="secondary" size="sm" icon={<Download size={14} />} onClick={handleExportCSV}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Download size={14} />}
+              onClick={handleExportCSV}
+            >
               Export SFT Audit Report
             </Button>
           </div>
@@ -406,16 +539,18 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Info size={18} color={THEME.accent} />
             <span style={{ fontSize: 12.5, color: THEME.ink }}>
-              Under Indian Income Tax law, banks, AMCs, registrars, and card issuers automatically report these high-value transactions to the Income Tax Department for populating your AIS and Form 26AS.
+              Under Indian Income Tax law, banks, AMCs, registrars, and card issuers automatically
+              report these high-value transactions to the Income Tax Department for populating your
+              AIS and Form 26AS.
             </span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {attentionCount > 0 && (
-              <Badge variant="danger">{attentionCount} ATTENTION</Badge>
-            )}
+            {attentionCount > 0 && <Badge variant="danger">{attentionCount} ATTENTION</Badge>}
             <Badge variant={triggeredCount > 0 ? "warning" : "success"}>
-              {triggeredCount > 0 ? `${triggeredCount} SFT REPORTABLE ITEMS` : "ALL TRANSACTIONS NORMAL"}
+              {triggeredCount > 0
+                ? `${triggeredCount} SFT REPORTABLE ITEMS`
+                : "ALL TRANSACTIONS NORMAL"}
             </Badge>
           </div>
         </div>
@@ -478,7 +613,9 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
                     padding: "6px 12px",
                     borderRadius: 8,
                     border: active ? `1.5px solid ${THEME.accent}` : `1px solid ${THEME.line}`,
-                    background: active ? `color-mix(in srgb, ${THEME.accent} 12%, transparent)` : "var(--t-paper)",
+                    background: active
+                      ? `color-mix(in srgb, ${THEME.accent} 12%, transparent)`
+                      : "var(--t-paper)",
                     color: active ? THEME.accent : THEME.ink,
                     fontSize: 12,
                     fontWeight: active ? 700 : 600,
@@ -493,15 +630,84 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}
+          >
             <thead>
-              <tr style={{ background: "color-mix(in srgb, var(--t-gold) 5%, transparent)", borderBottom: `1.5px solid ${THEME.line}` }}>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>SFT Code & Title</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>Statutory Rule & Section</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>Statutory Threshold</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase", textAlign: "right" }}>Detected Value</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase", textAlign: "center" }}>AIS / SFT Status</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>Audit Dossier Required</th>
+              <tr
+                style={{
+                  background: "color-mix(in srgb, var(--t-gold) 5%, transparent)",
+                  borderBottom: `1.5px solid ${THEME.line}`,
+                }}
+              >
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  SFT Code & Title
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Statutory Rule & Section
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Statutory Threshold
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    textAlign: "right",
+                  }}
+                >
+                  Detected Value
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    textAlign: "center",
+                  }}
+                >
+                  AIS / SFT Status
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Audit Dossier Required
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -510,12 +716,22 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
                   key={c.id}
                   style={{
                     borderBottom: `1px solid ${THEME.line}`,
-                    background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--t-paper) 40%, transparent)",
+                    background:
+                      i % 2 === 0
+                        ? "transparent"
+                        : "color-mix(in srgb, var(--t-paper) 40%, transparent)",
                   }}
                 >
                   <td style={{ padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: THEME.accent }}>
+                      <span
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: THEME.accent,
+                        }}
+                      >
                         {c.code}
                       </span>
                     </div>
@@ -532,10 +748,24 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
                       Reported By: {c.reportingEntity}
                     </div>
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 12.5, fontWeight: 600, color: THEME.muted }}>
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: THEME.muted,
+                    }}
+                  >
                     {c.thresholdDisplay}
                   </td>
-                  <td style={{ padding: "14px 16px", textAlign: "right", fontWeight: 800, fontSize: 14 }}>
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      textAlign: "right",
+                      fontWeight: 800,
+                      fontSize: 14,
+                    }}
+                  >
                     <Money value={c.detectedAmount} variant="full" />
                   </td>
                   <td style={{ padding: "14px 16px", textAlign: "center" }}>
@@ -558,7 +788,9 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
                   <td style={{ padding: "14px 16px" }}>
                     <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: THEME.muted }}>
                       {c.documentationRequired.map((doc, dIdx) => (
-                        <li key={dIdx} style={{ marginBottom: 2 }}>{doc}</li>
+                        <li key={dIdx} style={{ marginBottom: 2 }}>
+                          {doc}
+                        </li>
                       ))}
                     </ul>
                   </td>

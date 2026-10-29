@@ -129,7 +129,9 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: b.owner || "self",
         status: isNeg ? "WARNING" : "OK",
-        note: isNeg ? "Overdrawn bank balance (Credit balance in Asset ledger)" : "Active Liquid Asset",
+        note: isNeg
+          ? "Overdrawn bank balance (Credit balance in Asset ledger)"
+          : "Active Liquid Asset",
         tabTarget: "banking",
       });
     });
@@ -330,7 +332,12 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
 
     (state.epf || []).forEach((e: any, idx: number) => {
       const calcBal = calculateEpfBalance(e);
-      const bal = calcBal > 0 ? calcBal : !(e.transactions && e.transactions.length > 0) ? Number(e.currentBalance || e.balance || 0) : 0;
+      const bal =
+        calcBal > 0
+          ? calcBal
+          : !(e.transactions && e.transactions.length > 0)
+            ? Number(e.currentBalance || e.balance || 0)
+            : 0;
       list.push({
         id: e.id || `epf-${idx}`,
         code: `1420-${String(idx + 1).padStart(2, "0")}`,
@@ -350,7 +357,8 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     (state.nps || []).forEach((n: any, idx: number) => {
       const directBal = Number(n.balance || 0);
       const txTotal = (n.transactions || []).reduce(
-        (ss: number, t: any) => ss + (Number(t.employeeAmount) || 0) + (Number(t.employerAmount) || 0),
+        (ss: number, t: any) =>
+          ss + (Number(t.employeeAmount) || 0) + (Number(t.employerAmount) || 0),
         0
       );
       const bal = directBal > 0 ? directBal : txTotal;
@@ -389,7 +397,10 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     });
 
     (state.lic || []).forEach((l: any, idx: number) => {
-      const txTotal = (l.transactions || []).reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+      const txTotal = (l.transactions || []).reduce(
+        (sum: number, t: any) => sum + Number(t.amount || 0),
+        0
+      );
       const val = txTotal > 0 ? txTotal : Number(l.premiumPaid || 0);
       if (val > 0) {
         list.push({
@@ -410,7 +421,10 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     });
 
     (state.investmentPlans || []).forEach((ip: any, idx: number) => {
-      const txTotal = (ip.transactions || []).reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+      const txTotal = (ip.transactions || []).reduce(
+        (sum: number, t: any) => sum + Number(t.amount || 0),
+        0
+      );
       const val = txTotal > 0 ? txTotal : Number(ip.premiumPaid || 0);
       if (val > 0) {
         list.push({
@@ -457,7 +471,9 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
       .filter((r: any) => r.status !== "sold")
       .forEach((r: any, idx: number) => {
         const share = realEstateTrackedShare(r);
-        const rawVal = Number(r.marketValue || r.agreementValue || r.propertyValue || r.purchasePrice || 0);
+        const rawVal = Number(
+          r.marketValue || r.agreementValue || r.propertyValue || r.purchasePrice || 0
+        );
         const val = rawVal * share;
         list.push({
           id: r.id || `re-${idx}`,
@@ -831,7 +847,8 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
     window.print();
   };
 
-  const metricsNetWorth = typeof metrics?.netWorth === "number" ? metrics.netWorth : totals.netWorth;
+  const metricsNetWorth =
+    typeof metrics?.netWorth === "number" ? metrics.netWorth : totals.netWorth;
   const nwReconciliationDelta = Math.abs(totals.netWorth - metricsNetWorth);
 
   const handleCopyAuditorCertificate = () => {
@@ -839,11 +856,17 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
       .filter((l) => l.subCategory === "Cash & Liquid")
       .reduce((s, l) => s + (l.debit - l.credit), 0);
     const currentLiab = ledgers
-      .filter((l) => l.subCategory === "Current Liabilities" || l.subCategory === "Security Deposits Payable")
+      .filter(
+        (l) =>
+          l.subCategory === "Current Liabilities" || l.subCategory === "Security Deposits Payable"
+      )
       .reduce((s, l) => s + (l.credit - l.debit), 0);
-    const currentRatio = currentLiab > 0 ? (liquidAssets / currentLiab).toFixed(2) : "N/A (No short-term debt)";
-    const debtToEquity = totals.netWorth > 0 ? (totals.totalLiabilities / totals.netWorth).toFixed(2) : "N/A";
-    const solvencyRatio = totals.totalAssets > 0 ? ((totals.netWorth / totals.totalAssets) * 100).toFixed(1) : "0";
+    const currentRatio =
+      currentLiab > 0 ? (liquidAssets / currentLiab).toFixed(2) : "N/A (No short-term debt)";
+    const debtToEquity =
+      totals.netWorth > 0 ? (totals.totalLiabilities / totals.netWorth).toFixed(2) : "N/A";
+    const solvencyRatio =
+      totals.totalAssets > 0 ? ((totals.netWorth / totals.totalAssets) * 100).toFixed(1) : "0";
 
     const certText = `
 AUDITOR'S STATEMENT OF FINANCIAL POSITION & RECONCILIATION
@@ -918,7 +941,8 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
                   Double-Entry General Ledger & Trial Balance
                 </h2>
                 <p style={{ fontSize: 12, color: THEME.muted, margin: "2px 0 0" }}>
-                  Real-time double-entry trial balance generator · Assets = Liabilities + Capital Verification
+                  Real-time double-entry trial balance generator · Assets = Liabilities + Capital
+                  Verification
                 </p>
               </div>
             </div>
@@ -934,10 +958,20 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
             >
               {copiedCert ? "Copied Certificate" : "Copy Auditor Certificate"}
             </Button>
-            <Button variant="secondary" size="sm" icon={<Download size={14} />} onClick={handleExportCSV}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Download size={14} />}
+              onClick={handleExportCSV}
+            >
               Export Trial Balance
             </Button>
-            <Button variant="secondary" size="sm" icon={<Printer size={14} />} onClick={handlePrint}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Printer size={14} />}
+              onClick={handlePrint}
+            >
               Print Ledger
             </Button>
           </div>
@@ -974,10 +1008,14 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <Badge variant={nwReconciliationDelta < 1 ? "success" : "warning"}>
-              {nwReconciliationDelta < 1 ? "100% RECONCILED WITH DASHBOARD NW" : `NW DELTA: ${fmtINRFull(nwReconciliationDelta)}`}
+              {nwReconciliationDelta < 1
+                ? "100% RECONCILED WITH DASHBOARD NW"
+                : `NW DELTA: ${fmtINRFull(nwReconciliationDelta)}`}
             </Badge>
             <Badge variant={totals.variance < 1 ? "success" : "danger"}>
-              {totals.variance < 1 ? "PARITY VERIFIED (₹0 VARIANCE)" : `VARIANCE: ₹${totals.variance.toFixed(2)}`}
+              {totals.variance < 1
+                ? "PARITY VERIFIED (₹0 VARIANCE)"
+                : `VARIANCE: ₹${totals.variance.toFixed(2)}`}
             </Badge>
           </div>
         </div>
@@ -992,7 +1030,14 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
         }}
       >
         <Card style={{ padding: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: THEME.muted,
+              textTransform: "uppercase",
+            }}
+          >
             Total Debits (Assets)
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: THEME.ink, marginTop: 4 }}>
@@ -1004,7 +1049,14 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
         </Card>
 
         <Card style={{ padding: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: THEME.muted,
+              textTransform: "uppercase",
+            }}
+          >
             Total Credits (Liab + Equity)
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: THEME.ink, marginTop: 4 }}>
@@ -1016,26 +1068,53 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
         </Card>
 
         <Card style={{ padding: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: THEME.muted,
+              textTransform: "uppercase",
+            }}
+          >
             Owner Net Worth (Capital)
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "var(--t-sage)", marginTop: 4 }}>
             <Money value={totals.netWorth} variant="full" />
           </div>
           <div style={{ fontSize: 11, color: THEME.muted, marginTop: 4 }}>
-            Solvency: {totals.totalAssets > 0 ? ((totals.netWorth / totals.totalAssets) * 100).toFixed(1) : 0}% of gross assets
+            Solvency:{" "}
+            {totals.totalAssets > 0 ? ((totals.netWorth / totals.totalAssets) * 100).toFixed(1) : 0}
+            % of gross assets
           </div>
         </Card>
 
         <Card style={{ padding: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: THEME.muted,
+              textTransform: "uppercase",
+            }}
+          >
             Auditor Integrity Score
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: anomalies.length === 0 ? THEME.accent : "var(--t-gold)", marginTop: 4 }}>
-            {anomalies.length === 0 ? "100% / Clean" : `${Math.max(70, 100 - anomalies.length * 8)}% / ${anomalies.length} Flag(s)`}
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 800,
+              color: anomalies.length === 0 ? THEME.accent : "var(--t-gold)",
+              marginTop: 4,
+            }}
+          >
+            {anomalies.length === 0
+              ? "100% / Clean"
+              : `${Math.max(70, 100 - anomalies.length * 8)}% / ${anomalies.length} Flag(s)`}
           </div>
           <div style={{ fontSize: 11, color: THEME.muted, marginTop: 4 }}>
-            {anomalies.length === 0 ? "Zero ledger exceptions detected" : `${anomalies.length} account(s) flagged for review`}
+            {anomalies.length === 0
+              ? "Zero ledger exceptions detected"
+              : `${anomalies.length} account(s) flagged for review`}
           </div>
         </Card>
       </div>
@@ -1049,7 +1128,16 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
             background: "color-mix(in srgb, var(--t-gold) 5%, transparent)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 10,
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <ShieldCheck size={16} color="var(--t-gold)" />
               <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>
@@ -1068,7 +1156,13 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
               <Badge variant="warning">ACTION RECOMMENDED</Badge>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 10,
+            }}
+          >
             {anomalies.map((a) => (
               <div
                 key={a.id}
@@ -1082,9 +1176,22 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
                   gap: 8,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: 10,
+                  }}
+                >
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: a.severity === "WARNING" ? "var(--t-rust)" : THEME.ink }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: a.severity === "WARNING" ? "var(--t-rust)" : THEME.ink,
+                      }}
+                    >
                       {a.title}
                     </div>
                     <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>{a.detail}</div>
@@ -1110,10 +1217,12 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
                     }}
                   >
                     <div style={{ color: THEME.accent, fontWeight: 700 }}>
-                      Dr. {a.suggestedJournalEntry.drAccount}  ₹{a.suggestedJournalEntry.amount.toLocaleString("en-IN")}
+                      Dr. {a.suggestedJournalEntry.drAccount} ₹
+                      {a.suggestedJournalEntry.amount.toLocaleString("en-IN")}
                     </div>
                     <div style={{ color: "var(--t-sage)", fontWeight: 700, paddingLeft: 16 }}>
-                      Cr. {a.suggestedJournalEntry.crAccount}  ₹{a.suggestedJournalEntry.amount.toLocaleString("en-IN")}
+                      Cr. {a.suggestedJournalEntry.crAccount} ₹
+                      {a.suggestedJournalEntry.amount.toLocaleString("en-IN")}
                     </div>
                     <div style={{ color: THEME.muted, fontSize: 10, marginTop: 2 }}>
                       ({a.suggestedJournalEntry.narration})
@@ -1142,7 +1251,12 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
               <Search
                 size={15}
                 color={THEME.muted}
-                style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}
+                style={{
+                  position: "absolute",
+                  left: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
               />
               <input
                 type="text"
@@ -1212,16 +1326,96 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
       {/* ── Trial Balance Table ── */}
       <Card style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}
+          >
             <thead>
-              <tr style={{ background: "color-mix(in srgb, var(--t-accent) 5%, transparent)", borderBottom: `1.5px solid ${THEME.line}` }}>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>Code</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>Account Head</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>Classification</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase" }}>Owner</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase", textAlign: "right" }}>Debit (Dr.)</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase", textAlign: "right" }}>Credit (Cr.)</th>
-                <th style={{ padding: "12px 16px", fontWeight: 700, color: THEME.muted, fontSize: 11, textTransform: "uppercase", textAlign: "center" }}>Status</th>
+              <tr
+                style={{
+                  background: "color-mix(in srgb, var(--t-accent) 5%, transparent)",
+                  borderBottom: `1.5px solid ${THEME.line}`,
+                }}
+              >
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Code
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Account Head
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Classification
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Owner
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    textAlign: "right",
+                  }}
+                >
+                  Debit (Dr.)
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    textAlign: "right",
+                  }}
+                >
+                  Credit (Cr.)
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px",
+                    fontWeight: 700,
+                    color: THEME.muted,
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    textAlign: "center",
+                  }}
+                >
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1229,36 +1423,99 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
                 <tr
                   key={l.id}
                   onClick={() => l.tabTarget && setTab?.(l.tabTarget)}
+                  onKeyDown={(e) => {
+                    if ((e.key === "Enter" || e.key === " ") && l.tabTarget) {
+                      e.preventDefault();
+                      setTab?.(l.tabTarget);
+                    }
+                  }}
+                  tabIndex={l.tabTarget && setTab ? 0 : undefined}
+                  role={l.tabTarget && setTab ? "button" : undefined}
+                  aria-label={l.tabTarget ? `Navigate to ${l.tabTarget} for ${l.name}` : undefined}
                   style={{
                     borderBottom: `1px solid ${THEME.line}`,
-                    background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--t-paper) 40%, transparent)",
+                    background:
+                      i % 2 === 0
+                        ? "transparent"
+                        : "color-mix(in srgb, var(--t-paper) 40%, transparent)",
                     cursor: l.tabTarget && setTab ? "pointer" : "default",
                   }}
                 >
-                  <td style={{ padding: "12px 16px", fontFamily: "monospace", fontSize: 12, color: THEME.muted }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      fontFamily: "monospace",
+                      fontSize: 12,
+                      color: THEME.muted,
+                    }}
+                  >
                     {l.code}
                   </td>
                   <td style={{ padding: "12px 16px", fontWeight: 600, color: THEME.ink }}>
                     <div>{l.name}</div>
-                    {l.note && <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 400 }}>{l.note}</div>}
+                    {l.note && (
+                      <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 400 }}>
+                        {l.note}
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: l.category === "ASSET" ? THEME.accent : l.category === "LIABILITY" ? "var(--t-rust)" : "var(--t-sage)" }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color:
+                          l.category === "ASSET"
+                            ? THEME.accent
+                            : l.category === "LIABILITY"
+                              ? "var(--t-rust)"
+                              : "var(--t-sage)",
+                      }}
+                    >
                       {l.category}
                     </div>
                     <div style={{ fontSize: 11, color: THEME.muted }}>{l.subCategory}</div>
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: 12, color: THEME.muted, textTransform: "capitalize" }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      fontSize: 12,
+                      color: THEME.muted,
+                      textTransform: "capitalize",
+                    }}
+                  >
                     {l.owner}
                   </td>
-                  <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700, color: l.debit > 0 ? THEME.ink : THEME.muted }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 700,
+                      color: l.debit > 0 ? THEME.ink : THEME.muted,
+                    }}
+                  >
                     {l.debit > 0 ? <Money value={l.debit} variant="full" /> : "—"}
                   </td>
-                  <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700, color: l.credit > 0 ? THEME.ink : THEME.muted }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 700,
+                      color: l.credit > 0 ? THEME.ink : THEME.muted,
+                    }}
+                  >
                     {l.credit > 0 ? <Money value={l.credit} variant="full" /> : "—"}
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                    <Badge variant={l.status === "OK" ? "success" : l.status === "WARNING" ? "danger" : "warning"}>
+                    <Badge
+                      variant={
+                        l.status === "OK"
+                          ? "success"
+                          : l.status === "WARNING"
+                            ? "danger"
+                            : "warning"
+                      }
+                    >
                       {l.status}
                     </Badge>
                   </td>
@@ -1266,14 +1523,38 @@ Generated by ArthaDrishti Executive Double-Entry Audit Desk
               ))}
             </tbody>
             <tfoot>
-              <tr style={{ background: "color-mix(in srgb, var(--t-accent) 8%, transparent)", borderTop: `2px solid ${THEME.line}` }}>
-                <td colSpan={4} style={{ padding: "14px 16px", fontWeight: 800, fontSize: 14, color: THEME.ink }}>
+              <tr
+                style={{
+                  background: "color-mix(in srgb, var(--t-accent) 8%, transparent)",
+                  borderTop: `2px solid ${THEME.line}`,
+                }}
+              >
+                <td
+                  colSpan={4}
+                  style={{ padding: "14px 16px", fontWeight: 800, fontSize: 14, color: THEME.ink }}
+                >
                   TOTAL TRIAL BALANCE
                 </td>
-                <td style={{ padding: "14px 16px", textAlign: "right", fontWeight: 900, fontSize: 15, color: THEME.ink }}>
+                <td
+                  style={{
+                    padding: "14px 16px",
+                    textAlign: "right",
+                    fontWeight: 900,
+                    fontSize: 15,
+                    color: THEME.ink,
+                  }}
+                >
                   <Money value={totals.totalDebits} variant="full" />
                 </td>
-                <td style={{ padding: "14px 16px", textAlign: "right", fontWeight: 900, fontSize: 15, color: THEME.ink }}>
+                <td
+                  style={{
+                    padding: "14px 16px",
+                    textAlign: "right",
+                    fontWeight: 900,
+                    fontSize: 15,
+                    color: THEME.ink,
+                  }}
+                >
                   <Money value={totals.totalCredits} variant="full" />
                 </td>
                 <td style={{ padding: "14px 16px", textAlign: "center" }}>

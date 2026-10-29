@@ -21,14 +21,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { THEME } from "../../utils/constants";
 import {
   fmtINRFull,
@@ -49,6 +42,7 @@ import { EmptyState } from "../ui/EmptyState";
 import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 import { TaxSuiteHeader } from "../tax/TaxSuiteHeader";
 import { CapitalGainsExemptionStudio } from "../tax/CapitalGainsExemptionStudio";
+import { ScheduleCFLStudio } from "../tax/ScheduleCFLStudio";
 
 /* ══════════════════════════════════════════════════════════════════
    CONSTANTS & HELPERS
@@ -288,8 +282,7 @@ const classifySells = (
       gainType = isLTCG ? "EQUITY_LTCG" : "EQUITY_STCG";
       taxRate = isLTCG ? getEquityLTCGRate(m.sellDate) : getEquitySTCGRate(m.sellDate);
     } else {
-      const postApr2023 =
-        parseLocalDate(m.buyDate) >= parseLocalDate(DEBT_INDEXATION_CUTOFF_DATE);
+      const postApr2023 = parseLocalDate(m.buyDate) >= parseLocalDate(DEBT_INDEXATION_CUTOFF_DATE);
       if (postApr2023) {
         gainType = "DEBT_STCG";
         taxRate = DEBT_STCG_SLAB_RATE;
@@ -521,8 +514,12 @@ export const computeScheduleCGQuarters = (
       return d >= qFrom && d <= qTo;
     });
 
-    const eqSTCG = rows.filter((r) => r.gainType === "EQUITY_STCG").reduce((s, r) => s + r.profit, 0);
-    const eqLTCG = rows.filter((r) => r.gainType === "EQUITY_LTCG").reduce((s, r) => s + r.profit, 0);
+    const eqSTCG = rows
+      .filter((r) => r.gainType === "EQUITY_STCG")
+      .reduce((s, r) => s + r.profit, 0);
+    const eqLTCG = rows
+      .filter((r) => r.gainType === "EQUITY_LTCG")
+      .reduce((s, r) => s + r.profit, 0);
     const dSTCG = rows.filter((r) => r.gainType === "DEBT_STCG").reduce((s, r) => s + r.profit, 0);
     const dLTCG = rows.filter((r) => r.gainType === "DEBT_LTCG").reduce((s, r) => s + r.profit, 0);
     const totalGain = rows.reduce((s, r) => s + r.profit, 0);
@@ -631,14 +628,12 @@ const CategoryFixBadge = ({
       </button>
 
       {open && (
-        <Modal
-          title="Resolve Fund Tax Category"
-          onClose={() => setOpen(false)}
-          width={440}
-        >
+        <Modal title="Resolve Fund Tax Category" onClose={() => setOpen(false)} width={440}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 13, color: THEME.muted, margin: 0, lineHeight: 1.5 }}>
-              Choose whether <strong style={{ color: THEME.ink }}>{name}</strong> is an Equity or Debt mutual fund. This permanently updates your historical record and ensures correct tax calculation.
+              Choose whether <strong style={{ color: THEME.ink }}>{name}</strong> is an Equity or
+              Debt mutual fund. This permanently updates your historical record and ensures correct
+              tax calculation.
             </p>
             <div
               style={{
@@ -651,28 +646,22 @@ const CategoryFixBadge = ({
               }}
             >
               <div style={{ marginBottom: 4 }}>
-                <strong style={{ color: THEME.ink }}>Equity:</strong> ≥65% domestic equities (STCG @ 15/20%, LTCG @ 10/12.5% above ₹1.25L).
+                <strong style={{ color: THEME.ink }}>Equity:</strong> ≥65% domestic equities (STCG @
+                15/20%, LTCG @ 10/12.5% above ₹1.25L).
               </div>
               <div>
-                <strong style={{ color: THEME.ink }}>Debt:</strong> &lt;65% equity (Post-Apr 2023 units taxed at slab rate).
+                <strong style={{ color: THEME.ink }}>Debt:</strong> &lt;65% equity (Post-Apr 2023
+                units taxed at slab rate).
               </div>
             </div>
             <ModalActions>
               <Button variant="secondary" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                variant="secondary"
-                disabled={saving}
-                onClick={() => pick("Debt")}
-              >
+              <Button variant="secondary" disabled={saving} onClick={() => pick("Debt")}>
                 Set as Debt
               </Button>
-              <Button
-                variant="primary"
-                disabled={saving}
-                onClick={() => pick("Equity")}
-              >
+              <Button variant="primary" disabled={saving} onClick={() => pick("Equity")}>
                 Set as Equity
               </Button>
             </ModalActions>
@@ -710,12 +699,21 @@ export const CapitalGainsTab = ({
 
   // Sub-navigation workspace views
   const [activeView, setActiveView] = useState<
-    "overview" | "ledger" | "unrealized" | "harvesting" | "exemptions" | "calculator" | "rules"
+    | "overview"
+    | "ledger"
+    | "unrealized"
+    | "harvesting"
+    | "exemptions"
+    | "cfl"
+    | "calculator"
+    | "rules"
   >("overview");
 
   // Filter & Search states for Ledger
   const [ledgerSearch, setLedgerSearch] = useState("");
-  const [ledgerAssetFilter, setLedgerAssetFilter] = useState<"ALL" | "Stock" | "Mutual Fund">("ALL");
+  const [ledgerAssetFilter, setLedgerAssetFilter] = useState<"ALL" | "Stock" | "Mutual Fund">(
+    "ALL"
+  );
   const [ledgerGainFilter, setLedgerGainFilter] = useState<"ALL" | GainType>("ALL");
   const [ledgerOutcomeFilter, setLedgerOutcomeFilter] = useState<"ALL" | "PROFIT" | "LOSS">("ALL");
   const [ledgerSortBy, setLedgerSortBy] = useState<"date" | "profit" | "holding" | "tax">("date");
@@ -780,15 +778,48 @@ export const CapitalGainsTab = ({
     () =>
       isViewingCurrentFY
         ? classified
-        : classifySells(state.stockSells || [], state.mfSells || [], currentFYStartYear, mfCategoryIndex),
-    [isViewingCurrentFY, classified, state.stockSells, state.mfSells, currentFYStartYear, mfCategoryIndex]
+        : classifySells(
+            state.stockSells || [],
+            state.mfSells || [],
+            currentFYStartYear,
+            mfCategoryIndex
+          ),
+    [
+      isViewingCurrentFY,
+      classified,
+      state.stockSells,
+      state.mfSells,
+      currentFYStartYear,
+      mfCategoryIndex,
+    ]
   );
   const currentFYTotals = useMemo(
     () =>
       isViewingCurrentFY
-        ? { byType, totalTax, ltcgExemptionUsed, ltcgExemptionLimit, stcgRate, ltcgRate, taxablePools, setOffDetails }
+        ? {
+            byType,
+            totalTax,
+            ltcgExemptionUsed,
+            ltcgExemptionLimit,
+            stcgRate,
+            ltcgRate,
+            taxablePools,
+            setOffDetails,
+          }
         : computeGainTotals(currentFYClassified, currentFYStartYear),
-    [isViewingCurrentFY, byType, totalTax, ltcgExemptionUsed, ltcgExemptionLimit, stcgRate, ltcgRate, taxablePools, setOffDetails, currentFYClassified, currentFYStartYear]
+    [
+      isViewingCurrentFY,
+      byType,
+      totalTax,
+      ltcgExemptionUsed,
+      ltcgExemptionLimit,
+      stcgRate,
+      ltcgRate,
+      taxablePools,
+      setOffDetails,
+      currentFYClassified,
+      currentFYStartYear,
+    ]
   );
 
   /* ── Schedule CG Section F Quarters ────────────────────────────── */
@@ -881,7 +912,11 @@ export const CapitalGainsTab = ({
           wouldBeType = isLTCG ? "DEBT_LTCG" : "DEBT_STCG";
           monthsToLTCG = isLTCG ? null : ltcgThreshold - months;
           const buyD = parseLocalDate(bd);
-          const anniversary = new Date(buyD.getFullYear(), buyD.getMonth() + ltcgThreshold, buyD.getDate());
+          const anniversary = new Date(
+            buyD.getFullYear(),
+            buyD.getMonth() + ltcgThreshold,
+            buyD.getDate()
+          );
           const diffMs = anniversary.getTime() - todayDate.getTime();
           daysToLTCG = isLTCG ? 0 : Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
         }
@@ -909,10 +944,7 @@ export const CapitalGainsTab = ({
   }, [state.stocks, state.mutualFunds]);
 
   /* ── Tax-Loss Harvesting Suggestions & Simulator ────────────────── */
-  const lossCandidates = useMemo(
-    () => unrealized.filter((h) => h.unrealizedPL < 0),
-    [unrealized]
-  );
+  const lossCandidates = useMemo(() => unrealized.filter((h) => h.unrealizedPL < 0), [unrealized]);
 
   // Initialize selected IDs with all loss positions on first load
   React.useEffect(() => {
@@ -1061,9 +1093,7 @@ export const CapitalGainsTab = ({
     if (ledgerSearch.trim()) {
       const q = ledgerSearch.toLowerCase();
       list = list.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          (r.symbol && r.symbol.toLowerCase().includes(q))
+        (r) => r.name.toLowerCase().includes(q) || (r.symbol && r.symbol.toLowerCase().includes(q))
       );
     }
 
@@ -1113,9 +1143,7 @@ export const CapitalGainsTab = ({
     if (unrealizedSearch.trim()) {
       const q = unrealizedSearch.toLowerCase();
       list = list.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          (r.symbol && r.symbol.toLowerCase().includes(q))
+        (r) => r.name.toLowerCase().includes(q) || (r.symbol && r.symbol.toLowerCase().includes(q))
       );
     }
 
@@ -1483,6 +1511,11 @@ export const CapitalGainsTab = ({
             label: "Sec 54 / 54EC / 54F Exemption Studio",
             icon: ShieldCheck,
           },
+          {
+            id: "cfl",
+            label: "Schedule CFL (Loss Carry-Forward)",
+            icon: Layers,
+          },
           { id: "calculator", label: "What-If Simulator", icon: Calculator },
           { id: "rules", label: "Tax Rules & Guide", icon: BookOpen },
         ].map((tab) => {
@@ -1800,7 +1833,10 @@ export const CapitalGainsTab = ({
                 </div>
               </div>
 
-              <div className="progress-track" style={{ height: 10, borderRadius: 5, marginBottom: 10 }}>
+              <div
+                className="progress-track"
+                style={{ height: 10, borderRadius: 5, marginBottom: 10 }}
+              >
                 <div
                   className="progress-fill progress-fill-sage"
                   style={{
@@ -1858,7 +1894,10 @@ export const CapitalGainsTab = ({
 
               <div style={{ width: "100%", height: 180 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={quarterlyChartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <BarChart
+                    data={quarterlyChartData}
+                    margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
+                  >
                     <XAxis
                       dataKey="name"
                       tick={{ fontSize: 11, fill: "var(--t-muted)" }}
@@ -1878,8 +1917,18 @@ export const CapitalGainsTab = ({
                         fontSize: 11,
                       }}
                     />
-                    <Bar dataKey="Equity STCG" fill={THEME.gold} stackId="a" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="Equity LTCG" fill={THEME.sage} stackId="a" radius={[2, 2, 0, 0]} />
+                    <Bar
+                      dataKey="Equity STCG"
+                      fill={THEME.gold}
+                      stackId="a"
+                      radius={[2, 2, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="Equity LTCG"
+                      fill={THEME.sage}
+                      stackId="a"
+                      radius={[2, 2, 0, 0]}
+                    />
                     <Bar dataKey="Debt" fill={THEME.accent} stackId="a" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -2613,9 +2662,10 @@ export const CapitalGainsTab = ({
                       Tax-Loss Harvesting Studio & Offset Planner
                     </div>
                     <div style={{ fontSize: 12, color: THEME.muted, maxWidth: 580 }}>
-                      Realize losses on underperforming holdings to legally wipe out capital gains tax
-                      in {currentFYLabel}. You can immediately reinvest proceeds into similar index funds
-                      or alternative securities to keep your portfolio allocation intact.
+                      Realize losses on underperforming holdings to legally wipe out capital gains
+                      tax in {currentFYLabel}. You can immediately reinvest proceeds into similar
+                      index funds or alternative securities to keep your portfolio allocation
+                      intact.
                     </div>
                   </div>
                 </div>
@@ -2641,7 +2691,9 @@ export const CapitalGainsTab = ({
                 }}
               >
                 <Card style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}
+                  >
                     Realized Gains to Offset ({currentFYLabel})
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: THEME.ink }}>
@@ -2663,7 +2715,9 @@ export const CapitalGainsTab = ({
                 </Card>
 
                 <Card style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}
+                  >
                     Selected Losses to Harvest
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: THEME.rust }}>
@@ -2681,7 +2735,9 @@ export const CapitalGainsTab = ({
                     border: `1px solid color-mix(in srgb, ${THEME.sage} 25%, transparent)`,
                   }}
                 >
-                  <div style={{ fontSize: 11, fontWeight: 700, color: THEME.sage, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 700, color: THEME.sage, marginBottom: 4 }}
+                  >
                     Immediate Tax Savings
                   </div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: THEME.sage }}>
@@ -2704,7 +2760,8 @@ export const CapitalGainsTab = ({
                   }}
                 >
                   <div style={{ fontSize: 14, fontWeight: 700, color: THEME.ink }}>
-                    Select Loss Positions to Harvest ({harvestingCalculations.activeList.length} opportunities)
+                    Select Loss Positions to Harvest ({harvestingCalculations.activeList.length}{" "}
+                    opportunities)
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
@@ -2878,7 +2935,10 @@ export const CapitalGainsTab = ({
                       Section 112A Tax-Free LTCG Gain Harvester (₹1.25L Exemption)
                     </div>
                     <div style={{ fontSize: 12, color: THEME.muted, maxWidth: 580 }}>
-                      Under Section 112A, long-term capital gains up to ₹1,25,000 per financial year are completely tax-free (0% tax). Sell and immediately repurchase winning positions to step up your cost basis to today's market price without paying any tax, locking in future tax savings!
+                      Under Section 112A, long-term capital gains up to ₹1,25,000 per financial year
+                      are completely tax-free (0% tax). Sell and immediately repurchase winning
+                      positions to step up your cost basis to today's market price without paying
+                      any tax, locking in future tax savings!
                     </div>
                   </div>
                 </div>
@@ -2904,7 +2964,9 @@ export const CapitalGainsTab = ({
                 }}
               >
                 <Card style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}
+                  >
                     Remaining 0%-Tax Headroom ({currentFYLabel})
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: THEME.ink }}>
@@ -2916,7 +2978,9 @@ export const CapitalGainsTab = ({
                 </Card>
 
                 <Card style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}
+                  >
                     Tax-Free Gain to Harvest (0% Tax)
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "var(--t-sage)" }}>
@@ -2934,7 +2998,9 @@ export const CapitalGainsTab = ({
                     border: `1px solid color-mix(in srgb, ${THEME.accent} 25%, transparent)`,
                   }}
                 >
-                  <div style={{ fontSize: 11, fontWeight: 700, color: THEME.accent, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 700, color: THEME.accent, marginBottom: 4 }}
+                  >
                     Future Tax Saved (12.5%)
                   </div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: THEME.accent }}>
@@ -2946,11 +3012,16 @@ export const CapitalGainsTab = ({
                 </Card>
 
                 <Card style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, marginBottom: 4 }}
+                  >
                     Total Trade Value to Execute
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: THEME.ink }}>
-                    <Money value={gainHarvestingCalculations.totalSaleValueRequired} variant="full" />
+                    <Money
+                      value={gainHarvestingCalculations.totalSaleValueRequired}
+                      variant="full"
+                    />
                   </div>
                   <div style={{ fontSize: 10, color: THEME.muted, marginTop: 4 }}>
                     Sell & Rebuy volume needed
@@ -2969,7 +3040,8 @@ export const CapitalGainsTab = ({
                   }}
                 >
                   <div style={{ fontSize: 14, fontWeight: 700, color: THEME.ink }}>
-                    Select Profitable LTCG Positions ({gainHarvestingCalculations.activeList.length} candidates)
+                    Select Profitable LTCG Positions ({gainHarvestingCalculations.activeList.length}{" "}
+                    candidates)
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
@@ -3076,19 +3148,47 @@ export const CapitalGainsTab = ({
                               <td style={tdStyle}>
                                 <Badge variant="muted">{h.assetType}</Badge>
                               </td>
-                              <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, color: "var(--t-sage)" }}>
+                              <td
+                                style={{
+                                  ...tdStyle,
+                                  textAlign: "right",
+                                  fontWeight: 700,
+                                  color: "var(--t-sage)",
+                                }}
+                              >
                                 <Money value={h.unrealizedPL} variant="full" />
                               </td>
-                              <td style={{ ...tdStyle, textAlign: "right", fontWeight: 600, color: THEME.ink }}>
+                              <td
+                                style={{
+                                  ...tdStyle,
+                                  textAlign: "right",
+                                  fontWeight: 600,
+                                  color: THEME.ink,
+                                }}
+                              >
                                 {h.unitsToSell} / {h.qty}
                               </td>
                               <td style={{ ...tdStyle, textAlign: "right", color: THEME.ink }}>
                                 <Money value={h.saleValue} variant="full" />
                               </td>
-                              <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, color: "var(--t-sage)" }}>
+                              <td
+                                style={{
+                                  ...tdStyle,
+                                  textAlign: "right",
+                                  fontWeight: 700,
+                                  color: "var(--t-sage)",
+                                }}
+                              >
                                 <Money value={h.harvestableGain} variant="full" />
                               </td>
-                              <td style={{ ...tdStyle, textAlign: "right", fontWeight: 800, color: THEME.accent }}>
+                              <td
+                                style={{
+                                  ...tdStyle,
+                                  textAlign: "right",
+                                  fontWeight: 800,
+                                  color: THEME.accent,
+                                }}
+                              >
                                 <Money value={h.futureTaxSaved} variant="full" />
                               </td>
                             </tr>
@@ -3126,7 +3226,24 @@ export const CapitalGainsTab = ({
       )}
 
       {/* ═════════════════════════════════════════════════════════════
-         VIEW 6: CAPITAL GAINS WHAT-IF SIMULATOR
+         VIEW 6: ITR SCHEDULE CFL (BROUGHT-FORWARD LOSSES SET-OFF & CARRY-FORWARD)
+         ═════════════════════════════════════════════════════════════ */}
+      {activeView === "cfl" && (
+        <ScheduleCFLStudio
+          currentFYSTCG={Math.max(
+            0,
+            Number(byType?.totals?.EQUITY_STCG || 0) + Number(byType?.totals?.DEBT_STCG || 0)
+          )}
+          currentFYLTCG={Math.max(
+            0,
+            Number(byType?.totals?.EQUITY_LTCG || 0) + Number(byType?.totals?.DEBT_LTCG || 0)
+          )}
+          showToast={showToast}
+        />
+      )}
+
+      {/* ═════════════════════════════════════════════════════════════
+         VIEW 7: CAPITAL GAINS WHAT-IF SIMULATOR
          ═════════════════════════════════════════════════════════════ */}
       {activeView === "calculator" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -3146,7 +3263,8 @@ export const CapitalGainsTab = ({
                     Capital Gains "What-If" Trade Simulator
                   </div>
                   <div style={{ fontSize: 12, color: THEME.muted }}>
-                    Simulate selling any stock or mutual fund to test holding duration, tax bracket & net profit before trading
+                    Simulate selling any stock or mutual fund to test holding duration, tax bracket
+                    & net profit before trading
                   </div>
                 </div>
               </div>
@@ -3163,7 +3281,15 @@ export const CapitalGainsTab = ({
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div style={{ display: "flex", gap: 10 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: THEME.muted,
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
                       Asset Class
                     </label>
                     <select
@@ -3179,7 +3305,15 @@ export const CapitalGainsTab = ({
 
                   {simAssetType === "Mutual Fund" && (
                     <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                      <label
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: THEME.muted,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
                         Fund Category
                       </label>
                       <select
@@ -3197,7 +3331,15 @@ export const CapitalGainsTab = ({
 
                 <div style={{ display: "flex", gap: 10 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: THEME.muted,
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
                       Buy Date
                     </label>
                     <input
@@ -3210,7 +3352,15 @@ export const CapitalGainsTab = ({
                   </div>
 
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: THEME.muted,
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
                       Total Buy Cost (₹)
                     </label>
                     <input
@@ -3225,7 +3375,15 @@ export const CapitalGainsTab = ({
 
                 <div style={{ display: "flex", gap: 10 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: THEME.muted,
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
                       Simulated Sell Date
                     </label>
                     <input
@@ -3238,7 +3396,15 @@ export const CapitalGainsTab = ({
                   </div>
 
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: THEME.muted,
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
                       Simulated Sell Value (₹)
                     </label>
                     <input
@@ -3264,7 +3430,9 @@ export const CapitalGainsTab = ({
                   gap: 12,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
                   <span style={{ fontSize: 13, fontWeight: 700, color: THEME.ink }}>
                     Simulation Outcome
                   </span>
@@ -3380,8 +3548,12 @@ export const CapitalGainsTab = ({
                     </td>
                     <td style={tdStyle}>≤ 12 Months</td>
                     <td style={tdStyle}>&gt; 12 Months</td>
-                    <td style={{ ...tdStyle, color: THEME.gold, fontWeight: 600 }}>20% (15% pre-23-Jul)</td>
-                    <td style={{ ...tdStyle, color: THEME.sage, fontWeight: 600 }}>12.5% (10% pre-23-Jul)</td>
+                    <td style={{ ...tdStyle, color: THEME.gold, fontWeight: 600 }}>
+                      20% (15% pre-23-Jul)
+                    </td>
+                    <td style={{ ...tdStyle, color: THEME.sage, fontWeight: 600 }}>
+                      12.5% (10% pre-23-Jul)
+                    </td>
                     <td style={tdStyle}>₹1,25,000 / FY</td>
                   </tr>
                   <tr className="table-row-hover">
@@ -3390,7 +3562,9 @@ export const CapitalGainsTab = ({
                     </td>
                     <td style={tdStyle}>Any duration</td>
                     <td style={{ ...tdStyle, color: THEME.muted }}>No LTCG Allowed</td>
-                    <td style={{ ...tdStyle, color: THEME.rust, fontWeight: 600 }}>Slab Rate (30%)</td>
+                    <td style={{ ...tdStyle, color: THEME.rust, fontWeight: 600 }}>
+                      Slab Rate (30%)
+                    </td>
                     <td style={{ ...tdStyle, color: THEME.muted }}>N/A (Slab Rate)</td>
                     <td style={tdStyle}>None</td>
                   </tr>
@@ -3401,7 +3575,9 @@ export const CapitalGainsTab = ({
                     <td style={tdStyle}>≤ 36 Months</td>
                     <td style={tdStyle}>&gt; 36 Months</td>
                     <td style={{ ...tdStyle, color: THEME.rust, fontWeight: 600 }}>Slab Rate</td>
-                    <td style={{ ...tdStyle, color: THEME.accent, fontWeight: 600 }}>20% with Indexation</td>
+                    <td style={{ ...tdStyle, color: THEME.accent, fontWeight: 600 }}>
+                      20% with Indexation
+                    </td>
                     <td style={tdStyle}>None</td>
                   </tr>
                   <tr className="table-row-hover">
@@ -3411,7 +3587,9 @@ export const CapitalGainsTab = ({
                     <td style={tdStyle}>≤ 24 Months</td>
                     <td style={tdStyle}>&gt; 24 Months</td>
                     <td style={tdStyle}>Slab Rate</td>
-                    <td style={{ ...tdStyle, color: THEME.accent, fontWeight: 600 }}>12.5% (Without Indexation)</td>
+                    <td style={{ ...tdStyle, color: THEME.accent, fontWeight: 600 }}>
+                      12.5% (Without Indexation)
+                    </td>
                     <td style={tdStyle}>Sec 54 / 54F</td>
                   </tr>
                   <tr className="table-row-hover">
@@ -3456,9 +3634,21 @@ export const CapitalGainsTab = ({
                 <div style={{ fontSize: 13, fontWeight: 700, color: THEME.gold, marginBottom: 6 }}>
                   Short-Term Capital Loss (STCL)
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: THEME.muted, lineHeight: 1.6 }}>
-                  <li>Can be set off against <strong>both STCG and LTCG</strong> in the same FY.</li>
-                  <li>Can be carried forward for up to <strong>8 Assessment Years</strong>.</li>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: 18,
+                    fontSize: 12,
+                    color: THEME.muted,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <li>
+                    Can be set off against <strong>both STCG and LTCG</strong> in the same FY.
+                  </li>
+                  <li>
+                    Can be carried forward for up to <strong>8 Assessment Years</strong>.
+                  </li>
                   <li>In future years, brought-forward STCL can set off STCG and LTCG.</li>
                 </ul>
               </div>
@@ -3474,9 +3664,21 @@ export const CapitalGainsTab = ({
                 <div style={{ fontSize: 13, fontWeight: 700, color: THEME.sage, marginBottom: 6 }}>
                   Long-Term Capital Loss (LTCL)
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: THEME.muted, lineHeight: 1.6 }}>
-                  <li>Can only be set off against <strong>LTCG</strong> (cannot offset STCG).</li>
-                  <li>Can be carried forward for up to <strong>8 Assessment Years</strong>.</li>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: 18,
+                    fontSize: 12,
+                    color: THEME.muted,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <li>
+                    Can only be set off against <strong>LTCG</strong> (cannot offset STCG).
+                  </li>
+                  <li>
+                    Can be carried forward for up to <strong>8 Assessment Years</strong>.
+                  </li>
                   <li>In future years, brought-forward LTCL can set off only LTCG.</li>
                 </ul>
               </div>
@@ -3504,9 +3706,9 @@ export const CapitalGainsTab = ({
         <span>
           <strong>Statutory Disclaimer:</strong> Tax estimates are computed per Indian Income Tax
           Act provisions (Finance Act 2024). STCG on equity is taxed at {stcgRate * 100}%, LTCG at{" "}
-          {ltcgRate * 100}% above <Money value={ltcgExemptionLimit} variant="full" /> exemption. Debt
-          mutual funds purchased on or after 1-Apr-2023 are taxed at your applicable slab rate with
-          no indexation benefit. For ITR filing, verify against your AIS/TIS and capital gain
+          {ltcgRate * 100}% above <Money value={ltcgExemptionLimit} variant="full" /> exemption.
+          Debt mutual funds purchased on or after 1-Apr-2023 are taxed at your applicable slab rate
+          with no indexation benefit. For ITR filing, verify against your AIS/TIS and capital gain
           statements from CAMS/KFintech/brokers.
         </span>
       </div>

@@ -32,12 +32,52 @@ export const EFFECTIVE_LTCG_RATE = LTCG_STATUTORY_TAX_RATE * (1 + HEALTH_EDU_CES
 
 export interface ExemptionCalculationResult {
   section54Exemption: number;
+  section54BExemption?: number;
   section54ECExemption: number;
   section54FExemption: number;
   totalExemption: number;
   netTaxableLTCG: number;
   taxSaved: number;
   notes: string[];
+}
+
+/**
+ * Calculates Section 54B exemption for transfer of agricultural land.
+ */
+export function calculateSection54BExemption({
+  ltcg,
+  newAgriculturalLandInvestment,
+  cgasDeposit = 0,
+  usedForAgriTwoYears = true,
+}: {
+  ltcg: number;
+  newAgriculturalLandInvestment: number;
+  cgasDeposit?: number;
+  usedForAgriTwoYears?: boolean;
+}): { exemption: number; notes: string[] } {
+  const notes: string[] = [];
+  if (!usedForAgriTwoYears) {
+    return {
+      exemption: 0,
+      notes: [
+        "Ineligible: Land must have been used by the assessee or their parent for agricultural purposes for at least 2 years immediately preceding the date of transfer (Section 54B(1)).",
+      ],
+    };
+  }
+  if (ltcg <= 0) return { exemption: 0, notes: ["No LTCG available for Section 54B exemption."] };
+
+  const totalReinvested = Math.max(0, newAgriculturalLandInvestment) + Math.max(0, cgasDeposit);
+  const exemption = Math.min(ltcg, totalReinvested);
+
+  if (totalReinvested >= ltcg) {
+    notes.push("100% Capital Gains sheltered under Section 54B.");
+  } else if (totalReinvested > 0) {
+    notes.push(
+      `Partial exemption claimed: ${fmtINRFull(exemption)} of ${fmtINRFull(ltcg)} under Section 54B.`
+    );
+  }
+
+  return { exemption, notes };
 }
 
 /**
@@ -193,7 +233,8 @@ export function calculateStatutoryDeadlines(transferDateStr: string) {
       section: "Sec 54 / 54F / CGAS",
       deadlineDate: fmt(cgasDeadline),
       daysLeft: getDaysLeft(cgasDeadline),
-      description: "Unutilized capital gains must be deposited in designated bank account before ITR filing due date.",
+      description:
+        "Unutilized capital gains must be deposited in designated bank account before ITR filing due date.",
       badge: "Sec 139(1) ITR Filing",
     },
     {
@@ -235,10 +276,14 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
   setTab,
 }) => {
   // Mode: "simulator" | "deadlines" | "portfolio_crosscheck" | "rules"
-  const [studioTab, setStudioTab] = useState<"simulator" | "deadlines" | "crosscheck" | "rules">("simulator");
+  const [studioTab, setStudioTab] = useState<"simulator" | "deadlines" | "crosscheck" | "rules">(
+    "simulator"
+  );
 
   // Transfer Details Inputs
-  const [assetType, setAssetType] = useState<"residential_house" | "land_or_commercial" | "securities_or_gold">("residential_house");
+  const [assetType, setAssetType] = useState<
+    "residential_house" | "land_or_commercial" | "agricultural_land" | "securities_or_gold"
+  >("residential_house");
   const [transferDate, setTransferDate] = useState<string>(today());
   const [netConsideration, setNetConsideration] = useState<number>(15000000); // 1.5 Cr default
   const [indexedCost, setIndexedCost] = useState<number>(6000000); // 60 Lakhs default
@@ -247,6 +292,8 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
 
   // Exemption Reinvestment Inputs
   const [newHouseInvestment, setNewHouseInvestment] = useState<number>(6000000);
+  const [newAgriLandInvestment, setNewAgriLandInvestment] = useState<number>(5000000);
+  const [usedForAgriTwoYears, setUsedForAgriTwoYears] = useState<boolean>(true);
   const [cgasDeposit, setCgasDeposit] = useState<number>(1000000);
   const [sec54ECBonds, setSec54ECBonds] = useState<number>(2000000);
   const [existingHousesOwned, setExistingHousesOwned] = useState<number>(1);
@@ -256,7 +303,13 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
   const existing54ECBonds = useMemo(() => {
     return (state.bonds || []).filter((b: any) => {
       const name = (b.issuerName || b.name || b.securityNature || "").toLowerCase();
-      return name.includes("54ec") || name.includes("nhai") || name.includes("rec") || name.includes("pfc") || name.includes("irfc");
+      return (
+        name.includes("54ec") ||
+        name.includes("nhai") ||
+        name.includes("rec") ||
+        name.includes("pfc") ||
+        name.includes("irfc")
+      );
     });
   }, [state.bonds]);
 
@@ -287,6 +340,7 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
   // Calculate Exemptions based on Asset Type
   const computationResult: ExemptionCalculationResult = useMemo(() => {
     let s54 = 0;
+    let s54b = 0;
     let s54ec = 0;
     let s54f = 0;
     const notes: string[] = [];
@@ -303,6 +357,27 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
 
       // Section 54EC for remaining gain (if residential building included land)
       const remainingGain = Math.max(0, effectiveLTCG - s54);
+      if (sec54ECBonds > 0 && remainingGain > 0) {
+        const res54EC = calculateSection54ECExemption({
+          ltcg: remainingGain,
+          bondInvestment: sec54ECBonds,
+          existing54ECInvestmentsInFY: existing54ECTotal,
+        });
+        s54ec = res54EC.exemption;
+        notes.push(...res54EC.notes);
+      }
+    } else if (assetType === "agricultural_land") {
+      // Eligible for Section 54B & Section 54EC
+      const res54B = calculateSection54BExemption({
+        ltcg: effectiveLTCG,
+        newAgriculturalLandInvestment: newAgriLandInvestment,
+        cgasDeposit,
+        usedForAgriTwoYears,
+      });
+      s54b = res54B.exemption;
+      notes.push(...res54B.notes);
+
+      const remainingGain = Math.max(0, effectiveLTCG - s54b);
       if (sec54ECBonds > 0 && remainingGain > 0) {
         const res54EC = calculateSection54ECExemption({
           ltcg: remainingGain,
@@ -347,12 +422,13 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
       notes.push(...res54F.notes);
     }
 
-    const totalExemption = Math.min(effectiveLTCG, s54 + s54ec + s54f);
+    const totalExemption = Math.min(effectiveLTCG, s54 + s54b + s54ec + s54f);
     const netTaxableLTCG = Math.max(0, effectiveLTCG - totalExemption);
     const taxSaved = Math.round(totalExemption * EFFECTIVE_LTCG_RATE);
 
     return {
       section54Exemption: s54,
+      section54BExemption: s54b,
       section54ECExemption: s54ec,
       section54FExemption: s54f,
       totalExemption,
@@ -365,6 +441,8 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
     effectiveLTCG,
     netConsideration,
     newHouseInvestment,
+    newAgriLandInvestment,
+    usedForAgriTwoYears,
     cgasDeposit,
     sec54ECBonds,
     existing54ECTotal,
@@ -378,7 +456,9 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
   );
 
   // Quick Preset Handlers
-  const handleApplyPreset = (preset: "res_to_res" | "land_to_bonds" | "shares_to_house") => {
+  const handleApplyPreset = (
+    preset: "res_to_res" | "land_to_bonds" | "shares_to_house" | "agri_to_agri"
+  ) => {
     if (preset === "res_to_res") {
       setAssetType("residential_house");
       setNetConsideration(20000000);
@@ -404,6 +484,15 @@ export const CapitalGainsExemptionStudio: React.FC<CapitalGainsExemptionStudioPr
       setSec54ECBonds(0);
       setExistingHousesOwned(1);
       showToast?.("Applied Shares/MF Portfolio Sale → Sec 54F Proportional Preset", "info");
+    } else if (preset === "agri_to_agri") {
+      setAssetType("agricultural_land");
+      setNetConsideration(8000000);
+      setIndexedCost(3000000);
+      setNewAgriLandInvestment(4000000);
+      setCgasDeposit(1000000);
+      setSec54ECBonds(0);
+      setUsedForAgriTwoYears(true);
+      showToast?.("Applied Agricultural Land Sale → Sec 54B Reinvestment Preset", "info");
     }
   };
 
@@ -419,6 +508,7 @@ Long-Term Capital Gain: ₹${effectiveLTCG.toLocaleString("en-IN")}
 
 EXEMPTIONS CLAIMED UNDER CHAPTER IV-E:
 • Section 54 (Residential House): ₹${computationResult.section54Exemption.toLocaleString("en-IN")}
+• Section 54B (Agricultural Land): ₹${(computationResult.section54BExemption || 0).toLocaleString("en-IN")}
 • Section 54EC (Capital Gains Bonds): ₹${computationResult.section54ECExemption.toLocaleString("en-IN")}
 • Section 54F (Proportional Exemption): ₹${computationResult.section54FExemption.toLocaleString("en-IN")}
 • CGAS 1988 Deposit Claimed: ₹${cgasDeposit.toLocaleString("en-IN")}
@@ -475,7 +565,8 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                   Capital Gains Exemption Studio (Sec 54, 54EC, 54F & CGAS)
                 </h3>
                 <p style={{ fontSize: 12, color: THEME.muted, margin: "3px 0 0" }}>
-                  Model statutory tax shelters, calculate proportional 54F deductions, enforce ₹50L / ₹10Cr limits & track compliance deadlines
+                  Model statutory tax shelters, calculate proportional 54F deductions, enforce ₹50L
+                  / ₹10Cr limits & track compliance deadlines
                 </p>
               </div>
             </div>
@@ -485,7 +576,9 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
             <Button
               variant="secondary"
               size="sm"
-              icon={copiedScheduleCG ? <Check size={14} color="var(--t-sage)" /> : <Copy size={14} />}
+              icon={
+                copiedScheduleCG ? <Check size={14} color="var(--t-sage)" /> : <Copy size={14} />
+              }
               onClick={handleCopyScheduleCGText}
             >
               {copiedScheduleCG ? "Copied Disclosure" : "Copy Schedule CG Disclosure"}
@@ -509,7 +602,12 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
           {[
             { id: "simulator", label: "Interactive Exemption Simulator", icon: Sparkles },
             { id: "deadlines", label: "Statutory Deadlines Radar", icon: Calendar },
-            { id: "crosscheck", label: "Portfolio Cross-Reference", icon: Layers, count: existing54ECBonds.length },
+            {
+              id: "crosscheck",
+              label: "Portfolio Cross-Reference",
+              icon: Layers,
+              count: existing54ECBonds.length,
+            },
             { id: "rules", label: "Tax Law Provisions & Caps", icon: FileText },
           ].map((tab) => {
             const active = studioTab === tab.id;
@@ -572,7 +670,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
               border: `1px solid ${THEME.line}`,
             }}
           >
-            <span style={{ fontSize: 11, fontWeight: 800, color: THEME.muted, textTransform: "uppercase" }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: THEME.muted,
+                textTransform: "uppercase",
+              }}
+            >
               Quick Presets:
             </span>
             <button
@@ -627,7 +732,26 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                 gap: 5,
               }}
             >
-              <Building size={12} color="var(--t-gold)" /> Shares / MF → House (Sec 54F Proportional)
+              <Building size={12} color="var(--t-gold)" /> Shares / MF → House (Sec 54F
+              Proportional)
+            </button>
+            <button
+              onClick={() => handleApplyPreset("agri_to_agri")}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "4px 10px",
+                borderRadius: 6,
+                border: `1px solid ${THEME.line}`,
+                background: "var(--t-paper)",
+                color: THEME.ink,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <Landmark size={12} color="var(--t-sage)" /> Agri Land → New Agri Land (Sec 54B)
             </button>
           </div>
 
@@ -640,7 +764,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
             }}
           >
             <Card style={{ padding: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.muted,
+                  textTransform: "uppercase",
+                }}
+              >
                 Gross Capital Gain (LTCG)
               </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: THEME.ink, marginTop: 4 }}>
@@ -652,7 +783,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
             </Card>
 
             <Card style={{ padding: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.muted,
+                  textTransform: "uppercase",
+                }}
+              >
                 Total Exemption Claimed
               </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "var(--t-sage)", marginTop: 4 }}>
@@ -666,10 +804,24 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
             </Card>
 
             <Card style={{ padding: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.muted,
+                  textTransform: "uppercase",
+                }}
+              >
                 Net Taxable LTCG
               </div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: computationResult.netTaxableLTCG > 0 ? "var(--t-rust)" : "var(--t-sage)", marginTop: 4 }}>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: computationResult.netTaxableLTCG > 0 ? "var(--t-rust)" : "var(--t-sage)",
+                  marginTop: 4,
+                }}
+              >
                 <Money value={computationResult.netTaxableLTCG} variant="full" />
               </div>
               <div style={{ fontSize: 11, color: THEME.muted, marginTop: 4 }}>
@@ -678,7 +830,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
             </Card>
 
             <Card style={{ padding: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: THEME.muted,
+                  textTransform: "uppercase",
+                }}
+              >
                 Direct Tax Saved
               </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: THEME.accent, marginTop: 4 }}>
@@ -691,7 +850,13 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
           </div>
 
           {/* Form & Controls Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+              gap: 16,
+            }}
+          >
             {/* Left Card: Original Asset Transfer Details */}
             <Card style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
@@ -703,23 +868,54 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
 
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: THEME.muted,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Asset Transferred / Sold:
                   </label>
                   <select
                     value={assetType}
                     onChange={(e) => setAssetType(e.target.value as any)}
                     className="form-input"
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, fontSize: 13, fontWeight: 600 }}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
                   >
-                    <option value="residential_house">Residential House Property (Sec 54 & Sec 54EC eligible)</option>
-                    <option value="land_or_commercial">Land, Commercial Plot or Office (Sec 54EC & Sec 54F eligible)</option>
-                    <option value="securities_or_gold">Listed Equities, Mutual Funds or Gold (Sec 54F eligible)</option>
+                    <option value="residential_house">
+                      Residential House Property (Sec 54 & Sec 54EC eligible)
+                    </option>
+                    <option value="agricultural_land">
+                      Agricultural Land (Sec 54B & Sec 54EC eligible)
+                    </option>
+                    <option value="land_or_commercial">
+                      Land, Commercial Plot or Office (Sec 54EC & Sec 54F eligible)
+                    </option>
+                    <option value="securities_or_gold">
+                      Listed Equities, Mutual Funds or Gold (Sec 54F eligible)
+                    </option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: THEME.muted,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Date of Transfer / Deed Registration:
                   </label>
                   <input
@@ -732,7 +928,15 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: THEME.muted,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Gross Net Consideration / Sale Value (₹):
                   </label>
                   <input
@@ -740,7 +944,13 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                     value={netConsideration}
                     onChange={(e) => setNetConsideration(Math.max(0, Number(e.target.value)))}
                     className="form-input"
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, fontSize: 13, fontWeight: 700 }}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 700,
+                    }}
                   />
                   <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
                     Formatted: {fmtINRFull(netConsideration)}
@@ -748,7 +958,15 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: THEME.muted,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Cost of Acquisition / Indexed Cost (₹):
                   </label>
                   <input
@@ -765,7 +983,15 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
 
                 {assetType !== "residential_house" && (
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted, display: "block", marginBottom: 4 }}>
+                    <label
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: THEME.muted,
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
                       Existing Residential Houses Owned on Transfer Date:
                     </label>
                     <select
@@ -779,7 +1005,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                       <option value={2}>2 or more Houses (INELIGIBLE for Sec 54F)</option>
                     </select>
                     {existingHousesOwned > 1 && (
-                      <div style={{ fontSize: 11, color: "var(--t-rust)", marginTop: 4, fontWeight: 600 }}>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "var(--t-rust)",
+                          marginTop: 4,
+                          fontWeight: 600,
+                        }}
+                      >
                         ⚠️ Disqualified u/s 54F: Assessee cannot own more than 1 residential house.
                       </div>
                     )}
@@ -798,31 +1031,114 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {/* Section 54B Agricultural Land Investment */}
+                {assetType === "agricultural_land" && (
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 4,
+                      }}
+                    >
+                      <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted }}>
+                        Investment in New Agricultural Land (₹):
+                      </label>
+                      <Badge variant="sage">Sec 54B</Badge>
+                    </div>
+                    <input
+                      type="number"
+                      value={newAgriLandInvestment}
+                      onChange={(e) =>
+                        setNewAgriLandInvestment(Math.max(0, Number(e.target.value)))
+                      }
+                      className="form-input"
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 700,
+                      }}
+                    />
+                    <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                      Formatted: {fmtINRFull(newAgriLandInvestment)} · 2-Year Purchase Window
+                    </div>
+
+                    <div style={{ marginTop: 8 }}>
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: 12,
+                          color: THEME.muted,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={usedForAgriTwoYears}
+                          onChange={(e) => setUsedForAgriTwoYears(e.target.checked)}
+                          style={{ cursor: "pointer" }}
+                        />
+                        <span>
+                          Land used for agriculture for at least 2 years prior to transfer (Sec
+                          54B(1))
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 {/* Section 54 / 54F Residential House Investment */}
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted }}>
-                      Investment in New Residential House (₹):
-                    </label>
-                    <Badge variant="outline">
-                      {assetType === "residential_house" ? "Sec 54" : "Sec 54F"}
-                    </Badge>
+                {assetType !== "agricultural_land" && (
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 4,
+                      }}
+                    >
+                      <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted }}>
+                        Investment in New Residential House (₹):
+                      </label>
+                      <Badge variant="outline">
+                        {assetType === "residential_house" ? "Sec 54" : "Sec 54F"}
+                      </Badge>
+                    </div>
+                    <input
+                      type="number"
+                      value={newHouseInvestment}
+                      onChange={(e) => setNewHouseInvestment(Math.max(0, Number(e.target.value)))}
+                      className="form-input"
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 700,
+                      }}
+                    />
+                    <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                      Formatted: {fmtINRFull(newHouseInvestment)} · Max ₹10 Crore
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    value={newHouseInvestment}
-                    onChange={(e) => setNewHouseInvestment(Math.max(0, Number(e.target.value)))}
-                    className="form-input"
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, fontSize: 13, fontWeight: 700 }}
-                  />
-                  <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
-                    Formatted: {fmtINRFull(newHouseInvestment)} · Max ₹10 Crore
-                  </div>
-                </div>
+                )}
 
                 {/* Capital Gains Account Scheme (CGAS 1988) */}
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 4,
+                    }}
+                  >
                     <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted }}>
                       Deposit in CGAS Account (Type A / B) (₹):
                     </label>
@@ -842,7 +1158,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
 
                 {/* Section 54EC Bonds */}
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 4,
+                    }}
+                  >
                     <label style={{ fontSize: 12, fontWeight: 600, color: THEME.muted }}>
                       Specified Capital Gains Bonds (NHAI / REC / PFC) (₹):
                     </label>
@@ -867,10 +1190,18 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                   />
                   <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
                     Formatted: {fmtINRFull(sec54ECBonds)}
-                    {existing54ECTotal > 0 && ` (Existing portfolio bonds: ${fmtINRFull(existing54ECTotal)})`}
+                    {existing54ECTotal > 0 &&
+                      ` (Existing portfolio bonds: ${fmtINRFull(existing54ECTotal)})`}
                   </div>
                   {sec54ECBonds > SEC_54EC_ANNUAL_CAP && (
-                    <div style={{ fontSize: 11, color: "var(--t-rust)", marginTop: 2, fontWeight: 600 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--t-rust)",
+                        marginTop: 2,
+                        fontWeight: 600,
+                      }}
+                    >
                       ⚠️ Statutory ceiling: Max ₹50,00,000 allowed per FY under Section 54EC.
                     </div>
                   )}
@@ -887,15 +1218,32 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                       marginTop: 4,
                     }}
                   >
-                    <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: THEME.muted,
+                        textTransform: "uppercase",
+                      }}
+                    >
                       Auditor Compliance Notes:
                     </div>
                     {computationResult.notes.map((note, idx) => (
                       <div
                         key={idx}
-                        style={{ fontSize: 11, color: THEME.ink, marginTop: 3, display: "flex", gap: 5 }}
+                        style={{
+                          fontSize: 11,
+                          color: THEME.ink,
+                          marginTop: 3,
+                          display: "flex",
+                          gap: 5,
+                        }}
                       >
-                        <Info size={12} color={THEME.accent} style={{ flexShrink: 0, marginTop: 2 }} />
+                        <Info
+                          size={12}
+                          color={THEME.accent}
+                          style={{ flexShrink: 0, marginTop: 2 }}
+                        />
                         <span>{note}</span>
                       </div>
                     ))}
@@ -916,7 +1264,13 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
             </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 12,
+            }}
+          >
             {statutoryDeadlines.map((dl) => {
               const isUrgent = dl.daysLeft <= 60 && dl.daysLeft > 0;
               const isExpired = dl.daysLeft <= 0;
@@ -928,15 +1282,31 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                     border: isExpired
                       ? "1px solid color-mix(in srgb, var(--t-rust) 35%, transparent)"
                       : isUrgent
-                      ? "1px solid color-mix(in srgb, var(--t-gold) 45%, transparent)"
-                      : `1px solid ${THEME.line}`,
+                        ? "1px solid color-mix(in srgb, var(--t-gold) 45%, transparent)"
+                        : `1px solid ${THEME.line}`,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Badge variant={isExpired ? "danger" : isUrgent ? "warning" : "success"}>
                       {dl.section}
                     </Badge>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: isExpired ? "var(--t-rust)" : isUrgent ? "var(--t-gold)" : "var(--t-sage)" }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: isExpired
+                          ? "var(--t-rust)"
+                          : isUrgent
+                            ? "var(--t-gold)"
+                            : "var(--t-sage)",
+                      }}
+                    >
                       {isExpired ? "DEADLINE LAPSED" : `${dl.daysLeft} days left`}
                     </span>
                   </div>
@@ -961,7 +1331,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
       {studioTab === "crosscheck" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Card style={{ padding: 18 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Landmark size={18} color={THEME.accent} />
                 <h4 style={{ fontSize: 15, fontWeight: 800, color: THEME.ink, margin: 0 }}>
@@ -974,7 +1351,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
             </div>
 
             {existing54ECBonds.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "24px 16px", color: THEME.muted, fontSize: 13 }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "24px 16px",
+                  color: THEME.muted,
+                  fontSize: 13,
+                }}
+              >
                 No active Section 54EC capital gains bonds found in Investments.
                 <div style={{ marginTop: 8 }}>
                   {setTab && (
@@ -985,7 +1369,13 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                 </div>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: 10,
+                }}
+              >
                 {existing54ECBonds.map((b: any, idx: number) => {
                   const amt = Number(
                     b.totalInvestmentAmount ||
@@ -1008,7 +1398,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                       <div style={{ fontSize: 13, fontWeight: 700, color: THEME.ink }}>
                         {b.issuerName || b.name || "54EC Capital Gains Bond"}
                       </div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: "var(--t-sage)", marginTop: 4 }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: "var(--t-sage)",
+                          marginTop: 4,
+                        }}
+                      >
                         {fmtINRFull(amt)}
                       </div>
                       <div style={{ fontSize: 11, color: THEME.muted, marginTop: 4 }}>
@@ -1030,13 +1427,22 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                 background: "color-mix(in srgb, var(--t-sage) 5%, transparent)",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 10,
+                }}
+              >
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>
                     Current FY Realized Long-Term Capital Gains: {fmtINRFull(currentFYLTCG)}
                   </div>
                   <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
-                    Eligible for Section 54F shelter by investing sale proceeds into a residential house or CGAS.
+                    Eligible for Section 54F shelter by investing sale proceeds into a residential
+                    house or CGAS.
                   </div>
                 </div>
                 <Button
@@ -1047,7 +1453,10 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
                     setManualLTCG(currentFYLTCG);
                     setUseCalculatedLTCG(false);
                     setStudioTab("simulator");
-                    showToast?.(`Imported ₹${Math.round(currentFYLTCG).toLocaleString("en-IN")} into Simulator`, "success");
+                    showToast?.(
+                      `Imported ₹${Math.round(currentFYLTCG).toLocaleString("en-IN")} into Simulator`,
+                      "success"
+                    );
                   }}
                 >
                   Import into Sec 54F Simulator
@@ -1060,17 +1469,26 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
 
       {/* ── TAB 4: TAX LAW PROVISIONS & CAPS ──────────────────────── */}
       {studioTab === "rules" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: 14,
+          }}
+        >
           <Card style={{ padding: 16 }}>
             <Badge variant="success">Section 54</Badge>
             <h4 style={{ fontSize: 14, fontWeight: 800, color: THEME.ink, margin: "8px 0 4px" }}>
               Residential House Transfer
             </h4>
             <div style={{ fontSize: 12, color: THEME.muted, lineHeight: 1.6 }}>
-              • Reinvest LTCG from residential house into 1 new residential house in India (or 2 if LTCG ≤ ₹2 Cr once in lifetime).<br />
-              • Purchase within 1 year before or 2 years after sale, OR construct within 3 years.<br />
-              • Budget 2023 Cap: Maximum exemption is strictly capped at ₹10 Crore.<br />
-              • Lock-in: 3 years for new house property.
+              • Reinvest LTCG from residential house into 1 new residential house in India (or 2 if
+              LTCG ≤ ₹2 Cr once in lifetime).
+              <br />
+              • Purchase within 1 year before or 2 years after sale, OR construct within 3 years.
+              <br />
+              • Budget 2023 Cap: Maximum exemption is strictly capped at ₹10 Crore.
+              <br />• Lock-in: 3 years for new house property.
             </div>
           </Card>
 
@@ -1080,10 +1498,12 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
               Capital Gains Bonds
             </h4>
             <div style={{ fontSize: 12, color: THEME.muted, lineHeight: 1.6 }}>
-              • Transfer of land or building reinvested in specified bonds: NHAI, REC, PFC, IRFC.<br />
-              • Investment must occur within 6 months of sale date.<br />
-              • Statutory Cap: Maximum deduction is ₹50,00,000 (₹50 Lakhs) per financial year.<br />
-              • Lock-in: 5 years (cannot be transferred, pledged, or encashed prematurely).
+              • Transfer of land or building reinvested in specified bonds: NHAI, REC, PFC, IRFC.
+              <br />
+              • Investment must occur within 6 months of sale date.
+              <br />
+              • Statutory Cap: Maximum deduction is ₹50,00,000 (₹50 Lakhs) per financial year.
+              <br />• Lock-in: 5 years (cannot be transferred, pledged, or encashed prematurely).
             </div>
           </Card>
 
@@ -1093,10 +1513,14 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
               Non-Residential Capital Assets
             </h4>
             <div style={{ fontSize: 12, color: THEME.muted, lineHeight: 1.6 }}>
-              • Transfer of any long-term asset other than a residential house (shares, mutual funds, gold, commercial plot).<br />
-              • Must reinvest Net Sale Consideration into 1 residential house.<br />
-              • Proportional Formula: Exemption = LTCG × (Amount Reinvested / Net Consideration).<br />
-              • Disqualification: Assessee must not own more than 1 residential house on transfer date.
+              • Transfer of any long-term asset other than a residential house (shares, mutual
+              funds, gold, commercial plot).
+              <br />
+              • Must reinvest Net Sale Consideration into 1 residential house.
+              <br />
+              • Proportional Formula: Exemption = LTCG × (Amount Reinvested / Net Consideration).
+              <br />• Disqualification: Assessee must not own more than 1 residential house on
+              transfer date.
             </div>
           </Card>
 
@@ -1106,9 +1530,12 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
               Capital Gains Account Scheme
             </h4>
             <div style={{ fontSize: 12, color: THEME.muted, lineHeight: 1.6 }}>
-              • If new house is not purchased/constructed before return filing due date u/s 139(1) (July 31), deposit unutilized gains in CGAS.<br />
-              • Type A (Savings Account) or Type B (Term Deposit) with authorized banks.<br />
-              • Funds must be utilized within statutory 2 or 3 years, else unutilized amount is taxed in expiry year.
+              • If new house is not purchased/constructed before return filing due date u/s 139(1)
+              (July 31), deposit unutilized gains in CGAS.
+              <br />
+              • Type A (Savings Account) or Type B (Term Deposit) with authorized banks.
+              <br />• Funds must be utilized within statutory 2 or 3 years, else unutilized amount
+              is taxed in expiry year.
             </div>
           </Card>
         </div>
@@ -1116,4 +1543,3 @@ Generated by ArthaDrishti Capital Gains & Tax Studio
     </div>
   );
 };
-
