@@ -25,6 +25,15 @@ module.exports = async function handler(req, res) {
   if (!prompt && (!contents || !contents.length)) {
     return res.status(400).json({ error: "prompt or contents parameter required" });
   }
+  // Bound the request so one signed-in user can't run up the server key's bill.
+  // The financial context arrives as systemInstruction, so it gets the larger budget.
+  if (
+    String(prompt || "").length > 8_000 ||
+    String(systemInstruction || "").length > 120_000 ||
+    (contents && (!Array.isArray(contents) || contents.length > 40 || JSON.stringify(contents).length > 120_000))
+  ) {
+    return res.status(413).json({ error: "Request too large" });
+  }
 
   const serverApiKey =
     process.env.GEMINI_API_KEY ||

@@ -47,8 +47,9 @@ function isAllowedOrigin(origin) {
     if (host === "localhost" || host === "127.0.0.1") return true;
     // Production app
     if (host === "arthadrishti-app.vercel.app") return true;
-    // Vercel preview & production deployments
-    if (host.endsWith(".vercel.app")) return true;
+    // This project's own Vercel preview deployments only — a bare ".vercel.app"
+    // suffix would admit anyone's Vercel-hosted site.
+    if (/^arthadrishti[a-z0-9-]*\.vercel\.app$/.test(host)) return true;
     // Custom configured app domain
     const appUrl = process.env.APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
     if (appUrl) {

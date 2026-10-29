@@ -10,12 +10,19 @@
 // Set any ONE of these in Vercel → Settings → Environment Variables → Redeploy.
 
 const { rateLimit, handleCors } = require("./_lib/rateLimit");
+const { verifyManualAuth } = require("./_lib/auth");
 
 module.exports = async function handler(req, res) {
   if (!handleCors(req, res)) return;
   // Tighter than the other proxies — every live-provider call here costs real
   // money (Surepass is ~₹2-4/lookup once the free tier is exhausted).
   if (!(await rateLimit(req, res, { max: 10, windowMs: 60_000, keyPrefix: "rc:" }))) return;
+
+  // Lookups spend paid provider credits (server-side env tokens), so only signed-in
+  // users may call this. Provider tokens are accepted via headers only — query
+  // strings end up in access logs.
+  const auth = await verifyManualAuth(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.reason || "Unauthorized" });
 
   const reg = String(req.query.reg || "")
     .trim()
@@ -27,17 +34,14 @@ module.exports = async function handler(req, res) {
 
   const surepassToken =
     req.headers["x-surepass-token"] ||
-    req.query.surepassToken ||
     process.env.SUREPASS_TOKEN;
 
   const attestrToken =
     req.headers["x-attestr-token"] ||
-    req.query.attestrToken ||
     process.env.ATTESTR_TOKEN;
 
   const rapidApiKey =
     req.headers["x-rapidapi-key"] ||
-    req.query.rapidApiKey ||
     process.env.RAPIDAPI_KEY;
 
   // ── SOURCE 1: Surepass (recommended — 100 free calls) ───────────────────

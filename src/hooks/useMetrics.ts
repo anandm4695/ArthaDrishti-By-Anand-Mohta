@@ -806,7 +806,16 @@ export function useMetrics(
 
     // Monthly Cashflow & Savings (Audit D1 & D4):
     // Deduct fixed debt obligations (EMIs) from net cashflow and savings rate so true retained savings is reflected
-    const totalMonthlyOutflow = monthExpense + totalMonthlyEMI;
+    // EMIs paid from a bank account are already inside monthExpense (as "EMI" debits or
+    // debits linked to a loan), so only the not-yet-logged part of the scheduled EMI is
+    // added on top — otherwise a logged EMI is counted twice.
+    const emiDebitsThisMonth = monthTxns
+      .filter(
+        (t: any) => t.type === "debit" && (t.linkedType === "loansTaken" || t.category === "EMI")
+      )
+      .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+    const totalMonthlyOutflow =
+      monthExpense + Math.max(0, totalMonthlyEMI - emiDebitsThisMonth);
     const netSavings = monthIncome - totalMonthlyOutflow;
     const savingsRate = monthIncome > 0 ? (Math.max(0, netSavings) / monthIncome) * 100 : 0;
     const savingsRateBeforeEMI =
