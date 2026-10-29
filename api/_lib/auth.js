@@ -5,7 +5,9 @@ let supabaseAdmin = null;
 function getSupabase() {
   if (supabaseAdmin) return supabaseAdmin;
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Production stores the service key as SUPABASE_SERVICE_EMAIL_ROLE_KEY (see health.js,
+  // rateLimit.js); reading only SUPABASE_SERVICE_ROLE_KEY made every sign-in check fail.
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_EMAIL_ROLE_KEY;
   if (!url || !key) {
     throw new Error("Supabase service credentials not configured in environment");
   }
