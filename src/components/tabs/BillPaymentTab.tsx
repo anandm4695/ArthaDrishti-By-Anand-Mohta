@@ -1041,7 +1041,9 @@ export function BillPaymentTab({ state, addItem, removeItem, updateItem, showToa
       if (h.linkedAccountId?.startsWith("bank:") && h.linkedTxnId) {
         try {
           await removeItem("transactions", h.linkedTxnId);
-        } catch {}
+        } catch {
+          /* best-effort: storage/parse unavailable */
+        }
       }
 
       // 2. If linked to CC transaction, reverse outstanding
@@ -1055,7 +1057,9 @@ export function BillPaymentTab({ state, addItem, removeItem, updateItem, showToa
               transactions: nextTxns,
               outstanding: Math.max(0, Number(card.outstanding || 0) - Number(h.amount || 0)),
             });
-          } catch {}
+          } catch {
+            /* best-effort: storage/parse unavailable */
+          }
         }
       }
 

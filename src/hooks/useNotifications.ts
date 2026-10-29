@@ -57,7 +57,9 @@ export function useNotifications(loaded: boolean, session: any, state: any): voi
         if (typeof parsed.notifStartHour === "number") notifStart = parsed.notifStartHour;
         if (typeof parsed.notifEndHour === "number") notifEnd = parsed.notifEndHour;
       }
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     const nowUtc = new Date();
     const istHour =
       (nowUtc.getUTCHours() + 5 + Math.floor((nowUtc.getUTCMinutes() + 30) / 60)) % 24;
@@ -94,7 +96,9 @@ export function useNotifications(loaded: boolean, session: any, state: any): voi
     try {
       const s = localStorage.getItem("finance-notif-settings");
       if (s) ns = { ...ns, ...JSON.parse(s) };
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     const leadDays = ns.leadDays || 3;
     const cats = ns.categories || {};
 
@@ -312,7 +316,9 @@ export function useNotifications(loaded: boolean, session: any, state: any): voi
     soon.forEach(({ title, body, type }) => {
       try {
         new Notification(title, { body, icon: getNotificationIcon(type) });
-      } catch {}
+      } catch {
+        /* best-effort: storage/parse unavailable */
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, session]); // intentionally omit other deps — runs once after login + load

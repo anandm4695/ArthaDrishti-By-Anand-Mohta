@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Copy,
   Check,
-  FileSpreadsheet,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import {

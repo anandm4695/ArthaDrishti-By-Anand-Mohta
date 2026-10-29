@@ -1,22 +1,16 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Layers,
   Plus,
   Trash2,
   Sparkles,
   Check,
-  CheckCircle2,
-  AlertCircle,
   CreditCard,
-  ArrowRight,
-  Shield,
   X,
-  TrendingDown,
-  Info,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { fmtINR, fmtINRFull, ccOutstanding, computeCreditPortfolioSummary } from "../../utils/finance";
-import { Modal, ModalActions } from "../ui/Modal";
+import { Modal } from "../ui/Modal";
 import { Field } from "../ui/Form";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";

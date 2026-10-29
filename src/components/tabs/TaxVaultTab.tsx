@@ -56,8 +56,10 @@ import {
   computeAdvanceTaxSchedule,
   today,
   getAutoDetectedDeductions,
+  getTaxpayerAge,
+  cap80CCD2,
+  compute80GG,
 } from "../../utils/finance";
-import { isSeniorCitizen, calculateAge } from "../../utils/masterData";
 import { Card } from "../ui/Card";
 import { StatCard } from "../ui/StatCard";
 import { Button } from "../ui/Button";
@@ -1713,31 +1715,39 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
   }, [state.stocks, state.mutualFunds]);
 
   /* ── Tax Computations (FY-Aware) ────────────────────────────── */
-  const selfProfile = (state.masterData?.familyProfiles || []).find((p: any) => p.id === "self");
-  const citizenAge =
-    Number(state.profile?.age || 0) ||
-    (selfProfile?.dob ? (calculateAge(selfProfile.dob) ?? 0) : 0);
-  const isSenior = citizenAge >= 60 || isSeniorCitizen(selfProfile?.dob);
+  const citizenAge = getTaxpayerAge(state, fy);
+  const isSenior = citizenAge >= 60;
   const stdDedOld = getOldStdDed(fyStartYear);
-  const d80DCap = deductions.d80DSenior ? 50_000 : 25_000;
+  // 80D has two buckets — self/family (₹25K, ₹50K if senior) and parents (₹25K, ₹50K if
+  // senior) — so the combined ceiling is ₹50K, rising to ₹1L when seniors are involved.
+  // The auto-detected figure is already capped per bucket, so never clip below it.
+  const d80DCap = Math.max(deductions.d80DSenior ? 100_000 : 50_000, autoDetected.d80D || 0);
+  const d80CCD2Old = cap80CCD2(Number(deductions.d80CCD2) || 0, autoDetected.salaryBasicDA, "old", fy);
+  const d80CCD2New = cap80CCD2(Number(deductions.d80CCD2) || 0, autoDetected.salaryBasicDA, "new", fy);
   // Section 80TTB for seniors allows up to ₹50,000 on deposits, vs ₹10,000 u/s 80TTA for non-seniors
   const max80TTA = isSenior ? 50_000 : 10_000;
 
-  const totalOldDeductions =
+  const deductionsBefore80GG =
     stdDedOld +
     Math.min(Number(deductions.d80C) || 0, 150_000) +
     Math.min(Number(deductions.d80D) || 0, d80DCap) +
     (Number(deductions.hra) || 0) +
     Math.min(Number(deductions.homeLoan) || 0, 200_000) +
     Math.min(Number(deductions.nps) || 0, 50_000) +
-    (Number(deductions.d80CCD2) || 0) +
+    d80CCD2Old +
     (Number(deductions.d80G) || 0) +
     (Number(deductions.d80E) || 0) +
     Math.min(Number(deductions.d80TTA) || 0, max80TTA);
+  // Sec 80GG — only when no HRA exemption is claimed for the same rent.
+  const d80GG =
+    (Number(deductions.hra) || 0) > 0
+      ? 0
+      : compute80GG(autoDetected.rentWithoutHra, annualIncome - deductionsBefore80GG);
+  const totalOldDeductions = deductionsBefore80GG + d80GG;
 
   const taxNewResult = useMemo(
-    () => calcTaxNewByFY(annualIncome, fy, Number(deductions.d80CCD2) || 0),
-    [annualIncome, fy, deductions.d80CCD2]
+    () => calcTaxNewByFY(annualIncome, fy, d80CCD2New),
+    [annualIncome, fy, d80CCD2New]
   );
   const taxOldResult = useMemo(
     () => calcTaxOldByFY(annualIncome, totalOldDeductions, fy, citizenAge),
@@ -2909,7 +2919,7 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                     onChange={toggleD80DSenior}
                     style={{ width: 14, height: 14, accentColor: THEME.accent }}
                   />
-                  Self or parents is senior citizen (60+) — cap raised to ₹50K
+                  Self or parents is senior citizen (60+) — combined cap raised to ₹1L
                 </label>
               </div>
 
@@ -2929,6 +2939,12 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                 {autoDetected.hra_source && (
                   <div style={{ fontSize: 10, color: THEME.accent, fontWeight: 700, marginTop: 2 }}>
                     <Zap size={10} style={{ verticalAlign: -1 }} /> Auto: {autoDetected.hra_source}
+                  </div>
+                )}
+                {d80GG > 0 && (
+                  <div style={{ fontSize: 10, color: THEME.sage, fontWeight: 700, marginTop: 2 }}>
+                    <Zap size={10} style={{ verticalAlign: -1 }} /> Sec 80GG applied:{" "}
+                    <Money value={d80GG} variant="full" /> (least of ₹60K, 25% of adjusted income, rent − 10%)
                   </div>
                 )}
               </div>
@@ -3451,7 +3467,9 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                   totalTDS,
                   totalAdvancePaid,
                   today(),
-                  isSenior
+                  isSenior,
+                  undefined,
+                  annualIncome
                 );
                 return (
                   <div>

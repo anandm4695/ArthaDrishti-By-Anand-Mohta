@@ -301,12 +301,10 @@ export const EmergencyFundTab: React.FC<EmergencyFundTabProps> = ({
   const stressSimulation = useMemo(() => {
     let shockCost = 0;
     let title = "";
-    let durationMonths = 0;
 
     if (activeShockScenario === "jobloss") {
-      durationMonths = customJobLossMonths;
-      shockCost = data.activeExpense * durationMonths;
-      title = `${durationMonths}-Month Sudden Job Loss / Income Halt`;
+      shockCost = data.activeExpense * customJobLossMonths;
+      title = `${customJobLossMonths}-Month Sudden Job Loss / Income Halt`;
     } else if (activeShockScenario === "medical") {
       shockCost = 500000;
       title = "Major Hospitalization / Medical Emergency Shock (₹5,00,000)";
@@ -314,7 +312,6 @@ export const EmergencyFundTab: React.FC<EmergencyFundTabProps> = ({
       shockCost = 150000;
       title = "Critical Home Structural / Vehicle Breakdown Shock (₹1,50,000)";
     } else if (activeShockScenario === "blackswan") {
-      durationMonths = 6;
       shockCost = data.activeExpense * 6 + 300000;
       title = "Black Swan Crisis (6-Month Job Loss + ₹3L Medical Shock)";
     } else if (activeShockScenario === "custom") {

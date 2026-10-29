@@ -52,6 +52,7 @@ import {
   annualizePremium,
   calcTaxNewByFY,
   calcTaxOldByFY,
+  compute80GG,
 } from "../../utils/finance";
 import { useMasterData, isSeniorCitizen } from "../../utils/masterData";
 import { getCurrentFY, getCurrentFYStartYear } from "../../utils/appConstants";
@@ -799,7 +800,6 @@ export const Section80TrackerTab: React.FC<Section80TrackerTabProps> = ({
     const custom80GG = fyCustom
       .filter((d) => d.section === "80GG")
       .reduce((s, i) => s + Number(i.amount || 0), 0);
-    const sec80GG_used = Math.min(custom80GG, 60000);
 
     const sec80U_used = fyCustom
       .filter((d) => d.section === "80U")
@@ -828,6 +828,29 @@ export const Section80TrackerTab: React.FC<Section80TrackerTabProps> = ({
       .filter((p: any) => p.isActive !== false)
       .reduce((s: number, p: any) => s + getEffectiveRent(p), 0);
     const annualRent = monthlyRent * 12;
+
+    const otherVIABefore80GG =
+      sec80E_used +
+      sec80G_used +
+      sec80U_used +
+      sec80DD_used +
+      sec80DDB_used +
+      sec80EEA_used +
+      sec80EEB_used +
+      customOther;
+    // Sec 80GG's 25% / rent − 10% tests run on income after every other deduction.
+    const stdDedForATI = Number(selectedFY.split("-")[0]) >= 2020 ? 50000 : 40000;
+    const adjustedTotalIncome =
+      grossIncome -
+      stdDedForATI -
+      (sec80C_used +
+        sec80CCD1B_used +
+        sec80CCD2_total +
+        sec80D_total +
+        sec80TTA_used +
+        sec24_used +
+        otherVIABefore80GG);
+    const sec80GG_used = compute80GG(custom80GG, adjustedTotalIncome);
 
     const totalOtherVIA =
       sec80E_used +
@@ -919,7 +942,7 @@ export const Section80TrackerTab: React.FC<Section80TrackerTabProps> = ({
       totalPotentialHeadroom,
       customList: fyCustom,
     };
-  }, [state, familyProfiles, selectedFY, customDeductions, effectiveTaxRate]);
+  }, [state, familyProfiles, selectedFY, customDeductions, effectiveTaxRate, grossIncome]);
 
   // Donut Pie Chart Data
   const pieData = useMemo(() => {

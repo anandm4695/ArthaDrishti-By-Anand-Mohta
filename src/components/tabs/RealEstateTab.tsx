@@ -226,7 +226,9 @@ export function RealEstateTab({
         ) {
           try {
             await removeItem("transactions", editPayment.linkedTxnId);
-          } catch {}
+          } catch {
+            /* best-effort: storage/parse unavailable */
+          }
         } else if (
           editPayment.paymentSource.startsWith("cc:") &&
           (data.paymentSource !== editPayment.paymentSource || !data.postToAccount)
@@ -242,7 +244,9 @@ export function RealEstateTab({
                 transactions: nextTxns,
                 outstanding: Math.max(0, Number(oldCard.outstanding || 0) - Number(editPayment.amount || 0)),
               });
-            } catch {}
+            } catch {
+              /* best-effort: storage/parse unavailable */
+            }
           }
         }
       }
@@ -392,7 +396,9 @@ export function RealEstateTab({
         if (paymentToDelete.paymentSource?.startsWith("bank:") && paymentToDelete.linkedTxnId) {
           try {
             await removeItem("transactions", paymentToDelete.linkedTxnId);
-          } catch {}
+          } catch {
+            /* best-effort: storage/parse unavailable */
+          }
         }
         // Reverse credit card transaction
         if (paymentToDelete.paymentSource?.startsWith("cc:") && paymentToDelete.linkedTxnId) {
@@ -410,7 +416,9 @@ export function RealEstateTab({
                   Number(card.outstanding || 0) - Number(paymentToDelete.amount || 0)
                 ),
               });
-            } catch {}
+            } catch {
+              /* best-effort: storage/parse unavailable */
+            }
           }
         }
         // Adjust property agreementValuePaid

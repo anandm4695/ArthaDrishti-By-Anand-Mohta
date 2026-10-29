@@ -35,7 +35,6 @@ import {
   Compass,
   Repeat,
   History,
-  ArrowRight,
   Receipt,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
@@ -306,7 +305,7 @@ export function GoalsTab({ state, addItem, removeItem, updateItem, metrics, show
         ? Number(g.installmentsPaid) || disbursements.length
         : 0;
 
-      let perInstallment = isRecurring
+      const perInstallment = isRecurring
         ? Number(g.amountPerInstallment) || (totalInstallments > 0 ? nominalTarget / totalInstallments : nominalTarget)
         : nominalTarget;
 

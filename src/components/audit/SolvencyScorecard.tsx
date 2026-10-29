@@ -12,7 +12,6 @@ import {
   fmtINRFull,
   exportArrayToCSV,
   today,
-  monthsBetween,
   rdMaturity,
   rdElapsed,
   isDepositClosed,

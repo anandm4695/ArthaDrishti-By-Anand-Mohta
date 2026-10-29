@@ -28,6 +28,7 @@ import {
   isHomeLoan,
   loanOutstanding,
   getEffectiveRent,
+  getTaxpayerAge,
 } from "../../utils/finance";
 import { useMasterData, isSeniorCitizen } from "../../utils/masterData";
 import { Card } from "../ui/Card";
@@ -726,7 +727,8 @@ export const TaxFilingHelperTab = ({
     const [startYear] = fy.split("-").map(Number);
     const regime = state.profile?.regime || selectedRegime;
     const grossIncome = incomeSummary.totalIncome;
-    const isSenior = isSeniorCitizen(state.profile?.dob);
+    const taxpayerAge = getTaxpayerAge(state, fy);
+    const isSenior = taxpayerAge >= 60;
     const estimatedTax =
       regime === "new"
         ? calcTaxNewByFY(grossIncome, fy).total
@@ -734,7 +736,7 @@ export const TaxFilingHelperTab = ({
             grossIncome,
             (startYear >= 2020 ? 50_000 : 40_000) + deductions.totalDeductions,
             fy,
-            isSenior ? 65 : 30
+            taxpayerAge
           ).total;
 
     return computeAdvanceTaxSchedule(
@@ -743,9 +745,11 @@ export const TaxFilingHelperTab = ({
       taxPaid.tds,
       taxPaid.advanceTax,
       now,
-      isSenior
+      isSenior,
+      undefined,
+      grossIncome
     );
-  }, [selectedFY, incomeSummary, deductions, state.profile, selectedRegime, taxPaid.tds, taxPaid.advanceTax]);
+  }, [selectedFY, incomeSummary, deductions, state, selectedRegime, taxPaid.tds, taxPaid.advanceTax]);
 
   const advanceTaxSchedule = advanceTaxAnalysis.quarters;
 

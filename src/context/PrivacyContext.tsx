@@ -24,7 +24,9 @@ export const PrivacyProvider = ({ children }: { children: React.ReactNode }) => 
       const next = typeof v === "function" ? v(prev) : v;
       try {
         localStorage.setItem(PRIVACY_KEY, String(next));
-      } catch {}
+      } catch {
+        /* best-effort: storage/parse unavailable */
+      }
       return next;
     });
   };

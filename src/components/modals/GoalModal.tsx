@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { THEME } from "../../utils/constants";
 import { today, monthsBetween, fmtINR, fmtINRFull } from "../../utils/finance";
 import { useMasterData, formatProfileOption } from "../../utils/masterData";
@@ -17,8 +17,6 @@ import {
   Calculator,
   Repeat,
   Target,
-  Calendar,
-  CheckCircle2,
   Plus,
   Trash2,
   ArrowUpRight,

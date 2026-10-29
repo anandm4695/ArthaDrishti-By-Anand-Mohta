@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import {
-  fmtINR,
   fmtINRFull,
   today,
   getLocalDateString,
@@ -10,7 +9,6 @@ import {
   calcTaxOldByFY,
   alertDismissKey,
   loanOutstanding,
-  ccOutstanding,
   computeCreditPortfolioSummary,
 } from "../utils/finance";
 import { getCurrentFY } from "../utils/appConstants";

@@ -9,12 +9,9 @@ import {
   Moon,
   Download,
   HelpCircle,
-  History,
-  Sparkles,
   User,
   Calculator,
   FileText,
-  Check,
   Zap,
 } from "lucide-react";
 import { NAV_GROUPS } from "../../utils/appConstants";
@@ -303,7 +300,9 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
       const next = [key, ...recentIds.filter((id) => id !== key)].slice(0, 8);
       setRecentIds(next);
       localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   };
 
   const executeItem = (item: CommandItem) => {

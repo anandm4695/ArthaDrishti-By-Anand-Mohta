@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom";
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { CommandKModal } from "../components/workspace/CommandKModal";
 import { WorkspaceHeader } from "../components/workspace/WorkspaceHeader";
 import { PrivacyProvider, usePrivacy } from "../context/PrivacyContext";

@@ -202,7 +202,9 @@ export const FIREPlannerTab = ({ state, metrics }: any) => {
           includeRealEstate,
         })
       );
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   }, [
     archetype,
     monthlyExpense,

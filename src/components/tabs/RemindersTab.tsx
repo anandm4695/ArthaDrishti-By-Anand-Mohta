@@ -246,7 +246,9 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
     setSnoozedMap(next);
     try {
       localStorage.setItem("finance-snoozed-reminders", JSON.stringify(next));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     setActiveSnoozeMenu(null);
     showToast?.(newDateStr ? `Reminder snoozed to ${fmtDisplayDate(newDateStr)}` : "Snooze cleared", "success");
   };
@@ -292,7 +294,9 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
     const actual = Notification.permission;
     try {
       localStorage.setItem("finance-notif", actual);
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     return actual;
   });
 
@@ -305,7 +309,9 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
           categories: { ...DEFAULT_NOTIF_SETTINGS.categories },
           ...JSON.parse(saved),
         };
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     return DEFAULT_NOTIF_SETTINGS;
   });
 
@@ -314,7 +320,9 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
     setNotifSettings(next);
     try {
       localStorage.setItem("finance-notif-settings", JSON.stringify(next));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   };
 
   const [completedKeys, setCompletedKeys] = useState<string[]>(() => {
@@ -380,7 +388,9 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
     setCompletedKeys(newKeys);
     try {
       localStorage.setItem("finance-completed-reminders", JSON.stringify(newKeys));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     showToast?.(`Marked ${pastKeys.length} past-due reminders as completed`, "success");
   };
 
@@ -388,7 +398,9 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
     setCompletedKeys([]);
     try {
       localStorage.removeItem("finance-completed-reminders");
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     showToast?.("Completed history cleared", "info");
   };
 
@@ -403,7 +415,9 @@ export function RemindersTab({ state, addItem, removeItem, updateItem, showToast
     setNotifPerm(perm);
     try {
       localStorage.setItem("finance-notif", perm);
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     if (perm === "granted") {
       showToast?.("Push notifications enabled successfully", "success");
     }

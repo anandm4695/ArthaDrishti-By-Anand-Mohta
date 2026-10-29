@@ -176,7 +176,9 @@ export const fmtDate = (d?: string | null): string => {
     if (!isNaN(date.getTime())) {
       return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
     }
-  } catch {}
+  } catch {
+    /* best-effort: storage/parse unavailable */
+  }
   return String(d);
 };
 

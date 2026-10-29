@@ -26,6 +26,7 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen = true,
 }) => {
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const titleId = React.useId();
   const onCloseRef = React.useRef(onClose);
   onCloseRef.current = onClose;
   const mouseDownOnBackdrop = React.useRef(false);
@@ -38,11 +39,17 @@ export const Modal: React.FC<ModalProps> = ({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Focus the panel (or its first focusable element) once mounted.
+    // Focus the first form field in the body once mounted — not the header's close
+    // button, which would otherwise win as the first focusable element in the panel.
+    // A body child can claim focus first with autoFocus; leave that alone.
     const panel = panelRef.current;
-    if (panel) {
-      const firstFocusable = panel.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-      (firstFocusable || panel).focus();
+    if (panel && !panel.contains(document.activeElement)) {
+      const body = panel.querySelector<HTMLElement>(".modal-body");
+      const firstField = body?.querySelector<HTMLElement>(
+        'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])'
+      );
+      const firstFocusable = body?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      (firstField || firstFocusable || panel).focus();
     }
 
     const handler = (e: KeyboardEvent) => {
@@ -100,12 +107,14 @@ export const Modal: React.FC<ModalProps> = ({
         className="modal-panel"
         role="dialog"
         aria-modal="true"
-        aria-label={typeof title === "string" ? title : "Modal Dialog"}
+        aria-labelledby={titleId}
         tabIndex={-1}
         style={{ maxWidth: `min(${effectiveMaxWidth}px, 100%)` }}
       >
         <div className="modal-header">
-          <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{title}</h2>
+          <h2 id={titleId} style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>
+            {title}
+          </h2>
           <button className="modal-close-btn" onClick={onClose} aria-label="Close">
             <X size={18} />
           </button>

@@ -29,13 +29,13 @@ import {
 } from "recharts";
 import { THEME } from "../../utils/constants";
 import { getCurrentFY } from "../../utils/appConstants";
-import { isSeniorCitizen } from "../../utils/masterData";
 import {
   fmtINRFull,
   today,
   calcTaxNewByFY,
   calcTaxOldByFY,
-  getAutoDetectedDeductions,
+  getTaxDueForDashboard,
+  getTaxpayerAge,
   getEffectiveRent,
 } from "../../utils/finance";
 import { Card } from "../ui/Card";
@@ -156,7 +156,8 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
   const [manualIncome, setManualIncome] = useState("");
   const income = manualIncome ? Number(manualIncome) : projectedIncome;
 
-  const isSenior = isSeniorCitizen(state.profile?.dob);
+  const taxpayerAge = getTaxpayerAge(state, fy);
+  const isSenior = taxpayerAge >= 60;
   const hasBusinessIncome = (state.income || []).some((i: any) =>
     ["business", "freelance", "consulting", "professional"].includes((i.category || "").toLowerCase())
   );
@@ -164,35 +165,8 @@ const AdvanceTaxSection: React.FC<AdvanceTaxSectionProps> = ({ state, metrics, a
 
   const taxLiability = useMemo(() => {
     if (!income) return 0;
-    const auto = getAutoDetectedDeductions(state, fy);
-    const overrides = state.masterData?.taxDeductions?.[fy] || {};
-    const d80CCD2 = overrides.d80CCD2 !== undefined ? overrides.d80CCD2 : auto.d80CCD2;
-
-    if (regime === "new") {
-      return calcTaxNewByFY(income, fy, d80CCD2 || 0).total;
-    }
-    const d80C = overrides.d80C !== undefined ? overrides.d80C : auto.d80C;
-    const d80D = overrides.d80D !== undefined ? overrides.d80D : auto.d80D;
-    const hra = overrides.hra !== undefined ? overrides.hra : auto.hra;
-    const homeLoan = overrides.homeLoan !== undefined ? overrides.homeLoan : auto.homeLoan;
-    const nps = overrides.nps !== undefined ? overrides.nps : auto.nps;
-    const d80G = overrides.d80G !== undefined ? overrides.d80G : 0;
-    const d80E = overrides.d80E !== undefined ? overrides.d80E : 0;
-    const d80TTA = overrides.d80TTA !== undefined ? overrides.d80TTA : auto.d80TTA;
-    const stdDedOld = fyStart >= 2020 ? 50000 : 40000;
-    const totalOldDeductions =
-      stdDedOld +
-      Math.min(d80C, 150000) +
-      Math.min(d80D, isSenior ? 100000 : 75000) +
-      hra +
-      Math.min(homeLoan, 200000) +
-      Math.min(nps, 50000) +
-      (d80CCD2 || 0) +
-      (d80G || 0) +
-      (d80E || 0) +
-      Math.min(d80TTA || 0, isSenior ? 50000 : 10000);
-    return calcTaxOldByFY(income, totalOldDeductions, fy, isSenior ? 65 : 30).total;
-  }, [income, regime, fy, fyStart, state, isSenior]);
+    return getTaxDueForDashboard({ ...state, profile: { ...state.profile, fy, regime } }, income);
+  }, [income, regime, fy, state]);
 
   const tdsPaid = useMemo(() => {
     return (state.taxPayments || [])

@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from "vitest";
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import {
@@ -10,7 +9,6 @@ import {
   CapitalGainsExemptionStudio,
   SEC_54_CAP,
   SEC_54EC_ANNUAL_CAP,
-  SEC_54F_CONSIDERATION_CAP,
 } from "../components/tax/CapitalGainsExemptionStudio";
 import { CapitalGainsTab } from "../components/tabs/CapitalGainsTab";
 

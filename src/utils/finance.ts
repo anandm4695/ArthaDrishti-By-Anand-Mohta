@@ -24,7 +24,9 @@ export const saveStateLocal = (s: any) => {
     if (typeof localStorage !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);
     }
-  } catch {}
+  } catch {
+    /* best-effort: storage/parse unavailable */
+  }
 };
 
 export const fmtINR = (n: number | string | null | undefined) => {
@@ -76,7 +78,9 @@ export const fmtDate = (d?: string | null): string => {
     if (!isNaN(date.getTime())) {
       return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
     }
-  } catch {}
+  } catch {
+    /* best-effort: storage/parse unavailable */
+  }
   return String(d);
 };
 
@@ -136,7 +140,9 @@ export const getGoldPricePerGram = (state?: any): number => {
   try {
     const fromLocal = Number(localStorage.getItem("gold_price_per_gram"));
     if (fromLocal > 0) return fromLocal;
-  } catch {}
+  } catch {
+    /* best-effort: storage/parse unavailable */
+  }
   return DEFAULT_GOLD_PRICE_PER_GRAM;
 };
 
@@ -560,6 +566,15 @@ export const isDepositClosed = (d: any): boolean => {
   return status === "closed" || status === "matured" || payoutStatus === "credited";
 };
 
+// A bond whose maturity date has passed has repaid its principal (to the linked bank
+// account), so it must drop out of net worth — matching the Bonds tab, which already
+// shows a matured holding at ₹0. Dates compare as YYYY-MM-DD strings.
+export const isBondOutstanding = (b: any, asOfDate: string = today()): boolean => {
+  const mat = String(b?.maturityDate || "").slice(0, 10);
+  if ((b?.status || "").toLowerCase() === "redeemed") return false;
+  return !mat || mat >= asOfDate;
+};
+
 export const fdCurrentValue = (f: any, asOfDate: string = today()): number => {
   if (!f || isDepositClosed(f)) return 0;
   const principal = Number(f.principal || 0);
@@ -857,7 +872,8 @@ export function calcTaxNewByFY(
   // Statutory surcharge thresholds (₹50L/₹1Cr/₹2Cr/₹5Cr) apply to Total Taxable Income
   const surcharge = calcSurcharge(taxable, tax, "new");
   const cess = Math.round((tax + surcharge) * 0.04);
-  const total = tax + surcharge + cess;
+  // Sec 288B: tax payable is rounded off to the nearest multiple of ₹10.
+  const total = Math.round((tax + surcharge + cess) / 10) * 10;
 
   return {
     grossIncome,
@@ -948,7 +964,8 @@ export function calcTaxOldByFY(
 
   const surcharge = calcSurcharge(taxable, tax, "old");
   const cess = Math.round((tax + surcharge) * 0.04);
-  const total = tax + surcharge + cess;
+  // Sec 288B: tax payable is rounded off to the nearest multiple of ₹10.
+  const total = Math.round((tax + surcharge + cess) / 10) * 10;
 
   return {
     grossIncome,
@@ -1211,7 +1228,54 @@ export interface AutoDetectedDeductions {
   d80CCD2_source: string | null;
   d80TTA: number;
   d80TTA_source: string | null;
+  /** Basic + DA from the FY's salary slips (0 when no slips) — the base for the 80CCD(2) cap. */
+  salaryBasicDA: number;
+  /** Rent paid in the FY by a salaried taxpayer who receives no HRA — the 80GG base. */
+  rentWithoutHra: number;
 }
+
+// The taxpayer's age for slab / 80TTB / 80D / Sec 207(2) purposes. DOB lives on the
+// "self" family profile (Settings → Family) — `state.profile` never stores one.
+// Age is reckoned for the whole FY: anyone who turns 60/80 during the year is a
+// senior for that entire year. Measuring on 1 April of the next year also honours
+// the CBDT rule that a person born on 1 April attains that age on 31 March.
+export const getTaxpayerAge = (state: any, fy?: string): number => {
+  const explicit = Number(state?.profile?.age || 0);
+  if (explicit > 0) return explicit;
+  const fyStart =
+    Number((fy || state?.profile?.fy || getCurrentFY()).split("-")[0]) || getCurrentFYStartYear();
+  const selfProfile = (state?.masterData?.familyProfiles || []).find((p: any) => p.id === "self");
+  return calculateAge(selfProfile?.dob, `${fyStart + 1}-04-01`) ?? 0;
+};
+
+// Sec 80CCD(2): employer NPS contribution is deductible only up to 14% of Basic+DA in
+// the new regime (FY 2024-25 onwards; 10% before) and 10% in the old regime. Without
+// salary-slip data there is no base to cap against, so the figure passes through.
+export const cap80CCD2 = (
+  employerNps: number,
+  salaryBasicDA: number,
+  regime: "new" | "old",
+  fy: string
+): number => {
+  const amt = Math.max(0, Number(employerNps || 0));
+  if (!(salaryBasicDA > 0)) return amt;
+  const fyStart = Number((fy || getCurrentFY()).split("-")[0]) || getCurrentFYStartYear();
+  const pct = regime === "new" && fyStart >= 2024 ? 0.14 : 0.1;
+  return Math.min(amt, Math.round(salaryBasicDA * pct));
+};
+
+// Sec 80GG (old regime only): rent paid by someone receiving no HRA. Deduction is the
+// least of ₹5,000/month, 25% of adjusted total income, or rent in excess of 10% of
+// adjusted total income — ATI being total income before this deduction itself.
+export const compute80GG = (rentPaid: number, adjustedTotalIncome: number): number => {
+  const rent = Math.max(0, Number(rentPaid || 0));
+  const ati = Math.max(0, Number(adjustedTotalIncome || 0));
+  if (rent <= 0 || ati <= 0) return 0;
+  return Math.round(Math.min(60_000, 0.25 * ati, Math.max(0, rent - 0.1 * ati)));
+};
+
+// Sec 10(13A) Rule 2A: 50% of salary for the four notified metros, 40% elsewhere.
+const HRA_METRO_RE = /\b(mumbai|bombay|delhi|kolkata|calcutta|chennai|madras)\b/i;
 
 export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedDeductions => {
   const fyParts = (fy || getCurrentFY()).split("-");
@@ -1254,8 +1318,10 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
           0
         );
 
-  // 80C — LIC annual premiums
-  const lic = (state.lic || []).reduce((s: number, l: any) => s + Number(l.annualPremium || 0), 0);
+  // 80C — LIC annual premiums (a policy that matured before this FY no longer draws premium)
+  const lic = (state.lic || [])
+    .filter((l: any) => !l.maturityDate || l.maturityDate >= fyStartStr)
+    .reduce((s: number, l: any) => s + Number(l.annualPremium || 0), 0);
 
   // 80C — EPF employee contributions in FY (passbook transactions first, falling back to salary slip EPF)
   const epfPassbook = (state.epf || []).reduce((s: number, e: any) => {
@@ -1285,26 +1351,27 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
   const epf = epfPassbook > 0 ? epfPassbook : salarySlipEpf;
 
   // 80C — NSC and Sukanya Samriddhi (SSY) Govt schemes
-  const annualizeGovt = (amt: number, freq: string) => {
-    const num = Number(amt || 0);
+  // A one-time deposit (the usual way NSC is bought) qualifies only in the FY it was
+  // made; recurring contributions count every FY until the scheme matures.
+  const govtSchemeFYContribution = (sc: any) => {
+    if (sc.maturityDate && sc.maturityDate < fyStartStr) return 0;
+    const num = Number(sc.contributionAmount || 0);
+    const freq = sc.frequency || "annual";
+    if (freq === "one_time") {
+      return sc.startDate && sc.startDate >= fyStartStr && sc.startDate <= fyEndStr ? num : 0;
+    }
+    if (sc.startDate && sc.startDate > fyEndStr) return 0;
     if (freq === "monthly") return num * 12;
     if (freq === "quarterly") return num * 4;
     if (freq === "half_yearly") return num * 2;
-    if (freq === "one_time") return 0;
     return num;
   };
   const nsc = (state.govtSchemes || [])
     .filter((sc: any) => (sc.schemeType || "").toUpperCase() === "NSC")
-    .reduce(
-      (s: number, sc: any) => s + annualizeGovt(sc.contributionAmount, sc.frequency || "annual"),
-      0
-    );
+    .reduce((s: number, sc: any) => s + govtSchemeFYContribution(sc), 0);
   const ssy = (state.govtSchemes || [])
     .filter((sc: any) => (sc.schemeType || "").toUpperCase() === "SSY")
-    .reduce(
-      (s: number, sc: any) => s + annualizeGovt(sc.contributionAmount, sc.frequency || "annual"),
-      0
-    );
+    .reduce((s: number, sc: any) => s + govtSchemeFYContribution(sc), 0);
 
   // 80C — Home Loan Principal Repayment
   const homeLoans = (state.loansTaken || []).filter(isHomeLoan);
@@ -1350,11 +1417,10 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
       0
     );
 
-  const selfProfile = (state.masterData?.familyProfiles || []).find((p: any) => p.id === "self");
   const spouseProfile = (state.masterData?.familyProfiles || []).find(
     (p: any) => p.id === "wife" || /spouse|wife|husband/i.test(p?.relation || "")
   );
-  const isSelfSenior = isSeniorCitizen(selfProfile?.dob) || (state.profile?.age || 0) >= 60;
+  const isSelfSenior = getTaxpayerAge(state, fy) >= 60;
   const isSpouseSenior = isSeniorCitizen(spouseProfile?.dob);
   const sec80D_self_limit = isSelfSenior || isSpouseSenior ? 50_000 : 25_000;
 
@@ -1450,11 +1516,27 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
     0
   );
 
+  const isMetro =
+    typeof state.profile?.hraMetro === "boolean"
+      ? state.profile.hraMetro
+      : (state.rentedProperties || []).some((p: any) =>
+          HRA_METRO_RE.test(`${p.city || ""} ${p.address || ""} ${p.name || ""}`)
+        );
+  const salaryPct = isMetro ? 0.5 : 0.4;
+
   if (annualBasic > 0 && annualHraReceived > 0 && hra_raw > 0) {
     const rentMinusTenPct = Math.max(0, hra_raw - 0.1 * annualBasic);
-    const fiftyPctBasic = 0.5 * annualBasic;
-    finalHra = Math.round(Math.min(annualHraReceived, rentMinusTenPct, fiftyPctBasic));
-    hra_source = `Sec 10(13A) Rule 2A: Least of HRA (₹${Math.round(annualHraReceived).toLocaleString("en-IN")}), Rent-10% Basic (₹${Math.round(rentMinusTenPct).toLocaleString("en-IN")}), & 50% Basic`;
+    const pctBasic = salaryPct * annualBasic;
+    finalHra = Math.round(Math.min(annualHraReceived, rentMinusTenPct, pctBasic));
+    hra_source = `Sec 10(13A) Rule 2A: Least of HRA (₹${Math.round(annualHraReceived).toLocaleString("en-IN")}), Rent-10% Basic (₹${Math.round(rentMinusTenPct).toLocaleString("en-IN")}), & ${isMetro ? "50% Basic (metro)" : "40% Basic (non-metro)"}`;
+  }
+  // Salary slips show no HRA component — Sec 10(13A) exemption cannot exceed HRA
+  // actually received, so it is nil and the rent moves to Sec 80GG instead.
+  const rentWithoutHra =
+    annualBasic > 0 && annualHraReceived === 0 && hra_raw > 0 ? Math.round(hra_raw) : 0;
+  if (rentWithoutHra > 0) {
+    finalHra = 0;
+    hra_source = "No HRA in salary slips — Sec 10(13A) nil; rent claimed u/s 80GG instead";
   }
 
   // Home Loan Interest — from loansTaken type "Home", approx annual interest = outstanding × rate / 100
@@ -1511,21 +1593,32 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
 
   // 80TTA / 80TTB — Savings & Deposit Interest
   const savingsInterest = (state.bankAccounts || []).reduce((s: number, a: any) => {
+    if ((a.status || "").toLowerCase() === "closed") return s;
     if ((a.type || "").toLowerCase() === "savings" || !a.type) {
-      return s + Number(a.balance || 0) * (Number(a.interestRate || 3.0) / 100);
+      return s + Math.max(0, Number(a.balance || 0)) * (Number(a.interestRate || 3.0) / 100);
     }
     return s;
   }, 0);
+  // FD/RD records store their rate as `rate` (see FixedDepositsSection / RecurringDepositsSection).
+  // An RD earns interest on what has been deposited so far, not on a full year of instalments.
   const depositInterest = isSelfSenior
-    ? (state.fixedDeposits || []).reduce(
-        (s: number, d: any) => s + Number(d.principal || 0) * (Number(d.interestRate || 6.5) / 100),
-        0
-      ) +
-      (state.recurringDeposits || []).reduce(
-        (s: number, r: any) =>
-          s + Number(r.monthly || r.monthlyDeposit || 0) * 12 * (Number(r.interestRate || 6.5) / 100),
-        0
-      )
+    ? (state.fixedDeposits || [])
+        .filter((d: any) => !isDepositClosed(d))
+        .reduce(
+          (s: number, d: any) =>
+            s + Number(d.principal || 0) * (Number(d.rate ?? d.interestRate ?? 6.5) / 100),
+          0
+        ) +
+      (state.recurringDeposits || [])
+        .filter((r: any) => !isDepositClosed(r))
+        .reduce(
+          (s: number, r: any) =>
+            s +
+            Number(r.monthly || r.monthlyDeposit || 0) *
+              rdElapsed(r) *
+              (Number(r.rate ?? r.interestRate ?? 6.5) / 100),
+          0
+        )
     : 0;
   const sec80TTA_limit = isSelfSenior ? 50_000 : 10_000;
   const d80TTA_raw = Math.min(sec80TTA_limit, Math.round(savingsInterest + depositInterest));
@@ -1551,6 +1644,8 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
     d80CCD2_source,
     d80TTA: d80TTA_raw,
     d80TTA_source,
+    salaryBasicDA: annualBasic,
+    rentWithoutHra,
   };
 };
 
@@ -1559,11 +1654,12 @@ export const getTaxDueForDashboard = (state: any, annualIncome: number): number 
   const regime = state.profile?.regime || "new";
   const auto = getAutoDetectedDeductions(state, fy);
   const overrides = state.masterData?.taxDeductions?.[fy] || {};
-  const d80CCD2 = overrides.d80CCD2 !== undefined ? overrides.d80CCD2 : auto.d80CCD2;
+  const d80CCD2Claimed = overrides.d80CCD2 !== undefined ? overrides.d80CCD2 : auto.d80CCD2;
+  const d80CCD2 = cap80CCD2(d80CCD2Claimed, auto.salaryBasicDA, regime, fy);
 
   if (regime === "new") {
     // Standard deduction + Sec 80CCD(2) employer NPS are allowed in the New Regime u/s 115BAC(2)
-    const taxRes = calcTaxNewByFY(annualIncome, fy, d80CCD2 || 0);
+    const taxRes = calcTaxNewByFY(annualIncome, fy, d80CCD2);
     return taxRes.total;
   } else {
     // Old regime: standard deduction + auto-detected deductions + manual overrides
@@ -1580,11 +1676,8 @@ export const getTaxDueForDashboard = (state: any, annualIncome: number): number 
     const fyStartYear = Number(fyParts[0]) || getCurrentFYStartYear();
     const stdDedOld = fyStartYear >= 2020 ? 50_000 : 40_000;
 
-    const selfProfile = (state.masterData?.familyProfiles || []).find((p: any) => p.id === "self");
-    const citizenAge =
-      Number(state.profile?.age || 0) ||
-      (selfProfile?.dob ? (calculateAge(selfProfile.dob) ?? 0) : 0);
-    const isSenior = citizenAge >= 60 || isSeniorCitizen(selfProfile?.dob);
+    const citizenAge = getTaxpayerAge(state, fy);
+    const isSenior = citizenAge >= 60;
     // Section 80TTB allows up to ₹50,000 on deposits for senior citizens, vs ₹10,000 u/s 80TTA for non-seniors
     const max80TTA = isSenior ? 50_000 : 10_000;
 
@@ -1595,12 +1688,15 @@ export const getTaxDueForDashboard = (state: any, annualIncome: number): number 
       hra +
       Math.min(homeLoan, 200_000) +
       Math.min(nps, 50_000) +
-      (d80CCD2 || 0) +
+      d80CCD2 +
       (d80G || 0) +
       (d80E || 0) +
       Math.min(d80TTA || 0, max80TTA);
 
-    const taxRes = calcTaxOldByFY(annualIncome, totalOldDeductions, fy, citizenAge);
+    // 80GG only when no HRA exemption is being claimed for the same rent.
+    const d80GG = hra > 0 ? 0 : compute80GG(auto.rentWithoutHra, annualIncome - totalOldDeductions);
+
+    const taxRes = calcTaxOldByFY(annualIncome, totalOldDeductions + d80GG, fy, citizenAge);
     return taxRes.total;
   }
 };
@@ -1958,7 +2054,8 @@ export function computeAdvanceTaxSchedule(
   totalAdvancePaid: number,
   asOfDateStr: string = today(),
   isSeniorCitizenWithoutBusinessIncome: boolean = false,
-  quarterlyAdvancePaid?: { Q1?: number; Q2?: number; Q3?: number; Q4?: number }
+  quarterlyAdvancePaid?: { Q1?: number; Q2?: number; Q3?: number; Q4?: number },
+  totalIncome?: number
 ): AdvanceTaxAnalysis {
   const netTaxPayable = Math.max(0, Math.round(grossTax - tdsCredit));
   const remainingTaxPayable = Math.max(0, netTaxPayable - totalAdvancePaid);
@@ -2007,7 +2104,7 @@ export function computeAdvanceTaxSchedule(
     const isPast = dueDate < asOfDateStr;
 
     // Determine cumulative amount paid by this quarter
-    let paidByQuarter = 0;
+    let paidByQuarter: number;
     if (quarterlyAdvancePaid) {
       if (q.quarter === "Q1") paidByQuarter = quarterlyAdvancePaid.Q1 || 0;
       else if (q.quarter === "Q2") paidByQuarter = (quarterlyAdvancePaid.Q1 || 0) + (quarterlyAdvancePaid.Q2 || 0);
@@ -2072,10 +2169,12 @@ export function computeAdvanceTaxSchedule(
     penalty234A = Math.round(remainingTaxPayable * 0.01 * monthsDelay);
   }
 
-  // Section 234F fee: ₹5,000 (or ₹1,000 if taxable income <= 5L) if filed after 31 July
+  // Section 234F fee: ₹5,000 (or ₹1,000 if TOTAL INCOME <= ₹5L) if filed after 31 July.
+  // The ₹5L test is on income, not on the tax payable — without an income figure we
+  // cannot claim the reduced fee, so the standard ₹5,000 applies.
   let penalty234F = 0;
   if (asOfDateStr > july31OfAY && remainingTaxPayable > 0) {
-    penalty234F = netTaxPayable <= 500_000 ? 1000 : 5000;
+    penalty234F = totalIncome !== undefined && totalIncome <= 500_000 ? 1000 : 5000;
   }
 
   return {

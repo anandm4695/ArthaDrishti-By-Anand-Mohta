@@ -23,7 +23,6 @@ import {
   Download,
   ShieldAlert,
   ArrowUpDown,
-  FileText,
   Scale,
   Receipt,
 } from "lucide-react";
@@ -31,15 +30,14 @@ import { THEME } from "../../utils/constants";
 import {
   today,
   monthsBetween,
-  fmtINR,
   fmtINRFull,
   calcTaxNewByFY,
   calcTaxOldByFY,
   computeAdvanceTaxSchedule,
   getEffectiveRent,
+  getTaxpayerAge,
 } from "../../utils/finance";
 import { getCurrentFY, getCurrentFYStartYear } from "../../utils/appConstants";
-import { isSeniorCitizen } from "../../utils/masterData";
 import { Card } from "../ui/Card";
 import { SectionTitle } from "../ui/SectionTitle";
 import { StatCard } from "../ui/StatCard";
@@ -145,7 +143,9 @@ export const SmartAlertsTab = ({
     try {
       localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(newPrefs));
       if (showToast) showToast("Alert preferences updated successfully", "success");
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   };
 
   // Snoozed alerts state
@@ -209,7 +209,9 @@ export const SmartAlertsTab = ({
     setDismissed(next);
     try {
       localStorage.setItem(DISMISSED_ALERTS_KEY, JSON.stringify(next));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     setActiveSnoozeMenuId(null);
     if (showToast) {
       showToast(`Alert snoozed for ${days} days`, "info");
@@ -222,7 +224,9 @@ export const SmartAlertsTab = ({
     setDismissed(next);
     try {
       localStorage.setItem(DISMISSED_ALERTS_KEY, JSON.stringify(next));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     if (showToast) {
       showToast("Alert restored to active list", "success");
     }
@@ -232,7 +236,9 @@ export const SmartAlertsTab = ({
     setDismissed({});
     try {
       localStorage.removeItem(DISMISSED_ALERTS_KEY);
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     if (showToast) {
       showToast("All snoozed alerts restored", "success");
     }
@@ -702,7 +708,8 @@ export const SmartAlertsTab = ({
       const detectedInc =
         Number(metrics?.annualIncome || 0) ||
         (state?.income || []).reduce((s: number, i: any) => s + Number(i.amount || 0), 0);
-      const isSenior = isSeniorCitizen(state?.profile?.dob);
+      const taxpayerAge = getTaxpayerAge(state, activeFY);
+      const isSenior = taxpayerAge >= 60;
       const regime = state?.profile?.regime || "new";
 
       if (detectedInc > 0) {
@@ -710,7 +717,7 @@ export const SmartAlertsTab = ({
         const estTax =
           regime === "new"
             ? calcTaxNewByFY(detectedInc, activeFY).total
-            : calcTaxOldByFY(detectedInc, 50000, activeFY, isSenior ? 65 : 30).total;
+            : calcTaxOldByFY(detectedInc, 50000, activeFY, taxpayerAge).total;
 
         // TDS Paid
         const tdsFromPayments = (state?.taxPayments || [])
@@ -739,7 +746,9 @@ export const SmartAlertsTab = ({
           totalTds,
           advTaxPaid,
           todayStr,
-          isSenior
+          isSenior,
+          undefined,
+          detectedInc
         );
 
         if (advAnalysis.isSubjectToAdvanceTax) {

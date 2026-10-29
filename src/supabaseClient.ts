@@ -26,7 +26,9 @@ if (typeof window !== "undefined") {
     if (custom && defaultKey && !localStorage.getItem(defaultKey)) {
       localStorage.setItem(defaultKey, custom);
     }
-  } catch {}
+  } catch {
+    /* best-effort: storage/parse unavailable */
+  }
 }
 
 export const supabase = createBrowserClient(
@@ -49,7 +51,7 @@ export const supabase = createBrowserClient(
             const idx = c.indexOf("=");
             const name = idx > -1 ? c.slice(0, idx).trim() : c.trim();
             const rawVal = idx > -1 ? c.slice(idx + 1) : "";
-            let value = rawVal;
+            let value: string;
             try {
               value = decodeURIComponent(rawVal);
             } catch {

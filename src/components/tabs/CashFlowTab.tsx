@@ -17,7 +17,6 @@ import {
   Activity,
   BarChart2,
   DollarSign,
-  PiggyBank,
   Sliders,
   Info,
   AlertCircle,
@@ -734,7 +733,9 @@ export const CashFlowTab = ({
     try {
       const saved = typeof window !== "undefined" ? localStorage.getItem("arthadrishti_cf_salary_pref") : null;
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     return { source: "auto" };
   });
 
@@ -746,7 +747,9 @@ export const CashFlowTab = ({
       if (typeof window !== "undefined") {
         localStorage.setItem("arthadrishti_cf_salary_pref", JSON.stringify(pref));
       }
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   };
 
   // ── STARTING LIQUID CASH (from Bank Accounts) ────────────────────────────

@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom";
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { StockScripModal } from "../components/modals/StockScripModal";
 
 describe("StockScripModal — Wide-Screen Smart Scrip Terminal", () => {

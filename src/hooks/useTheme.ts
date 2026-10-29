@@ -84,7 +84,9 @@ export function useTheme(settings: {
     // so any user on the light theme saw a dark→light flash on every load.
     try {
       localStorage.setItem("finance-theme", darkMode ? "dark" : "light");
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   }, [darkMode, accentKey, density, radiusKey, fontKey, animSpeed]);
 
   // Background style (dots / mesh) injected dynamically since it depends on user setting

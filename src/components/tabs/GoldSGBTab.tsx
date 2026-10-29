@@ -375,7 +375,9 @@ export const GoldSGBTab = ({
     }
     try {
       localStorage.setItem("gold_price_per_gram", String(clean));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     if (updateSettings) {
       await updateSettings({ goldPricePerGram: clean });
     }

@@ -455,7 +455,9 @@ export const AIAssistantTab: React.FC<AIAssistantTabProps> = ({
           return;
         }
       }
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     setMessages([WELCOME]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
@@ -495,7 +497,9 @@ export const AIAssistantTab: React.FC<AIAssistantTabProps> = ({
       setSavedNotes(next);
       setSavedNoteIdx(idx);
       setTimeout(() => setSavedNoteIdx(null), 2000);
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   };
 
   // ── Delete a saved note ──
@@ -504,7 +508,9 @@ export const AIAssistantTab: React.FC<AIAssistantTabProps> = ({
       const next = prev.filter((_, i) => i !== idx);
       try {
         localStorage.setItem("finance_ai_notes", JSON.stringify(next));
-      } catch {}
+      } catch {
+        /* best-effort: storage/parse unavailable */
+      }
       return next;
     });
   };
@@ -2080,7 +2086,9 @@ You have access to local tools/functions to retrieve real-time and detailed tran
               setConsentDismissed(true);
               try {
                 localStorage.setItem("ai_consent_accepted", "true");
-              } catch {}
+              } catch {
+                /* best-effort: storage/parse unavailable */
+              }
             }}
             style={{
               background: "none",

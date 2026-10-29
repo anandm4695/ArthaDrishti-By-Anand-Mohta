@@ -368,7 +368,9 @@ export default function Auth({
         if (error) throw error;
         try {
           localStorage.setItem("pf_pending_onboarding", cleanEmail);
-        } catch {}
+        } catch {
+          /* best-effort: storage/parse unavailable */
+        }
         setMsg("Account created! Please check your inbox to verify your email before signing in.");
         setTimeout(() => switchMode("login"), 3000);
       } else {
@@ -500,7 +502,9 @@ export default function Auth({
   const handleCancelReset = async () => {
     try {
       await supabase.auth.signOut();
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     window.history.replaceState({}, document.title, window.location.pathname);
     onRecoveryComplete?.();
     switchMode("login");
@@ -512,7 +516,9 @@ export default function Auth({
     setMsg(null);
     try {
       localStorage.setItem("pf_demo_mode", "true");
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     onLogin(DEMO_USER_SESSION);
   };
 

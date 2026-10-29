@@ -16,7 +16,7 @@ import { PrivacyProvider, usePrivacy } from "./context/PrivacyContext";
 import { getDemoState, DEMO_USER_SESSION, isDemoSession } from "./utils/demoData";
 
 // Modular Imports
-import { THEME, DENSITY, STORAGE_KEY } from "./utils/constants";
+import { THEME, DENSITY } from "./utils/constants";
 import { DEFAULT_MASTER_DATA, MasterDataContext } from "./utils/masterData";
 import {
   uid,
@@ -335,7 +335,9 @@ function FinanceDashboard() {
   useEffect(() => {
     try {
       localStorage.setItem("pf_sidebar_minimized", String(sidebarMinimized));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   }, [sidebarMinimized]);
 
   useEffect(() => {
@@ -759,7 +761,9 @@ function FinanceDashboard() {
   useEffect(() => {
     try {
       localStorage.setItem("pf_collapsed_nav_groups", JSON.stringify(collapsedGroups));
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   }, [collapsedGroups]);
   const [missingTables, setMissingTables] = useState<string[]>([]);
 
@@ -4113,7 +4117,7 @@ function FinanceDashboard() {
             let txChanged = false;
             const updatedTxns = s.transactions.map((t: any) => {
               let tChanged = false;
-              let nextT = { ...t };
+              const nextT = { ...t };
               if (nextT.category === oldName) {
                 nextT.category = newName;
                 tChanged = true;
@@ -4285,7 +4289,7 @@ function FinanceDashboard() {
             let ccChanged = false;
             const updatedCards = s.creditCards.map((card: any) => {
               let cChanged = false;
-              let nextCard = { ...card };
+              const nextCard = { ...card };
               if (nextCard.network === oldName) {
                 nextCard.network = newName;
                 cChanged = true;
@@ -4323,7 +4327,7 @@ function FinanceDashboard() {
             let ppChanged = false;
             const updatedCards = s.prepaidCards.map((card: any) => {
               let cChanged = false;
-              let nextCard = { ...card };
+              const nextCard = { ...card };
               if (nextCard.cardType === oldName) {
                 nextCard.cardType = newName;
                 cChanged = true;
@@ -4355,7 +4359,7 @@ function FinanceDashboard() {
             let baChanged = false;
             const updatedAccs = s.bankAccounts.map((acc: any) => {
               let aChanged = false;
-              let nextAcc = { ...acc };
+              const nextAcc = { ...acc };
               if (nextAcc.type === oldName) {
                 nextAcc.type = newName;
                 aChanged = true;
@@ -4387,7 +4391,7 @@ function FinanceDashboard() {
             let mfChanged = false;
             const updatedMFs = s.mutualFunds.map((mf: any) => {
               let mChanged = false;
-              let nextMf = { ...mf };
+              const nextMf = { ...mf };
               if (nextMf.category === oldName) {
                 nextMf.category = newName;
                 mChanged = true;
@@ -4421,7 +4425,7 @@ function FinanceDashboard() {
             let sipChanged = false;
             const updatedSips = s.sips.map((sip: any) => {
               let spChanged = false;
-              let nextSip = { ...sip };
+              const nextSip = { ...sip };
               if (nextSip.fundType === oldName) {
                 nextSip.fundType = newName;
                 spChanged = true;
@@ -4453,7 +4457,7 @@ function FinanceDashboard() {
             let ltChanged = false;
             const updatedLT = s.loansTaken.map((l: any) => {
               let lChanged = false;
-              let nextL = { ...l };
+              const nextL = { ...l };
               if (nextL.type === oldName) {
                 nextL.type = newName;
                 lChanged = true;
@@ -4482,7 +4486,7 @@ function FinanceDashboard() {
             let lgChanged = false;
             const updatedLG = s.loansGiven.map((l: any) => {
               let lChanged = false;
-              let nextL = { ...l };
+              const nextL = { ...l };
               if (nextL.type === oldName) {
                 nextL.type = newName;
                 lChanged = true;
@@ -4607,7 +4611,9 @@ function FinanceDashboard() {
       localStorage.removeItem("finance_estate_checklist");
       localStorage.removeItem("arthadrishti_cf_salary_pref");
       if (typeof sessionStorage !== "undefined") sessionStorage.clear();
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
     await supabase.auth.signOut().catch(() => {});
     setSession(null);
     lastFetchedUserIdRef.current = null;
@@ -5048,7 +5054,9 @@ function FinanceDashboard() {
           if (isDemoSession(s)) {
             try {
               localStorage.setItem("pf_demo_mode", "true");
-            } catch {}
+            } catch {
+              /* best-effort: storage/parse unavailable */
+            }
             setState((prev: any) => getDemoState(prev?.settings));
           }
           setMfaPending(false);
@@ -5092,7 +5100,9 @@ function FinanceDashboard() {
           onComplete={() => {
             try {
               localStorage.removeItem("pf_pending_onboarding");
-            } catch {}
+            } catch {
+              /* best-effort: storage/parse unavailable */
+            }
           }}
         />
       </div>

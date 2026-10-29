@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef } from "react";
 import {
-  Heart,
   Plus,
   Trash2,
   Pencil,
@@ -29,16 +28,12 @@ import {
   FileSpreadsheet,
   ChevronRight,
   ChevronLeft,
-  Sparkles,
-  Layers,
-  Info,
   Upload,
   UploadCloud,
   Paperclip,
   Download,
   ExternalLink,
   Eye,
-  RefreshCw,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { useMasterData, formatProfileOption, calculateAge } from "../../utils/masterData";

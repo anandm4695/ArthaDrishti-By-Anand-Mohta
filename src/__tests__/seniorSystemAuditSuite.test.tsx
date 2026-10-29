@@ -1,14 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import {
   computeAdvanceTaxSchedule,
-  calcTaxNewByFY,
   calcTaxOldByFY,
   getTaxDueForDashboard,
   getAutoDetectedDeductions,
-  exportArrayToCSV,
 } from "../utils/finance";
 import { SmartAlertsTab } from "../components/tabs/SmartAlertsTab";
 import { TaxFilingHelperTab } from "../components/tabs/TaxFilingHelperTab";

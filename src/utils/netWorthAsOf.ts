@@ -30,6 +30,7 @@ import {
   monthsBetween,
   rdMaturity,
   isDepositClosed,
+  isBondOutstanding,
   calculateEpfBalance,
   today,
   getGoldPricePerGram,
@@ -174,6 +175,8 @@ export function computeNetWorthAsOf(
 
   const bondValue = (s.bonds || [])
     .filter((b: any) => gateInclude(String(b.orderDate || "").trim(), asOfYm))
+    // Still held during this month — a bond maturing mid-month counts for that month.
+    .filter((b: any) => isBondOutstanding(b, `${asOfYm}-01`))
     .reduce(
       (sum: number, b: any) =>
         sum +

@@ -4005,7 +4005,9 @@ function EmailSummarySection({ state, emailSettings, updateEmailSettings }: any)
         updateEmailSettings({ fromEmail: local.trim() });
         localStorage.removeItem("finance-email-from");
       }
-    } catch {}
+    } catch {
+      /* best-effort: storage/parse unavailable */
+    }
   }, []);
 
   const [addrBuf, setAddrBuf] = useState({ emailAddress: savedAddress, fromEmail: savedFromEmail });

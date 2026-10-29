@@ -2,11 +2,11 @@ import { useMemo } from "react";
 import {
   fmtINRFull,
   today,
-  monthsBetween,
   calculateEpfBalance,
   rdMaturity,
   rdElapsed,
   isDepositClosed,
+  isBondOutstanding,
   loanOutstanding,
   loanGivenOutstanding,
   getCcOutstanding,
@@ -83,12 +83,14 @@ export function getFilteredStateForProfile(state: any, profileId: string) {
     rentalProperties: filterByOwner(state.rentalProperties || []),
     rentedProperties: filterByOwner(state.rentedProperties || []),
     realEstateProperties: filterRealEstateByOwner(state.realEstateProperties || []),
-    realEstateDemands: (Array.isArray(state.realEstateDemands) ? state.realEstateDemands : []).filter(
-      (d: any) => ownedPropertyIds.has(d.propertyId)
-    ),
-    realEstatePayments: (Array.isArray(state.realEstatePayments) ? state.realEstatePayments : []).filter(
-      (p: any) => ownedPropertyIds.has(p.propertyId)
-    ),
+    realEstateDemands: (Array.isArray(state.realEstateDemands)
+      ? state.realEstateDemands
+      : []
+    ).filter((d: any) => ownedPropertyIds.has(d.propertyId)),
+    realEstatePayments: (Array.isArray(state.realEstatePayments)
+      ? state.realEstatePayments
+      : []
+    ).filter((p: any) => ownedPropertyIds.has(p.propertyId)),
     vehicles: filterByOwner(state.vehicles || []),
     dividends: filterByOwner(state.dividends || []),
     documents: filterByOwner(state.documents || []),
@@ -109,9 +111,10 @@ export function getFilteredStateForProfile(state: any, profileId: string) {
     healthInsurance: filterByOwner(state.healthInsurance || []),
     creditScores: filterByOwner(state.creditScores || []),
     billPayments: filterByOwner(state.billPayments || []),
-    billPaymentHistory: (Array.isArray(state.billPaymentHistory) ? state.billPaymentHistory : []).filter(
-      (h: any) => ownedBillIds.has(h.billId)
-    ),
+    billPaymentHistory: (Array.isArray(state.billPaymentHistory)
+      ? state.billPaymentHistory
+      : []
+    ).filter((h: any) => ownedBillIds.has(h.billId)),
     salarySlips: filterByOwner(state.salarySlips || []),
     form26as: filterByOwner(state.form26as || []),
     // wishlists / wishlistItems are intentionally NOT owner-filtered here: they are
@@ -175,18 +178,20 @@ export function calculateProfileNWAndCover(pState: any, marketData: any, profile
     const elapsed = rdElapsed(r, today());
     return s + rdMaturity(Number(r.monthly || 0), Number(r.rate || 0), elapsed);
   }, 0);
-  const bondValue = (pState.bonds || []).reduce(
-    (s: number, b: any) =>
-      s +
-      Number(
-        b.totalInvestmentAmount ||
-        b.totalPrincipalAmount ||
-        (Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0)) ||
-        b.faceValue ||
-        0
-      ),
-    0
-  );
+  const bondValue = (pState.bonds || [])
+    .filter((b: any) => isBondOutstanding(b))
+    .reduce(
+      (s: number, b: any) =>
+        s +
+        Number(
+          b.totalInvestmentAmount ||
+            b.totalPrincipalAmount ||
+            Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0) ||
+            b.faceValue ||
+            0
+        ),
+      0
+    );
   const ppfValue = (pState.ppf || []).reduce(
     (s: number, pp: any) => s + Number(pp.balance || 0),
     0
@@ -427,19 +432,24 @@ export function useMetrics(
       const elapsed = rdElapsed(r, today());
       return s + rdMaturity(Number(r.monthly || 0), Number(r.rate || 0), elapsed);
     }, 0);
-    const bondValue = (sState.bonds || []).reduce(
-      (s: number, b: any) =>
-        s +
-        Number(
-          b.totalInvestmentAmount ||
-          b.totalPrincipalAmount ||
-          (Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0)) ||
-          b.faceValue ||
-          0
-        ),
+    const bondValue = (sState.bonds || [])
+      .filter((b: any) => isBondOutstanding(b))
+      .reduce(
+        (s: number, b: any) =>
+          s +
+          Number(
+            b.totalInvestmentAmount ||
+              b.totalPrincipalAmount ||
+              Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0) ||
+              b.faceValue ||
+              0
+          ),
+        0
+      );
+    const ppfValue = (sState.ppf || []).reduce(
+      (s: number, p: any) => s + Number(p.balance || 0),
       0
     );
-    const ppfValue = (sState.ppf || []).reduce((s: number, p: any) => s + Number(p.balance || 0), 0);
     const npsValue = (sState.nps || []).reduce((s: number, n: any) => {
       const bal = Number(n.balance) || 0;
       if (bal > 0) return s + bal;
@@ -581,7 +591,9 @@ export function useMetrics(
       .reduce((s: number, p: any) => {
         const value = Number(p.marketValue || p.agreementValue || 0);
         const share =
-          activeProfile !== "all" ? realEstateShareForOwner(p, activeProfile) : realEstateTrackedShare(p);
+          activeProfile !== "all"
+            ? realEstateShareForOwner(p, activeProfile)
+            : realEstateTrackedShare(p);
         return s + value * share;
       }, 0);
 
@@ -593,7 +605,9 @@ export function useMetrics(
       .filter((p: any) => p.status === "under-construction")
       .reduce((total: number, p: any) => {
         const share =
-          activeProfile !== "all" ? realEstateShareForOwner(p, activeProfile) : realEstateTrackedShare(p);
+          activeProfile !== "all"
+            ? realEstateShareForOwner(p, activeProfile)
+            : realEstateTrackedShare(p);
         const demanded = (sState.realEstateDemands || [])
           .filter((d: any) => d.propertyId === p.id)
           .reduce((s: number, d: any) => s + Number(d.totalAmount || d.amount || 0), 0);
@@ -665,20 +679,18 @@ export function useMetrics(
     // Mirrors rentPaidThisMonth's guard: skip the ledger top-up for a month that already
     // has a bank-linked "Rent" credit transaction counted in txnIncomeMonth, to avoid
     // double-counting (BanksTab's applyLinkedTxn auto-posts into receipts AND transactions).
-    const rentReceivedThisMonth = (sState.rentalProperties || []).reduce(
-      (sum: number, p: any) => {
-        const receiptsThisMonth = (p.receipts || [])
-          .filter((r: any) => r.date && r.date.startsWith(ym))
-          .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-        return sum + receiptsThisMonth;
-      },
-      0
-    );
+    const rentReceivedThisMonth = (sState.rentalProperties || []).reduce((sum: number, p: any) => {
+      const receiptsThisMonth = (p.receipts || [])
+        .filter((r: any) => r.date && r.date.startsWith(ym))
+        .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      return sum + receiptsThisMonth;
+    }, 0);
     const hasRentReceivedTxn = monthTxns.some(
       (t: any) => t.type === "credit" && t.category === "Rent"
     );
     const monthIncome =
-      monthIncomeBase + (rentReceivedThisMonth > 0 && !hasRentReceivedTxn ? rentReceivedThisMonth : 0);
+      monthIncomeBase +
+      (rentReceivedThisMonth > 0 && !hasRentReceivedTxn ? rentReceivedThisMonth : 0);
 
     const txnDebitTotal = monthTxns
       .filter(
@@ -699,8 +711,11 @@ export function useMetrics(
     // gamification badges, alerts, AI assistant, peer benchmark) — see the
     // helpers' comments in finance.ts for why this used to drift per-consumer.
     const efMonthlyExpense = getEmergencyFundMonthlyExpense(sState, monthExpense);
-    const { liquidAssets: efLiquidAssets, nearTermFDValue: efNearTermFDValue, liquidMFValue: efLiquidMFValue } =
-      getEmergencyFundLiquidAssets(sState, cashInBanks, prepaidValue);
+    const {
+      liquidAssets: efLiquidAssets,
+      nearTermFDValue: efNearTermFDValue,
+      liquidMFValue: efLiquidMFValue,
+    } = getEmergencyFundLiquidAssets(sState, cashInBanks, prepaidValue);
     const efMonthsCovered = efMonthlyExpense > 0 ? efLiquidAssets / efMonthlyExpense : 0;
     const efTargetAmount = efMonthlyExpense * EMERGENCY_FUND_TARGET_MONTHS;
     const efGap = Math.max(0, efTargetAmount - efLiquidAssets);
@@ -749,11 +764,15 @@ export function useMetrics(
       return sum + receiptsInFY;
     }, 0);
     // Prefer explicit ledger -> FY-to-date credit txns -> annualised single month (least accurate)
-    const annualIncome = (explicitIncome || txnIncome || annualizedCurrentMonth || 0) + rentReceivedFY;
+    const annualIncome =
+      (explicitIncome || txnIncome || annualizedCurrentMonth || 0) + rentReceivedFY;
 
     const subTotal = (sState.subscriptions || [])
       .filter((sub: any) => !sub.paused)
-      .reduce((s: number, sub: any) => s + getSubscriptionMonthlyEquivalent(sub.amount, sub.cycle), 0);
+      .reduce(
+        (s: number, sub: any) => s + getSubscriptionMonthlyEquivalent(sub.amount, sub.cycle),
+        0
+      );
 
     const liquidAssets = cashInBanks + mfValue + stockValue + prepaidValue + goldValue;
     const lockedAssets =
@@ -776,7 +795,12 @@ export function useMetrics(
     // FOIR & Monthly Debt Obligations:
     // Only include active loans (outstanding > 0, and monthsRemaining unset OR > 0)
     const totalMonthlyEMI = (sState.loansTaken || [])
-      .filter((l: any) => (l.status || "").toLowerCase() !== "closed" && loanOutstanding(l) > 0 && Number(l.monthsRemaining ?? 1) > 0)
+      .filter(
+        (l: any) =>
+          (l.status || "").toLowerCase() !== "closed" &&
+          loanOutstanding(l) > 0 &&
+          Number(l.monthsRemaining ?? 1) > 0
+      )
       .reduce((s: number, l: any) => s + Number(l.emi || 0), 0);
     const foir = monthIncome > 0 ? (totalMonthlyEMI / monthIncome) * 100 : 0;
 
@@ -785,7 +809,8 @@ export function useMetrics(
     const totalMonthlyOutflow = monthExpense + totalMonthlyEMI;
     const netSavings = monthIncome - totalMonthlyOutflow;
     const savingsRate = monthIncome > 0 ? (Math.max(0, netSavings) / monthIncome) * 100 : 0;
-    const savingsRateBeforeEMI = monthIncome > 0 ? (Math.max(0, monthIncome - monthExpense) / monthIncome) * 100 : 0;
+    const savingsRateBeforeEMI =
+      monthIncome > 0 ? (Math.max(0, monthIncome - monthExpense) / monthIncome) * 100 : 0;
     const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
 
     // Credit utilization: cc outstanding / cc total limit (shared-pool deduplication)
@@ -833,44 +858,44 @@ export function useMetrics(
       { name: "Stocks", Invested: stockInvested, Current: stockValue },
     ].filter((x) => x.Invested > 0 || x.Current > 0);
 
-    const totalGoalTarget = (sState.goals || []).reduce(
-      (s: number, g: any) => {
+    const totalGoalTarget = (sState.goals || []).reduce((s: number, g: any) => {
+      if (g.schedule && g.schedule.length > 0) {
+        return s + g.schedule.reduce((sum: number, it: any) => sum + (Number(it.amount) || 0), 0);
+      }
+      return s + Number(g.targetAmount || 0);
+    }, 0);
+    const totalGoalSaved = (sState.goals || []).reduce((s: number, g: any) => {
+      const current = Number(g.currentAmount || 0);
+      if (g.goalType === "recurring") {
+        const disbursements = g.disbursements || [];
+        if (disbursements.length > 0) {
+          return (
+            s +
+            (disbursements.reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0) +
+              current)
+          );
+        }
         if (g.schedule && g.schedule.length > 0) {
-          return s + g.schedule.reduce((sum: number, it: any) => sum + (Number(it.amount) || 0), 0);
+          const paidCount = Number(g.installmentsPaid) || 0;
+          const paidFromSchedule = g.schedule
+            .slice(0, paidCount)
+            .reduce((sum: number, it: any) => sum + (Number(it.amount) || 0), 0);
+          return s + (paidFromSchedule + current);
         }
-        return s + Number(g.targetAmount || 0);
-      },
-      0
-    );
-    const totalGoalSaved = (sState.goals || []).reduce(
-      (s: number, g: any) => {
-        const current = Number(g.currentAmount || 0);
-        if (g.goalType === "recurring") {
-          const disbursements = g.disbursements || [];
-          if (disbursements.length > 0) {
-            return s + (disbursements.reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0) + current);
-          }
-          if (g.schedule && g.schedule.length > 0) {
-            const paidCount = Number(g.installmentsPaid) || 0;
-            const paidFromSchedule = g.schedule.slice(0, paidCount).reduce((sum: number, it: any) => sum + (Number(it.amount) || 0), 0);
-            return s + (paidFromSchedule + current);
-          }
-          const totalInst = Number(g.installmentsCount) || 1;
-          const perInst = Number(g.amountPerInstallment) || (Number(g.targetAmount || 0) / totalInst);
-          const paidDisbursed = (Number(g.installmentsPaid) || 0) * perInst;
-          return s + (paidDisbursed + current);
-        }
-        return s + current;
-      },
-      0
-    );
+        const totalInst = Number(g.installmentsCount) || 1;
+        const perInst = Number(g.amountPerInstallment) || Number(g.targetAmount || 0) / totalInst;
+        const paidDisbursed = (Number(g.installmentsPaid) || 0) * perInst;
+        return s + (paidDisbursed + current);
+      }
+      return s + current;
+    }, 0);
     const totalGoalRemaining = Math.max(0, totalGoalTarget - totalGoalSaved);
     const overallGoalPct = totalGoalTarget > 0 ? (totalGoalSaved / totalGoalTarget) * 100 : 0;
     const goalsCompleted = (sState.goals || []).filter((g: any) => {
       const target = Number(g.targetAmount || 0);
       if (g.goalType === "recurring") {
         const totalInst = g.schedule?.length || Number(g.installmentsCount) || 1;
-        const paidInst = Number(g.installmentsPaid) || (g.disbursements?.length || 0);
+        const paidInst = Number(g.installmentsPaid) || g.disbursements?.length || 0;
         return paidInst >= totalInst || (target > 0 && Number(g.currentAmount || 0) >= target);
       }
       return target > 0 && Number(g.currentAmount || 0) >= target;
@@ -1079,13 +1104,14 @@ export function useMetrics(
       const rentReceived = (filteredState.rentalProperties || []).reduce((sum: number, p: any) => {
         const receiptsInMonth = (p.receipts || [])
           .filter(
-            (r: any) =>
-              r.date && r.date.startsWith(ym) && !String(r.id || "").startsWith("bank-")
+            (r: any) => r.date && r.date.startsWith(ym) && !String(r.id || "").startsWith("bank-")
           )
           .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
         return sum + receiptsInMonth;
       }, 0);
-      const inc = (explicitInc > 0 ? explicitInc : txnInc) + (rentReceived > 0 && !hasRentReceivedTxnTrend ? rentReceived : 0);
+      const inc =
+        (explicitInc > 0 ? explicitInc : txnInc) +
+        (rentReceived > 0 && !hasRentReceivedTxnTrend ? rentReceived : 0);
       const txnExp = txns
         .filter(
           (t: any) =>
