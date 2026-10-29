@@ -153,6 +153,18 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         return sum + val;
       }, 0);
 
+    // 9. SFT-009: High-Value Tenant Rent & Section 194-IB Compliance (Threshold: Monthly Rent > ₹50,000 / Annual > ₹6,00,000)
+    const totalHighRentPaid = (state.rentedProperties || []).reduce((sum: number, p: any) => {
+      const payments = (p.payments || []).filter((pay: any) => inSelectedFY(pay.date));
+      const paySum = payments.reduce((s: number, pay: any) => s + Number(pay.amount || 0), 0);
+      const monthly = Number(p.monthlyRent || 0);
+      return sum + (paySum > 0 ? paySum : monthly * 12);
+    }, 0);
+    const hasMonthlyRentAbove50k = (state.rentedProperties || []).some((p: any) => {
+      const rent = Number(p.monthlyRent || 0);
+      return rent > 50000;
+    });
+
     return [
       {
         id: "sft-001",
@@ -257,6 +269,19 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) =>
         description: "Sale or purchase of goods/services (including bullion & jewellery) exceeding ₹2 Lakhs per transaction requires mandatory PAN quoting.",
         reportingEntity: "Bullion Dealer / Authorised Bank / RBI (SGB)",
         documentationRequired: ["GST tax invoices with PAN", "SGB holding certificate", "Purity hallmarking receipts"],
+      },
+      {
+        id: "sft-009",
+        code: "SFT-009",
+        title: "High-Value Tenant Rent & Section 194-IB Compliance",
+        section: "Section 194-IB · Income-tax Act (Finance Act 2024)",
+        ruleThreshold: 600000,
+        detectedAmount: totalHighRentPaid,
+        thresholdDisplay: "Rent > ₹50,000/mo (₹6,00,000/year)",
+        status: hasMonthlyRentAbove50k ? "SFT_TRIGGERED" : totalHighRentPaid >= 400000 ? "ATTENTION" : "CLEAN",
+        description: "Mandatory 2% TDS on rent paid by individuals/HUFs exceeding ₹50,000 per month. Form 26QC challan-cum-statement must be filed within 30 days of March or vacating.",
+        reportingEntity: "Tenant (Form 26QC) / Landlord Form 26AS & AIS/TIS",
+        documentationRequired: ["Rent agreement", "Landlord PAN copy", "Form 26QC challan receipt", "Form 16C TDS certificate"],
       },
     ];
   }, [state, selectedFY]);

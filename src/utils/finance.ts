@@ -1,6 +1,6 @@
 import { STORAGE_KEY } from "./constants";
 import { getCurrentFY, getCurrentFYStartYear } from "./appConstants";
-import { isSeniorCitizen } from "./masterData";
+import { isSeniorCitizen, calculateAge } from "./masterData";
 
 export const loadState = () => {
   try {
@@ -1499,6 +1499,14 @@ export const getTaxDueForDashboard = (state: any, annualIncome: number): number 
     const fyStartYear = Number(fyParts[0]) || getCurrentFYStartYear();
     const stdDedOld = fyStartYear >= 2020 ? 50_000 : 40_000;
 
+    const selfProfile = (state.masterData?.familyProfiles || []).find((p: any) => p.id === "self");
+    const citizenAge =
+      Number(state.profile?.age || 0) ||
+      (selfProfile?.dob ? (calculateAge(selfProfile.dob) ?? 0) : 0);
+    const isSenior = citizenAge >= 60 || isSeniorCitizen(selfProfile?.dob);
+    // Section 80TTB allows up to ₹50,000 on deposits for senior citizens, vs ₹10,000 u/s 80TTA for non-seniors
+    const max80TTA = isSenior ? 50_000 : 10_000;
+
     const totalOldDeductions =
       stdDedOld +
       Math.min(d80C, 150_000) +
@@ -1509,9 +1517,8 @@ export const getTaxDueForDashboard = (state: any, annualIncome: number): number 
       (d80CCD2 || 0) +
       (d80G || 0) +
       (d80E || 0) +
-      Math.min(d80TTA || 0, 10_000);
+      Math.min(d80TTA || 0, max80TTA);
 
-    const citizenAge = Number(state.profile?.age || 0);
     const taxRes = calcTaxOldByFY(annualIncome, totalOldDeductions, fy, citizenAge);
     return taxRes.total;
   }
@@ -1858,6 +1865,7 @@ export interface AdvanceTaxAnalysis {
   quarters: AdvanceTaxQuarter[];
   penalty234C: number;
   penalty234B: number;
+  penalty234A: number;
   penalty234F: number;
   totalStatutoryPenalty: number;
 }
@@ -1887,6 +1895,7 @@ export function computeAdvanceTaxSchedule(
       quarters: [],
       penalty234C: 0,
       penalty234B: 0,
+      penalty234A: 0,
       penalty234F: 0,
       totalStatutoryPenalty: 0,
     };
@@ -1971,11 +1980,21 @@ export function computeAdvanceTaxSchedule(
     penalty234B = Math.round(assessedShortfall * 0.01 * monthsElapsed);
   }
 
-  // Section 234F fee: ₹5,000 (or ₹1,000 if income <= 5L) if filed after 31 July
+  // Section 234A penalty: Interest for default in furnishing return of income
+  // 1% simple interest per month (or part thereof) on unpaid tax commencing after the statutory return filing due date (July 31 of AY)
   const july31OfAY = `${fyStartYear + 1}-07-31`;
+  let penalty234A = 0;
+  if (isSubject && asOfDateStr > july31OfAY && remainingTaxPayable > 0) {
+    const dueTime = new Date(`${july31OfAY}T00:00:00`);
+    const curr = new Date(`${asOfDateStr}T00:00:00`);
+    const monthsDelay = Math.max(1, Math.ceil((curr.getTime() - dueTime.getTime()) / (30.44 * 86400000)));
+    penalty234A = Math.round(remainingTaxPayable * 0.01 * monthsDelay);
+  }
+
+  // Section 234F fee: ₹5,000 (or ₹1,000 if taxable income <= 5L) if filed after 31 July
   let penalty234F = 0;
   if (asOfDateStr > july31OfAY && remainingTaxPayable > 0) {
-    penalty234F = 5000;
+    penalty234F = netTaxPayable <= 500_000 ? 1000 : 5000;
   }
 
   return {
@@ -1989,8 +2008,9 @@ export function computeAdvanceTaxSchedule(
     quarters,
     penalty234C: total234C,
     penalty234B,
+    penalty234A,
     penalty234F,
-    totalStatutoryPenalty: total234C + penalty234B + penalty234F,
+    totalStatutoryPenalty: total234C + penalty234B + penalty234A + penalty234F,
   };
 }
 

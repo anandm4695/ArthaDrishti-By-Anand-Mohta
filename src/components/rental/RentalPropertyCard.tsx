@@ -242,6 +242,27 @@ export const RentalPropertyCard: React.FC<RentalPropertyCardProps> = ({
                     Active
                   </span>
                 )}
+
+                {/* Section 194-IB Mandatory TDS Badge */}
+                {!isOut && displayedRent > 50000 && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: THEME.gold,
+                      background: `color-mix(in srgb, ${THEME.gold} 14%, transparent)`,
+                      border: `1px solid color-mix(in srgb, ${THEME.gold} 30%, transparent)`,
+                      padding: "2px 7px",
+                      borderRadius: 99,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 3,
+                    }}
+                    title="Monthly rent exceeds ₹50,000. Under Section 194-IB, 2% TDS must be deducted (Form 26QC)."
+                  >
+                    <Receipt size={10} /> Sec 194-IB (2% TDS)
+                  </span>
+                )}
               </div>
 
               {/* Tenant / Landlord Name */}
@@ -362,6 +383,33 @@ export const RentalPropertyCard: React.FC<RentalPropertyCardProps> = ({
             </span>
           </div>
         </div>
+
+        {/* ── Section 194-IB Statutory TDS Notice ── */}
+        {!isOut && displayedRent > 50000 && (
+          <div
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              background: "color-mix(in srgb, #C5A152 8%, transparent)",
+              border: "1px solid color-mix(in srgb, #C5A152 24%, transparent)",
+              marginBottom: 12,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: 11,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Shield size={13} color={THEME.gold} />
+              <span style={{ color: THEME.ink, fontWeight: 600 }}>
+                Sec 194-IB TDS (2%): Deduct ₹{Math.round(displayedRent * 0.02).toLocaleString("en-IN")}/mo
+              </span>
+            </div>
+            <span style={{ color: THEME.muted, fontSize: 10, fontWeight: 600 }}>
+              Form 26QC in March
+            </span>
+          </div>
+        )}
 
         {/* ── Escalation Schedule Timeline ── */}
         {p.escalationTiers?.length > 1 && (

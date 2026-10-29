@@ -6,10 +6,12 @@ import {
   computeAdvanceTaxSchedule,
   calcTaxNewByFY,
   calcTaxOldByFY,
+  getTaxDueForDashboard,
   exportArrayToCSV,
 } from "../utils/finance";
 import { SmartAlertsTab } from "../components/tabs/SmartAlertsTab";
 import { TaxFilingHelperTab } from "../components/tabs/TaxFilingHelperTab";
+import { SftTaxRadar } from "../components/audit/SftTaxRadar";
 import { DataTable, Column } from "../components/design-system/DataTable";
 import { PrivacyProvider } from "../context/PrivacyContext";
 
@@ -388,5 +390,104 @@ describe("Senior Accountant Audit: Section 70 Capital Gains Loss Set-Off & Carry
     const exportBtn = container.querySelector("button[title='Export table records as CSV']");
     expect(exportBtn).toBeTruthy();
     expect(exportBtn?.textContent).toContain("Export CSV");
+  });
+
+  it("calculates Section 234A penalty for delayed return filing after 31 July of Assessment Year", () => {
+    // FY 2024-25, AY 2025-26: Due date 2025-07-31.
+    // Net tax: 1,00,000, 0 paid. As of 2025-10-15 (~3 months delay).
+    const delayedResult = computeAdvanceTaxSchedule(2024, 100000, 0, 0, "2025-10-15", false);
+    expect(delayedResult.penalty234A).toBeGreaterThan(0);
+    // 1% per month on 1,00,000 for 3 months = ~3,000
+    expect(delayedResult.penalty234A).toBeGreaterThanOrEqual(2000);
+    expect(delayedResult.totalStatutoryPenalty).toBeGreaterThan(delayedResult.penalty234C);
+
+    // Timely filing on or before 31 July
+    const timelyResult = computeAdvanceTaxSchedule(2024, 100000, 0, 0, "2025-07-25", false);
+    expect(timelyResult.penalty234A).toBe(0);
+  });
+
+  it("applies Section 80TTB ₹50,000 deduction cap for senior citizens vs ₹10,000 Section 80TTA for non-seniors", () => {
+    // Non-senior profile (<60) with ₹40,000 savings interest
+    const nonSeniorState = {
+      profile: { fy: "2024-25", regime: "old", age: 35 },
+      masterData: {
+        familyProfiles: [{ id: "self", dob: "1989-01-01" }],
+        taxDeductions: {
+          "2024-25": { d80TTA: 40000 },
+        },
+      },
+    };
+    const taxNonSenior = getTaxDueForDashboard(nonSeniorState, 1000000);
+
+    // Senior citizen profile (>=60) with same income & ₹40,000 deposit interest
+    const seniorState = {
+      profile: { fy: "2024-25", regime: "old", age: 65 },
+      masterData: {
+        familyProfiles: [{ id: "self", dob: "1959-01-01" }],
+        taxDeductions: {
+          "2024-25": { d80TTA: 40000 },
+        },
+      },
+    };
+    const taxSenior = getTaxDueForDashboard(seniorState, 1000000);
+
+    // Senior citizen must pay lower tax due to higher basic exemption (₹3L vs ₹2.5L)
+    // AND full ₹40,000 deduction under Section 80TTB (vs ₹10,000 cap under 80TTA)
+    expect(taxSenior).toBeLessThan(taxNonSenior);
+  });
+
+  it("triggers Section 194-IB mandatory TDS alert on monthly rent exceeding ₹50,000 in SmartAlertsTab", () => {
+    const mockState = {
+      profile: { fy: "2026-27", regime: "new" },
+      rentedProperties: [
+        {
+          id: "r1",
+          propertyName: "Penthouse Horizon",
+          monthlyRent: 75000,
+          isActive: true,
+        },
+      ],
+      transactions: [],
+      bankAccounts: [],
+      creditCards: [],
+      income: [],
+      fixedDeposits: [],
+      mutualFunds: [],
+      stocks: [],
+    };
+
+    render(
+      <PrivacyProvider>
+        <SmartAlertsTab state={mockState} metrics={{}} />
+      </PrivacyProvider>
+    );
+
+    expect(screen.getByText(/Section 194-IB Mandatory TDS Notice/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Penthouse Horizon/i).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("flags high-value rent exceeding ₹50,000/month under SFT-009 in SftTaxRadar", () => {
+    const mockState = {
+      profile: { fy: "2026-27" },
+      rentedProperties: [
+        {
+          id: "r1",
+          propertyName: "Luxury Villa",
+          monthlyRent: 80000,
+          isActive: true,
+        },
+      ],
+      transactions: [],
+      goldHoldings: [],
+    };
+
+    render(
+      <PrivacyProvider>
+        <SftTaxRadar state={mockState} metrics={{}} />
+      </PrivacyProvider>
+    );
+
+    expect(screen.getByText(/High-Value Tenant Rent & Section 194-IB Compliance/i)).toBeInTheDocument();
+    expect(screen.getByText(/SFT-009/i)).toBeInTheDocument();
   });
 });

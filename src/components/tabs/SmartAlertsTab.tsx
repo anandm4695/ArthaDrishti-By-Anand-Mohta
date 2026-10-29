@@ -36,6 +36,7 @@ import {
   calcTaxNewByFY,
   calcTaxOldByFY,
   computeAdvanceTaxSchedule,
+  getEffectiveRent,
 } from "../../utils/finance";
 import { getCurrentFY, getCurrentFYStartYear } from "../../utils/appConstants";
 import { isSeniorCitizen } from "../../utils/masterData";
@@ -849,7 +850,7 @@ export const SmartAlertsTab = ({
               plainDetail: `₹${headroom80C} unutilized Section 80C headroom`,
               icon: Sparkles,
               action: "Optimize Section 80 deductions",
-              targetTab: "section80",
+              targetTab: "sec80",
               daysRemaining: daysTillMarch31,
               impactValue: potentialTaxSavings,
               impactLabel: `Save ~₹${potentialTaxSavings.toLocaleString("en-IN")}`,
@@ -885,12 +886,47 @@ export const SmartAlertsTab = ({
           plainDetail: `Credit card payments of ₹${annualCcPayments} reported under SFT-005`,
           icon: Scale,
           action: "Review SFT Radar",
-          targetTab: "audit",
+          targetTab: "auditlog",
           impactValue: annualCcPayments,
           impactLabel: "SFT-005 Tracked",
           tags: ["SFT-005", "AIS / TIS", "Form 61A"],
         });
       }
+
+      // Section 194-IB Mandatory TDS Compliance on Rent > ₹50,000 / month
+      const highRentProperties = (state?.rentedProperties || []).filter((p: any) => {
+        if (p.isActive === false) return false;
+        const rent = getEffectiveRent(p) || Number(p.monthlyRent || 0);
+        return rent > 50000;
+      });
+
+      highRentProperties.forEach((p: any) => {
+        const monthlyRent = getEffectiveRent(p) || Number(p.monthlyRent || 0);
+        const monthlyTds = Math.round(monthlyRent * 0.02); // 2% TDS under Finance Act 2024
+        alerts.push({
+          id: `tds_194ib_${p.id}`,
+          level: "warn",
+          category: "tax",
+          title: `Section 194-IB Mandatory TDS Notice: Rent > ₹50,000/mo (${p.propertyName})`,
+          detail: (
+            <>
+              {`Your monthly rent of `}
+              <Money value={monthlyRent} variant="full" />
+              {` on "${p.propertyName}" exceeds ₹50,000. Under Section 194-IB (Finance Act 2024), you must deduct 2% TDS (`}
+              <Money value={monthlyTds} variant="full" />
+              {`/mo) and deposit via Form 26QC challan in the last month of FY (March) or upon vacating.`}
+            </>
+          ),
+          plainDetail: `Section 194-IB: 2% TDS (₹${monthlyTds}/mo) must be deducted on monthly rent of ₹${monthlyRent}`,
+          icon: Receipt,
+          action: "Review Rented Properties",
+          targetTab: "rental",
+          targetSubTab: "in",
+          impactValue: monthlyTds * 12,
+          impactLabel: `₹${monthlyTds}/mo TDS`,
+          tags: ["Section 194-IB", "Form 26QC", "TDS Compliance"],
+        });
+      });
     }
 
     // 10. Data Quality & Inactivity

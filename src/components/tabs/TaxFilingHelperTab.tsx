@@ -1751,23 +1751,36 @@ export const TaxFilingHelperTab = ({
             <div
               style={{
                 marginTop: 12,
-                padding: "10px 14px",
+                padding: "12px 14px",
                 borderRadius: 8,
                 background: "color-mix(in srgb, var(--t-rust) 12%, transparent)",
                 border: "1px solid color-mix(in srgb, var(--t-rust) 35%, transparent)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
                 fontSize: 12,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <AlertTriangle size={15} color={THEME.rust} />
-                <span style={{ color: THEME.text, fontWeight: 600 }}>Total Section 234 Penalty Accrued:</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <AlertTriangle size={15} color={THEME.rust} />
+                  <span style={{ color: THEME.text, fontWeight: 700 }}>Total Section 234 Penalties & Fees:</span>
+                </div>
+                <span style={{ color: THEME.rust, fontWeight: 800, fontSize: 13 }}>
+                  <Money value={advanceTaxAnalysis.totalStatutoryPenalty} variant="full" />
+                </span>
               </div>
-              <span style={{ color: THEME.rust, fontWeight: 800, fontSize: 13 }}>
-                <Money value={advanceTaxAnalysis.totalStatutoryPenalty} variant="full" />
-              </span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", fontSize: 11, color: THEME.muted, paddingTop: 4, borderTop: `1px solid color-mix(in srgb, var(--t-rust) 20%, transparent)` }}>
+                {advanceTaxAnalysis.penalty234C > 0 && (
+                  <span>Sec 234C (Quarterly Deferment): <strong>₹{advanceTaxAnalysis.penalty234C.toLocaleString("en-IN")}</strong></span>
+                )}
+                {advanceTaxAnalysis.penalty234B > 0 && (
+                  <span>Sec 234B (Shortfall &lt; 90%): <strong>₹{advanceTaxAnalysis.penalty234B.toLocaleString("en-IN")}</strong></span>
+                )}
+                {advanceTaxAnalysis.penalty234A > 0 && (
+                  <span>Sec 234A (Late Filing after 31 July): <strong>₹{advanceTaxAnalysis.penalty234A.toLocaleString("en-IN")}</strong></span>
+                )}
+                {advanceTaxAnalysis.penalty234F > 0 && (
+                  <span>Sec 234F (Late Filing Fee): <strong>₹{advanceTaxAnalysis.penalty234F.toLocaleString("en-IN")}</strong></span>
+                )}
+              </div>
             </div>
           )}
         </Card>

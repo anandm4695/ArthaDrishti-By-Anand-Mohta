@@ -53,9 +53,11 @@ import {
   fmtINRExact,
   calcTaxNewByFY,
   calcTaxOldByFY,
+  computeAdvanceTaxSchedule,
   today,
   getAutoDetectedDeductions,
 } from "../../utils/finance";
+import { isSeniorCitizen, calculateAge } from "../../utils/masterData";
 import { Card } from "../ui/Card";
 import { StatCard } from "../ui/StatCard";
 import { Button } from "../ui/Button";
@@ -1710,8 +1712,16 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
   }, [state.stocks, state.mutualFunds]);
 
   /* ── Tax Computations (FY-Aware) ────────────────────────────── */
+  const selfProfile = (state.masterData?.familyProfiles || []).find((p: any) => p.id === "self");
+  const citizenAge =
+    Number(state.profile?.age || 0) ||
+    (selfProfile?.dob ? (calculateAge(selfProfile.dob) ?? 0) : 0);
+  const isSenior = citizenAge >= 60 || isSeniorCitizen(selfProfile?.dob);
   const stdDedOld = getOldStdDed(fyStartYear);
   const d80DCap = deductions.d80DSenior ? 50_000 : 25_000;
+  // Section 80TTB for seniors allows up to ₹50,000 on deposits, vs ₹10,000 u/s 80TTA for non-seniors
+  const max80TTA = isSenior ? 50_000 : 10_000;
+
   const totalOldDeductions =
     stdDedOld +
     Math.min(Number(deductions.d80C) || 0, 150_000) +
@@ -1722,12 +1732,15 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
     (Number(deductions.d80CCD2) || 0) +
     (Number(deductions.d80G) || 0) +
     (Number(deductions.d80E) || 0) +
-    Math.min(Number(deductions.d80TTA) || 0, 10_000);
+    Math.min(Number(deductions.d80TTA) || 0, max80TTA);
 
-  const taxNewResult = useMemo(() => calcTaxNewByFY(annualIncome, fy), [annualIncome, fy]);
+  const taxNewResult = useMemo(
+    () => calcTaxNewByFY(annualIncome, fy, Number(deductions.d80CCD2) || 0),
+    [annualIncome, fy, deductions.d80CCD2]
+  );
   const taxOldResult = useMemo(
-    () => calcTaxOldByFY(annualIncome, totalOldDeductions, fy),
-    [annualIncome, totalOldDeductions, fy]
+    () => calcTaxOldByFY(annualIncome, totalOldDeductions, fy, citizenAge),
+    [annualIncome, totalOldDeductions, fy, citizenAge]
   );
 
   const taxOldDisplay = { ...taxOldResult, extraDeds: totalOldDeductions - stdDedOld };
@@ -2972,9 +2985,15 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                 </div>
               </div>
 
-              {/* 80TTA */}
+              {/* 80TTA / 80TTB */}
               <div>
-                <Field label="Section 80TTA — Savings Bank Interest (Max ₹10,000)">
+                <Field
+                  label={
+                    isSenior
+                      ? "Section 80TTB — Senior Citizen Deposit Interest (Max ₹50,000)"
+                      : "Section 80TTA — Savings Bank Interest (Max ₹10,000)"
+                  }
+                >
                   <input
                     className="form-input"
                     type="number"
@@ -2983,8 +3002,14 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                     onBlur={(e) =>
                       handleDeductionBlur("d80TTA", Number(e.target.value) || 0, e.target.value === "")
                     }
+                    placeholder={isSenior ? "Max ₹50,000" : "Max ₹10,000"}
                   />
                 </Field>
+                <div style={{ fontSize: 10, color: THEME.muted, marginTop: 2 }}>
+                  {isSenior
+                    ? "✓ Senior citizen benefit: applies to interest from Savings, FDs, and RDs up to ₹50,000."
+                    : "✓ Resident individuals under 60: applies to savings bank interest up to ₹10,000."}
+                </div>
               </div>
             </div>
           </Card>
@@ -3419,50 +3444,124 @@ export const TaxVaultTab: React.FC<TaxVaultTabProps> = ({
                 </div>
               </div>
               {(() => {
-                const now = new Date();
-                const totalPenalty234C = calcSection234CPenalty(
+                const advSchedule = computeAdvanceTaxSchedule(
                   fyStartYear,
-                  netLiability,
+                  currentTax,
+                  totalTDS,
                   totalAdvancePaid,
-                  now
+                  today(),
+                  isSenior
                 );
                 return (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
-                    <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
-                      <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
-                        Net Tax Liability
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
+                      <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
+                        <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
+                          Net Tax Liability
+                        </div>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: THEME.ink, marginTop: 4 }}>
+                          <Money value={advSchedule.netTaxPayable} variant="full" />
+                        </div>
+                        <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                          Gross tax minus TDS
+                        </div>
                       </div>
-                      <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: THEME.ink, marginTop: 4 }}>
-                        <Money value={netLiability} variant="full" />
+
+                      <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
+                        <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
+                          Advance Tax Paid
+                        </div>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: THEME.sage, marginTop: 4 }}>
+                          <Money value={advSchedule.totalAdvancePaid} variant="full" />
+                        </div>
+                        <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                          Credited against liability
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
-                        Gross tax minus TDS
+
+                      <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
+                        <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
+                          Sec 234C Interest
+                        </div>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: advSchedule.penalty234C > 0 ? THEME.rust : THEME.sage, marginTop: 4 }}>
+                          <Money value={advSchedule.penalty234C} variant="full" />
+                        </div>
+                        <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                          {advSchedule.penalty234C > 0 ? "Deferment shortfall" : "Zero penalty (on track)"}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
+                        <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
+                          Sec 234B Interest
+                        </div>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: advSchedule.penalty234B > 0 ? THEME.rust : THEME.sage, marginTop: 4 }}>
+                          <Money value={advSchedule.penalty234B} variant="full" />
+                        </div>
+                        <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                          {advSchedule.penalty234B > 0 ? "< 90% paid before 31 Mar" : "Zero penalty"}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
+                        <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
+                          Sec 234A Delay
+                        </div>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: advSchedule.penalty234A > 0 ? THEME.rust : THEME.sage, marginTop: 4 }}>
+                          <Money value={advSchedule.penalty234A} variant="full" />
+                        </div>
+                        <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                          {advSchedule.penalty234A > 0 ? "Unpaid after 31 July" : "Filed / On track"}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
+                        <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
+                          Total Section 234
+                        </div>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: advSchedule.totalStatutoryPenalty > 0 ? THEME.rust : THEME.sage, marginTop: 4 }}>
+                          <Money value={advSchedule.totalStatutoryPenalty} variant="full" />
+                        </div>
+                        <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
+                          Aggregate penalty & fees
+                        </div>
                       </div>
                     </div>
 
-                    <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
-                      <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
-                        Advance Tax Paid
+                    {advSchedule.quarters.length > 0 && (
+                      <div style={{ marginTop: 16, overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: `1px solid ${THEME.line}`, color: THEME.muted, textAlign: "left" }}>
+                              <th style={{ padding: "8px 10px" }}>Quarter</th>
+                              <th style={{ padding: "8px 10px" }}>Due Date</th>
+                              <th style={{ padding: "8px 10px" }}>Cumulative Target</th>
+                              <th style={{ padding: "8px 10px" }}>Safe Harbor</th>
+                              <th style={{ padding: "8px 10px" }}>Status</th>
+                              <th style={{ padding: "8px 10px", textAlign: "right" }}>Shortfall / 234C</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {advSchedule.quarters.map((q) => (
+                              <tr key={q.quarter} style={{ borderBottom: `1px solid ${THEME.line}` }}>
+                                <td style={{ padding: "8px 10px", fontWeight: 700 }}>{q.quarter}</td>
+                                <td style={{ padding: "8px 10px" }}>{q.dueDate} ({q.label})</td>
+                                <td style={{ padding: "8px 10px" }}>{q.cumulativePct}% ({fmtINR(q.requiredAmount)})</td>
+                                <td style={{ padding: "8px 10px" }}>{q.safeHarborPct}%</td>
+                                <td style={{ padding: "8px 10px" }}>
+                                  <Badge variant={q.isPast ? (q.penalty234C > 0 ? "rust" : "sage") : "muted"} size="xs">
+                                    {q.isPast ? (q.penalty234C > 0 ? "Shortfall Accrued" : "Satisfied") : "Upcoming"}
+                                  </Badge>
+                                </td>
+                                <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 700, color: q.penalty234C > 0 ? THEME.rust : THEME.muted }}>
+                                  {q.penalty234C > 0 ? `Penalty ₹${q.penalty234C.toLocaleString("en-IN")}` : "₹0"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                      <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: THEME.sage, marginTop: 4 }}>
-                        <Money value={totalAdvancePaid} variant="full" />
-                      </div>
-                      <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
-                        Credited against liability
-                      </div>
-                    </div>
-
-                    <div style={{ padding: 16, borderRadius: 12, background: "rgba(128,128,128,0.03)", border: `1px solid ${THEME.line}` }}>
-                      <div style={{ fontSize: 11, color: THEME.muted, fontWeight: 700, textTransform: "uppercase" }}>
-                        Section 234C Penalty
-                      </div>
-                      <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: totalPenalty234C > 0 ? THEME.rust : THEME.sage, marginTop: 4 }}>
-                        <Money value={totalPenalty234C} variant="full" />
-                      </div>
-                      <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>
-                        {totalPenalty234C > 0 ? "1% per month on shortfall" : "Zero penalty (on track)"}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })()}

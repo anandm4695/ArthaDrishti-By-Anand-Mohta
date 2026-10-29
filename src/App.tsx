@@ -5573,7 +5573,7 @@ function FinanceDashboard() {
               {tab === "familyview" && (
                 <FamilyViewTab state={state} metrics={metrics} marketData={marketData} />
               )}
-              {tab === "emergencyfund" && (
+              {(tab === "emergencyfund" || tab === "emergency") && (
                 <EmergencyFundTab
                   state={filteredState}
                   metrics={metrics}
@@ -5643,7 +5643,7 @@ function FinanceDashboard() {
                   setTab={setTab}
                 />
               )}
-              {tab === "smartalerts" && (
+              {(tab === "smartalerts" || tab === "alerts") && (
                 <SmartAlertsTab
                   state={filteredState}
                   metrics={metrics}
@@ -5673,7 +5673,7 @@ function FinanceDashboard() {
                   activeProfile={activeProfile}
                 />
               )}
-              {tab === "sec80" && (
+              {(tab === "sec80" || tab === "section80") && (
                 <Section80TrackerTab
                   state={filteredState}
                   metrics={metrics}
@@ -5700,7 +5700,7 @@ function FinanceDashboard() {
                   showToast={showToast}
                 />
               )}
-              {tab === "creditscore" && (
+              {(tab === "creditscore" || tab === "cibil") && (
                 <CreditScoreTab
                   state={filteredState}
                   addItem={addItem}
@@ -5729,7 +5729,7 @@ function FinanceDashboard() {
                   showToast={showToast}
                 />
               )}
-              {tab === "xirrreport" && (
+              {(tab === "xirrreport" || tab === "xirr") && (
                 <XIRRReportTab state={filteredState} metrics={metrics} marketData={marketData} />
               )}
               {tab === "dividendcal" && (
@@ -5744,7 +5744,7 @@ function FinanceDashboard() {
                   showToast={showToast}
                 />
               )}
-              {tab === "auditlog" && (
+              {(tab === "auditlog" || tab === "audit") && (
                 <AuditLogTab
                   session={session}
                   state={filteredState}
