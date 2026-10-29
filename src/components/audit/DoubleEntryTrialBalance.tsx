@@ -6,28 +6,27 @@ import {
   Download,
   Printer,
   Search,
-  ArrowUpRight,
-  ArrowDownRight,
-  Building2,
-  Landmark,
-  TrendingUp,
-  Shield,
-  Coins,
-  Home,
-  Car,
-  CreditCard,
-  HandCoins,
-  RefreshCw,
-  SlidersHorizontal,
-  Info,
+  ShieldCheck,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
-import { fmtINRFull, exportArrayToCSV } from "../../utils/finance";
+import {
+  fmtINRFull,
+  exportArrayToCSV,
+  today,
+  monthsBetween,
+  rdMaturity,
+  calculateEpfBalance,
+  loanOutstanding,
+  loanGivenOutstanding,
+  informalPersonOutstanding,
+  getCcOutstanding,
+  getGoldPricePerGram,
+  GOLD_PURITY_FACTOR,
+} from "../../utils/finance";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Money } from "../ui/Money";
-import { usePrivacy } from "../../context/PrivacyContext";
 
 interface DoubleEntryTrialBalanceProps {
   state: any;
@@ -36,7 +35,7 @@ interface DoubleEntryTrialBalanceProps {
   showToast?: (msg: string, type?: string) => void;
 }
 
-interface LedgerAccount {
+export interface LedgerAccount {
   id: string;
   code: string;
   name: string;
@@ -49,6 +48,19 @@ interface LedgerAccount {
   owner: string;
   status: "OK" | "WARNING" | "ATTENTION";
   note?: string;
+  tabTarget?: string;
+}
+
+function realEstateTrackedShare(property: any): number {
+  if (Array.isArray(property?.owners) && property.owners.length > 0) {
+    return (
+      property.owners.reduce(
+        (s: number, o: any) => (o?.id !== "external" ? s + Number(o.sharePct || 0) : s),
+        0
+      ) / 100
+    );
+  }
+  return 1;
 }
 
 export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = ({
@@ -57,23 +69,33 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
   setTab,
   showToast,
 }) => {
-  const { privacyMode } = usePrivacy();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [ownerFilter, setOwnerFilter] = useState<string>("ALL");
 
-  // Build Comprehensive Ledger Matrix from active state
-  const { ledgers, totals, balanceSheetCheck } = useMemo(() => {
+  // Build Comprehensive Ledger Matrix from active state — reconciled 1-for-1 with useMetrics.ts
+  const { ledgers, totals, anomalies } = useMemo(() => {
     const list: LedgerAccount[] = [];
+    const detectedAnomalies: { id: string; severity: "WARNING" | "ATTENTION"; title: string; detail: string; tab?: string }[] = [];
 
-    // 1. BANK ACCOUNTS (Asset -> Debit)
+    // 1. BANK ACCOUNTS (Asset -> Debit; Overdraft -> Credit)
     (state.bankAccounts || []).forEach((b: any, idx: number) => {
       const bal = Number(b.balance || 0);
       const isNeg = bal < 0;
+      const bankLabel = b.bankName || b.bank || "Bank";
+      if (isNeg) {
+        detectedAnomalies.push({
+          id: `anom-bank-${b.id || idx}`,
+          severity: "WARNING",
+          title: `Overdrawn Bank Account: ${bankLabel}`,
+          detail: `Account has a negative balance of ${fmtINRFull(bal)}. Verify overdraft interest or pending sweep-in transfers.`,
+          tab: "banking",
+        });
+      }
       list.push({
         id: b.id || `bank-${idx}`,
-        code: `1100-${idx + 1}`,
-        name: `${b.bank || "Bank"} (${b.type || "Savings"}) ${b.accountNumber ? `••••${String(b.accountNumber).slice(-4)}` : ""}`,
+        code: `1100-${String(idx + 1).padStart(2, "0")}`,
+        name: `${bankLabel} (${b.type || "Savings"}) ${b.accountNumber ? `••••${String(b.accountNumber).slice(-4)}` : ""}`.trim(),
         category: "ASSET",
         subCategory: "Cash & Liquid",
         debit: Math.max(0, bal),
@@ -82,16 +104,48 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: b.owner || "self",
         status: isNeg ? "WARNING" : "OK",
-        note: isNeg ? "Overdrawn bank balance" : "Active Liquid Asset",
+        note: isNeg ? "Overdrawn bank balance (Credit balance in Asset ledger)" : "Active Liquid Asset",
+        tabTarget: "banking",
       });
     });
 
-    // 2. FIXED & RECURRING DEPOSITS (Asset -> Debit)
+    // 2. PREPAID CARDS & WALLETS (Asset -> Debit)
+    (state.prepaidCards || [])
+      .filter((pc: any) => (pc.status || "").toLowerCase() !== "closed")
+      .forEach((pc: any, idx: number) => {
+        const txns = pc.transactions || [];
+        const loaded = txns
+          .filter((t: any) => t.type === "load")
+          .reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+        const spent = txns
+          .filter((t: any) => t.type === "spend")
+          .reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+        const bal = loaded - spent;
+        if (bal !== 0 || txns.length > 0) {
+          list.push({
+            id: pc.id || `prepaid-${idx}`,
+            code: `1150-${String(idx + 1).padStart(2, "0")}`,
+            name: `Prepaid Wallet: ${pc.name || pc.issuer || "Card"}`,
+            category: "ASSET",
+            subCategory: "Cash & Liquid",
+            debit: Math.max(0, bal),
+            credit: bal < 0 ? Math.abs(bal) : 0,
+            netBalance: bal,
+            normalBalance: "DEBIT",
+            owner: pc.owner || "self",
+            status: bal < 0 ? "WARNING" : "OK",
+            note: `Loaded: ${fmtINRFull(loaded)} | Spent: ${fmtINRFull(spent)}`,
+            tabTarget: "cards",
+          });
+        }
+      });
+
+    // 3. FIXED & RECURRING DEPOSITS (Asset -> Debit)
     (state.fixedDeposits || []).forEach((fd: any, idx: number) => {
       const amt = Number(fd.principal || 0);
       list.push({
         id: fd.id || `fd-${idx}`,
-        code: `1200-${idx + 1}`,
+        code: `1200-${String(idx + 1).padStart(2, "0")}`,
         name: `FD: ${fd.bank || "Bank"} @ ${fd.rate || 0}%`,
         category: "ASSET",
         subCategory: "Term Deposits",
@@ -102,16 +156,21 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         owner: fd.owner || "self",
         status: "OK",
         note: `Matures: ${fd.maturityDate || "N/A"}`,
+        tabTarget: "investments",
       });
     });
 
     (state.recurringDeposits || []).forEach((rd: any, idx: number) => {
+      if (rd.payoutStatus === "credited" || rd.status === "closed") return;
       const monthly = Number(rd.monthly || 0);
-      const tenure = Number(rd.tenureMonths || 12);
-      const amt = monthly * tenure;
+      const rate = Number(rd.rate || 0);
+      const elapsed = rd.startDate
+        ? Math.min(Number(rd.tenureMonths || 0), Math.max(0, monthsBetween(rd.startDate, today())))
+        : Number(rd.tenureMonths || 12);
+      const amt = rate > 0 ? rdMaturity(monthly, rate, elapsed) : monthly * elapsed;
       list.push({
         id: rd.id || `rd-${idx}`,
-        code: `1250-${idx + 1}`,
+        code: `1250-${String(idx + 1).padStart(2, "0")}`,
         name: `RD: ${rd.bank || "Bank"} (₹${monthly.toLocaleString("en-IN")}/mo)`,
         category: "ASSET",
         subCategory: "Term Deposits",
@@ -121,10 +180,39 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: rd.owner || "self",
         status: "OK",
+        note: `${elapsed} mos accrued @ ${rate}% p.a.`,
+        tabTarget: "investments",
       });
     });
 
-    // 3. EQUITIES & MUTUAL FUNDS (Asset -> Debit)
+    // 4. BONDS & DEBENTURES (Asset -> Debit)
+    (state.bonds || []).forEach((b: any, idx: number) => {
+      const amt = Number(
+        b.totalInvestmentAmount ||
+          b.totalPrincipalAmount ||
+          Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0) ||
+          b.faceValue ||
+          b.principal ||
+          0
+      );
+      list.push({
+        id: b.id || `bond-${idx}`,
+        code: `1280-${String(idx + 1).padStart(2, "0")}`,
+        name: `Bond: ${b.issuerName || b.name || "Fixed Income Bond"}`,
+        category: "ASSET",
+        subCategory: "Fixed Income Securities",
+        debit: amt,
+        credit: 0,
+        netBalance: amt,
+        normalBalance: "DEBIT",
+        owner: b.owner || "self",
+        status: "OK",
+        note: b.couponRate ? `Coupon: ${b.couponRate}% p.a.` : undefined,
+        tabTarget: "investments",
+      });
+    });
+
+    // 5. EQUITIES & MUTUAL FUNDS (Asset -> Debit)
     let totalStockVal = 0;
     let totalStockCost = 0;
     (state.stocks || []).forEach((s: any) => {
@@ -147,17 +235,35 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         owner: "family",
         status: "OK",
         note: `Invested Cost: ₹${Math.round(totalStockCost).toLocaleString("en-IN")}`,
+        tabTarget: "demat",
       });
     }
 
     let totalMFVal = 0;
     let totalMFCost = 0;
+    let zeroNavCount = 0;
     (state.mutualFunds || []).forEach((m: any) => {
-      const cur = Number(m.current || (Number(m.units || 0) * Number(m.nav || 0)) || 0);
+      const units = Number(m.units || 0);
+      const nav =
+        Number(m.currentNav || 0) ||
+        Number(m.nav || 0) ||
+        Number(m.buyNav || 0) ||
+        (units > 0 ? Number(m.invested || 0) / units : 0);
+      const cur = Number(m.current || 0) > 0 ? Number(m.current) : units * nav;
       const cost = Number(m.invested || 0);
+      if (units > 0 && cur <= 0) zeroNavCount++;
       totalMFVal += cur;
       totalMFCost += cost;
     });
+    if (zeroNavCount > 0) {
+      detectedAnomalies.push({
+        id: "anom-mf-zero-nav",
+        severity: "ATTENTION",
+        title: `${zeroNavCount} Mutual Fund Folio(s) Missing Live NAV`,
+        detail: "Some mutual fund holdings have units > 0 but no current/buy NAV recorded.",
+        tab: "mutualFunds",
+      });
+    }
     if (totalMFVal > 0 || (state.mutualFunds || []).length > 0) {
       list.push({
         id: "ledger-mf-portfolio",
@@ -170,18 +276,19 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         netBalance: totalMFVal,
         normalBalance: "DEBIT",
         owner: "family",
-        status: "OK",
+        status: zeroNavCount > 0 ? "ATTENTION" : "OK",
         note: `Invested Cost: ₹${Math.round(totalMFCost).toLocaleString("en-IN")}`,
+        tabTarget: "mutualFunds",
       });
     }
 
-    // 4. RETIREMENT & GOVERNMENT ASSETS (Asset -> Debit)
+    // 6. RETIREMENT, INSURANCE & GOVT ASSETS (Asset -> Debit)
     (state.ppf || []).forEach((p: any, idx: number) => {
       const bal = Number(p.balance || 0);
       list.push({
         id: p.id || `ppf-${idx}`,
-        code: `1400-${idx + 1}`,
-        name: `Public Provident Fund (PPF) ${p.accountNumber ? `••••${String(p.accountNumber).slice(-4)}` : ""}`,
+        code: `1400-${String(idx + 1).padStart(2, "0")}`,
+        name: `Public Provident Fund (PPF) ${p.accountNumber ? `••••${String(p.accountNumber).slice(-4)}` : ""}`.trim(),
         category: "ASSET",
         subCategory: "Retirement Funds",
         debit: bal,
@@ -190,14 +297,16 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: p.owner || "self",
         status: "OK",
+        tabTarget: "investments",
       });
     });
 
     (state.epf || []).forEach((e: any, idx: number) => {
-      const bal = Number(e.currentBalance || 0);
+      const calcBal = calculateEpfBalance(e);
+      const bal = calcBal > 0 ? calcBal : !(e.transactions && e.transactions.length > 0) ? Number(e.currentBalance || e.balance || 0) : 0;
       list.push({
         id: e.id || `epf-${idx}`,
-        code: `1420-${idx + 1}`,
+        code: `1420-${String(idx + 1).padStart(2, "0")}`,
         name: `Employees' Provident Fund (EPFO: ${e.employer || "Org"})`,
         category: "ASSET",
         subCategory: "Retirement Funds",
@@ -207,14 +316,20 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: e.owner || "self",
         status: "OK",
+        tabTarget: "investments",
       });
     });
 
     (state.nps || []).forEach((n: any, idx: number) => {
-      const bal = Number(n.balance || 0);
+      const directBal = Number(n.balance || 0);
+      const txTotal = (n.transactions || []).reduce(
+        (ss: number, t: any) => ss + (Number(t.employeeAmount) || 0) + (Number(t.employerAmount) || 0),
+        0
+      );
+      const bal = directBal > 0 ? directBal : txTotal;
       list.push({
         id: n.id || `nps-${idx}`,
-        code: `1440-${idx + 1}`,
+        code: `1440-${String(idx + 1).padStart(2, "0")}`,
         name: `National Pension System (NPS ${n.tier || "Tier 1"})`,
         category: "ASSET",
         subCategory: "Retirement Funds",
@@ -224,16 +339,83 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: n.owner || "self",
         status: "OK",
+        tabTarget: "investments",
       });
     });
 
-    // 5. GOLD & SOVEREIGN BULLION (Asset -> Debit)
+    (state.govtSchemes || []).forEach((sc: any, idx: number) => {
+      const bal = Number(sc.currentBalance || sc.investedAmount || 0);
+      list.push({
+        id: sc.id || `govt-${idx}`,
+        code: `1460-${String(idx + 1).padStart(2, "0")}`,
+        name: `${sc.schemeType || "Govt Scheme"}: ${sc.accountHolder || sc.bankOrPostOffice || "Account"}`,
+        category: "ASSET",
+        subCategory: "Government Schemes",
+        debit: bal,
+        credit: 0,
+        netBalance: bal,
+        normalBalance: "DEBIT",
+        owner: sc.owner || "self",
+        status: "OK",
+        tabTarget: "investments",
+      });
+    });
+
+    (state.lic || []).forEach((l: any, idx: number) => {
+      const txTotal = (l.transactions || []).reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+      const val = txTotal > 0 ? txTotal : Number(l.premiumPaid || 0);
+      if (val > 0) {
+        list.push({
+          id: l.id || `lic-${idx}`,
+          code: `1480-${String(idx + 1).padStart(2, "0")}`,
+          name: `LIC / Endowment: ${l.name || l.policyNumber || "Policy"}`,
+          category: "ASSET",
+          subCategory: "Insurance & Endowment",
+          debit: val,
+          credit: 0,
+          netBalance: val,
+          normalBalance: "DEBIT",
+          owner: l.owner || "self",
+          status: "OK",
+          tabTarget: "insurance",
+        });
+      }
+    });
+
+    (state.investmentPlans || []).forEach((ip: any, idx: number) => {
+      const txTotal = (ip.transactions || []).reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+      const val = txTotal > 0 ? txTotal : Number(ip.premiumPaid || 0);
+      if (val > 0) {
+        list.push({
+          id: ip.id || `invplan-${idx}`,
+          code: `1490-${String(idx + 1).padStart(2, "0")}`,
+          name: `Investment Plan: ${ip.name || "ULIP / Plan"}`,
+          category: "ASSET",
+          subCategory: "Insurance & Endowment",
+          debit: val,
+          credit: 0,
+          netBalance: val,
+          normalBalance: "DEBIT",
+          owner: ip.owner || "self",
+          status: "OK",
+          tabTarget: "insurance",
+        });
+      }
+    });
+
+    // 7. GOLD & SOVEREIGN BULLION (Asset -> Debit)
+    const goldPrice = getGoldPricePerGram(state);
     (state.goldHoldings || []).forEach((g: any, idx: number) => {
-      const val = Number(g.currentValue || (Number(g.weightGrams || 0) * 7200) || 0);
+      const grams = Number(g.grams || g.weightGrams || 0);
+      const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
+      const val =
+        Number(g.currentValue || 0) > 0
+          ? Number(g.currentValue)
+          : grams * goldPrice * purityMul;
       list.push({
         id: g.id || `gold-${idx}`,
-        code: `1500-${idx + 1}`,
-        name: `${g.type || "Gold"} (${g.weightGrams || 0}g ${g.purity || "24K"})`,
+        code: `1500-${String(idx + 1).padStart(2, "0")}`,
+        name: `${g.name || g.type || "Gold"} (${grams}g ${g.purity || "24K"})`,
         category: "ASSET",
         subCategory: "Precious Metals",
         debit: val,
@@ -242,34 +424,85 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: g.owner || "self",
         status: "OK",
+        tabTarget: "gold",
       });
     });
 
-    // 6. REAL ESTATE & FIXED PROPERTIES (Asset -> Debit)
-    (state.realEstateProperties || []).forEach((r: any, idx: number) => {
-      const val = Number(r.propertyValue || r.purchasePrice || 0);
-      list.push({
-        id: r.id || `re-${idx}`,
-        code: `1600-${idx + 1}`,
-        name: `Property: ${r.name || "Real Estate"}`,
-        category: "ASSET",
-        subCategory: "Immovable Property",
-        debit: val,
-        credit: 0,
-        netBalance: val,
-        normalBalance: "DEBIT",
-        owner: r.owner || "self",
-        status: "OK",
+    // 8. REAL ESTATE, RENTAL PROPERTIES & SECURITY DEPOSITS (Asset -> Debit)
+    (state.realEstateProperties || [])
+      .filter((r: any) => r.status !== "sold")
+      .forEach((r: any, idx: number) => {
+        const share = realEstateTrackedShare(r);
+        const rawVal = Number(r.marketValue || r.agreementValue || r.propertyValue || r.purchasePrice || 0);
+        const val = rawVal * share;
+        list.push({
+          id: r.id || `re-${idx}`,
+          code: `1600-${String(idx + 1).padStart(2, "0")}`,
+          name: `Property: ${r.name || "Real Estate"}${share < 1 ? ` (${Math.round(share * 100)}% Share)` : ""}`,
+          category: "ASSET",
+          subCategory: "Immovable Property",
+          debit: val,
+          credit: 0,
+          netBalance: val,
+          normalBalance: "DEBIT",
+          owner: r.owner || "self",
+          status: "OK",
+          tabTarget: "realEstate",
+        });
       });
+
+    (state.rentalProperties || []).forEach((rp: any, idx: number) => {
+      const val = Number(rp.propertyValue || 0);
+      if (val > 0) {
+        list.push({
+          id: rp.id || `rental-prop-${idx}`,
+          code: `1620-${String(idx + 1).padStart(2, "0")}`,
+          name: `Let-Out Property: ${rp.propertyName || rp.address || "Rental Asset"}`,
+          category: "ASSET",
+          subCategory: "Immovable Property",
+          debit: val,
+          credit: 0,
+          netBalance: val,
+          normalBalance: "DEBIT",
+          owner: rp.owner || "self",
+          status: "OK",
+          tabTarget: "rentals",
+        });
+      }
     });
 
-    // 7. VEHICLES (Asset -> Debit)
+    (state.rentedProperties || []).forEach((rp: any, idx: number) => {
+      const actualDeposit =
+        rp.depositTransactions && rp.depositTransactions.length > 0
+          ? rp.depositTransactions.reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0)
+          : Number(rp.securityDeposit || 0);
+      const returned = Number(rp.depositReturned || 0);
+      const netDeposit = Math.max(0, actualDeposit - returned);
+      if (netDeposit > 0) {
+        list.push({
+          id: rp.id || `rented-dep-${idx}`,
+          code: `1650-${String(idx + 1).padStart(2, "0")}`,
+          name: `Security Deposit Receivable: ${rp.propertyName || rp.landlordName || "Rented Home"}`,
+          category: "ASSET",
+          subCategory: "Deposits & Advances",
+          debit: netDeposit,
+          credit: 0,
+          netBalance: netDeposit,
+          normalBalance: "DEBIT",
+          owner: rp.owner || "self",
+          status: "OK",
+          tabTarget: "rentals",
+        });
+      }
+    });
+
+    // 9. VEHICLES (Asset -> Debit)
     (state.vehicles || []).forEach((v: any, idx: number) => {
       const val = Number(v.currentValue || v.purchasePrice || 0);
       list.push({
         id: v.id || `veh-${idx}`,
-        code: `1700-${idx + 1}`,
-        name: `Vehicle: ${v.make || ""} ${v.model || "Automobile"}`,
+        code: `1700-${String(idx + 1).padStart(2, "0")}`,
+        name: `Vehicle: ${v.make || ""} ${v.model || v.name || "Automobile"}`.trim(),
         category: "ASSET",
         subCategory: "Movable Fixed Assets",
         debit: val,
@@ -278,15 +511,27 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: v.owner || "self",
         status: "OK",
+        tabTarget: "vehicles",
       });
     });
 
-    // 8. LOANS & ADVANCES GIVEN (Asset -> Debit)
+    // 10. LOANS & ADVANCES GIVEN (Asset -> Debit)
+    const nowStr = today();
     (state.loansGiven || []).forEach((l: any, idx: number) => {
-      const out = Number(l.outstanding ?? l.principal ?? 0);
+      const out = loanGivenOutstanding(l);
+      const isOverdue = out > 0 && l.dueDate && l.dueDate < nowStr;
+      if (isOverdue) {
+        detectedAnomalies.push({
+          id: `anom-lg-${l.id || idx}`,
+          severity: "ATTENTION",
+          title: `Overdue Loan Receivable: ${l.borrower || "Borrower"}`,
+          detail: `${fmtINRFull(out)} is past agreed due date (${l.dueDate}). Follow up or assess provision for doubtful debt.`,
+          tab: "credit",
+        });
+      }
       list.push({
         id: l.id || `lg-${idx}`,
-        code: `1800-${idx + 1}`,
+        code: `1800-${String(idx + 1).padStart(2, "0")}`,
         name: `Loan Given: ${l.borrower || "Borrower"}`,
         category: "ASSET",
         subCategory: "Loans & Receivables",
@@ -295,16 +540,19 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         netBalance: out,
         normalBalance: "DEBIT",
         owner: l.owner || "self",
-        status: out > 0 ? "OK" : "ATTENTION",
+        status: isOverdue ? "WARNING" : out > 0 ? "OK" : "ATTENTION",
+        note: isOverdue ? `Overdue since ${l.dueDate}` : undefined,
+        tabTarget: "credit",
       });
     });
 
     (state.informalLent || []).forEach((i: any, idx: number) => {
-      const out = Number(i.outstanding ?? i.amount ?? 0);
+      const calcOut = informalPersonOutstanding(i);
+      const out = calcOut > 0 ? calcOut : Number(i.outstanding ?? i.amount ?? 0);
       list.push({
         id: i.id || `inf-lent-${idx}`,
-        code: `1850-${idx + 1}`,
-        name: `Receivable from ${i.person || "Person"}`,
+        code: `1850-${String(idx + 1).padStart(2, "0")}`,
+        name: `Receivable from ${i.name || i.person || "Person"}`,
         category: "ASSET",
         subCategory: "Loans & Receivables",
         debit: out,
@@ -313,16 +561,21 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "DEBIT",
         owner: i.owner || "self",
         status: "OK",
+        tabTarget: "credit",
       });
     });
 
-    // 9. SECURED & UNSECURED BORROWINGS (Liability -> Credit)
+    // 11. SECURED & UNSECURED BORROWINGS (Liability -> Credit)
     (state.loansTaken || []).forEach((l: any, idx: number) => {
-      const out = Number(l.outstanding ?? l.principal ?? 0);
-      const isSecured = (l.type || "").toLowerCase() === "home" || (l.type || "").toLowerCase() === "vehicle";
+      const out = loanOutstanding(l);
+      const isSecured =
+        (l.type || "").toLowerCase().includes("home") ||
+        (l.type || "").toLowerCase().includes("vehicle") ||
+        (l.type || "").toLowerCase().includes("car") ||
+        (l.type || "").toLowerCase().includes("gold");
       list.push({
         id: l.id || `loan-taken-${idx}`,
-        code: `2100-${idx + 1}`,
+        code: `2100-${String(idx + 1).padStart(2, "0")}`,
         name: `Loan: ${l.lender || "Bank"} (${l.type || "General"})`,
         category: "LIABILITY",
         subCategory: isSecured ? "Secured Borrowings" : "Unsecured Borrowings",
@@ -333,15 +586,48 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         owner: l.owner || "self",
         status: out > 0 ? "OK" : "ATTENTION",
         note: `EMI: ₹${Number(l.emi || 0).toLocaleString("en-IN")}/mo @ ${l.rate || 0}%`,
+        tabTarget: "credit",
       });
     });
 
+    // Under-Construction Builder Demands Outstanding (Liability -> Credit)
+    (state.realEstateProperties || [])
+      .filter((p: any) => p.status === "under-construction")
+      .forEach((p: any, idx: number) => {
+        const share = realEstateTrackedShare(p);
+        const demanded = (state.realEstateDemands || [])
+          .filter((d: any) => d.propertyId === p.id)
+          .reduce((s: number, d: any) => s + Number(d.totalAmount || d.amount || 0), 0);
+        const paid = (state.realEstatePayments || [])
+          .filter((pm: any) => pm.propertyId === p.id)
+          .reduce((s: number, pm: any) => s + Number(pm.amount || 0), 0);
+        const out = Math.max(0, demanded - paid) * share;
+        if (out > 0) {
+          list.push({
+            id: `re-demand-liab-${p.id || idx}`,
+            code: `2150-${String(idx + 1).padStart(2, "0")}`,
+            name: `Builder Demand Payable: ${p.name || "Under-Construction Property"}`,
+            category: "LIABILITY",
+            subCategory: "Real Estate Payables",
+            debit: 0,
+            credit: out,
+            netBalance: out,
+            normalBalance: "CREDIT",
+            owner: p.owner || "self",
+            status: "ATTENTION",
+            note: `Demanded: ${fmtINRFull(demanded)} | Paid: ${fmtINRFull(paid)}`,
+            tabTarget: "realEstate",
+          });
+        }
+      });
+
     (state.informalBorrowed || []).forEach((i: any, idx: number) => {
-      const out = Number(i.outstanding ?? i.amount ?? 0);
+      const calcOut = informalPersonOutstanding(i);
+      const out = calcOut > 0 ? calcOut : Number(i.outstanding ?? i.amount ?? 0);
       list.push({
         id: i.id || `inf-borr-${idx}`,
-        code: `2200-${idx + 1}`,
-        name: `Payable to ${i.person || "Lender"}`,
+        code: `2200-${String(idx + 1).padStart(2, "0")}`,
+        name: `Payable to ${i.name || i.person || "Lender"}`,
         category: "LIABILITY",
         subCategory: "Informal Liabilities",
         debit: 0,
@@ -350,53 +636,99 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         normalBalance: "CREDIT",
         owner: i.owner || "self",
         status: "OK",
+        tabTarget: "credit",
       });
+    });
+
+    // Landlord Security Deposits Held (Liability -> Credit)
+    (state.rentalProperties || []).forEach((r: any, idx: number) => {
+      const actualDeposit =
+        r.depositTransactions && r.depositTransactions.length > 0
+          ? r.depositTransactions.reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0)
+          : Number(r.securityDeposit || 0);
+      const deducted = (r.depositDeductions || []).reduce(
+        (a: number, d: any) => a + Number(d.amount || 0),
+        0
+      );
+      const returned = Number(r.depositReturned || 0);
+      const liab = Math.max(0, actualDeposit - deducted - returned);
+      if (liab > 0) {
+        list.push({
+          id: `rental-dep-liab-${r.id || idx}`,
+          code: `2250-${String(idx + 1).padStart(2, "0")}`,
+          name: `Tenant Security Deposit Refundable: ${r.propertyName || r.tenantName || "Tenant"}`,
+          category: "LIABILITY",
+          subCategory: "Security Deposits Payable",
+          debit: 0,
+          credit: liab,
+          netBalance: liab,
+          normalBalance: "CREDIT",
+          owner: r.owner || "self",
+          status: "OK",
+          tabTarget: "rentals",
+        });
+      }
     });
 
     (state.creditCards || [])
       .filter((c: any) => (c.status || "").toLowerCase() !== "closed")
       .forEach((c: any, idx: number) => {
-        const out = Math.max(0, Number(c.outstanding || 0));
-      list.push({
-        id: c.id || `cc-${idx}`,
-        code: `2300-${idx + 1}`,
-        name: `Credit Card: ${c.bank || ""} ${c.name || "Card"}`,
-        category: "LIABILITY",
-        subCategory: "Current Liabilities",
-        debit: 0,
-        credit: out,
-        netBalance: out,
-        normalBalance: "CREDIT",
-        owner: c.owner || "self",
-        status: out > Number(c.limit || Infinity) ? "WARNING" : "OK",
-        note: `Due: ${c.dueDate || "N/A"} | Limit: ₹${Number(c.limit || 0).toLocaleString("en-IN")}`,
+        const out = getCcOutstanding(c);
+        const limit = Number(c.limit || 0);
+        const overLimit = limit > 0 && out > limit;
+        if (overLimit) {
+          detectedAnomalies.push({
+            id: `anom-cc-${c.id || idx}`,
+            severity: "WARNING",
+            title: `Credit Limit Exceeded: ${c.bank || ""} ${c.name || "Card"}`,
+            detail: `Outstanding ${fmtINRFull(out)} exceeds sanctioned limit of ${fmtINRFull(limit)}.`,
+            tab: "cards",
+          });
+        }
+        list.push({
+          id: c.id || `cc-${idx}`,
+          code: `2300-${String(idx + 1).padStart(2, "0")}`,
+          name: `Credit Card: ${c.bank || ""} ${c.name || "Card"}`.trim(),
+          category: "LIABILITY",
+          subCategory: "Current Liabilities",
+          debit: 0,
+          credit: out,
+          netBalance: out,
+          normalBalance: "CREDIT",
+          owner: c.owner || "self",
+          status: overLimit ? "WARNING" : "OK",
+          note: `Due: ${c.dueDate || "N/A"} | Limit: ₹${limit.toLocaleString("en-IN")}`,
+          tabTarget: "cards",
+        });
       });
-    });
 
-    // Compute Totals
+    // Compute Totals (Net Asset Value & Net Liability Value)
     const totalAssets = list
       .filter((l) => l.category === "ASSET")
-      .reduce((sum, l) => sum + l.debit, 0);
+      .reduce((sum, l) => sum + (l.debit - l.credit), 0);
 
     const totalLiabilities = list
       .filter((l) => l.category === "LIABILITY")
-      .reduce((sum, l) => sum + l.credit, 0);
+      .reduce((sum, l) => sum + (l.credit - l.debit), 0);
 
     const netWorth = totalAssets - totalLiabilities;
 
-    // 10. OWNER'S CAPITAL / EQUITY ACCOUNT (Equity -> Credit)
+    // 12. OWNER'S CAPITAL / EQUITY ACCOUNT (Credit when Net Worth >= 0, Debit when Accumulated Deficit < 0)
     list.push({
       id: "ledger-equity-capital",
       code: "3000-01",
-      name: "Family Capital Account (Accumulated Net Worth)",
+      name:
+        netWorth >= 0
+          ? "Family Capital Account (Accumulated Net Worth)"
+          : "Family Capital Account (Accumulated Deficit)",
       category: "EQUITY",
       subCategory: "Owner Equity",
-      debit: 0,
-      credit: Math.max(0, netWorth),
+      debit: netWorth < 0 ? Math.abs(netWorth) : 0,
+      credit: netWorth >= 0 ? netWorth : 0,
       netBalance: netWorth,
       normalBalance: "CREDIT",
       owner: "family",
-      status: "OK",
+      status: netWorth >= 0 ? "OK" : "WARNING",
       note: "Balancing Equity Account: Assets − Liabilities",
     });
 
@@ -414,12 +746,18 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
         totalCredits,
         variance,
       },
-      balanceSheetCheck: {
-        isBalanced: variance < 1,
-        equation: `${fmtINRFull(totalAssets)} = ${fmtINRFull(totalLiabilities)} + ${fmtINRFull(netWorth)}`,
-      },
+      anomalies: detectedAnomalies,
     };
   }, [state]);
+
+  // Unique Owners for Owner Filter
+  const availableOwners = useMemo(() => {
+    const set = new Set<string>();
+    ledgers.forEach((l) => {
+      if (l.owner) set.add(l.owner);
+    });
+    return Array.from(set);
+  }, [ledgers]);
 
   // Filtered List
   const filteredLedgers = useMemo(() => {
@@ -458,6 +796,9 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
   const handlePrint = () => {
     window.print();
   };
+
+  const metricsNetWorth = typeof metrics?.netWorth === "number" ? metrics.netWorth : totals.netWorth;
+  const nwReconciliationDelta = Math.abs(totals.netWorth - metricsNetWorth);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -544,7 +885,10 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <Badge variant={nwReconciliationDelta < 1 ? "success" : "warning"}>
+              {nwReconciliationDelta < 1 ? "100% RECONCILED WITH DASHBOARD NW" : `NW DELTA: ${fmtINRFull(nwReconciliationDelta)}`}
+            </Badge>
             <Badge variant={totals.variance < 1 ? "success" : "danger"}>
               {totals.variance < 1 ? "PARITY VERIFIED (₹0 VARIANCE)" : `VARIANCE: ₹${totals.variance.toFixed(2)}`}
             </Badge>
@@ -600,14 +944,64 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
           <div style={{ fontSize: 11, fontWeight: 700, color: THEME.muted, textTransform: "uppercase" }}>
             Auditor Integrity Score
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: THEME.accent, marginTop: 4 }}>
-            100% / Clean
+          <div style={{ fontSize: 20, fontWeight: 800, color: anomalies.length === 0 ? THEME.accent : "var(--t-gold)", marginTop: 4 }}>
+            {anomalies.length === 0 ? "100% / Clean" : `${Math.max(70, 100 - anomalies.length * 8)}% / ${anomalies.length} Flag(s)`}
           </div>
           <div style={{ fontSize: 11, color: THEME.muted, marginTop: 4 }}>
-            Zero orphan transactions detected
+            {anomalies.length === 0 ? "Zero ledger exceptions detected" : `${anomalies.length} account(s) flagged for review`}
           </div>
         </Card>
       </div>
+
+      {/* ── Senior Accountant Reconciliation & Exception Inspector (New Feature) ── */}
+      {anomalies.length > 0 && (
+        <Card
+          style={{
+            padding: 16,
+            border: "1px solid color-mix(in srgb, var(--t-gold) 35%, transparent)",
+            background: "color-mix(in srgb, var(--t-gold) 5%, transparent)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ShieldCheck size={16} color="var(--t-gold)" />
+              <span style={{ fontSize: 13, fontWeight: 800, color: THEME.ink }}>
+                Ledger Exception & Audit Observations ({anomalies.length})
+              </span>
+            </div>
+            <Badge variant="warning">ACTION RECOMMENDED</Badge>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+            {anomalies.map((a) => (
+              <div
+                key={a.id}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  background: "var(--t-paper)",
+                  border: `1px solid ${THEME.line}`,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: a.severity === "WARNING" ? "var(--t-rust)" : THEME.ink }}>
+                    {a.title}
+                  </div>
+                  <div style={{ fontSize: 11, color: THEME.muted, marginTop: 2 }}>{a.detail}</div>
+                </div>
+                {setTab && a.tab && (
+                  <Button variant="secondary" size="sm" onClick={() => setTab(a.tab!)}>
+                    Inspect
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* ── Filters & Controls Bar ── */}
       <Card style={{ padding: 14 }}>
@@ -646,8 +1040,9 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <select
+              aria-label="Filter by Category"
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               style={{
@@ -664,6 +1059,28 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
               <option value="ASSET">Assets (Debit)</option>
               <option value="LIABILITY">Liabilities (Credit)</option>
               <option value="EQUITY">Capital / Equity (Credit)</option>
+            </select>
+
+            <select
+              aria-label="Filter by Owner"
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: `1px solid ${THEME.line}`,
+                background: "var(--t-paper)",
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: THEME.ink,
+              }}
+            >
+              <option value="ALL">All Owners</option>
+              {availableOwners.map((owner) => (
+                <option key={owner} value={owner}>
+                  Owner: {owner.charAt(0).toUpperCase() + owner.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -688,9 +1105,11 @@ export const DoubleEntryTrialBalance: React.FC<DoubleEntryTrialBalanceProps> = (
               {filteredLedgers.map((l, i) => (
                 <tr
                   key={l.id}
+                  onClick={() => l.tabTarget && setTab?.(l.tabTarget)}
                   style={{
                     borderBottom: `1px solid ${THEME.line}`,
                     background: i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--t-paper) 40%, transparent)",
+                    cursor: l.tabTarget && setTab ? "pointer" : "default",
                   }}
                 >
                   <td style={{ padding: "12px 16px", fontFamily: "monospace", fontSize: 12, color: THEME.muted }}>

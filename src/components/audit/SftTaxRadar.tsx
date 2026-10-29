@@ -1,22 +1,17 @@
 import React, { useMemo, useState } from "react";
 import {
   ShieldAlert,
-  AlertTriangle,
-  CheckCircle2,
   Download,
-  Printer,
   Info,
-  Building2,
-  CreditCard,
-  TrendingUp,
-  Landmark,
-  Coins,
-  FileText,
-  HelpCircle,
   Search,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
-import { fmtINRFull, exportArrayToCSV } from "../../utils/finance";
+import {
+  exportArrayToCSV,
+  informalPersonOutstanding,
+  getGoldPricePerGram,
+  GOLD_PURITY_FACTOR,
+} from "../../utils/finance";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -28,7 +23,7 @@ interface SftTaxRadarProps {
   showToast?: (msg: string, type?: string) => void;
 }
 
-interface SftItem {
+export interface SftItem {
   id: string;
   code: string;
   title: string;
@@ -42,19 +37,22 @@ interface SftItem {
   documentationRequired: string[];
 }
 
-export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, metrics, showToast }) => {
+export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, showToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "SFT_TRIGGERED" | "ATTENTION" | "CLEAN">("ALL");
 
   const sftChecks = useMemo((): SftItem[] => {
     // 1. SFT-001: Cash Deposits / Withdrawals in Bank Accounts (Threshold: >= ₹10 Lakhs in a FY)
     const totalBankCashTxns = (state.transactions || [])
       .filter((t: any) => {
-        const desc = (t.description || "").toLowerCase();
+        const desc = (t.description || t.note || "").toLowerCase();
         const cat = (t.category || "").toLowerCase();
+        const mode = (t.mode || "").toLowerCase();
         return (
           desc.includes("cash deposit") ||
           desc.includes("cash withdraw") ||
           cat.includes("cash") ||
+          mode === "cash" ||
           desc.includes("atm withdrawal")
         );
       })
@@ -63,7 +61,7 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, metrics, showTo
     // 2. SFT-002: Credit Card Bill Payments (Threshold: >= ₹1 Lakh Cash or >= ₹10 Lakhs any mode)
     const totalCCPayments = (state.transactions || [])
       .filter((t: any) => {
-        const desc = (t.description || "").toLowerCase();
+        const desc = (t.description || t.note || "").toLowerCase();
         const cat = (t.category || "").toLowerCase();
         return desc.includes("credit card") || desc.includes("cc payment") || cat.includes("credit card");
       })
@@ -82,7 +80,14 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, metrics, showTo
 
     // 4. SFT-004: Purchase or Sale of Immovable Property (Threshold: >= ₹30 Lakhs)
     const totalPropertyValue = (state.realEstateProperties || []).reduce(
-      (sum: number, r: any) => sum + Math.max(Number(r.propertyValue || 0), Number(r.purchasePrice || 0)),
+      (sum: number, r: any) =>
+        sum +
+        Math.max(
+          Number(r.marketValue || 0),
+          Number(r.agreementValue || 0),
+          Number(r.propertyValue || 0),
+          Number(r.purchasePrice || 0)
+        ),
       0
     );
 
@@ -92,10 +97,44 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, metrics, showTo
       0
     );
 
-    // 6. SFT-006: High Value Informal Borrowing / Cash Transactions u/s 269ST (Threshold: >= ₹2 Lakhs)
-    const totalInformalLarge = (state.informalBorrowed || [])
-      .filter((i: any) => Number(i.amount || 0) >= 200000)
-      .reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
+    // 6. SFT-006: High Value Informal Borrowing / Lending & Cash Transactions u/s 269ST / 269SS (Threshold: >= ₹2 Lakhs)
+    const computeLargeInformal = (list: any[]) =>
+      (list || []).reduce((sum: number, item: any) => {
+        const largeTranches = (item.tranches || [])
+          .filter((tr: any) => Number(tr.amount || 0) >= 200000)
+          .reduce((s: number, tr: any) => s + Number(tr.amount || 0), 0);
+        if (largeTranches > 0) return sum + largeTranches;
+        const out = Math.max(informalPersonOutstanding(item), Number(item.amount || 0));
+        return out >= 200000 ? sum + out : sum;
+      }, 0);
+
+    const totalInformalLarge =
+      computeLargeInformal(state.informalBorrowed || []) +
+      computeLargeInformal(state.informalLent || []);
+
+    // 7. SFT-007: Bonds & Debentures Subscription (Threshold: >= ₹10 Lakhs u/s 285BA Rule 114E Item 3)
+    const totalBondsInvestment = (state.bonds || []).reduce(
+      (sum: number, b: any) =>
+        sum +
+        Number(
+          b.totalInvestmentAmount ||
+            b.totalPrincipalAmount ||
+            Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0) ||
+            b.faceValue ||
+            b.principal ||
+            0
+        ),
+      0
+    );
+
+    // 8. SFT-008: High-Value Bullion / Gold Holdings (Rule 114B PAN Mandatory >= ₹2 Lakhs per bill)
+    const goldPrice = getGoldPricePerGram(state);
+    const totalGoldValue = (state.goldHoldings || []).reduce((sum: number, g: any) => {
+      const grams = Number(g.grams || g.weightGrams || 0);
+      const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
+      const val = Number(g.currentValue || 0) > 0 ? Number(g.currentValue) : grams * goldPrice * purityMul;
+      return sum + val;
+    }, 0);
 
     return [
       {
@@ -166,32 +205,61 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, metrics, showTo
       {
         id: "sft-006",
         code: "SFT-006",
-        title: "Cash Receipts Limit & Prohibition (Sec 269ST)",
-        section: "Section 269ST · Income-tax Act",
+        title: "Cash Receipts & Loans Limit (Sec 269SS / 269ST)",
+        section: "Section 269SS & 269ST · Income-tax Act",
         ruleThreshold: 200000,
         detectedAmount: totalInformalLarge,
-        thresholdDisplay: "₹2,00,000 per Day / Event",
+        thresholdDisplay: "₹2,00,000 per Event / ₹20,000 Cash Loan",
         status: totalInformalLarge > 0 ? "ATTENTION" : "CLEAN",
-        description: "Prohibits receipt of ₹2 Lakhs or more in cash in aggregate from a person in a day or in respect of a single transaction.",
-        reportingEntity: "Income Tax Department Scrutiny Flag",
-        documentationRequired: ["Account payee cheque/NEFT confirmation", "Promissory note / Agreement"],
+        description: "Prohibits receipt of ₹2 Lakhs or more in cash (Sec 269ST) and cash loans/deposits >= ₹20,000 (Sec 269SS/269T).",
+        reportingEntity: "Income Tax Department Scrutiny Flag / Tax Audit Form 3CD",
+        documentationRequired: ["Account payee cheque/NEFT/RTGS UTR trail", "Confirmation of accounts", "Promissory note / Agreement"],
+      },
+      {
+        id: "sft-007",
+        code: "SFT-007",
+        title: "Bonds, Debentures & RBI Floating Rate Bonds",
+        section: "Section 285BA · Rule 114E(2) Item 3",
+        ruleThreshold: 1000000,
+        detectedAmount: totalBondsInvestment,
+        thresholdDisplay: "₹10,00,000 / Financial Year",
+        status: totalBondsInvestment >= 1000000 ? "SFT_TRIGGERED" : totalBondsInvestment >= 500000 ? "ATTENTION" : "CLEAN",
+        description: "Receipt from any person for acquiring bonds or debentures issued by a company or institution (including RBI bonds).",
+        reportingEntity: "Bond Issuing Company / RBI / Depository",
+        documentationRequired: ["Bond allotment advice", "Demat holding statement", "Form 16A for interest TDS u/s 193"],
+      },
+      {
+        id: "sft-008",
+        code: "SFT-008",
+        title: "Bullion, Jewellery & Sovereign Gold Holdings",
+        section: "Rule 114B & Section 285BA Item 11",
+        ruleThreshold: 1000000,
+        detectedAmount: totalGoldValue,
+        thresholdDisplay: "₹2,00,000 (PAN Rule 114B) / ₹10,00,000 (SFT)",
+        status: totalGoldValue >= 1000000 ? "SFT_TRIGGERED" : totalGoldValue >= 200000 ? "ATTENTION" : "CLEAN",
+        description: "Sale or purchase of goods/services (including bullion & jewellery) exceeding ₹2 Lakhs per transaction requires mandatory PAN quoting.",
+        reportingEntity: "Bullion Dealer / Authorised Bank / RBI (SGB)",
+        documentationRequired: ["GST tax invoices with PAN", "SGB holding certificate", "Purity hallmarking receipts"],
       },
     ];
   }, [state]);
 
   const filteredChecks = useMemo(() => {
-    if (!searchTerm.trim()) return sftChecks;
-    const q = searchTerm.toLowerCase();
-    return sftChecks.filter(
-      (c) =>
+    return sftChecks.filter((c) => {
+      if (statusFilter !== "ALL" && c.status !== statusFilter) return false;
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.toLowerCase();
+      return (
         c.title.toLowerCase().includes(q) ||
         c.code.toLowerCase().includes(q) ||
         c.section.toLowerCase().includes(q) ||
         c.description.toLowerCase().includes(q)
-    );
-  }, [sftChecks, searchTerm]);
+      );
+    });
+  }, [sftChecks, searchTerm, statusFilter]);
 
   const triggeredCount = sftChecks.filter((c) => c.status === "SFT_TRIGGERED").length;
+  const attentionCount = sftChecks.filter((c) => c.status === "ATTENTION").length;
 
   const handleExportCSV = () => {
     const rows = sftChecks.map((c) => ({
@@ -280,16 +348,31 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, metrics, showTo
             </span>
           </div>
 
-          <Badge variant={triggeredCount > 0 ? "warning" : "success"}>
-            {triggeredCount > 0 ? `${triggeredCount} SFT REPORTABLE ITEMS` : "ALL TRANSACTIONS NORMAL"}
-          </Badge>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {attentionCount > 0 && (
+              <Badge variant="danger">{attentionCount} ATTENTION</Badge>
+            )}
+            <Badge variant={triggeredCount > 0 ? "warning" : "success"}>
+              {triggeredCount > 0 ? `${triggeredCount} SFT REPORTABLE ITEMS` : "ALL TRANSACTIONS NORMAL"}
+            </Badge>
+          </div>
         </div>
       </Card>
 
       {/* ── SFT Items Table ── */}
       <Card style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ padding: 14, borderBottom: `1px solid ${THEME.line}` }}>
-          <div style={{ position: "relative", maxWidth: 360 }}>
+        <div
+          style={{
+            padding: 14,
+            borderBottom: `1px solid ${THEME.line}`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div style={{ position: "relative", flex: 1, minWidth: 240, maxWidth: 360 }}>
             <Search
               size={15}
               color={THEME.muted}
@@ -311,6 +394,39 @@ export const SftTaxRadar: React.FC<SftTaxRadarProps> = ({ state, metrics, showTo
                 outline: "none",
               }}
             />
+          </div>
+
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {(["ALL", "SFT_TRIGGERED", "ATTENTION", "CLEAN"] as const).map((st) => {
+              const active = statusFilter === st;
+              const label =
+                st === "ALL"
+                  ? `All (${sftChecks.length})`
+                  : st === "SFT_TRIGGERED"
+                    ? `Reportable (${triggeredCount})`
+                    : st === "ATTENTION"
+                      ? `Attention (${attentionCount})`
+                      : "Clean";
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setStatusFilter(st)}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 8,
+                    border: active ? `1.5px solid ${THEME.accent}` : `1px solid ${THEME.line}`,
+                    background: active ? `color-mix(in srgb, ${THEME.accent} 12%, transparent)` : "var(--t-paper)",
+                    color: active ? THEME.accent : THEME.ink,
+                    fontSize: 12,
+                    fontWeight: active ? 700 : 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -85,6 +85,7 @@ export function LoanGivenSection({
   const [paymentLoan, setPaymentLoan] = useState<any | null>(null);
   const [reminderLoan, setReminderLoan] = useState<any | null>(null);
   const [historyLoan, setHistoryLoan] = useState<any | null>(null);
+  const [singlePassbookOpen, setSinglePassbookOpen] = useState<boolean>(true);
   const [confirmDeleteLoan, setConfirmDeleteLoan] = useState<any | null>(null);
   const [confirmUndoPayment, setConfirmUndoPayment] = useState<any | null>(null);
   const [confirmForgiveLoan, setConfirmForgiveLoan] = useState<any | null>(null);
@@ -528,7 +529,7 @@ export function LoanGivenSection({
            Row 1: Selected Loan (50% Left) + Recovery Passbook (50% Right, matched height)
            Row 2: Remaining Loans in a full-width multi-column grid across 100% width */
         (() => {
-          const activeHistoryLoan = historyLoan || (displayItems.length === 1 ? displayItems[0] : null);
+          const activeHistoryLoan = historyLoan || (displayItems.length === 1 && singlePassbookOpen ? displayItems[0] : null);
           const otherLoans = activeHistoryLoan
             ? displayItems.filter((l: any) => l.id !== activeHistoryLoan.id)
             : [];
@@ -822,7 +823,14 @@ export function LoanGivenSection({
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4 }}>
                     {paymentsCount > 0 ? (
                       <button
-                        onClick={() => setHistoryLoan(isSelectedHistory ? null : l)}
+                        onClick={() => {
+                          if (displayItems.length === 1) {
+                            setSinglePassbookOpen((prev) => !prev);
+                            setHistoryLoan(null);
+                          } else {
+                            setHistoryLoan(isSelectedHistory ? null : l);
+                          }
+                        }}
                         style={{
                           fontSize: 11,
                           color: "var(--t-accent)",
@@ -916,7 +924,10 @@ export function LoanGivenSection({
                       allLoans={displayItems}
                       onSelectLoan={(targetLoan: any) => setHistoryLoan(targetLoan)}
                       isAutoPreview={!historyLoan && displayItems.length === 1}
-                      onClose={() => setHistoryLoan(null)}
+                      onClose={() => {
+                        setHistoryLoan(null);
+                        if (displayItems.length === 1) setSinglePassbookOpen(false);
+                      }}
                       onRecordReceipt={(targetLoan: any) => setPaymentLoan(targetLoan)}
                       onSendReminder={(targetLoan: any) => setReminderLoan(targetLoan)}
                       onUndoPayment={(undoTarget: any) => {

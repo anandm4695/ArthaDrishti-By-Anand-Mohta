@@ -268,7 +268,7 @@ export function InformalPaymentModal({
             alignItems: "stretch",
           }}
         >
-          {/* Left Panel: Amount, Date & Bank Account */}
+          {/* Left Panel: Amount, Date & Payment Mode */}
           <div style={sectionCardStyle}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <Field label={isBorrowed ? "Repayment Amount (₹)" : "Received Amount (₹)"}>
@@ -342,11 +342,52 @@ export function InformalPaymentModal({
               </Field>
             </div>
 
+            <Field label="Payment Mode / Channel">
+              <div style={{ position: "relative" }}>
+                <select
+                  aria-label="Payment Mode / Channel"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px 10px 36px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--t-line)",
+                    background: "var(--t-card-bg)",
+                    color: "var(--t-ink)",
+                    fontSize: 13,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value)}
+                >
+                  {PAYMENT_MODES.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <CreditCard
+                  size={15}
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--t-muted)",
+                  }}
+                />
+              </div>
+            </Field>
+          </div>
+
+          {/* Right Panel: Bank Account Selection, Remarks & Bank Ledger Metadata */}
+          <div style={sectionCardStyle}>
             {/* Bank Account Selection (Only for new entries) */}
             {!initial && bankAccounts && bankAccounts.length > 0 && (
               <Field label={isBorrowed ? "Debit from Bank Account (optional)" : "Deposit to Bank Account (optional)"}>
                 <div style={{ position: "relative" }}>
                   <select
+                    aria-label={isBorrowed ? "Debit from Bank Account" : "Deposit to Bank Account"}
                     style={{
                       width: "100%",
                       padding: "10px 12px 10px 36px",
@@ -386,45 +427,6 @@ export function InformalPaymentModal({
                 </div>
               </Field>
             )}
-          </div>
-
-          {/* Right Panel: Mode, Remarks & Bank Ledger Metadata */}
-          <div style={sectionCardStyle}>
-            <Field label="Payment Mode / Channel">
-              <div style={{ position: "relative" }}>
-                <select
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px 10px 36px",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--t-line)",
-                    background: "var(--t-card-bg)",
-                    color: "var(--t-ink)",
-                    fontSize: 13,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                  value={method}
-                  onChange={(e) => setMethod(e.target.value)}
-                >
-                  {PAYMENT_MODES.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <CreditCard
-                  size={15}
-                  style={{
-                    position: "absolute",
-                    left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--t-muted)",
-                  }}
-                />
-              </div>
-            </Field>
 
             <Field label="Payment Remarks / Reference (optional)">
               <div style={{ position: "relative" }}>

@@ -1,5 +1,14 @@
 import { useMemo } from "react";
-import { fmtINRFull, calculateEpfBalance } from "../utils/finance";
+import {
+  fmtINRFull,
+  calculateEpfBalance,
+  loanOutstanding,
+  loanGivenOutstanding,
+  informalPersonOutstanding,
+  getEffectiveRent,
+  getGoldPricePerGram,
+  GOLD_PURITY_FACTOR,
+} from "../utils/finance";
 
 export interface SearchResult {
   type: string;
@@ -16,47 +25,49 @@ export function useSearch(state: any, search: string): SearchResult[] {
     const results: SearchResult[] = [];
 
     // Bank Accounts
-    state.bankAccounts.forEach((b: any) => {
-      if (match(b.bankName) || match(b.accountNumber)) {
+    (state.bankAccounts || []).forEach((b: any) => {
+      const bankLabel = b.bankName || b.bank || "";
+      if (match(bankLabel) || match(b.accountNumber)) {
         results.push({
           type: "Bank Account",
-          name: b.bankName,
-          detail: `${b.accountNumber} · ${fmtINRFull(b.balance)}`,
+          name: bankLabel,
+          detail: `${b.accountNumber || ""} · ${fmtINRFull(b.balance)}`.replace(/^ · /, ""),
           tab: "banks",
         });
       }
     });
     // Transactions
-    state.transactions.forEach((t: any) => {
-      if (match(t.note) || match(t.category)) {
+    (state.transactions || []).forEach((t: any) => {
+      if (match(t.note) || match(t.description) || match(t.category)) {
         results.push({
           type: "Transaction",
-          name: t.note || t.category,
+          name: t.note || t.description || t.category,
           detail: `${t.date} · ${fmtINRFull(t.amount)}`,
           tab: "banks",
         });
       }
     });
     // Stocks
-    state.stocks.forEach((s: any) => {
+    (state.stocks || []).forEach((s: any) => {
       if (match(s.symbol) || match(s.name)) {
         results.push({
           type: "Stock",
           name: s.symbol,
-          detail: fmtINRFull(Number(s.qty) * Number(s.currentPrice)),
+          detail: fmtINRFull(Number(s.qty || 0) * Number(s.currentPrice || s.avgPrice || 0)),
           tab: "demat",
         });
       }
     });
     // Mutual Funds
-    state.mutualFunds.forEach((m: any) => {
+    (state.mutualFunds || []).forEach((m: any) => {
       const mfName = m.name || m.scheme || "";
       if (match(mfName)) {
+        const nav = Number(m.currentNav || m.nav || m.buyNav || 0);
         results.push({
           type: "Mutual Fund",
           name: mfName,
           detail: fmtINRFull(
-            Number(m.units || 0) * Number(m.currentNav || 0) || Number(m.invested || 0)
+            Number(m.units || 0) * nav || Number(m.invested || 0)
           ),
           tab: "investments",
         });
@@ -86,11 +97,21 @@ export function useSearch(state: any, search: string): SearchResult[] {
     });
     // Bonds
     (state.bonds || []).forEach((b: any) => {
-      if (match(b.name)) {
+      const bondName = b.issuerName || b.name || "";
+      if (match(bondName)) {
+        const val =
+          Number(
+            b.totalInvestmentAmount ||
+              b.totalPrincipalAmount ||
+              Number(b.numberOfUnits || 0) * Number(b.faceValuePerUnit || 0) ||
+              b.faceValue ||
+              b.principal ||
+              0
+          );
         results.push({
           type: "Bond",
-          name: b.name,
-          detail: fmtINRFull(b.faceValue || b.principal),
+          name: bondName,
+          detail: fmtINRFull(val),
           tab: "investments",
         });
       }
@@ -137,8 +158,36 @@ export function useSearch(state: any, search: string): SearchResult[] {
         });
       }
     });
+    // Govt Schemes (SSY, SCSS, NSC, KVP, POMIS)
+    (state.govtSchemes || []).forEach((sc: any) => {
+      const label = sc.schemeType || sc.accountHolder || sc.bankOrPostOffice || "Govt Scheme";
+      if (match(sc.schemeType) || match(sc.accountHolder) || match(sc.bankOrPostOffice) || match(sc.accountNumber)) {
+        results.push({
+          type: "Govt Scheme",
+          name: label,
+          detail: fmtINRFull(sc.currentBalance || sc.investedAmount || 0),
+          tab: "investments",
+        });
+      }
+    });
+    // Gold & SGBs
+    const goldPrice = getGoldPricePerGram(state);
+    (state.goldHoldings || []).forEach((g: any) => {
+      const gName = g.name || g.type || "Gold";
+      if (match(gName) || match(g.type) || match("gold") || match("sgb")) {
+        const grams = Number(g.grams || g.weightGrams || 0);
+        const purityMul = g.type === "physical" ? GOLD_PURITY_FACTOR[g.purity] || 1 : 1;
+        const val = Number(g.currentValue || 0) > 0 ? Number(g.currentValue) : grams * goldPrice * purityMul;
+        results.push({
+          type: "Gold Holding",
+          name: gName,
+          detail: `${grams}g · ${fmtINRFull(val)}`,
+          tab: "gold",
+        });
+      }
+    });
     // Goals
-    state.goals.forEach((g: any) => {
+    (state.goals || []).forEach((g: any) => {
       if (match(g.name)) {
         results.push({
           type: "Goal",
@@ -149,19 +198,20 @@ export function useSearch(state: any, search: string): SearchResult[] {
       }
     });
     // Credit Cards
-    state.creditCards.forEach((c: any) => {
-      if (match(c.issuer) || (c.last4 || "").includes(q)) {
+    (state.creditCards || []).forEach((c: any) => {
+      const ccLabel = c.issuer || c.bank || c.name || "Credit Card";
+      if (match(ccLabel) || match(c.name) || (c.last4 || "").includes(q)) {
         results.push({
           type: "Credit Card",
-          name: c.issuer,
-          detail: `**** ${c.last4} · ${fmtINRFull(c.outstanding)}`,
+          name: ccLabel,
+          detail: `**** ${c.last4 || ""} · ${fmtINRFull(c.outstanding)}`,
           tab: "cc",
         });
       }
     });
     // Prepaid Cards
     (state.prepaidCards || []).forEach((p: any) => {
-      if (match(p.cardName) || match(p.cardType) || (p.last4 || "").includes(q)) {
+      if (match(p.cardName) || match(p.cardType) || match(p.name) || (p.last4 || "").includes(q)) {
         const txns = p.transactions || [];
         const loaded = txns
           .filter((t: any) => t.type === "load")
@@ -171,19 +221,19 @@ export function useSearch(state: any, search: string): SearchResult[] {
           .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
         results.push({
           type: "Prepaid Card",
-          name: p.cardName || p.cardType || "Prepaid",
+          name: p.cardName || p.name || p.cardType || "Prepaid",
           detail: `**** ${p.last4 || ""} · ${fmtINRFull(loaded - spent)}`,
           tab: "prepaid",
         });
       }
     });
     // Loans Taken
-    state.loansTaken.forEach((l: any) => {
+    (state.loansTaken || []).forEach((l: any) => {
       if (match(l.lender) || match(l.type)) {
         results.push({
           type: "Loan Taken",
           name: l.lender,
-          detail: `${l.type} · ${fmtINRFull(l.outstanding)}`,
+          detail: `${l.type || "Loan"} · ${fmtINRFull(loanOutstanding(l))}`,
           tab: "taken",
         });
       }
@@ -194,44 +244,56 @@ export function useSearch(state: any, search: string): SearchResult[] {
         results.push({
           type: "Loan Given",
           name: l.borrower,
-          detail: fmtINRFull(l.outstanding),
+          detail: fmtINRFull(loanGivenOutstanding(l)),
           tab: "given",
         });
       }
     });
     // Informal Borrowed (From People)
     (state.informalBorrowed || []).forEach((p: any) => {
-      if (match(p.person)) {
-        const total = (p.tranches || []).reduce(
-          (s: number, t: any) => s + Number(t.amount || 0),
-          0
-        );
+      const pName = p.name || p.person || "";
+      if (match(pName)) {
+        const out = informalPersonOutstanding(p) || Number(p.outstanding ?? p.amount ?? 0);
         results.push({
           type: "Borrowed From",
-          name: p.person,
-          detail: fmtINRFull(total),
+          name: pName,
+          detail: fmtINRFull(out),
           tab: "borrowed",
         });
       }
     });
     // Informal Lent (To People)
     (state.informalLent || []).forEach((p: any) => {
-      if (match(p.person)) {
-        const total = (p.tranches || []).reduce(
-          (s: number, t: any) => s + Number(t.amount || 0),
-          0
-        );
-        results.push({ type: "Lent To", name: p.person, detail: fmtINRFull(total), tab: "lent" });
+      const pName = p.name || p.person || "";
+      if (match(pName)) {
+        const out = informalPersonOutstanding(p) || Number(p.outstanding ?? p.amount ?? 0);
+        results.push({
+          type: "Lent To",
+          name: pName,
+          detail: fmtINRFull(out),
+          tab: "lent",
+        });
       }
     });
     // Subscriptions
-    state.subscriptions.forEach((s: any) => {
+    (state.subscriptions || []).forEach((s: any) => {
       if (match(s.name)) {
         results.push({
           type: "Subscription",
           name: s.name,
           detail: `${fmtINRFull(s.amount)} / ${s.cycle || s.billingCycle || "monthly"}`,
           tab: "subs",
+        });
+      }
+    });
+    // Bill Payments
+    (state.billPayments || []).forEach((b: any) => {
+      if (match(b.name) || match(b.provider) || match(b.category)) {
+        results.push({
+          type: "Bill Payment",
+          name: b.name || b.provider || "Utility Bill",
+          detail: `${b.category || "Bill"} · ${fmtINRFull(b.amount || 0)}`,
+          tab: "bills",
         });
       }
     });
@@ -246,7 +308,7 @@ export function useSearch(state: any, search: string): SearchResult[] {
         });
       }
     });
-    // Insurance (LIC + Term Plans)
+    // Insurance (LIC + Term Plans + Health Insurance)
     (state.lic || []).forEach((l: any) => {
       if (match(l.planName) || match(l.name)) {
         results.push({
@@ -267,13 +329,24 @@ export function useSearch(state: any, search: string): SearchResult[] {
         });
       }
     });
+    (state.healthInsurance || []).forEach((h: any) => {
+      const hName = h.planName || h.insurer || h.policyNumber || "";
+      if (match(hName) || match(h.insurer)) {
+        results.push({
+          type: "Health Insurance",
+          name: hName || "Health Policy",
+          detail: fmtINRFull(h.sumInsured || h.coverAmount || 0),
+          tab: "insurance",
+        });
+      }
+    });
     // Rental Properties (owned)
     (state.rentalProperties || []).forEach((p: any) => {
       if (match(p.propertyName) || match(p.tenantName)) {
         results.push({
           type: "Rental Property",
           name: p.propertyName,
-          detail: fmtINRFull(p.monthlyRent),
+          detail: fmtINRFull(getEffectiveRent(p)),
           tab: "rental",
         });
       }
@@ -284,7 +357,7 @@ export function useSearch(state: any, search: string): SearchResult[] {
         results.push({
           type: "Rented Property",
           name: p.propertyName || "Rented",
-          detail: fmtINRFull(p.monthlyRent),
+          detail: fmtINRFull(getEffectiveRent(p)),
           tab: "rental",
         });
       }
@@ -295,7 +368,7 @@ export function useSearch(state: any, search: string): SearchResult[] {
         results.push({
           type: "Real Estate",
           name: p.name,
-          detail: fmtINRFull(p.currentValue || p.purchasePrice),
+          detail: fmtINRFull(p.marketValue || p.agreementValue || p.currentValue || p.purchasePrice),
           tab: "realestate",
         });
       }
