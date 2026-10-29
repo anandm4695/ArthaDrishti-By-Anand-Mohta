@@ -268,3 +268,18 @@ describe("Equity-oriented fund test & debt holding period", () => {
     expect(classifyMFHolding({ ...m, sellDate: "2024-05-01" }, 800).isLtcg).toBe(false);
   });
 });
+
+describe("NPS split between 80CCD(1B) and 80CCD(1)", () => {
+  it("fills the exclusive ₹50K 1B limit first and puts only the excess in 80C", () => {
+    const auto = getAutoDetectedDeductions({ nps: [{ thisYearContribution: 80_000 }] }, FY);
+    expect(auto.nps).toBe(50_000);
+    expect(auto.d80C_breakdown.nps80CCD1).toBe(30_000);
+    expect(auto.d80C).toBe(30_000);
+  });
+
+  it("uses no 80C room when NPS is within ₹50K", () => {
+    const auto = getAutoDetectedDeductions({ nps: [{ thisYearContribution: 40_000 }] }, FY);
+    expect(auto.nps).toBe(40_000);
+    expect(auto.d80C).toBe(0);
+  });
+});

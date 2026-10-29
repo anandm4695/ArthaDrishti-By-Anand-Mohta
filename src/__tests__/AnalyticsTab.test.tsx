@@ -88,7 +88,7 @@ function Harness({ state }: { state: any }) {
 }
 
 describe("AnalyticsTab 80C tracker", () => {
-  it("includes NPS employee contributions in the 80C total and stays reactive when only NPS changes", () => {
+  it("allocates NPS beyond ₹50K to 80C and stays reactive when only NPS changes", () => {
     // Keep the SAME array references for mutualFunds/ppf/ppfLedger/lic/epf across
     // both renders — only `nps` changes. This reproduces the exact shape of the
     // useMemo staleness bug: taxData80C's dependency array previously omitted
@@ -121,9 +121,11 @@ describe("AnalyticsTab 80C tracker", () => {
 
     rerender(<Harness state={state2} />);
 
-    // 80C total should now include the ₹60,000 NPS contribution → ₹90,000 remaining.
+    // ₹60,000 NPS: the first ₹50,000 goes to the exclusive 80CCD(1B) limit, so only the
+    // ₹10,000 excess uses 80C room (u/s 80CCD(1)) → ₹1,40,000 remaining. Counting all
+    // ₹60,000 here would double-claim the ₹50,000 already deducted u/s 80CCD(1B).
     remainingIdx = screen.getByText("Remaining Space");
-    expect(remainingIdx.parentElement?.textContent).toContain("₹90,000");
+    expect(remainingIdx.parentElement?.textContent).toContain("₹1,40,000");
     expect(remainingIdx.parentElement?.textContent).not.toContain("₹1,50,000");
   });
 });

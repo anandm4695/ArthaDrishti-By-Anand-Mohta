@@ -212,13 +212,14 @@ describe("Senior Comprehensive Audit - Accountant & Developer Verification", () 
 
       // Income = 10L
       // Total Deductions in old regime:
-      // stdDed (50k) + 80D (55k) + NPS (50k) + Employer NPS (40k) = 195,000
-      // Taxable = 1,000,000 - 195,000 = 805,000
-      // Slabs: 0-2.5L: 0, 2.5-5L (5%): 12,500, 5-8.05L (20%): 305,000 * 0.20 = 61,000
-      // Total before cess = 73,500
-      // Cess = 73,500 * 0.04 = 2,940. Total = 76,440.
+      // stdDed (50k) + 80C via 80CCD(1) (NPS excess over 50k = 10k) + 80D (55k)
+      //   + 80CCD(1B) (50k) + Employer NPS (40k) = 205,000
+      // Taxable = 1,000,000 - 205,000 = 795,000
+      // Slabs: 0-2.5L: 0, 2.5-5L (5%): 12,500, 5-7.95L (20%): 295,000 * 0.20 = 59,000
+      // Total before cess = 71,500
+      // Cess = 71,500 * 0.04 = 2,860. Total = 74,360.
       const taxDue = getTaxDueForDashboard(state, 1000000);
-      expect(taxDue).toBe(76440);
+      expect(taxDue).toBe(74360);
     });
   });
 

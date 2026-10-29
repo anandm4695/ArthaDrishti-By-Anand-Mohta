@@ -92,6 +92,9 @@ import {
   computeFireTarget,
   DEFAULT_FIRE_SWR,
   computeCreditPortfolioSummary,
+  getAutoDetectedDeductions,
+  isDepositClosed,
+  rdElapsed,
 } from "../../utils/finance";
 import { computeNetWorthAsOf, getEarliestNetWorthMonth, nextYm } from "../../utils/netWorthAsOf";
 import { getCurrentFY } from "../../utils/appConstants";
@@ -1696,10 +1699,16 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
     else if (emergencyMonths > 0) emergencyScore = 4;
     else emergencyScore = 0;
 
-    if (state.mutualFunds.length > 0) divScore += 6;
-    if (state.stocks.length > 0) divScore += 6;
-    if (state.fixedDeposits.length > 0) divScore += 6;
-    if (state.ppf.length > 0 || state.nps.length > 0) divScore += 7;
+    // Diversification credits asset classes actually held (current value > 0), not
+    // merely ones with a record — a closed FD or a fully sold stock adds nothing.
+    const holdsMF = (metrics.mfValue || 0) > 0;
+    const holdsStocks = (metrics.stockValue || 0) > 0;
+    const holdsFD = (metrics.fdValue || 0) > 0;
+    const holdsRetirement = (metrics.ppfValue || 0) + (metrics.npsValue || 0) > 0;
+    if (holdsMF) divScore += 6;
+    if (holdsStocks) divScore += 6;
+    if (holdsFD) divScore += 6;
+    if (holdsRetirement) divScore += 7;
 
     const rawScore = savingsScore + debtScore + emergencyScore + divScore;
     const hasCriticalRedFlag = (metrics.debtToAssetRatio || 0) >= 50 || (metrics.foir || 0) >= 50;
@@ -1716,10 +1725,10 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
             : THEME.rust;
 
     const investTypes = [
-      state.mutualFunds.length > 0 ? "MF" : null,
-      state.stocks.length > 0 ? "Stocks" : null,
-      state.fixedDeposits.length > 0 ? "FDs" : null,
-      state.ppf.length > 0 || state.nps.length > 0 ? "PPF/NPS" : null,
+      holdsMF ? "MF" : null,
+      holdsStocks ? "Stocks" : null,
+      holdsFD ? "FDs" : null,
+      holdsRetirement ? "PPF/NPS" : null,
     ].filter(Boolean);
 
     const subScores = [
@@ -2555,21 +2564,22 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
       0
     );
 
-    const fdMonthly = (state.fixedDeposits || []).reduce(
-      (s: number, f: any) => s + (Number(f.principal || 0) * Number(f.rate || 0)) / 100 / 12,
-      0
-    );
+    // Closed / matured / paid-out deposits no longer earn anything.
+    const fdMonthly = (state.fixedDeposits || [])
+      .filter((f: any) => !isDepositClosed(f))
+      .reduce(
+        (s: number, f: any) => s + (Number(f.principal || 0) * Number(f.rate || 0)) / 100 / 12,
+        0
+      );
 
-    const rdMonthly = (state.recurringDeposits || []).reduce((sum: number, r: any) => {
-      const start = r.startDate ? new Date(r.startDate) : new Date();
-      const now = new Date();
-      const m =
-        (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-      const months = Math.max(0, Math.min(m, Number(r.tenureMonths || 0)));
-      const currentVal =
-        months > 0 ? rdMaturity(Number(r.monthly || 0), Number(r.rate || 6), months) : 0;
-      return sum + (currentVal * Number(r.rate || 6)) / 100 / 12;
-    }, 0);
+    const rdMonthly = (state.recurringDeposits || [])
+      .filter((r: any) => !isDepositClosed(r))
+      .reduce((sum: number, r: any) => {
+        const months = rdElapsed(r);
+        const currentVal =
+          months > 0 ? rdMaturity(Number(r.monthly || 0), Number(r.rate || 6), months) : 0;
+        return sum + (currentVal * Number(r.rate || 6)) / 100 / 12;
+      }, 0);
 
     const savingsMonthly = (metrics.cashInBanks * 0.03) / 12;
     const stockDividendsMonthly = (metrics.stockValue * 0.012) / 12;
@@ -2624,69 +2634,35 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
     metrics.monthIncome,
   ]);
 
+  // Same engine and manual override as Tax Vault, so this widget can never disagree
+  // with the tax screens about how much 80C room is left.
   const taxData80C = useMemo(() => {
     const limit = 150000;
-    const fyParts = (getCurrentFY() || "").split("-");
-    const fyStartYear = Number(fyParts[0]) || new Date().getFullYear() - 1;
-    const fyStartStr = `${fyStartYear}-04-01`;
-    const fyEndStr = `${fyStartYear + 1}-03-31`;
-    const elss = (state.mutualFunds || [])
-      .filter(
-        (m: any) =>
-          (m.type || m.category || "").toUpperCase().includes("ELSS") &&
-          m.buyDate &&
-          m.buyDate >= fyStartStr &&
-          m.buyDate <= fyEndStr
-      )
-      .reduce((s: number, m: any) => s + Number(m.invested || m.investedAmount || 0), 0);
-    const ppfThisYear = (state.ppfLedger || [])
-      .filter(
-        (t: any) => t.date && t.date >= fyStartStr && t.date <= fyEndStr && t.type !== "withdrawal"
-      )
-      .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
-    const ppfAnnual =
-      ppfThisYear > 0
-        ? ppfThisYear
-        : (state.ppf || []).reduce(
-            (s: number, p: any) => s + Number(p.thisYearContribution || p.yearlyContribution || 0),
-            0
-          );
-    const licPremium = (state.lic || []).reduce(
-      (s: number, l: any) => s + Number(l.annualPremium || 0),
-      0
-    );
-    const epfEmployee = (state.epf || []).reduce((s: number, e: any) => {
-      const txs = (e.transactions || []).filter(
-        (t: any) => t.date && t.date >= fyStartStr && t.date <= fyEndStr
-      );
-      const simpleEmp = txs
-        .filter((t: any) => t.type === "employee_contribution")
-        .reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
-      const passbookEmp = txs
-        .filter((t: any) => t.type === "monthly_contribution")
-        .reduce((sum: number, t: any) => sum + Number(t.employeeShare || 0), 0);
-      const ledgerTotal = simpleEmp + passbookEmp;
-      return s + (ledgerTotal > 0 ? ledgerTotal : Number(e.thisYearContribution || 0));
-    }, 0);
-    // NPS employee contribution qualifies under 80CCD(1) within the ₹1.5L limit
-    const npsContrib = (state.nps || []).reduce(
-      (s: number, n: any) => s + Number(n.yearContribution || n.yearlyContribution || 0),
-      0
-    );
-    const total = Math.min(elss + ppfAnnual + licPremium + epfEmployee + npsContrib, limit);
+    const fy = state.profile?.fy || getCurrentFY();
+    const auto = getAutoDetectedDeductions(state, fy);
+    const override = state.masterData?.taxDeductions?.[fy]?.d80C;
+    const b = auto.d80C_breakdown;
+    const total = Math.min(override !== undefined ? Number(override) || 0 : auto.d80C, limit);
     const remaining = Math.max(0, limit - total);
+    const sources = [
+      { label: "ELSS Invested", value: b.elss },
+      { label: "PPF Contribution", value: b.ppf },
+      { label: "LIC Premium", value: b.lic },
+      { label: "EPF (Employee)", value: b.epf },
+      { label: "NSC", value: b.nsc },
+      { label: "Sukanya Samriddhi", value: b.ssy },
+      { label: "Home Loan Principal", value: b.homeLoanPrincipal },
+      { label: "NPS beyond ₹50K (80CCD(1))", value: b.nps80CCD1 },
+    ];
     return {
-      elss,
-      ppfAnnual,
-      licPremium,
-      epfEmployee,
-      npsContrib,
+      sources,
+      isOverride: override !== undefined,
       total,
       remaining,
       limit,
       progress: total > 0 ? (total / limit) * 100 : 0,
     };
-  }, [state.mutualFunds, state.ppf, state.ppfLedger, state.lic, state.epf, state.nps, getCurrentFY()]);
+  }, [state]);
 
   // ── Habits & Rewards: badge evaluation ───────────────────────────────────
   const habitsBadges = useMemo(() => {
@@ -2889,53 +2865,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
         (m.type || m.category || "").toUpperCase().includes("ELSS")
       );
     if (has80CAsset) earned.add("tax1");
-    // Compute 80C total for current FY using same logic as taxData80C
-    const fyParts80C = (getCurrentFY() || "").split("-");
-    const fyStart80C = Number(fyParts80C[0]) || new Date().getFullYear() - 1;
-    const fyStartStr80C = `${fyStart80C}-04-01`;
-    const fyEndStr80C = `${fyStart80C + 1}-03-31`;
-    const elss80C = (state.mutualFunds || [])
-      .filter(
-        (m: any) =>
-          (m.type || m.category || "").toUpperCase().includes("ELSS") &&
-          m.buyDate &&
-          m.buyDate >= fyStartStr80C &&
-          m.buyDate <= fyEndStr80C
-      )
-      .reduce((s: number, m: any) => s + Number(m.invested || m.investedAmount || 0), 0);
-    const ppf80C =
-      (state.ppfLedger || [])
-        .filter(
-          (t: any) =>
-            t.date && t.date >= fyStartStr80C && t.date <= fyEndStr80C && t.type !== "withdrawal"
-        )
-        .reduce((s: number, t: any) => s + Number(t.amount || 0), 0) ||
-      (state.ppf || []).reduce(
-        (s: number, p: any) => s + Number(p.thisYearContribution || p.yearlyContribution || 0),
-        0
-      );
-    const lic80C = (state.lic || []).reduce(
-      (s: number, l: any) => s + Number(l.annualPremium || 0),
-      0
-    );
-    const epf80C = (state.epf || []).reduce((s: number, e: any) => {
-      const txs80 = (e.transactions || []).filter(
-        (t: any) => t.date && t.date >= fyStartStr80C && t.date <= fyEndStr80C
-      );
-      const simpleEmp80 = txs80
-        .filter((t: any) => t.type === "employee_contribution")
-        .reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
-      const passbookEmp80 = txs80
-        .filter((t: any) => t.type === "monthly_contribution")
-        .reduce((sum: number, t: any) => sum + Number(t.employeeShare || 0), 0);
-      const lTotal = simpleEmp80 + passbookEmp80;
-      return s + (lTotal > 0 ? lTotal : Number(e.thisYearContribution || 0));
-    }, 0);
-    const nps80C = (state.nps || []).reduce(
-      (s: number, n: any) => s + Number(n.yearContribution || n.yearlyContribution || 0),
-      0
-    );
-    const total80C = Math.min(elss80C + ppf80C + lic80C + epf80C + nps80C, 150000);
+    const total80C = taxData80C.total;
     if (total80C >= 150000) earned.add("tax2");
     if (!earned.has("tax1"))
       prog["tax1"] = { current: 0, target: 1, label: "Add a PPF/ELSS/NPS/LIC investment" };
@@ -3118,7 +3048,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
       efMonthsHB,
       totalPassiveMonthly,
     };
-  }, [metrics, dashboardData.streak, state, privacyMode]);
+  }, [metrics, dashboardData.streak, state, privacyMode, taxData80C.total]);
 
   // ── Streak calendar: January to December of current year ──
   const streakCalendar = useMemo(() => {
@@ -12625,23 +12555,14 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({
               />
             </div>
             <div style={{ display: "grid", gap: 12 }}>
-              {[
-                { label: "ELSS Invested", value: taxData80C.elss, color: THEME.accent },
-                { label: "PPF Contribution", value: taxData80C.ppfAnnual, color: THEME.sage },
-                { label: "LIC Premium", value: taxData80C.licPremium, color: THEME.gold },
-                ...(taxData80C.epfEmployee > 0
-                  ? [{ label: "EPF (Employee)", value: taxData80C.epfEmployee, color: THEME.violet }]
-                  : []),
-                ...(taxData80C.npsContrib > 0
-                  ? [
-                      {
-                        label: "NPS (80CCD(1))",
-                        value: taxData80C.npsContrib,
-                        color: THEME.cyan || THEME.accent,
-                      },
-                    ]
-                  : []),
-              ].map(({ label, value, color }) => (
+              {taxData80C.sources
+                .map((src, i) => ({
+                  ...src,
+                  color: [THEME.accent, THEME.sage, THEME.gold, THEME.violet, THEME.cyan || THEME.accent, THEME.rust, THEME.muted, THEME.accent][i],
+                }))
+                // The first three always show so an empty FY still reads as a checklist.
+                .filter((src, i) => i < 3 || src.value > 0)
+                .map(({ label, value, color }) => (
                 <div
                   key={label}
                   style={{

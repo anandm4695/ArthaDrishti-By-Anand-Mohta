@@ -1296,6 +1296,17 @@ export const informalPersonOutstanding = (person: any): number => {
 export interface AutoDetectedDeductions {
   d80C: number;
   d80C_sources: string | null;
+  /** Uncapped per-source 80C amounts behind `d80C` (which is capped at ₹1.5L). */
+  d80C_breakdown: {
+    elss: number;
+    ppf: number;
+    lic: number;
+    epf: number;
+    nsc: number;
+    ssy: number;
+    homeLoanPrincipal: number;
+    nps80CCD1: number;
+  };
   d80D: number;
   d80D_source: string | null;
   hra: number;
@@ -1466,7 +1477,30 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
     return s + Math.max(0, annualEMI - annualInterest);
   }, 0);
 
-  const d80C_raw = elss + ppf + lic + epf + nsc + ssy + homeLoanPrincipal;
+  // 80CCD(1B) — NPS extra self contribution (max ₹50,000)
+  // Checks both account ledger transactions in FY and account-level contribution
+  const npsTxnSelf = (state.nps || []).reduce((s: number, n: any) => {
+    return (
+      s +
+      (n.transactions || [])
+        .filter((t: any) => t.date && t.date >= fyStartStr && t.date <= fyEndStr)
+        .reduce((sum: number, t: any) => sum + Number(t.employeeAmount ?? t.amount ?? 0), 0)
+    );
+  }, 0);
+  const npsAccountSelf = (state.nps || []).reduce(
+    (s: number, n: any) => s + Number(n.thisYearContribution || n.yearContribution || 0),
+    0
+  );
+  const npsContrib = npsTxnSelf > 0 ? npsTxnSelf : npsAccountSelf;
+  const nps_used = Math.min(npsContrib, 50_000);
+  // Own NPS contribution beyond the exclusive ₹50K 80CCD(1B) limit still qualifies
+  // u/s 80CCD(1), inside the ₹1.5L 80C/80CCE ceiling — allocate 1B first since it
+  // is the only room that nothing else can use.
+  const nps80CCD1 = Math.max(0, npsContrib - 50_000);
+  const nps_source =
+    nps_used > 0 ? `NPS ₹${Math.round(nps_used).toLocaleString("en-IN")}` : null;
+
+  const d80C_raw = elss + ppf + lic + epf + nsc + ssy + homeLoanPrincipal + nps80CCD1;
   const d80C_sources =
     [
       elss > 0 ? `ELSS ₹${Math.round(elss).toLocaleString("en-IN")}` : null,
@@ -1478,6 +1512,7 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
       homeLoanPrincipal > 0
         ? `Home Loan Principal ₹${Math.round(homeLoanPrincipal).toLocaleString("en-IN")}`
         : null,
+      nps80CCD1 > 0 ? `NPS 80CCD(1) ₹${Math.round(nps80CCD1).toLocaleString("en-IN")}` : null,
     ]
       .filter(Boolean)
       .join(" + ") || null;
@@ -1640,25 +1675,6 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
       ? homeLoanData.map((l: any) => l.lender).join(", ") + " (approx. interest)"
       : null;
 
-  // 80CCD(1B) — NPS extra self contribution (max ₹50,000)
-  // Checks both account ledger transactions in FY and account-level contribution
-  const npsTxnSelf = (state.nps || []).reduce((s: number, n: any) => {
-    return (
-      s +
-      (n.transactions || [])
-        .filter((t: any) => t.date && t.date >= fyStartStr && t.date <= fyEndStr)
-        .reduce((sum: number, t: any) => sum + Number(t.employeeAmount ?? t.amount ?? 0), 0)
-    );
-  }, 0);
-  const npsAccountSelf = (state.nps || []).reduce(
-    (s: number, n: any) => s + Number(n.thisYearContribution || n.yearContribution || 0),
-    0
-  );
-  const npsContrib = npsTxnSelf > 0 ? npsTxnSelf : npsAccountSelf;
-  const nps_used = Math.min(npsContrib, 50_000);
-  const nps_source =
-    nps_used > 0 ? `NPS ₹${Math.round(nps_used).toLocaleString("en-IN")}` : null;
-
   // 80CCD(2) — Employer NPS contribution
   // Checks both account ledger transactions in FY and account-level employerContribution
   const npsTxnEmployer = (state.nps || []).reduce((s: number, n: any) => {
@@ -1718,6 +1734,7 @@ export const getAutoDetectedDeductions = (state: any, fy: string): AutoDetectedD
   return {
     d80C: Math.min(d80C_raw, 150_000),
     d80C_sources,
+    d80C_breakdown: { elss, ppf, lic, epf, nsc, ssy, homeLoanPrincipal, nps80CCD1 },
     d80D: d80D_raw,
     d80D_source: d80D_sources,
     hra: finalHra,
