@@ -433,7 +433,7 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
       let closestNode: { node: AssetNode; px: number; py: number } | null = null;
       let minDistance = 9999;
 
-      ASSET_NODES.forEach((node) => {
+      for (const node of ASSET_NODES) {
         const ring = RINGS[node.ringIndex];
         const actualRadius = ring.radiusFactor * maxOrbRadius;
         const angle = time * node.speed + node.offset;
@@ -482,7 +482,7 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
         ctx.strokeStyle = "rgba(226, 232, 240, 0.95)";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        if ("roundRect" in ctx) {
+        if (typeof (ctx as any).roundRect === "function") {
           (ctx as any).roundRect(pillX, pillY, pillW, pillH, 4);
         } else {
           ctx.rect(pillX, pillY, pillW, pillH);
@@ -494,7 +494,7 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         ctx.fillText(text, pillX + pillPadX, py);
-      });
+      }
 
       if (closestNode) {
         setHoveredNode({

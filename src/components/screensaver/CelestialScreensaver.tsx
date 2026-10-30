@@ -788,7 +788,7 @@ export const CelestialScreensaver: React.FC<CelestialScreensaverProps> = ({
         ctx.strokeStyle = `rgba(${asset.rgb[0]}, ${asset.rgb[1]}, ${asset.rgb[2]}, 0.75)`;
         ctx.lineWidth = 1;
         ctx.beginPath();
-        if ("roundRect" in ctx) {
+        if (typeof (ctx as any).roundRect === "function") {
           (ctx as any).roundRect(cardX, cardY, cardW, cardH, 8 * scale);
         } else {
           ctx.rect(cardX, cardY, cardW, cardH);
