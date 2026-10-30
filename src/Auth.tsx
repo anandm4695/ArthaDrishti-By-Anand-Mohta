@@ -25,6 +25,8 @@ import {
 import { BrandMark } from "./components/ui/BrandMark";
 import { DEMO_USER_SESSION } from "./utils/demoData";
 import { WealthOrbCanvas } from "./components/auth/WealthOrbCanvas";
+import { CelestialScreensaver } from "./components/screensaver/CelestialScreensaver";
+import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 
 /* ─── Time-of-day greeting ───────────────────────────────────────────── */
 function getGreeting(): string {
@@ -190,6 +192,12 @@ export default function Auth({
   // Turnstile CAPTCHA State (Audit S4)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement>(null);
+
+  // 3D Screensaver Idle Detection (60s inactivity)
+  const { isScreensaverActive, closeScreensaver, launchScreensaver } = useIdleScreensaver({
+    timeoutMs: 60000,
+    enabled: true,
+  });
 
   const [isMobileViewport, setIsMobileViewport] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768
@@ -608,6 +616,11 @@ export default function Auth({
 
   return (
     <div className="af-shell">
+      {/* ── 3D Inactivity Celestial Screensaver Overlay ── */}
+      {isScreensaverActive && (
+        <CelestialScreensaver onClose={closeScreensaver} />
+      )}
+
       {/* ── Background Aurora Mesh & Starfield ── */}
       <div className="af-cosmic-bg" aria-hidden="true">
         <div className="af-aurora af-aurora-gold" />
@@ -658,7 +671,19 @@ export default function Auth({
                 <span className="af-live-dot" aria-hidden="true" />
                 <span>Multi-Asset Equilibrium Matrix</span>
               </span>
-              <span className="af-3d-status">Euler 3D Projection</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span className="af-3d-status">Euler 3D Projection</span>
+                <button
+                  type="button"
+                  onClick={launchScreensaver}
+                  className="af-screensaver-btn"
+                  title="Launch Fullscreen 3D Screensaver"
+                  aria-label="Launch Fullscreen 3D Screensaver"
+                >
+                  <Sparkles size={10} />
+                  <span>Screensaver</span>
+                </button>
+              </div>
             </div>
             <div className="af-3d-canvas-wrap">
               <WealthOrbCanvas height={220} interactive={true} />
@@ -1947,6 +1972,28 @@ const AF_STYLES = `
   border-radius: 6px;
   border: 1px solid #E2E8F0;
   font-weight: 600;
+}
+
+.af-screensaver-btn {
+  font-size: 10px;
+  font-family: inherit;
+  color: #B45309;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.af-screensaver-btn:hover {
+  background: #F59E0B;
+  color: #04060E;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
 }
 
 .af-3d-canvas-wrap {
