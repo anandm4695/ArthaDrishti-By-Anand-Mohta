@@ -3939,7 +3939,7 @@ async function handler(req, res) {
   }
 
   // ── Preview — renders the email HTML without sending ───────────────────────
-  if (req.method === "GET" && req.query?.action === "preview") {
+  if ((req.method === "GET" || req.method === "POST") && (req.query?.action === "preview" || req.body?.action === "preview")) {
     const auth = await verifyManualAuth(req);
     if (!auth.ok) {
       console.error(`[send-summary] Preview rejected: ${auth.reason}`);
@@ -3947,18 +3947,23 @@ async function handler(req, res) {
     }
     try {
       const supabase = getSupabase();
-      const state = await fetchStateFromSupabase(supabase, auth.user.id);
+      const clientState = req.body?.state;
+      const state =
+        clientState && typeof clientState === "object" && (clientState.stocks || clientState.bankAccounts)
+          ? clientState
+          : await fetchStateFromSupabase(supabase, auth.user.id);
       const { data: profData } = await supabase
         .from("profiles")
         .select("name")
         .eq("user_id", auth.user.id)
         .maybeSingle();
-      const recipientName = profData?.name || "there";
-      const rawFreq = req.query?.frequency;
+      const recipientName = profData?.name || req.body?.recipientName || "there";
+      const rawFreq = req.query?.frequency || req.body?.frequency;
       const freq = ["daily", "weekly", "monthly"].includes(rawFreq)
         ? rawFreq
         : String(rawFreq || "").split(",")[0] || "daily";
-      const refDate = req.query?.refDate ? new Date(req.query.refDate) : new Date();
+      const refDateStr = req.query?.refDate || req.body?.refDate;
+      const refDate = refDateStr ? new Date(refDateStr) : new Date();
       const summary = computeSummary(await withLiveMFPrices(await withLiveStockPrices(state)), refDate);
       const html = generateHTML(summary, freq, recipientName, refDate);
       res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -4011,8 +4016,8 @@ async function handler(req, res) {
             "Resend API key not configured. Add Resend_Email_API to Vercel environment variables.",
         });
 
-      // Security hardening (Finding S3): Rate limit manual sends per user (5 per day)
-      if (!(await rateLimit(req, res, { max: 5, windowMs: 24 * 60 * 60 * 1000, keyPrefix: "manual_send_", customKey: auth.user.id }))) {
+      // Security hardening (Finding S3): Rate limit manual sends per user (30 per 15 mins window; keyPrefix bumped to manual_send_v2_ to release stale locks)
+      if (!(await rateLimit(req, res, { max: 30, windowMs: 15 * 60 * 1000, keyPrefix: "manual_send_v2_", customKey: auth.user.id }))) {
         return;
       }
 
@@ -4033,7 +4038,11 @@ async function handler(req, res) {
       const effectiveFromAddr = FROM_ADDR;
 
       const supabase = getSupabase();
-      const state = await fetchStateFromSupabase(supabase, auth.user.id);
+      const clientState = req.body?.state;
+      const state =
+        clientState && typeof clientState === "object" && (clientState.stocks || clientState.bankAccounts)
+          ? clientState
+          : await fetchStateFromSupabase(supabase, auth.user.id);
       const { data: profData } = await supabase
         .from("profiles")
         .select("name")

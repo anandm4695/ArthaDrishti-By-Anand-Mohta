@@ -4120,6 +4120,7 @@ function EmailSummarySection({ state, emailSettings, updateEmailSettings }: any)
         body: JSON.stringify({
           frequency: chosenFreq,
           recipientName: state?.profile?.name || "there",
+          state,
         }),
       });
       const json = await res.json();
@@ -4177,8 +4178,18 @@ function EmailSummarySection({ state, emailSettings, updateEmailSettings }: any)
         _t: Date.now().toString(),
       });
       const res = await fetch(`/api/send-summary?${params.toString()}`, {
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         cache: "no-store",
+        body: JSON.stringify({
+          action: "preview",
+          frequency: chosenFreq,
+          recipientName: state?.profile?.name || "there",
+          state,
+        }),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}) as any);

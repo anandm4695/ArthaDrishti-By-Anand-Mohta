@@ -547,6 +547,7 @@ export function MonthlyReportModal({
           frequency: "monthly",
           recipientName: state.profile?.name || "there",
           refDate: reportDate.toISOString(),
+          state,
         }),
       });
       const json = await res.json();
