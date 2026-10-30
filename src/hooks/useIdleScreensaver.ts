@@ -11,12 +11,15 @@ export function useIdleScreensaver({
 }: UseIdleScreensaverOptions = {}) {
   const [isScreensaverActive, setIsScreensaverActive] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeSinceRef = useRef<number>(0);
+  const lastPosRef = useRef<{ x: number; y: number }>({ x: -1, y: -1 });
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!enabled) return;
 
     timerRef.current = setTimeout(() => {
+      activeSinceRef.current = Date.now();
       setIsScreensaverActive(true);
     }, timeoutMs);
   }, [enabled, timeoutMs]);
@@ -27,6 +30,7 @@ export function useIdleScreensaver({
   }, [resetTimer]);
 
   const launchScreensaver = useCallback(() => {
+    activeSinceRef.current = Date.now();
     setIsScreensaverActive(true);
   }, []);
 
@@ -36,30 +40,47 @@ export function useIdleScreensaver({
       return;
     }
 
-    let lastPos = { x: -1, y: -1 };
-
     const handleMouseMove = (e: MouseEvent) => {
-      if (lastPos.x !== -1 && lastPos.y !== -1) {
-        const dx = e.clientX - lastPos.x;
-        const dy = e.clientY - lastPos.y;
-        // Filter out micro-vibrations and optical mouse jitter (< 8px movement)
-        if (Math.hypot(dx, dy) < 8) {
-          return;
-        }
+      const prevX = lastPosRef.current.x;
+      const prevY = lastPosRef.current.y;
+      lastPosRef.current = { x: e.clientX, y: e.clientY };
+
+      if (prevX === -1 && prevY === -1) {
+        return;
       }
-      lastPos = { x: e.clientX, y: e.clientY };
-      if (!isScreensaverActive) {
+
+      const dx = e.clientX - prevX;
+      const dy = e.clientY - prevY;
+      const dist = Math.hypot(dx, dy);
+
+      // Filter out micro-vibrations and optical mouse jitter (< 10px movement)
+      if (dist < 10) {
+        return;
+      }
+
+      if (isScreensaverActive) {
+        // Stop screensaver on mouse move (with small grace period right when triggered)
+        if (Date.now() - activeSinceRef.current > 250) {
+          closeScreensaver();
+        }
+      } else {
         resetTimer();
       }
     };
 
     const handleActivity = () => {
-      if (!isScreensaverActive) {
+      if (isScreensaverActive) {
+        // Any keypress, click, scroll or touch immediately stops the screensaver
+        if (Date.now() - activeSinceRef.current > 100) {
+          closeScreensaver();
+        }
+      } else {
         resetTimer();
       }
     };
 
     const handleCustomLaunch = () => {
+      activeSinceRef.current = Date.now();
       setIsScreensaverActive(true);
     };
 
@@ -81,7 +102,7 @@ export function useIdleScreensaver({
       window.removeEventListener("wheel", handleActivity);
       window.removeEventListener("launch-screensaver", handleCustomLaunch);
     };
-  }, [enabled, isScreensaverActive, resetTimer]);
+  }, [enabled, isScreensaverActive, resetTimer, closeScreensaver]);
 
   return {
     isScreensaverActive,
@@ -89,5 +110,6 @@ export function useIdleScreensaver({
     launchScreensaver,
   };
 }
+
 
 
