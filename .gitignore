@@ -14,3 +14,4 @@ docs/design-assets
 scratch
 *.zip
 *.log
+.env*

@@ -621,3 +621,4 @@ export const CelestialScreensaver: React.FC<CelestialScreensaverProps> = ({
     </div>
   );
 };
+
