@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { BrandMark } from "./components/ui/BrandMark";
 import { DEMO_USER_SESSION } from "./utils/demoData";
+import { WealthOrbCanvas } from "./components/auth/WealthOrbCanvas";
 
 /* ─── Time-of-day greeting ───────────────────────────────────────────── */
 function getGreeting(): string {
@@ -53,7 +54,12 @@ function friendlyError(msg: string): string {
     return "Please enter a valid email address.";
   if (m.includes("signup is disabled"))
     return "New sign-ups are currently disabled. Please contact the admin.";
-  if (m.includes("invalid totp") || m.includes("invalid code") || m.includes("invalid authentication code") || m.includes("challenge failed"))
+  if (
+    m.includes("invalid totp") ||
+    m.includes("invalid code") ||
+    m.includes("invalid authentication code") ||
+    m.includes("challenge failed")
+  )
     return "Invalid verification code. Please check your authenticator app and enter the latest 6-digit code.";
   if (m.includes("mfa factor") || m.includes("factor not found") || m.includes("no mfa factor"))
     return "Authenticator factor not found. Please sign in again with your password.";
@@ -88,7 +94,13 @@ function checkPasswordCriteria(pw: string): PasswordCriteria {
 }
 
 function getStrength(pw: string): { score: number; label: string; color: string; badgeBg: string } {
-  if (!pw) return { score: 0, label: "Enter password", color: "#94A3B8", badgeBg: "rgba(148, 163, 184, 0.1)" };
+  if (!pw)
+    return {
+      score: 0,
+      label: "Enter password",
+      color: "#94A3B8",
+      badgeBg: "rgba(148, 163, 184, 0.1)",
+    };
   const c = checkPasswordCriteria(pw);
   let score = 0;
   if (c.minLength) score++;
@@ -97,11 +109,20 @@ function getStrength(pw: string): { score: number; label: string; color: string;
   if (c.hasNumber) score++;
   if (c.hasSpecial) score++;
 
-  if (score <= 1) return { score: 1, label: "Basic", color: "#F87171", badgeBg: "rgba(248, 113, 113, 0.15)" };
-  if (score === 2) return { score: 2, label: "Fair", color: "#FBBF24", badgeBg: "rgba(251, 191, 36, 0.15)" };
-  if (score === 3) return { score: 3, label: "Good", color: "#FCD34D", badgeBg: "rgba(252, 211, 77, 0.15)" };
-  if (score === 4) return { score: 4, label: "Strong", color: "#34D399", badgeBg: "rgba(52, 211, 153, 0.15)" };
-  return { score: 5, label: "Vault-Grade", color: "#10B981", badgeBg: "rgba(16, 185, 129, 0.2)" };
+  if (score <= 1)
+    return { score: 1, label: "Basic", color: "#F87171", badgeBg: "rgba(248, 113, 113, 0.15)" };
+  if (score === 2)
+    return { score: 2, label: "Fair", color: "#FBBF24", badgeBg: "rgba(251, 191, 36, 0.15)" };
+  if (score === 3)
+    return { score: 3, label: "Good", color: "#FCD34D", badgeBg: "rgba(252, 211, 77, 0.15)" };
+  if (score === 4)
+    return { score: 4, label: "Strong", color: "#34D399", badgeBg: "rgba(52, 211, 153, 0.15)" };
+  return {
+    score: 5,
+    label: "Vault-Grade",
+    color: "#10B981",
+    badgeBg: "rgba(16, 185, 129, 0.2)",
+  };
 }
 
 /* ─── Mode order for slide animations ───────────────────────────────── */
@@ -132,7 +153,7 @@ export default function Auth({
     if (initialMode && initialMode !== mode) {
       setMode(initialMode);
     }
-  }, [initialMode]);
+  }, [initialMode, mode]);
 
   // Remember Me: restore saved email
   const savedEmail =
@@ -245,15 +266,38 @@ export default function Auth({
   }, []);
 
   // Auto-clear error when user modifies fields
-  const prevFieldsRef = useRef([email, password, confirmPassword, displayName, newPassword, confirmNewPassword]);
+  const prevFieldsRef = useRef([
+    email,
+    password,
+    confirmPassword,
+    displayName,
+    newPassword,
+    confirmNewPassword,
+  ]);
   useEffect(() => {
-    const current = [email, password, confirmPassword, displayName, newPassword, confirmNewPassword];
+    const current = [
+      email,
+      password,
+      confirmPassword,
+      displayName,
+      newPassword,
+      confirmNewPassword,
+    ];
     const changed = current.some((v, i) => v !== prevFieldsRef.current[i]);
     prevFieldsRef.current = current;
     if (!changed) return;
     if (error) setError(null);
     if (showResendLink) setShowResendLink(false);
-  }, [email, password, confirmPassword, displayName, newPassword, confirmNewPassword, error, showResendLink]);
+  }, [
+    email,
+    password,
+    confirmPassword,
+    displayName,
+    newPassword,
+    confirmNewPassword,
+    error,
+    showResendLink,
+  ]);
 
   // Auto-dismiss success message
   useEffect(() => {
@@ -273,13 +317,16 @@ export default function Auth({
   useEffect(() => {
     if (mode !== "mfa") return;
     if (mfaFactorId) return;
-    supabase.auth.mfa.listFactors().then(({ data }) => {
-      const verified =
-        data?.totp?.find((f: any) => f.status === "verified") ||
-        data?.totp?.[0] ||
-        data?.all?.find((f: any) => f.status === "verified");
-      if (verified) setMfaFactorId(verified.id);
-    }).catch(() => {});
+    supabase.auth.mfa
+      .listFactors()
+      .then(({ data }) => {
+        const verified =
+          data?.totp?.find((f: any) => f.status === "verified") ||
+          data?.totp?.[0] ||
+          data?.all?.find((f: any) => f.status === "verified");
+        if (verified) setMfaFactorId(verified.id);
+      })
+      .catch(() => {});
   }, [mode, mfaFactorId]);
 
   // Validation
@@ -411,7 +458,9 @@ export default function Auth({
     } catch (err: any) {
       const rawMsg: string = err?.message || "";
       setError(friendlyError(rawMsg));
-      setShowResendLink(!isSignUp && !isForgot && rawMsg.toLowerCase().includes("email not confirmed"));
+      setShowResendLink(
+        !isSignUp && !isForgot && rawMsg.toLowerCase().includes("email not confirmed")
+      );
     } finally {
       setLoading(false);
     }
@@ -440,7 +489,9 @@ export default function Auth({
         }
       }
       if (!factorId) {
-        throw new Error("Unable to identify authenticator factor. Please cancel and sign in again.");
+        throw new Error(
+          "Unable to identify authenticator factor. Please cancel and sign in again."
+        );
       }
 
       // Add safety timeout so verification never hangs indefinitely
@@ -449,7 +500,10 @@ export default function Auth({
         code: cleanCode,
       });
       const timeoutPromise = new Promise<any>((_, reject) =>
-        setTimeout(() => reject(new Error("Verification request timed out. Please try again.")), 15000)
+        setTimeout(
+          () => reject(new Error("Verification request timed out. Please try again.")),
+          15000
+        )
       );
 
       const { data, error } = await Promise.race([verifyPromise, timeoutPromise]);
@@ -562,7 +616,7 @@ export default function Auth({
         <div className="af-grid-overlay" />
       </div>
 
-      {/* ── Brand & Executive Showcase Panel (Desktop) ── */}
+      {/* ── Brand & Executive Showcase Panel (Desktop & Tablet) ── */}
       <div className="af-brand-panel" aria-label="ArthaDrishti Institutional Overview">
         <div className="af-brand-content">
           {/* Brand header */}
@@ -589,8 +643,30 @@ export default function Auth({
               <span className="af-brand-headline-accent">Master your future.</span>
             </h1>
             <p className="af-brand-sub">
-              Consolidate multi-currency bank accounts, mutual funds, direct equities, real estate, PPF/EPF, and family liabilities into an autonomous executive command center.
+              Consolidate multi-currency bank accounts, mutual funds, direct equities, real estate,
+              PPF/EPF, and family liabilities into an autonomous executive command center.
             </p>
+          </div>
+
+          {/* 3D Wealth Orrery & Asset Convergence Matrix */}
+          <div
+            className="af-3d-showcase-box"
+            role="region"
+            aria-label="3D Wealth Matrix Visualization"
+          >
+            <div className="af-3d-header">
+              <span className="af-3d-pill">
+                <span className="af-live-dot" aria-hidden="true" />
+                <span>Multi-Asset Equilibrium Matrix</span>
+              </span>
+              <span className="af-3d-status">Euler 3D Projection</span>
+            </div>
+            <div className="af-3d-canvas-wrap">
+              <WealthOrbCanvas size={310} interactive={true} />
+            </div>
+            <div className="af-3d-caption">
+              <span>Interactive 3D Matrix • Hover or tilt to inspect asset convergence</span>
+            </div>
           </div>
 
           {/* Live Holographic Net Worth Mockup Card */}
@@ -611,53 +687,112 @@ export default function Auth({
               <div className="af-preview-currency">₹</div>
               <div className="af-preview-val">1,48,50,000</div>
             </div>
-            <div className="af-preview-lbl">Consolidated Net Worth across 14 assets &amp; 3 banks</div>
+            <div className="af-preview-lbl">
+              Consolidated Net Worth across 14 assets &amp; 3 banks
+            </div>
 
             {/* Asset distribution bar */}
             <div className="af-asset-bar" title="Asset allocation distribution">
-              <div className="af-asset-seg af-seg-mf" style={{ width: "42%" }} title="Mutual Funds & Stocks (42%)" />
-              <div className="af-asset-seg af-seg-re" style={{ width: "34%" }} title="Real Estate & Gold (34%)" />
-              <div className="af-asset-seg af-seg-epf" style={{ width: "16%" }} title="EPF & PPF (16%)" />
-              <div className="af-asset-seg af-seg-cash" style={{ width: "8%" }} title="Liquid Cash (8%)" />
+              <div
+                className="af-asset-seg af-seg-mf"
+                style={{ width: "42%" }}
+                title="Mutual Funds & Stocks (42%)"
+              />
+              <div
+                className="af-asset-seg af-seg-re"
+                style={{ width: "34%" }}
+                title="Real Estate & Gold (34%)"
+              />
+              <div
+                className="af-asset-seg af-seg-epf"
+                style={{ width: "16%" }}
+                title="EPF & PPF (16%)"
+              />
+              <div
+                className="af-asset-seg af-seg-cash"
+                style={{ width: "8%" }}
+                title="Liquid Cash (8%)"
+              />
             </div>
 
             <div className="af-preview-tags">
-              <span className="af-tag"><span className="af-tag-dot af-dot-mf" />Equities ₹62.3L</span>
-              <span className="af-tag"><span className="af-tag-dot af-dot-re" />Real Estate ₹50.5L</span>
-              <span className="af-tag"><span className="af-tag-dot af-dot-epf" />EPF/PPF ₹23.7L</span>
-              <span className="af-tag"><span className="af-tag-dot af-dot-cash" />Cash ₹12.0L</span>
+              <span className="af-tag">
+                <span className="af-tag-dot af-dot-mf" />
+                Equities ₹62.3L
+              </span>
+              <span className="af-tag">
+                <span className="af-tag-dot af-dot-re" />
+                Real Estate ₹50.5L
+              </span>
+              <span className="af-tag">
+                <span className="af-tag-dot af-dot-epf" />
+                EPF/PPF ₹23.7L
+              </span>
+              <span className="af-tag">
+                <span className="af-tag-dot af-dot-cash" />
+                Cash ₹12.0L
+              </span>
             </div>
           </div>
 
           {/* Interactive Feature Cards */}
           <div className="af-feature-chips-grid">
-            <div className={`af-feature-item ${activeTabFeature === 0 ? "af-feat-active" : ""}`} onClick={() => setActiveTabFeature(0)}>
+            <div
+              className={`af-feature-item ${activeTabFeature === 0 ? "af-feat-active" : ""}`}
+              onClick={() => setActiveTabFeature(0)}
+              tabIndex={0}
+              role="button"
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveTabFeature(0)}
+              aria-label="Automated Multi-Account Reconciliation Feature"
+            >
               <div className="af-feat-icon-box">
                 <Wallet size={16} aria-hidden="true" />
               </div>
               <div className="af-feat-text-wrap">
                 <strong>Automated Multi-Account Reconciliation</strong>
-                <p>Track liquid cash, investment yields, and liabilities with real-time analytics.</p>
+                <p>
+                  Track liquid cash, investment yields, and liabilities with real-time analytics.
+                </p>
               </div>
             </div>
 
-            <div className={`af-feature-item ${activeTabFeature === 1 ? "af-feat-active" : ""}`} onClick={() => setActiveTabFeature(1)}>
+            <div
+              className={`af-feature-item ${activeTabFeature === 1 ? "af-feat-active" : ""}`}
+              onClick={() => setActiveTabFeature(1)}
+              tabIndex={0}
+              role="button"
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveTabFeature(1)}
+              aria-label="Family Entities & Nominee Tracking Feature"
+            >
               <div className="af-feat-icon-box">
                 <Users size={16} aria-hidden="true" />
               </div>
               <div className="af-feat-text-wrap">
                 <strong>Family Entities &amp; Nominee Tracking</strong>
-                <p>Seamlessly organize portfolios across multiple family members with full asset clarity.</p>
+                <p>
+                  Seamlessly organize portfolios across multiple family members with full asset
+                  clarity.
+                </p>
               </div>
             </div>
 
-            <div className={`af-feature-item ${activeTabFeature === 2 ? "af-feat-active" : ""}`} onClick={() => setActiveTabFeature(2)}>
+            <div
+              className={`af-feature-item ${activeTabFeature === 2 ? "af-feat-active" : ""}`}
+              onClick={() => setActiveTabFeature(2)}
+              tabIndex={0}
+              role="button"
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveTabFeature(2)}
+              aria-label="Zero-Telemetry 256-Bit Vault Security Feature"
+            >
               <div className="af-feat-icon-box">
                 <ShieldCheck size={16} aria-hidden="true" />
               </div>
               <div className="af-feat-text-wrap">
                 <strong>Zero-Telemetry 256-Bit Vault Security</strong>
-                <p>Client-controlled encrypted data. Your private financial ledger is never sold or mined.</p>
+                <p>
+                  Client-controlled encrypted data. Your private financial ledger is never sold or
+                  mined.
+                </p>
               </div>
             </div>
           </div>
@@ -678,9 +813,12 @@ export default function Auth({
         <div className="af-card-outer">
           <div className="af-card-border-glow" />
           <div className="af-card">
-            {/* Mobile-only brand banner */}
+            {/* Mobile/Tablet brand banner */}
             <div className="af-logo-mobile">
-              <BrandMark size={38} />
+              <div className="af-logo-glow-wrap">
+                <div className="af-logo-ring-halo" />
+                <BrandMark size={38} />
+              </div>
               <div>
                 <div className="af-logo-name">ArthaDrishti</div>
                 <div className="af-logo-tagline">Private Wealth OS • by Anand Mohta</div>
@@ -697,7 +835,9 @@ export default function Auth({
                   className={`af-segment-btn ${isLogin ? "af-segment-active" : ""}`}
                   onClick={() => switchMode("login")}
                 >
-                  {isLogin && <motion.div layoutId="activeTabBadge" className="af-segment-glow-pill" />}
+                  {isLogin && (
+                    <motion.div layoutId="activeTabBadge" className="af-segment-glow-pill" />
+                  )}
                   <span className="af-segment-text">Sign In</span>
                 </button>
                 <button
@@ -707,7 +847,9 @@ export default function Auth({
                   className={`af-segment-btn ${isSignUp ? "af-segment-active" : ""}`}
                   onClick={() => switchMode("signup")}
                 >
-                  {isSignUp && <motion.div layoutId="activeTabBadge" className="af-segment-glow-pill" />}
+                  {isSignUp && (
+                    <motion.div layoutId="activeTabBadge" className="af-segment-glow-pill" />
+                  )}
                   <span className="af-segment-text">Create Account</span>
                 </button>
               </div>
@@ -718,9 +860,17 @@ export default function Auth({
               <motion.div
                 key={mode}
                 custom={slideDir}
-                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10, scale: shouldReduceMotion ? 1 : 0.985 }}
+                initial={{
+                  opacity: 0,
+                  y: shouldReduceMotion ? 0 : 10,
+                  scale: shouldReduceMotion ? 1 : 0.985,
+                }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10, scale: shouldReduceMotion ? 1 : 0.985 }}
+                exit={{
+                  opacity: 0,
+                  y: shouldReduceMotion ? 0 : -10,
+                  scale: shouldReduceMotion ? 1 : 0.985,
+                }}
                 transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
               >
                 {/* Header */}
@@ -850,7 +1000,11 @@ export default function Auth({
                             <span className="af-crit-title">Password Strength</span>
                             <span
                               className="af-strength-badge"
-                              style={{ color: strengthInfo.color, background: strengthInfo.badgeBg, borderColor: strengthInfo.color }}
+                              style={{
+                                color: strengthInfo.color,
+                                background: strengthInfo.badgeBg,
+                                borderColor: strengthInfo.color,
+                              }}
                             >
                               {strengthInfo.label}
                             </span>
@@ -862,22 +1016,33 @@ export default function Auth({
                                 className="af-strength-segment"
                                 style={{
                                   background:
-                                    strengthInfo.score >= i ? strengthInfo.color : "rgba(255, 255, 255, 0.08)",
+                                    strengthInfo.score >= i
+                                      ? strengthInfo.color
+                                      : "rgba(255, 255, 255, 0.08)",
                                 }}
                               />
                             ))}
                           </div>
                           <div className="af-criteria-grid">
-                            <span className={`af-crit-item ${criteria.minLength ? "af-crit-ok" : ""}`}>
-                              {criteria.minLength ? <Check size={12} /> : <X size={12} />} 8+ characters
+                            <span
+                              className={`af-crit-item ${criteria.minLength ? "af-crit-ok" : ""}`}
+                            >
+                              {criteria.minLength ? <Check size={12} /> : <X size={12} />} 8+
+                              characters
                             </span>
-                            <span className={`af-crit-item ${criteria.hasUpper ? "af-crit-ok" : ""}`}>
+                            <span
+                              className={`af-crit-item ${criteria.hasUpper ? "af-crit-ok" : ""}`}
+                            >
                               {criteria.hasUpper ? <Check size={12} /> : <X size={12} />} Uppercase
                             </span>
-                            <span className={`af-crit-item ${criteria.hasNumber ? "af-crit-ok" : ""}`}>
+                            <span
+                              className={`af-crit-item ${criteria.hasNumber ? "af-crit-ok" : ""}`}
+                            >
                               {criteria.hasNumber ? <Check size={12} /> : <X size={12} />} Number
                             </span>
-                            <span className={`af-crit-item ${criteria.hasSpecial ? "af-crit-ok" : ""}`}>
+                            <span
+                              className={`af-crit-item ${criteria.hasSpecial ? "af-crit-ok" : ""}`}
+                            >
                               {criteria.hasSpecial ? <Check size={12} /> : <X size={12} />} Symbol
                             </span>
                           </div>
@@ -925,12 +1090,14 @@ export default function Auth({
                           {confirmNewPassErr}
                         </div>
                       )}
-                      {!confirmNewPassErr && confirmNewPassword && confirmNewPassword === newPassword && (
-                        <div className="af-match-msg">
-                          <CheckCircle2 size={12} />
-                          Passwords match perfectly
-                        </div>
-                      )}
+                      {!confirmNewPassErr &&
+                        confirmNewPassword &&
+                        confirmNewPassword === newPassword && (
+                          <div className="af-match-msg">
+                            <CheckCircle2 size={12} />
+                            Passwords match perfectly
+                          </div>
+                        )}
                     </div>
 
                     <button type="submit" disabled={loading} className="af-cta-btn">
@@ -957,7 +1124,10 @@ export default function Auth({
                   <form onSubmit={handleMfaSubmit} className="af-form" noValidate>
                     <div className="af-info-banner" style={{ borderLeft: "3px solid #10B981" }}>
                       <ShieldCheck size={18} style={{ color: "#10B981", flexShrink: 0 }} />
-                      <span>Enter the 6-digit verification code generated by your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password, Authy).</span>
+                      <span>
+                        Enter the 6-digit verification code generated by your authenticator app
+                        (Google Authenticator, Microsoft Authenticator, 1Password, Authy).
+                      </span>
                     </div>
 
                     <div className="af-field">
@@ -975,11 +1145,18 @@ export default function Auth({
                           pattern="[0-9]*"
                           maxLength={6}
                           value={mfaCode}
-                          onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          onChange={(e) =>
+                            setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                          }
                           onFocus={() => setMfaFocused(true)}
                           onBlur={() => setMfaFocused(false)}
                           className="af-inp af-inp-padded"
-                          style={{ letterSpacing: "0.25em", fontSize: 18, fontWeight: 700, textAlign: "center" }}
+                          style={{
+                            letterSpacing: "0.25em",
+                            fontSize: 18,
+                            fontWeight: 700,
+                            textAlign: "center",
+                          }}
                           placeholder="000000"
                           autoFocus
                           autoComplete="one-time-code"
@@ -987,7 +1164,11 @@ export default function Auth({
                       </div>
                     </div>
 
-                    <button type="submit" disabled={loading || mfaCode.length !== 6} className="af-cta-btn">
+                    <button
+                      type="submit"
+                      disabled={loading || mfaCode.length !== 6}
+                      className="af-cta-btn"
+                    >
                       <div className="af-cta-shine" />
                       {loading ? (
                         <Loader2 size={18} className="af-spin" aria-hidden="true" />
@@ -1108,7 +1289,9 @@ export default function Auth({
                             onKeyUp={onCapsLockKey}
                             className="af-inp af-inp-padded"
                             placeholder={
-                              isSignUp ? "Create strong password (10+ chars)" : "Enter your password"
+                              isSignUp
+                                ? "Create strong password (10+ chars)"
+                                : "Enter your password"
                             }
                             autoComplete={isSignUp ? "new-password" : "current-password"}
                             aria-describedby={passErr ? "af-pass-err" : undefined}
@@ -1145,7 +1328,11 @@ export default function Auth({
                               <span className="af-crit-title">Password Security</span>
                               <span
                                 className="af-strength-badge"
-                                style={{ color: strengthInfo.color, background: strengthInfo.badgeBg, borderColor: strengthInfo.color }}
+                                style={{
+                                  color: strengthInfo.color,
+                                  background: strengthInfo.badgeBg,
+                                  borderColor: strengthInfo.color,
+                                }}
                               >
                                 {strengthInfo.label}
                               </span>
@@ -1153,209 +1340,220 @@ export default function Auth({
                             <div className="af-strength-bar-wrap">
                               {[1, 2, 3, 4, 5].map((i) => (
                                 <div
-                                key={i}
-                                className="af-strength-segment"
-                                style={{
-                                  background:
-                                    strengthInfo.score >= i
-                                      ? strengthInfo.color
-                                      : "rgba(255, 255, 255, 0.08)",
-                                }}
-                              />
-                            ))}
+                                  key={i}
+                                  className="af-strength-segment"
+                                  style={{
+                                    background:
+                                      strengthInfo.score >= i
+                                        ? strengthInfo.color
+                                        : "rgba(255, 255, 255, 0.08)",
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <div className="af-criteria-grid">
+                              <span
+                                className={`af-crit-item ${criteria.minLength ? "af-crit-ok" : ""}`}
+                              >
+                                {criteria.minLength ? <Check size={12} /> : <X size={12} />} 8+
+                                chars
+                              </span>
+                              <span
+                                className={`af-crit-item ${criteria.hasUpper ? "af-crit-ok" : ""}`}
+                              >
+                                {criteria.hasUpper ? <Check size={12} /> : <X size={12} />}{" "}
+                                Uppercase
+                              </span>
+                              <span
+                                className={`af-crit-item ${criteria.hasNumber ? "af-crit-ok" : ""}`}
+                              >
+                                {criteria.hasNumber ? <Check size={12} /> : <X size={12} />} Number
+                              </span>
+                              <span
+                                className={`af-crit-item ${criteria.hasSpecial ? "af-crit-ok" : ""}`}
+                              >
+                                {criteria.hasSpecial ? <Check size={12} /> : <X size={12} />} Symbol
+                              </span>
+                            </div>
                           </div>
-                          <div className="af-criteria-grid">
-                            <span className={`af-crit-item ${criteria.minLength ? "af-crit-ok" : ""}`}>
-                              {criteria.minLength ? <Check size={12} /> : <X size={12} />} 8+ chars
-                            </span>
-                            <span className={`af-crit-item ${criteria.hasUpper ? "af-crit-ok" : ""}`}>
-                              {criteria.hasUpper ? <Check size={12} /> : <X size={12} />} Uppercase
-                            </span>
-                            <span className={`af-crit-item ${criteria.hasNumber ? "af-crit-ok" : ""}`}>
-                              {criteria.hasNumber ? <Check size={12} /> : <X size={12} />} Number
-                            </span>
-                            <span className={`af-crit-item ${criteria.hasSpecial ? "af-crit-ok" : ""}`}>
-                              {criteria.hasSpecial ? <Check size={12} /> : <X size={12} />} Symbol
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
 
-                  {/* Confirm Password (Sign Up only) */}
-                  {isSignUp && (
-                    <div className="af-field">
-                      <label className="af-lbl" htmlFor="af-confirmpass">
-                        Confirm Password
-                      </label>
-                      <div className={wrapCls(confirmPassFocused, confirmPassErr)}>
-                        <span className="af-inp-icon">
-                          <Lock size={16} />
-                        </span>
-                        <input
-                          id="af-confirmpass"
-                          type={showConfirmPass ? "text" : "password"}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          onFocus={() => setConfirmPassFocused(true)}
-                          onBlur={() => {
-                            setConfirmPassFocused(false);
-                            setConfirmPassTouched(true);
-                          }}
-                          className="af-inp af-inp-padded"
-                          placeholder="Re-enter your password"
-                          autoComplete="new-password"
-                          aria-invalid={!!confirmPassErr}
-                        />
+                    {/* Confirm Password (Sign Up only) */}
+                    {isSignUp && (
+                      <div className="af-field">
+                        <label className="af-lbl" htmlFor="af-confirmpass">
+                          Confirm Password
+                        </label>
+                        <div className={wrapCls(confirmPassFocused, confirmPassErr)}>
+                          <span className="af-inp-icon">
+                            <Lock size={16} />
+                          </span>
+                          <input
+                            id="af-confirmpass"
+                            type={showConfirmPass ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            onFocus={() => setConfirmPassFocused(true)}
+                            onBlur={() => {
+                              setConfirmPassFocused(false);
+                              setConfirmPassTouched(true);
+                            }}
+                            className="af-inp af-inp-padded"
+                            placeholder="Re-enter your password"
+                            autoComplete="new-password"
+                            aria-invalid={!!confirmPassErr}
+                          />
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => setShowConfirmPass((v) => !v)}
+                            className="af-eye-btn"
+                            aria-label={showConfirmPass ? "Hide" : "Show"}
+                          >
+                            {showConfirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        {confirmPassErr && (
+                          <div className="af-err-msg" role="alert">
+                            <AlertCircle size={12} />
+                            {confirmPassErr}
+                          </div>
+                        )}
+                        {!confirmPassErr && confirmPassword && confirmPassword === password && (
+                          <div className="af-match-msg">
+                            <CheckCircle2 size={12} />
+                            Passwords match
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Remember me & Forgot Password */}
+                    {!isForgot && !isSignUp && (
+                      <div className="af-meta-row">
+                        <label className="af-remember">
+                          <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="af-chk"
+                          />
+                          <span className="af-remember-text">Remember my email</span>
+                        </label>
                         <button
                           type="button"
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => setShowConfirmPass((v) => !v)}
-                          className="af-eye-btn"
-                          aria-label={showConfirmPass ? "Hide" : "Show"}
+                          onClick={() => switchMode("forgot")}
+                          className="af-link af-forgot-btn"
                         >
-                          {showConfirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                          Forgot password?
                         </button>
                       </div>
-                      {confirmPassErr && (
-                        <div className="af-err-msg" role="alert">
-                          <AlertCircle size={12} />
-                          {confirmPassErr}
-                        </div>
-                      )}
-                      {!confirmPassErr && confirmPassword && confirmPassword === password && (
-                        <div className="af-match-msg">
-                          <CheckCircle2 size={12} />
-                          Passwords match
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Remember me & Forgot Password */}
-                  {!isForgot && !isSignUp && (
-                    <div className="af-meta-row">
-                      <label className="af-remember">
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="af-chk"
-                        />
-                        <span className="af-remember-text">Remember my email</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => switchMode("forgot")}
-                        className="af-link af-forgot-btn"
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Cloudflare Turnstile CAPTCHA widget (Audit S4) */}
-                  {isSignUp && (
-                    <div
-                      id="cf-turnstile-container"
-                      ref={turnstileContainerRef}
-                      style={{
-                        minHeight: 42,
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        margin: "8px 0 12px 0",
-                      }}
-                    />
-                  )}
-
-                  {/* Primary CTA Button with Gold Ingot Polish */}
-                  <button type="submit" disabled={loading} className="af-cta-btn">
-                    <div className="af-cta-shine" />
-                    {loading ? (
-                      <Loader2 size={18} className="af-spin" aria-hidden="true" />
-                    ) : (
-                      <>
-                        <span>
-                          {isForgot
-                            ? "Send Recovery Link"
-                            : isSignUp
-                              ? "Create Free Account"
-                              : "Sign In to Dashboard"}
-                        </span>
-                        <ArrowRight size={16} strokeWidth={2.5} aria-hidden="true" />
-                      </>
                     )}
-                  </button>
 
-                  {/* Back to Sign In button for Forgot Mode */}
-                  {isForgot && (
-                    <div className="af-switch">
+                    {/* Cloudflare Turnstile CAPTCHA widget (Audit S4) */}
+                    {isSignUp && (
+                      <div
+                        id="cf-turnstile-container"
+                        ref={turnstileContainerRef}
+                        style={{
+                          minHeight: 42,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          margin: "8px 0 12px 0",
+                        }}
+                      />
+                    )}
+
+                    {/* Primary CTA Button with Gold Ingot Polish */}
+                    <button type="submit" disabled={loading} className="af-cta-btn">
+                      <div className="af-cta-shine" />
+                      {loading ? (
+                        <Loader2 size={18} className="af-spin" aria-hidden="true" />
+                      ) : (
+                        <>
+                          <span>
+                            {isForgot
+                              ? "Send Recovery Link"
+                              : isSignUp
+                                ? "Create Free Account"
+                                : "Sign In to Dashboard"}
+                          </span>
+                          <ArrowRight size={16} strokeWidth={2.5} aria-hidden="true" />
+                        </>
+                      )}
+                    </button>
+
+                    {/* Back to Sign In button for Forgot Mode */}
+                    {isForgot && (
+                      <div className="af-switch">
+                        <button
+                          type="button"
+                          onClick={() => switchMode("login")}
+                          className="af-back-link"
+                        >
+                          <ArrowLeft size={14} />
+                          <span>Back to Sign In</span>
+                        </button>
+                      </div>
+                    )}
+                  </form>
+                )}
+
+                {/* ── Guest Demo Access Section ── */}
+                {(isLogin || isSignUp) && (
+                  <div className="af-demo-container">
+                    <div className="af-divider-row" role="separator" aria-label="Or explore demo">
+                      <span className="af-divider-line" />
+                      <span className="af-divider-text">OR TEST-DRIVE WITH DUMMY DATA</span>
+                      <span className="af-divider-line" />
+                    </div>
+
+                    <div className="af-demo-card">
+                      <div className="af-demo-card-shine" />
+                      <div className="af-demo-content">
+                        <div className="af-demo-icon-wrap">
+                          <Sparkles size={18} className="af-demo-icon" />
+                        </div>
+                        <div className="af-demo-text">
+                          <div className="af-demo-title-row">
+                            <span className="af-demo-title">Explore Interactive Demo</span>
+                            <span className="af-demo-badge">No Password</span>
+                          </div>
+                          <p className="af-demo-desc">
+                            Explore full wealth tracking with comprehensive dummy portfolio data —
+                            no username, password, or signup needed.
+                          </p>
+                        </div>
+                      </div>
+
                       <button
                         type="button"
-                        onClick={() => switchMode("login")}
-                        className="af-back-link"
+                        onClick={handleDemoLogin}
+                        disabled={loading}
+                        className="af-demo-btn"
+                        id="btn-explore-demo"
                       >
-                        <ArrowLeft size={14} />
-                        <span>Back to Sign In</span>
+                        <Zap size={15} className="af-demo-btn-icon" />
+                        <span>Launch Demo with Dummy Data</span>
+                        <ArrowRight size={14} className="af-demo-btn-arrow" />
                       </button>
                     </div>
-                  )}
-                </form>
-              )}
-
-              {/* ── Guest Demo Access Section ── */}
-              {(isLogin || isSignUp) && (
-                <div className="af-demo-container">
-                  <div className="af-divider-row" role="separator" aria-label="Or explore demo">
-                    <span className="af-divider-line" />
-                    <span className="af-divider-text">OR TEST-DRIVE WITH DUMMY DATA</span>
-                    <span className="af-divider-line" />
                   </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
 
-                  <div className="af-demo-card">
-                    <div className="af-demo-card-shine" />
-                    <div className="af-demo-content">
-                      <div className="af-demo-icon-wrap">
-                        <Sparkles size={18} className="af-demo-icon" />
-                      </div>
-                      <div className="af-demo-text">
-                        <div className="af-demo-title-row">
-                          <span className="af-demo-title">Explore Interactive Demo</span>
-                          <span className="af-demo-badge">No Password</span>
-                        </div>
-                        <p className="af-demo-desc">
-                          Explore full wealth tracking with comprehensive dummy portfolio data — no username, password, or signup needed.
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleDemoLogin}
-                      disabled={loading}
-                      className="af-demo-btn"
-                      id="btn-explore-demo"
-                    >
-                      <Zap size={15} className="af-demo-btn-icon" />
-                      <span>Launch Demo with Dummy Data</span>
-                      <ArrowRight size={14} className="af-demo-btn-arrow" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Privacy & Trust micro-footer */}
-          <div className="af-form-footer">
-            <ShieldCheck size={14} className="af-footer-shield" />
-            <span>256-bit Encryption • Zero-Telemetry Privacy • End-to-End Secure</span>
+            {/* Privacy & Trust micro-footer */}
+            <div className="af-form-footer">
+              <ShieldCheck size={14} className="af-footer-shield" />
+              <span>256-bit Encryption • Zero-Telemetry Privacy • End-to-End Secure</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       <style>{AF_STYLES}</style>
     </div>
@@ -1396,14 +1594,14 @@ const AF_STYLES = `
 
 .af-demo-card {
   position: relative;
-  background: linear-gradient(145deg, rgba(212, 175, 55, 0.08) 0%, rgba(16, 24, 42, 0.92) 60%, rgba(99, 102, 241, 0.06) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  border-radius: 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   overflow: hidden;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1489,16 +1687,19 @@ const AF_STYLES = `
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 13px 18px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  color: #1E293B;
+  font-family: 'Outfit', sans-serif;
   font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.03em;
   cursor: pointer;
-  background: rgba(212, 175, 55, 0.14);
-  color: #F5E5C9;
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .af-demo-btn:hover:not(:disabled) {
@@ -1525,26 +1726,27 @@ const AF_STYLES = `
   transform: translateX(3px);
 }
 
-/* ── Global Container & Luxe Tokens ─────── */
+/* ── Global Container & Luxe Tokens (Senior Designer Light Theme) ─────── */
 .af-shell {
-  --af-gold-primary: #D4AF37;
-  --af-gold-light: #F5E5C9;
-  --af-gold-glow: rgba(212, 175, 55, 0.25);
-  --af-gold-border: rgba(212, 175, 55, 0.35);
-  --af-gold-btn: linear-gradient(135deg, #E8C872 0%, #C5A152 50%, #9C782B 100%);
-  --af-gold-btn-hover: linear-gradient(135deg, #F3D993 0%, #D4AF37 50%, #B38932 100%);
+  --af-gold-primary: #D97706;
+  --af-gold-light: #B45309;
+  --af-gold-glow: rgba(217, 119, 6, 0.2);
+  --af-gold-border: rgba(217, 119, 6, 0.3);
+  --af-gold-btn: linear-gradient(135deg, #0F172A 0%, #1E293B 70%, #312E81 100%);
+  --af-gold-btn-hover: linear-gradient(135deg, #1E293B 0%, #312E81 70%, #4338CA 100%);
   
-  --af-bg-main: #060911;
-  --af-card-surface: rgba(12, 18, 32, 0.82);
-  --af-card-border: rgba(255, 255, 255, 0.08);
-  --af-input-surface: rgba(16, 24, 42, 0.88);
-  --af-input-surface-focus: rgba(20, 30, 52, 0.98);
+  --af-bg-main: #F8FAFC;
+  --af-card-surface: rgba(255, 255, 255, 0.94);
+  --af-card-border: rgba(226, 232, 240, 0.95);
+  --af-input-surface: #FFFFFF;
+  --af-input-surface-focus: #FFFFFF;
   
-  --af-text-head: #FFFFFF;
-  --af-text-body: #E2E8F0;
-  --af-text-muted: #8E9BAE;
+  --af-text-head: #0F172A;
+  --af-text-body: #1E293B;
+  --af-text-muted: #64748B;
 
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--af-bg-main);
@@ -1575,7 +1777,7 @@ const AF_STYLES = `
   right: 15%;
   width: 580px;
   height: 580px;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.16) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.05) 0%, transparent 70%);
 }
 
 .af-aurora-indigo {
@@ -1583,7 +1785,7 @@ const AF_STYLES = `
   left: 5%;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.045) 0%, transparent 70%);
   animation-duration: 20s;
   animation-delay: -4s;
 }
@@ -1593,7 +1795,7 @@ const AF_STYLES = `
   left: 30%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.03) 0%, transparent 70%);
   animation-duration: 24s;
   animation-delay: -8s;
 }
@@ -1602,34 +1804,36 @@ const AF_STYLES = `
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(15, 23, 42, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
 }
 
 /* ── Brand Panel (Left Showcase) ────────── */
 .af-brand-panel {
   position: relative;
-  flex: 0 0 48%;
-  min-width: 460px;
-  max-width: 660px;
-  padding: 64px 52px;
+  flex: 0 0 52%;
+  min-width: 480px;
+  max-width: 720px;
+  padding: 56px 48px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid #E2E8F0;
   z-index: 2;
-  background: linear-gradient(170deg, rgba(10, 15, 28, 0.85) 0%, rgba(6, 9, 17, 0.95) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  overflow-y: auto;
 }
 
 .af-brand-content {
   position: relative;
-  max-width: 480px;
+  max-width: 500px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 /* Brand Logo */
@@ -1683,16 +1887,17 @@ const AF_STYLES = `
 .af-hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 14px;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: 9999px;
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #F5E5C9;
   width: fit-content;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .af-badge-icon {
@@ -1701,7 +1906,7 @@ const AF_STYLES = `
 
 .af-brand-headline {
   font-family: 'Outfit', sans-serif;
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 700;
   line-height: 1.16;
   letter-spacing: -0.03em;
@@ -1710,37 +1915,95 @@ const AF_STYLES = `
 }
 
 .af-brand-headline-accent {
-  background: linear-gradient(135deg, #FFF1D0 0%, #E6CA85 50%, #C5A152 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 45%, #312E81 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .af-brand-sub {
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 13.5px;
+  line-height: 1.6;
   color: #94A3B8;
   margin: 0;
   font-weight: 400;
 }
 
+/* 3D Showcase Box */
+.af-3d-showcase-box {
+  position: relative;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.af-3d-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+
+.af-3d-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #F8FAFC;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1E293B;
+  border: 1px solid #E2E8F0;
+}
+
+.af-3d-status {
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #4F46E5;
+  background: #EEF2F6;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  font-weight: 600;
+}
+
+.af-3d-canvas-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.af-3d-caption {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #F1F5F9;
+  width: 100%;
+  justify-content: center;
+}
+
 /* Live Holographic Mockup Card */
 .af-preview-card {
   position: relative;
-  background: rgba(14, 21, 38, 0.75);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: 20px;
   padding: 22px 24px;
-  box-shadow: 
-    0 20px 40px -10px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
   overflow: hidden;
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .af-preview-card:hover {
@@ -1770,12 +2033,16 @@ const AF_STYLES = `
 }
 
 .af-preview-pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
+  gap: 6px;
+  background: #F8FAFC;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  color: #475569;
   font-weight: 600;
-  color: #F8FAFC;
+  border: 1px solid #E2E8F0;
 }
 
 .af-live-dot {
@@ -1788,33 +2055,34 @@ const AF_STYLES = `
 }
 
 .af-preview-growth {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  color: #047857;
+  font-size: 11.5px;
   font-weight: 700;
-  color: #34D399;
-  background: rgba(16, 185, 129, 0.16);
-  padding: 4px 9px;
-  border-radius: 8px;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: #ECFDF5;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #A7F3D0;
 }
 
 .af-preview-amount {
   display: flex;
   align-items: baseline;
-  gap: 5px;
-  margin-top: 2px;
+  gap: 4px;
+  margin-bottom: 4px;
+  color: #0F172A;
 }
 
 .af-preview-currency {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: #D4AF37;
 }
 
 .af-preview-val {
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.035em;
   color: #FFFFFF;
@@ -1823,16 +2091,18 @@ const AF_STYLES = `
 
 .af-preview-lbl {
   font-size: 12px;
-  color: #94A3B8;
+  color: #64748B;
+  margin-bottom: 14px;
 }
 
 .af-asset-bar {
   display: flex;
-  height: 8px;
+  height: 6px;
   border-radius: 9999px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
-  margin-top: 4px;
+  background: #F1F5F9;
+  gap: 2px;
+  margin-bottom: 14px;
 }
 
 .af-asset-seg {
@@ -1840,7 +2110,7 @@ const AF_STYLES = `
   transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.af-seg-mf { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+.af-seg-mf { background: linear-gradient(90deg, #38BDF8, #60A5FA); }
 .af-seg-re { background: linear-gradient(90deg, #D4AF37, #F5E5C9); }
 .af-seg-epf { background: linear-gradient(90deg, #10B981, #34D399); }
 .af-seg-cash { background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
@@ -1848,17 +2118,21 @@ const AF_STYLES = `
 .af-preview-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 2px;
 }
 
 .af-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #CBD5E1;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #334155;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
 .af-tag-dot {
@@ -1866,7 +2140,7 @@ const AF_STYLES = `
   height: 7px;
   border-radius: 50%;
 }
-.af-dot-mf { background: #3B82F6; box-shadow: 0 0 6px #3B82F6; }
+.af-dot-mf { background: #38BDF8; box-shadow: 0 0 6px #38BDF8; }
 .af-dot-re { background: #D4AF37; box-shadow: 0 0 6px #D4AF37; }
 .af-dot-epf { background: #10B981; box-shadow: 0 0 6px #10B981; }
 .af-dot-cash { background: #8B5CF6; box-shadow: 0 0 6px #8B5CF6; }
@@ -1875,19 +2149,21 @@ const AF_STYLES = `
 .af-feature-chips-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .af-feature-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #1E293B;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .af-feature-item:hover, .af-feat-active {
@@ -1897,9 +2173,9 @@ const AF_STYLES = `
 }
 
 .af-feat-icon-box {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: rgba(212, 175, 55, 0.14);
   border: 1px solid rgba(212, 175, 55, 0.35);
   color: #E6CA85;
@@ -1912,26 +2188,26 @@ const AF_STYLES = `
 
 .af-feat-text-wrap strong {
   display: block;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: #FFFFFF;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .af-feat-text-wrap p {
   margin: 0;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #94A3B8;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .af-brand-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11.5px;
+  font-size: 11px;
   color: #64748B;
-  padding-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -1960,7 +2236,7 @@ const AF_STYLES = `
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 36px;
+  padding: 44px 32px;
   min-height: 100dvh;
   min-height: 100vh;
   overflow-y: auto;
@@ -1971,31 +2247,34 @@ const AF_STYLES = `
 .af-card-outer {
   position: relative;
   width: 100%;
-  max-width: 450px;
+  max-width: 440px;
 }
 
 .af-card-border-glow {
   position: absolute;
-  inset: -1px;
-  border-radius: 26px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(212, 175, 55, 0.4) 50%, rgba(255, 255, 255, 0.05) 100%);
-  z-index: 0;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #4F46E5 30%, #D97706 70%, transparent);
+  border-radius: 50%;
+  z-index: 10;
   pointer-events: none;
 }
 
 .af-card {
   position: relative;
-  z-index: 1;
-  width: 100%;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px;
+  padding: 40px 36px;
   display: flex;
   flex-direction: column;
   gap: 22px;
-  background: var(--af-card-surface);
-  border-radius: 25px;
-  padding: 38px 34px;
   box-shadow: 
-    0 25px 60px -15px rgba(0, 0, 0, 0.75),
-    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+    0 30px 60px -15px rgba(15, 23, 42, 0.07),
+    0 4px 16px -2px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
 }
@@ -2006,13 +2285,13 @@ const AF_STYLES = `
 
 /* Segmented Mode Switcher */
 .af-segment-switch {
-  display: flex;
-  background: rgba(16, 24, 42, 0.75);
-  padding: 5px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
-  user-select: none;
+  display: flex;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
 }
 
 .af-segment-btn {
@@ -2045,13 +2324,10 @@ const AF_STYLES = `
 .af-segment-glow-pill {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(170, 124, 17, 0.45) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.5);
-  border-radius: 12px;
-  box-shadow: 
-    0 4px 14px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
-  z-index: 1;
+  background: #FFFFFF;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  z-index: 0;
 }
 
 .af-segment-text {
@@ -2074,7 +2350,7 @@ const AF_STYLES = `
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #D4AF37;
+  color: #B45309;
   margin-bottom: 2px;
 }
 
@@ -2082,23 +2358,23 @@ const AF_STYLES = `
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #F59E0B;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.9);
+  background: #D97706;
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.6);
 }
 
 .af-card-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 27px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: #FFFFFF;
+  color: #0F172A;
   margin: 0;
   line-height: 1.2;
 }
 
 .af-card-sub {
-  font-size: 13.5px;
-  color: #94A3B8;
+  font-size: 13px;
+  color: #64748B;
   line-height: 1.5;
   margin: 0;
 }
@@ -2108,9 +2384,9 @@ const AF_STYLES = `
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 13px 16px;
-  border-radius: 14px;
-  font-size: 13px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   line-height: 1.45;
   margin-bottom: 2px;
@@ -2128,15 +2404,15 @@ const AF_STYLES = `
 }
 
 .af-alert-err {
-  background: rgba(239, 68, 68, 0.14);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #FCA5A5;
+  background: #FFF1F2;
+  border: 1px solid #FECDD3;
+  color: #BE123C;
 }
 
 .af-alert-ok {
-  background: rgba(16, 185, 129, 0.14);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #6EE7B7;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #047857;
 }
 
 .af-info-banner {
@@ -2147,7 +2423,7 @@ const AF_STYLES = `
   background: rgba(212, 175, 55, 0.14);
   border-radius: 12px;
   border: 1px solid rgba(212, 175, 55, 0.35);
-  font-size: 13px;
+  font-size: 12.5px;
   color: #FDE68A;
   font-weight: 500;
   margin-bottom: 8px;
@@ -2169,7 +2445,7 @@ const AF_STYLES = `
 .af-lbl {
   font-size: 13px;
   font-weight: 600;
-  color: #CBD5E1;
+  color: #334155;
   letter-spacing: -0.01em;
 }
 
@@ -2184,24 +2460,24 @@ const AF_STYLES = `
   position: relative;
   display: flex;
   align-items: center;
-  background: var(--af-input-surface);
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 13px;
-  transition: all 0.2s ease;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .af-inp-wrap:hover:not(.af-focused):not(.af-inp-err) {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.af-inp-wrap.af-focused {
-  border-color: #D4AF37;
-  background: var(--af-input-surface-focus);
+.af-inp-wrap.af-focused,
+.af-inp-wrap:focus-within {
+  border-color: #4F46E5;
+  background: #FFFFFF;
   box-shadow: 
-    0 0 0 3px rgba(212, 175, 55, 0.25),
-    0 0 20px rgba(212, 175, 55, 0.15),
-    inset 0 1px 2px rgba(0, 0, 0, 0.2);
+    0 0 0 3.5px rgba(79, 70, 229, 0.14),
+    0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .af-inp-wrap.af-inp-err {
@@ -2210,15 +2486,15 @@ const AF_STYLES = `
 }
 
 .af-inp {
-  flex: 1;
-  background: none;
+  width: 100%;
+  background: transparent;
   border: none;
   outline: none;
-  padding: 13px 14px;
-  font-size: 16px;
-  font-family: inherit;
-  color: #FFFFFF;
-  min-width: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  color: #0F172A;
+  padding: 12px 14px;
+  font-weight: 500;
 }
 
 .af-inp::placeholder {
@@ -2238,7 +2514,8 @@ const AF_STYLES = `
   transition: color 0.2s;
 }
 
-.af-focused .af-inp-icon {
+.af-focused .af-inp-icon,
+.af-inp-wrap:focus-within .af-inp-icon {
   color: #D4AF37;
 }
 
@@ -2290,8 +2567,8 @@ const AF_STYLES = `
 
 /* Criteria Checklist */
 .af-criteria-card {
-  background: rgba(16, 24, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: 14px;
   padding: 12px 14px;
   margin-top: 6px;
@@ -2309,7 +2586,7 @@ const AF_STYLES = `
 .af-crit-title {
   font-size: 11.5px;
   font-weight: 600;
-  color: #CBD5E1;
+  color: #334155;
 }
 
 .af-strength-badge {
@@ -2349,7 +2626,7 @@ const AF_STYLES = `
 }
 
 .af-crit-ok {
-  color: #34D399;
+  color: #059669;
   font-weight: 600;
 }
 
@@ -2366,7 +2643,7 @@ const AF_STYLES = `
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #CBD5E1;
+  color: #475569;
   cursor: pointer;
   user-select: none;
   font-weight: 500;
@@ -2390,7 +2667,7 @@ const AF_STYLES = `
   border: none;
   font-size: 13px;
   font-weight: 600;
-  color: #D4AF37;
+  color: #4F46E5;
   cursor: pointer;
   padding: 0;
   font-family: inherit;
@@ -2430,20 +2707,20 @@ const AF_STYLES = `
   width: 100%;
   padding: 14px 20px;
   background: var(--af-gold-btn);
-  color: #060911;
+  color: #FFFFFF;
   border: none;
-  border-radius: 13px;
+  border-radius: 14px;
   font-size: 15px;
-  font-weight: 750;
-  font-family: inherit;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   box-shadow: 
-    0 8px 24px -4px rgba(212, 175, 55, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    0 8px 24px -4px rgba(15, 23, 42, 0.28),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   margin-top: 4px;
   overflow: hidden;
@@ -2467,9 +2744,10 @@ const AF_STYLES = `
 .af-cta-btn:hover:not(:disabled) {
   background: var(--af-gold-btn-hover);
   box-shadow: 
-    0 12px 30px -4px rgba(212, 175, 55, 0.55),
-    0 0 20px rgba(212, 175, 55, 0.25);
+    0 12px 28px -3px rgba(15, 23, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transform: translateY(-1.5px);
+  filter: brightness(1.05);
 }
 
 .af-cta-btn:active:not(:disabled) {
@@ -2481,6 +2759,15 @@ const AF_STYLES = `
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Accessible focus visible rings */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+.af-feature-item:focus-visible {
+  outline: 2px solid #D4AF37 !important;
+  outline-offset: 2px !important;
 }
 
 /* Footer info */
@@ -2548,8 +2835,25 @@ const AF_STYLES = `
   to { transform: rotate(360deg); }
 }
 
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .af-aurora,
+  .af-logo-ring-halo,
+  .af-live-dot,
+  .af-preview-card-shine,
+  .af-cta-shine {
+    animation: none !important;
+  }
+  .af-preview-card:hover,
+  .af-cta-btn:hover,
+  .af-demo-btn:hover,
+  .af-feature-item:hover {
+    transform: none !important;
+  }
+}
+
 /* ── Responsive Viewports ───────────────── */
-@media (max-width: 1200px) {
+@media (max-width: 1100px) {
   .af-brand-panel {
     display: none;
   }
@@ -2563,21 +2867,34 @@ const AF_STYLES = `
     gap: 14px;
     margin-bottom: 4px;
     padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid #E2E8F0;
   }
   .af-logo-name {
     font-family: 'Outfit', sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: #FFFFFF;
+    color: #0F172A;
   }
   .af-logo-tagline {
     font-size: 11.5px;
-    color: #D4AF37;
+    color: #B45309;
   }
   .af-card {
-    padding: 32px 26px;
-  }
+  position: relative;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 
+    0 30px 60px -15px rgba(15, 23, 42, 0.07),
+    0 4px 16px -2px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
 }
 
 @media (max-width: 480px) {
@@ -2585,9 +2902,21 @@ const AF_STYLES = `
     padding: 16px 12px;
   }
   .af-card {
-    padding: 24px 18px;
-    border-radius: 20px;
-  }
+  position: relative;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 
+    0 30px 60px -15px rgba(15, 23, 42, 0.07),
+    0 4px 16px -2px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
   .af-card-title {
     font-size: 22px;
   }
@@ -2596,9 +2925,24 @@ const AF_STYLES = `
     font-size: 12.5px;
   }
   .af-demo-btn {
-    padding: 12px 14px;
-    font-size: 12.5px;
-  }
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  color: #1E293B;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
 }
 
 @media (max-width: 380px) {
@@ -2606,10 +2950,21 @@ const AF_STYLES = `
     padding: 12px 8px;
   }
   .af-card {
-    padding: 20px 14px;
-    border-radius: 16px;
-    gap: 16px;
-  }
+  position: relative;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 
+    0 30px 60px -15px rgba(15, 23, 42, 0.07),
+    0 4px 16px -2px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
   .af-card-title {
     font-size: 20px;
   }
@@ -2618,22 +2973,65 @@ const AF_STYLES = `
     font-size: 11.5px;
   }
   .af-demo-btn {
-    padding: 11px 10px;
-    font-size: 12px;
-  }
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  color: #1E293B;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
 }
 
 @media (max-width: 340px) {
   .af-card {
-    padding: 16px 10px;
-  }
+  position: relative;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 
+    0 30px 60px -15px rgba(15, 23, 42, 0.07),
+    0 4px 16px -2px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
   .af-segment-btn {
     padding: 7px 4px;
     font-size: 10.5px;
   }
   .af-demo-btn {
-    padding: 10px 8px;
-    font-size: 11px;
-  }
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  color: #1E293B;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
 }
 `;
