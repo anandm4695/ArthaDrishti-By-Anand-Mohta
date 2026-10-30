@@ -661,7 +661,7 @@ export default function Auth({
               <span className="af-3d-status">Euler 3D Projection</span>
             </div>
             <div className="af-3d-canvas-wrap">
-              <WealthOrbCanvas size={230} interactive={true} />
+              <WealthOrbCanvas height={220} interactive={true} />
             </div>
             <div className="af-3d-caption">
               <span>Interactive 3D Matrix • Hover or tilt to inspect asset convergence</span>
