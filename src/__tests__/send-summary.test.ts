@@ -847,5 +847,208 @@ describe("Daily, Weekly & Monthly Email Summary Engine", () => {
       expect(debtFreeAlert).toBeDefined();
     });
   });
+
+  describe("11. Stock & Equities Intelligence across Daily, Weekly, and Monthly Summaries", () => {
+    it("accurately computes stock portfolio metrics, P&L, day changes, and rankings", () => {
+      const stateWithStocks = {
+        bankAccounts: [{ balance: 100000 }],
+        stocks: [
+          {
+            symbol: "TCS.NS",
+            companyName: "Tata Consultancy Services",
+            qty: 10,
+            avgPrice: 3500, // Invested = 35,000
+            currentPrice: 4000, // Current = 40,000 (+5,000, +14.3%)
+            dayChange: 50, // Day change = +50 * 10 = +500
+            dayChangePercent: 1.25,
+            exchange: "NSE",
+          },
+          {
+            symbol: "INFY",
+            companyName: "Infosys Ltd",
+            qty: 20,
+            avgPrice: 1800, // Invested = 36,000
+            currentPrice: 1500, // Current = 30,000 (-6,000, -16.7%)
+            dayChange: -20, // Day change = -20 * 20 = -400
+            dayChangePercent: -1.32,
+            exchange: "NSE",
+          },
+          {
+            symbol: "RELIANCE.BO",
+            companyName: "Reliance Industries",
+            qty: 30,
+            avgPrice: 2000, // Invested = 60,000
+            currentPrice: 3000, // Current = 90,000 (+30,000, +50%)
+            dayChange: 30, // Day change = +30 * 30 = +900
+            dayChangePercent: 1.01,
+            exchange: "BSE",
+          },
+        ],
+        mutualFunds: [
+          { scheme: "HDFC Top 100", units: 100, buyNav: 800, currentNav: 1000 }, // Invested 80K, Current 100K (+20K)
+        ],
+      };
+
+      const summary = computeSummary(stateWithStocks);
+
+      // Stock Invested = 35K + 36K + 60K = 131,000
+      expect(summary.stockInvested).toBe(131000);
+
+      // Stock Value = 40K + 30K + 90K = 160,000
+      expect(summary.stockValue).toBe(160000);
+      expect(summary.stockTotal).toBe(160000);
+
+      // Stock Unrealized P&L = 160K - 131K = +29,000 (+22.1%)
+      expect(summary.stockPnL).toBe(29000);
+      expect(summary.stockPnLPct).toBe(22.1);
+
+      // Stock Day Change = +500 - 400 + 900 = +1000
+      expect(summary.stockDayChange).toBe(1000);
+      // Prior day value = 160,000 - 1,000 = 159,000 => 1000 / 159000 = 0.6%
+      expect(summary.stockDayChangePct).toBe(0.6);
+
+      // Top Holdings: RELIANCE (90K), TCS (40K), INFY (30K)
+      expect(summary.topStockHoldings[0].cleanSymbol).toBe("RELIANCE");
+      expect(summary.topStockHoldings[0].currentValue).toBe(90000);
+      expect(summary.topStockHoldings[0].exchange).toBe("BSE");
+      expect(summary.topStockHoldings[0].weightPct).toBe(56.3); // 90K / 160K = 56.3%
+
+      // Top Gainer: RELIANCE (+50%), TCS (+14.3%)
+      expect(summary.topStockGainers[0].cleanSymbol).toBe("RELIANCE");
+      expect(summary.topStockGainers[0].pnlPct).toBe(50);
+
+      // Top Loser / Laggard: INFY (-16.7%)
+      expect(summary.topStockLosers[0].cleanSymbol).toBe("INFY");
+      expect(summary.topStockLosers[0].pnlPct).toBe(-16.7);
+
+      // Mutual Funds Companion Analytics
+      expect(summary.mfInvested).toBe(80000);
+      expect(summary.mfTotal).toBe(100000);
+      expect(summary.mfPnL).toBe(20000);
+      expect(summary.mfPnLPct).toBe(25);
+
+      // Combined Market Assets
+      expect(summary.totalMarketAssets).toBe(260000);
+      expect(summary.totalMarketInvested).toBe(211000);
+      expect(summary.totalMarketPnL).toBe(49000);
+    });
+
+    it("triggers concentration and performance milestone alerts for stocks", () => {
+      const stateConcentrated = {
+        bankAccounts: [{ balance: 50000 }],
+        stocks: [
+          { symbol: "HDFCBANK", qty: 100, avgPrice: 1000, currentPrice: 1500, exchange: "NSE" }, // 150K (75%)
+          { symbol: "ITC", qty: 100, avgPrice: 400, currentPrice: 500, exchange: "NSE" }, // 50K (25%)
+        ],
+      };
+
+      const summary = computeSummary(stateConcentrated);
+
+      // Concentration Alert: HDFCBANK is 75% of portfolio (>= 35%)
+      const concAlert = summary.alerts.find(
+        (a: any) => a.type === "warn" && a.msg.includes("Equity concentration alert")
+      );
+      expect(concAlert).toBeDefined();
+      expect(concAlert.msg).toContain("HDFCBANK");
+      expect(concAlert.msg).toContain("75%");
+
+      // Performance Milestone Alert: Up 50% overall (>= 20%)
+      const milestoneAlert = summary.alerts.find(
+        (a: any) => a.type === "info" && a.msg.includes("Stock portfolio milestone")
+      );
+      expect(milestoneAlert).toBeDefined();
+      expect(milestoneAlert.msg).toContain("+42.9%");
+    });
+
+    it("renders Equities & Demat Pulse in Daily Digest email", () => {
+      const state = {
+        bankAccounts: [{ balance: 200000 }],
+        stocks: [
+          { symbol: "TCS.NS", qty: 10, avgPrice: 3200, currentPrice: 3800, dayChange: 45, exchange: "NSE" },
+          { symbol: "INFY.NS", qty: 50, avgPrice: 1400, currentPrice: 1600, dayChange: 20, exchange: "NSE" },
+        ],
+      };
+
+      const summary = computeSummary(state);
+      const html = generateHTML(summary, "daily", "Anand");
+
+      expect(html).toContain("Equities &amp; Demat Pulse");
+      expect(html).toContain("Stock Portfolio Value");
+      expect(html).toContain("Overall P&amp;L");
+      expect(html).toContain("TCS");
+      expect(html).toContain("INFY");
+      expect(html).toContain("NSE");
+    });
+
+    it("renders Equities & Demat Performance and Mutual Funds in Weekly Briefing email", () => {
+      const state = {
+        bankAccounts: [{ balance: 300000 }],
+        stocks: [
+          { symbol: "RELIANCE.NS", qty: 25, avgPrice: 2400, currentPrice: 2800, exchange: "NSE" },
+        ],
+        mutualFunds: [
+          { scheme: "Parag Parikh Flexi Cap", units: 500, buyNav: 50, currentNav: 75 },
+        ],
+      };
+
+      const summary = computeSummary(state);
+      const html = generateHTML(summary, "weekly", "Anand");
+
+      expect(html).toContain("Equities &amp; Demat Portfolio");
+      expect(html).toContain("Portfolio Value");
+      expect(html).toContain("Total Invested");
+      expect(html).toContain("Unrealized Gain");
+      expect(html).toContain("RELIANCE");
+      expect(html).toContain("MUTUAL FUNDS");
+      expect(html).toContain("Mutual Funds Portfolio");
+    });
+
+    it("renders Equities Deep-Dive with KPI cards, Top Performer, and Holdings Ledger in Monthly Statement", () => {
+      const state = {
+        bankAccounts: [{ balance: 500000 }],
+        stocks: [
+          { symbol: "TITAN.NS", qty: 20, avgPrice: 3000, currentPrice: 3600, exchange: "NSE" }, // +600 (+20%)
+          { symbol: "WIPRO.NS", qty: 100, avgPrice: 500, currentPrice: 450, exchange: "NSE" }, // -50 (-10%)
+        ],
+        mutualFunds: [
+          { scheme: "Mirae Asset Large Cap", units: 300, buyNav: 80, currentNav: 100 },
+        ],
+      };
+
+      const refDate = new Date("2026-10-15T00:00:00Z");
+      const summary = computeSummary(state, refDate);
+      const html = generateHTML(summary, "monthly", "Anand", refDate);
+
+      expect(html).toContain("Equities &amp; Demat Portfolio Deep-Dive");
+      expect(html).toContain("Equity Market Value");
+      expect(html).toContain("Unrealized Wealth &amp; ROI");
+      expect(html).toContain("Top Performer");
+      expect(html).toContain("TITAN");
+      expect(html).toContain("Lagging");
+      expect(html).toContain("WIPRO");
+      expect(html).toContain("Mutual Funds Portfolio Summary");
+    });
+
+    it("gracefully omits equity sections when user holds zero stocks", () => {
+      const stateNoStocks = {
+        bankAccounts: [{ balance: 150000 }],
+        stocks: [],
+        mutualFunds: [],
+      };
+
+      const summary = computeSummary(stateNoStocks);
+      expect(summary.stockValue).toBe(0);
+      expect(summary.stockInvested).toBe(0);
+      expect(summary.stockPnL).toBe(0);
+
+      const dailyHtml = generateHTML(summary, "daily", "Anand");
+      const weeklyHtml = generateHTML(summary, "weekly", "Anand");
+      const monthlyHtml = generateHTML(summary, "monthly", "Anand");
+
+      expect(dailyHtml).not.toContain("Equities &amp; Demat Pulse");
+      expect(weeklyHtml).not.toContain("Equities &amp; Demat Portfolio");
+      expect(monthlyHtml).not.toContain("Equities &amp; Demat Portfolio Deep-Dive");
+    });
+  });
 });
 

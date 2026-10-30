@@ -509,10 +509,83 @@ function computeSummary(state, refDate = new Date()) {
     return s + Number(m.units || 0) * fallbackNav;
   }, 0);
 
-  const stockTotal = (state.stocks || []).reduce((s, st) => {
+  const stockValue = (state.stocks || []).reduce((s, st) => {
     const fallbackPrice = Number(st.currentPrice || 0) || Number(st.avgPrice || 0);
     return s + Number(st.qty || 0) * fallbackPrice;
   }, 0);
+  const stockTotal = stockValue;
+
+  const stockInvested = (state.stocks || []).reduce((s, st) => {
+    const fallbackPrice = Number(st.currentPrice || 0) || Number(st.avgPrice || 0);
+    const buyPrice = Number(st.avgPrice || 0) || fallbackPrice;
+    return s + Number(st.qty || 0) * buyPrice;
+  }, 0);
+
+  const stockPnL = stockValue - stockInvested;
+  const stockPnLPct = stockInvested > 0 ? Math.round(((stockValue - stockInvested) / stockInvested) * 1000) / 10 : 0;
+
+  const stockDayChange = (state.stocks || []).reduce((s, st) => {
+    return s + Number(st.qty || 0) * Number(st.dayChange || 0);
+  }, 0);
+  const priorDayStockVal = stockValue - stockDayChange;
+  const stockDayChangePct = priorDayStockVal > 0 ? Math.round((stockDayChange / priorDayStockVal) * 1000) / 10 : 0;
+
+  const enrichedStocks = (state.stocks || []).map((st) => {
+    const fallbackPrice = Number(st.currentPrice || 0) || Number(st.avgPrice || 0);
+    const qty = Number(st.qty || 0);
+    const avgPrice = Number(st.avgPrice || 0) || fallbackPrice;
+    const invested = qty * avgPrice;
+    const currentValue = qty * fallbackPrice;
+    const pnl = currentValue - invested;
+    const pnlPct = invested > 0 ? Math.round(((currentValue - invested) / invested) * 1000) / 10 : 0;
+    const cleanSymbol = String(st.symbol || "").replace(/\.(NS|BO)$/i, "").toUpperCase();
+    const exchange = st.exchange || (String(st.symbol || "").toUpperCase().endsWith(".BO") ? "BSE" : "NSE");
+    const weightPct = stockValue > 0 ? Math.round((currentValue / stockValue) * 1000) / 10 : 0;
+    const dayChange = Number(st.dayChange || 0);
+    const dayChangePercent = Number(st.dayChangePercent || 0);
+    const dayChangeAmount = qty * dayChange;
+    return {
+      ...st,
+      cleanSymbol,
+      exchange,
+      qty,
+      avgPrice,
+      currentPrice: fallbackPrice,
+      invested,
+      currentValue,
+      pnl,
+      pnlPct,
+      weightPct,
+      dayChange,
+      dayChangePercent,
+      dayChangeAmount,
+      companyName: st.companyName || st.name || cleanSymbol,
+    };
+  });
+
+  const topStockHoldings = [...enrichedStocks]
+    .filter((s) => s.currentValue > 0)
+    .sort((a, b) => b.currentValue - a.currentValue);
+
+  const topStockGainers = [...enrichedStocks]
+    .filter((s) => s.invested > 0)
+    .sort((a, b) => b.pnlPct - a.pnlPct);
+
+  const topStockLosers = [...enrichedStocks]
+    .filter((s) => s.invested > 0)
+    .sort((a, b) => a.pnlPct - b.pnlPct);
+
+  // ── Mutual Fund Performance Analytics ──────────────────────────────────────
+  const mfInvested = (state.mutualFunds || []).reduce((s, m) => {
+    return s + (m.buyNav ? Number(m.units || 0) * Number(m.buyNav || 0) : Number(m.invested || 0));
+  }, 0);
+  const mfPnL = mfTotal - mfInvested;
+  const mfPnLPct = mfInvested > 0 ? Math.round(((mfTotal - mfInvested) / mfInvested) * 1000) / 10 : 0;
+
+  const totalMarketAssets = stockValue + mfTotal;
+  const totalMarketInvested = stockInvested + mfInvested;
+  const totalMarketPnL = totalMarketAssets - totalMarketInvested;
+  const totalMarketPnLPct = totalMarketInvested > 0 ? Math.round(((totalMarketAssets - totalMarketInvested) / totalMarketInvested) * 1000) / 10 : 0;
 
   const fdTotal = (state.fixedDeposits || []).reduce((s, x) => s + (Number(x.principal) || 0), 0);
 
@@ -1612,6 +1685,24 @@ function computeSummary(state, refDate = new Date()) {
     });
   }
 
+  // ── Stock Portfolio & Equity Insights ──
+  if (stockValue > 0 && topStockHoldings.length > 0) {
+    const topStock = topStockHoldings[0];
+    if (topStock.weightPct >= 35 && stockValue >= 25000 && enrichedStocks.length > 1) {
+      alerts.push({
+        type: "warn",
+        msg: `Equity concentration alert: ${topStock.cleanSymbol} represents ${topStock.weightPct}% of your total stock portfolio. High concentration elevates single-stock risk.`,
+      });
+    }
+  }
+
+  if (stockInvested > 0 && stockPnLPct >= 20) {
+    alerts.push({
+      type: "info",
+      msg: `Stock portfolio milestone: Equities are up +${stockPnLPct}% overall (+${fmtINR(stockPnL)} unrealized gains across ${enrichedStocks.length} holdings).`,
+    });
+  }
+
   const fdMaturities30Days = [];
   (state.fixedDeposits || []).forEach((fd) => {
     if (fd.maturityDate) {
@@ -1638,7 +1729,25 @@ function computeSummary(state, refDate = new Date()) {
     investTotal,
     goldTotal,
     mfTotal,
+    mfInvested,
+    mfPnL,
+    mfPnLPct,
     stockTotal,
+    stockValue,
+    stockInvested,
+    stockPnL,
+    stockPnLPct,
+    stockDayChange,
+    stockDayChangePct,
+    enrichedStocks,
+    topStockHoldings,
+    topStockGainers,
+    topStockLosers,
+    stockCount: enrichedStocks.length,
+    totalMarketAssets,
+    totalMarketInvested,
+    totalMarketPnL,
+    totalMarketPnLPct,
     fdTotal,
     rdTotal,
     ppfTotal,
@@ -1871,6 +1980,14 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
   const {
     netWorth,
     bankTotal,
+    stockValue = 0,
+    stockInvested = 0,
+    stockPnL = 0,
+    stockPnLPct = 0,
+    stockDayChange = 0,
+    stockDayChangePct = 0,
+    enrichedStocks = [],
+    topStockHoldings = [],
     creditOutstanding,
     creditLimit,
     creditAvailable,
@@ -2103,6 +2220,74 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
   </td></tr>
   ${yesterdayTxnRows ? `<tr><td style="background:${EMAIL_STYLES.cardBg};">${yesterdayTxnRows}</td></tr>` : ""}
 
+  <!-- EQUITIES & DEMAT PULSE -->
+  ${
+    stockValue > 0
+      ? `
+  ${renderSectionHeader(
+    "Equities & Demat Pulse",
+    `${enrichedStocks.length} holding${enrichedStocks.length === 1 ? "" : "s"} · ${fmtINR(stockValue)}`,
+    stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor,
+    stockPnL >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg
+  )}
+  <tr><td style="padding:4px 24px 12px;background:${EMAIL_STYLES.cardBg};">
+    <div style="background:#f8fafc;border:1px solid ${EMAIL_STYLES.borderColor};border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <div style="font-size:11px;color:${EMAIL_STYLES.textMuted};text-transform:uppercase;font-weight:700;letter-spacing:0.04em;">Stock Portfolio Value</div>
+            <div style="font-size:22px;font-weight:900;color:${EMAIL_STYLES.textPrimary};margin-top:2px;">${fmtINRFull(stockValue)}</div>
+          </td>
+          <td style="text-align:right;">
+            <div style="font-size:11px;color:${EMAIL_STYLES.textMuted};text-transform:uppercase;font-weight:700;">Overall P&amp;L</div>
+            <div style="font-size:14px;font-weight:800;color:${stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};margin-top:2px;">
+              ${stockPnL >= 0 ? "+" : ""}${fmtINR(stockPnL)} (${stockPnL >= 0 ? "+" : ""}${stockPnLPct}%)
+            </div>
+            ${
+              stockDayChange !== 0
+                ? `<div style="font-size:11px;font-weight:700;color:${stockDayChange >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};margin-top:2px;">
+                    Day: ${stockDayChange >= 0 ? "+" : ""}${fmtINR(stockDayChange)} (${stockDayChangePct >= 0 ? "+" : ""}${stockDayChangePct}%)
+                   </div>`
+                : ""
+            }
+          </td>
+        </tr>
+      </table>
+    </div>
+  </td></tr>
+  ${
+    topStockHoldings.length > 0
+      ? `<tr><td style="background:${EMAIL_STYLES.cardBg};">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${topStockHoldings.slice(0, 3).map((st, i) => {
+              const bg = i % 2 === 0 ? "#ffffff" : "#f8fafc";
+              const pnlColor = st.pnl >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor;
+              const pnlBg = st.pnl >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg;
+              return `
+              <tr><td style="padding:9px 24px;background:${bg};border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-size:12.5px;color:${EMAIL_STYLES.textPrimary};font-weight:700;">
+                      <span style="font-size:9.5px;font-weight:800;color:#0284c7;background:#e0f2fe;padding:1px 5px;border-radius:4px;margin-right:6px;vertical-align:middle;">${escapeHtml(st.exchange)}</span>${escapeHtml(st.cleanSymbol)}
+                      <span style="font-size:11px;color:${EMAIL_STYLES.textMuted};font-weight:500;margin-left:4px;">${st.qty} sh @ ${fmtINR(st.currentPrice)}</span>
+                    </td>
+                    <td style="text-align:right;white-space:nowrap;">
+                      <span style="font-size:13px;font-weight:800;color:${EMAIL_STYLES.textPrimary};margin-right:8px;">${fmtINR(st.currentValue)}</span>
+                      <span style="display:inline-block;background:${pnlBg};color:${pnlColor};font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">
+                        ${st.pnl >= 0 ? "+" : ""}${st.pnlPct}%
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </td></tr>`;
+            }).join("")}
+          </table>
+        </td></tr>`
+      : ""
+  }`
+      : ""
+  }
+
   <!-- IMMEDIATE ACTION ITEMS (NEXT 3 DAYS) -->
   ${renderSectionHeader("Immediate Dues (Today & Next 3 Days)", `${dues3Days.length} due`, dues3Days.length > 0 ? "#b45309" : "#059669", dues3Days.length > 0 ? "#fef3c7" : "#ecfdf5")}
   <tr><td style="background:${EMAIL_STYLES.cardBg};">
@@ -2162,6 +2347,18 @@ function renderWeeklyHTML(summary, recipientName, refDate = new Date()) {
     totalAssets,
     totalLiabilities,
     bankTotal,
+    stockValue = 0,
+    stockInvested = 0,
+    stockPnL = 0,
+    stockPnLPct = 0,
+    stockDayChange = 0,
+    stockDayChangePct = 0,
+    enrichedStocks = [],
+    topStockHoldings = [],
+    mfTotal = 0,
+    mfInvested = 0,
+    mfPnL = 0,
+    mfPnLPct = 0,
     creditOutstanding,
     creditLimit,
     creditAvailable,
@@ -2438,6 +2635,95 @@ function renderWeeklyHTML(summary, recipientName, refDate = new Date()) {
     ${catRows}
   </td></tr>
 
+  <!-- EQUITIES & DEMAT PERFORMANCE -->
+  ${
+    stockValue > 0 || mfTotal > 0
+      ? `
+  ${renderSectionHeader(
+    "Equities & Demat Portfolio",
+    stockValue > 0 ? `${enrichedStocks.length} equities · ${fmtINR(stockValue)}` : `${fmtINR(mfTotal)} in MFs`,
+    stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor,
+    stockPnL >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg
+  )}
+  ${
+    stockValue > 0
+      ? `
+  <tr><td style="padding:14px 24px 6px;background:${EMAIL_STYLES.cardBg};">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td class="kpi-col" width="31%" style="padding:10px 12px;background:${EMAIL_STYLES.bodyBg};border:1px solid ${EMAIL_STYLES.borderColor};border-radius:8px;vertical-align:top;">
+          <div style="font-size:10px;color:${EMAIL_STYLES.textMuted};text-transform:uppercase;font-weight:700;">Portfolio Value</div>
+          <div style="font-size:16px;font-weight:900;color:${EMAIL_STYLES.textPrimary};margin-top:2px;">${fmtINR(stockValue)}</div>
+        </td>
+        <td class="kpi-space" width="3.5%"></td>
+        <td class="kpi-col" width="31%" style="padding:10px 12px;background:${EMAIL_STYLES.bodyBg};border:1px solid ${EMAIL_STYLES.borderColor};border-radius:8px;vertical-align:top;">
+          <div style="font-size:10px;color:${EMAIL_STYLES.textMuted};text-transform:uppercase;font-weight:700;">Total Invested</div>
+          <div style="font-size:16px;font-weight:900;color:${EMAIL_STYLES.textPrimary};margin-top:2px;">${fmtINR(stockInvested)}</div>
+        </td>
+        <td class="kpi-space" width="3.5%"></td>
+        <td class="kpi-col" width="31%" style="padding:10px 12px;background:${EMAIL_STYLES.bodyBg};border:1px solid ${EMAIL_STYLES.borderColor};border-radius:8px;vertical-align:top;">
+          <div style="font-size:10px;color:${EMAIL_STYLES.textMuted};text-transform:uppercase;font-weight:700;">Unrealized Gain</div>
+          <div style="font-size:16px;font-weight:900;color:${stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};margin-top:2px;">
+            ${stockPnL >= 0 ? "+" : ""}${fmtINR(stockPnL)}
+          </div>
+          <div style="font-size:10px;font-weight:700;color:${stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};">
+            ${stockPnL >= 0 ? "+" : ""}${stockPnLPct}%
+          </div>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+  <tr><td style="background:${EMAIL_STYLES.cardBg};padding-top:4px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      ${topStockHoldings.slice(0, 5).map((st, i) => {
+        const bg = i % 2 === 0 ? "#ffffff" : "#f8fafc";
+        const pnlColor = st.pnl >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor;
+        const pnlBg = st.pnl >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg;
+        return `
+        <tr><td style="padding:10px 24px;background:${bg};border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="font-size:13px;font-weight:700;color:${EMAIL_STYLES.textPrimary};">
+                <span style="font-size:9.5px;font-weight:800;color:#0284c7;background:#e0f2fe;padding:2px 5px;border-radius:4px;margin-right:6px;vertical-align:middle;">${escapeHtml(st.exchange)}</span>${escapeHtml(st.cleanSymbol)}
+                <span style="font-size:11px;color:${EMAIL_STYLES.textMuted};font-weight:500;margin-left:4px;">${st.qty} sh · Avg ${fmtINR(st.avgPrice)} · CMP ${fmtINR(st.currentPrice)}</span>
+              </td>
+              <td style="text-align:right;white-space:nowrap;">
+                <span style="font-size:13.5px;font-weight:800;color:${EMAIL_STYLES.textPrimary};margin-right:8px;">${fmtINR(st.currentValue)}</span>
+                <span style="display:inline-block;background:${pnlBg};color:${pnlColor};font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;">
+                  ${st.pnl >= 0 ? "+" : ""}${st.pnlPct}% (${st.pnl >= 0 ? "+" : ""}${fmtINR(st.pnl)})
+                </span>
+              </td>
+            </tr>
+          </table>
+          ${st.weightPct > 0 ? renderProgressBar(st.weightPct, EMAIL_STYLES.accentColor, 4) : ""}
+        </td></tr>`;
+      }).join("")}
+    </table>
+  </td></tr>`
+      : ""
+  }
+  ${
+    mfTotal > 0
+      ? `<tr><td style="padding:11px 24px;background:#f8fafc;border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="font-size:12.5px;font-weight:700;color:${EMAIL_STYLES.textPrimary};">
+                <span style="font-size:9.5px;font-weight:800;color:#7c3aed;background:#ede9fe;padding:2px 6px;border-radius:4px;margin-right:6px;vertical-align:middle;">MUTUAL FUNDS</span>Mutual Funds Portfolio
+              </td>
+              <td style="text-align:right;white-space:nowrap;">
+                <span style="font-size:13.5px;font-weight:800;color:${EMAIL_STYLES.textPrimary};margin-right:8px;">${fmtINR(mfTotal)}</span>
+                <span style="display:inline-block;background:${mfPnL >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg};color:${mfPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;">
+                  ${mfPnL >= 0 ? "+" : ""}${mfPnLPct}% (${mfPnL >= 0 ? "+" : ""}${fmtINR(mfPnL)})
+                </span>
+              </td>
+            </tr>
+          </table>
+        </td></tr>`
+      : ""
+  }`
+      : ""
+  }
+
   <!-- UPCOMING 7 DAYS OBLIGATIONS & INFLOWS -->
   ${renderSectionHeader("Upcoming Obligations — Next 7 Days", `${dues7Days.length} upcoming`)}
   ${inflowRows}
@@ -2534,7 +2820,18 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
     investTotal,
     goldTotal,
     mfTotal,
+    mfInvested = 0,
+    mfPnL = 0,
+    mfPnLPct = 0,
     stockTotal,
+    stockValue = stockTotal || 0,
+    stockInvested = 0,
+    stockPnL = 0,
+    stockPnLPct = 0,
+    enrichedStocks = [],
+    topStockHoldings = [],
+    topStockGainers = [],
+    topStockLosers = [],
     fdTotal,
     rdTotal,
     ppfTotal,
@@ -2910,6 +3207,113 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
   <tr><td style="background:${EMAIL_STYLES.cardBg};">
     ${investRows}
   </td></tr>`
+      : ""
+  }
+
+  <!-- EQUITIES & DEMAT PORTFOLIO DEEP-DIVE -->
+  ${
+    stockValue > 0
+      ? `
+  ${renderSectionHeader(
+    "Equities & Demat Portfolio Deep-Dive",
+    `${enrichedStocks.length} equities · ${fmtINR(stockValue)}`,
+    stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor,
+    stockPnL >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg
+  )}
+  <tr><td style="padding:14px 24px 6px;background:${EMAIL_STYLES.cardBg};">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td class="kpi-col" width="48%" style="padding:12px 14px;background:${EMAIL_STYLES.bodyBg};border:1px solid ${EMAIL_STYLES.borderColor};border-radius:8px;vertical-align:top;">
+          <div style="font-size:10.5px;color:${EMAIL_STYLES.textMuted};text-transform:uppercase;font-weight:700;">Equity Market Value</div>
+          <div style="font-size:19px;font-weight:900;color:${EMAIL_STYLES.textPrimary};margin-top:2px;">${fmtINRFull(stockValue)}</div>
+          <div style="font-size:11px;color:${EMAIL_STYLES.textMuted};margin-top:2px;">Invested: ${fmtINR(stockInvested)}</div>
+        </td>
+        <td class="kpi-space" width="4%"></td>
+        <td class="kpi-col" width="48%" style="padding:12px 14px;background:${EMAIL_STYLES.bodyBg};border:1px solid ${EMAIL_STYLES.borderColor};border-radius:8px;vertical-align:top;">
+          <div style="font-size:10.5px;color:${EMAIL_STYLES.textMuted};text-transform:uppercase;font-weight:700;">Unrealized Wealth &amp; ROI</div>
+          <div style="font-size:19px;font-weight:900;color:${stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};margin-top:2px;">
+            ${stockPnL >= 0 ? "+" : ""}${fmtINRFull(stockPnL)}
+          </div>
+          <div style="display:inline-block;background:${stockPnL >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg};color:${stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:2px;">
+            ${stockPnL >= 0 ? "+" : ""}${stockPnLPct}% overall return
+          </div>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+  ${
+    topStockGainers.length > 0
+      ? `<tr><td style="padding:8px 24px 4px;background:${EMAIL_STYLES.cardBg};">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid ${EMAIL_STYLES.borderColor};border-radius:8px;padding:8px 12px;">
+            <tr>
+              <td style="font-size:11px;color:${EMAIL_STYLES.textMuted};">
+                <strong style="color:${EMAIL_STYLES.posColor};">Top Performer:</strong> ${escapeHtml(topStockGainers[0].cleanSymbol)} (${topStockGainers[0].pnl >= 0 ? "+" : ""}${topStockGainers[0].pnlPct}%, ${topStockGainers[0].pnl >= 0 ? "+" : ""}${fmtINR(topStockGainers[0].pnl)})
+              </td>
+              ${
+                topStockLosers.length > 0 && topStockLosers[0].pnl < 0
+                  ? `<td style="font-size:11px;color:${EMAIL_STYLES.textMuted};text-align:right;">
+                      <strong style="color:${EMAIL_STYLES.negColor};">Lagging:</strong> ${escapeHtml(topStockLosers[0].cleanSymbol)} (${topStockLosers[0].pnlPct}%, ${fmtINR(topStockLosers[0].pnl)})
+                    </td>`
+                  : ""
+              }
+            </tr>
+          </table>
+        </td></tr>`
+      : ""
+  }
+  <tr><td style="background:${EMAIL_STYLES.cardBg};padding-top:4px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      ${topStockHoldings.slice(0, 8).map((st, i) => {
+        const bg = i % 2 === 0 ? "#ffffff" : "#f8fafc";
+        const pnlColor = st.pnl >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor;
+        const pnlBg = st.pnl >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg;
+        return `
+        <tr><td style="padding:11px 24px;background:${bg};border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="font-size:13px;font-weight:700;color:${EMAIL_STYLES.textPrimary};">
+                <span style="font-size:9.5px;font-weight:800;color:#0284c7;background:#e0f2fe;padding:2px 5px;border-radius:4px;margin-right:6px;vertical-align:middle;">${escapeHtml(st.exchange)}</span>${escapeHtml(st.cleanSymbol)}
+                <div style="font-size:11px;color:${EMAIL_STYLES.textMuted};font-weight:500;margin-top:2px;">
+                  ${st.qty} shares · Avg ${fmtINR(st.avgPrice)} · CMP ${fmtINR(st.currentPrice)}
+                </div>
+              </td>
+              <td style="text-align:right;white-space:nowrap;vertical-align:top;">
+                <div style="font-size:13.5px;font-weight:800;color:${EMAIL_STYLES.textPrimary};">${fmtINR(st.currentValue)}</div>
+                <div style="margin-top:3px;">
+                  <span style="display:inline-block;background:${pnlBg};color:${pnlColor};font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">
+                    ${st.pnl >= 0 ? "+" : ""}${st.pnlPct}% (${st.pnl >= 0 ? "+" : ""}${fmtINR(st.pnl)})
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </table>
+          ${st.weightPct > 0 ? renderProgressBar(st.weightPct, EMAIL_STYLES.accentColor, 4) : ""}
+        </td></tr>`;
+      }).join("")}
+    </table>
+  </td></tr>`
+      : ""
+  }
+  ${
+    mfTotal > 0
+      ? `<tr><td style="padding:12px 24px;background:#f8fafc;border-bottom:1px solid ${EMAIL_STYLES.borderColor};">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="font-size:13px;font-weight:700;color:${EMAIL_STYLES.textPrimary};">
+                <span style="font-size:9.5px;font-weight:800;color:#7c3aed;background:#ede9fe;padding:2px 6px;border-radius:4px;margin-right:6px;vertical-align:middle;">MUTUAL FUNDS</span>Mutual Funds Portfolio Summary
+                <div style="font-size:11px;color:${EMAIL_STYLES.textMuted};font-weight:500;margin-top:2px;">
+                  Invested: ${fmtINR(mfInvested)} · Current Value: ${fmtINR(mfTotal)}
+                </div>
+              </td>
+              <td style="text-align:right;white-space:nowrap;vertical-align:middle;">
+                <span style="font-size:14px;font-weight:800;color:${EMAIL_STYLES.textPrimary};margin-right:8px;">${fmtINR(mfTotal)}</span>
+                <span style="display:inline-block;background:${mfPnL >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg};color:${mfPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor};font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;">
+                  ${mfPnL >= 0 ? "+" : ""}${mfPnLPct}% (${mfPnL >= 0 ? "+" : ""}${fmtINR(mfPnL)})
+                </span>
+              </td>
+            </tr>
+          </table>
+        </td></tr>`
       : ""
   }
 
@@ -3372,14 +3776,23 @@ async function withLiveStockPrices(state) {
     `${String(s.symbol || "").replace(/\.(NS|BO)$/i, "")}.${(s.exchange || "NSE") === "BSE" ? "BO" : "NS"}`;
 
   const uniqueSymbols = [...new Set(stocks.map(yfSymFor).filter((sym) => sym !== "."))];
-  const priceMap = {};
+  const quoteMap = {};
 
   await Promise.allSettled(
     uniqueSymbols.map(async (sym) => {
       try {
         const quote = await yf.quote(sym, {}, { validateResult: false, ...yfFetchOptions() });
         const price = quote?.regularMarketPrice ?? quote?.postMarketPrice ?? quote?.preMarketPrice;
-        if (price != null && !isNaN(price)) priceMap[sym] = price;
+        if (price != null && !isNaN(price)) {
+          quoteMap[sym] = {
+            price,
+            change: Number(quote?.regularMarketChange ?? 0),
+            changePercent: Number(quote?.regularMarketChangePercent ?? 0),
+            dayHigh: quote?.regularMarketDayHigh ?? null,
+            dayLow: quote?.regularMarketDayLow ?? null,
+            name: quote?.shortName || quote?.longName || null,
+          };
+        }
       } catch (err) {
         console.error(`[send-summary] Failed to fetch live price for ${sym}:`, err.message);
       }
@@ -3389,8 +3802,17 @@ async function withLiveStockPrices(state) {
   return {
     ...state,
     stocks: stocks.map((s) => {
-      const live = priceMap[yfSymFor(s)];
-      return live != null ? { ...s, currentPrice: live } : s;
+      const q = quoteMap[yfSymFor(s)];
+      if (!q) return s;
+      return {
+        ...s,
+        currentPrice: q.price,
+        dayChange: q.change,
+        dayChangePercent: q.changePercent,
+        dayHigh: q.dayHigh ?? s.dayHigh,
+        dayLow: q.dayLow ?? s.dayLow,
+        companyName: q.name || s.companyName || s.name,
+      };
     }),
   };
 }
