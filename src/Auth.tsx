@@ -634,12 +634,11 @@ export default function Auth({
           {/* Headline & Value Proposition */}
           <div className="af-brand-hero">
             <div className="af-hero-badge">
-              <Sparkles size={13} className="af-badge-icon" />
+              <Sparkles size={12} className="af-badge-icon" />
               <span>Institutional Wealth Intelligence</span>
             </div>
             <h1 className="af-brand-headline">
-              Unify your wealth.
-              <br />
+              Unify your wealth.{" "}
               <span className="af-brand-headline-accent">Master your future.</span>
             </h1>
             <p className="af-brand-sub">
@@ -662,7 +661,7 @@ export default function Auth({
               <span className="af-3d-status">Euler 3D Projection</span>
             </div>
             <div className="af-3d-canvas-wrap">
-              <WealthOrbCanvas size={310} interactive={true} />
+              <WealthOrbCanvas size={230} interactive={true} />
             </div>
             <div className="af-3d-caption">
               <span>Interactive 3D Matrix • Hover or tilt to inspect asset convergence</span>
@@ -678,17 +677,19 @@ export default function Auth({
                 <span>Live Portfolio Summary</span>
               </div>
               <div className="af-preview-growth">
-                <TrendingUp size={13} aria-hidden="true" />
+                <TrendingUp size={12} aria-hidden="true" />
                 <span>+18.4% YoY</span>
               </div>
             </div>
 
-            <div className="af-preview-amount">
-              <div className="af-preview-currency">₹</div>
-              <div className="af-preview-val">1,48,50,000</div>
-            </div>
-            <div className="af-preview-lbl">
-              Consolidated Net Worth across 14 assets &amp; 3 banks
+            <div className="af-preview-amount-row">
+              <div className="af-preview-amount">
+                <span className="af-preview-currency">₹</span>
+                <span className="af-preview-val">1,48,50,000</span>
+              </div>
+              <div className="af-preview-lbl">
+                Consolidated Net Worth across 14 assets &amp; 3 banks
+              </div>
             </div>
 
             {/* Asset distribution bar */}
@@ -735,64 +736,35 @@ export default function Auth({
             </div>
           </div>
 
-          {/* Interactive Feature Cards */}
-          <div className="af-feature-chips-grid">
-            <div
-              className={`af-feature-item ${activeTabFeature === 0 ? "af-feat-active" : ""}`}
-              onClick={() => setActiveTabFeature(0)}
-              tabIndex={0}
-              role="button"
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveTabFeature(0)}
-              aria-label="Automated Multi-Account Reconciliation Feature"
-            >
+          {/* Executive Pillars Strip (Static Trust Badges - No Dropdown) */}
+          <div className="af-feature-chips-strip">
+            <div className="af-feature-chip">
               <div className="af-feat-icon-box">
-                <Wallet size={16} aria-hidden="true" />
+                <Wallet size={14} aria-hidden="true" />
               </div>
               <div className="af-feat-text-wrap">
                 <strong>Automated Multi-Account Reconciliation</strong>
-                <p>
-                  Track liquid cash, investment yields, and liabilities with real-time analytics.
-                </p>
+                <p>Track liquid cash, yields, and liabilities.</p>
               </div>
             </div>
 
-            <div
-              className={`af-feature-item ${activeTabFeature === 1 ? "af-feat-active" : ""}`}
-              onClick={() => setActiveTabFeature(1)}
-              tabIndex={0}
-              role="button"
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveTabFeature(1)}
-              aria-label="Family Entities & Nominee Tracking Feature"
-            >
+            <div className="af-feature-chip">
               <div className="af-feat-icon-box">
-                <Users size={16} aria-hidden="true" />
+                <Users size={14} aria-hidden="true" />
               </div>
               <div className="af-feat-text-wrap">
                 <strong>Family Entities &amp; Nominee Tracking</strong>
-                <p>
-                  Seamlessly organize portfolios across multiple family members with full asset
-                  clarity.
-                </p>
+                <p>Organize portfolios across family members.</p>
               </div>
             </div>
 
-            <div
-              className={`af-feature-item ${activeTabFeature === 2 ? "af-feat-active" : ""}`}
-              onClick={() => setActiveTabFeature(2)}
-              tabIndex={0}
-              role="button"
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveTabFeature(2)}
-              aria-label="Zero-Telemetry 256-Bit Vault Security Feature"
-            >
+            <div className="af-feature-chip">
               <div className="af-feat-icon-box">
-                <ShieldCheck size={16} aria-hidden="true" />
+                <ShieldCheck size={14} aria-hidden="true" />
               </div>
               <div className="af-feat-text-wrap">
                 <strong>Zero-Telemetry 256-Bit Vault Security</strong>
-                <p>
-                  Client-controlled encrypted data. Your private financial ledger is never sold or
-                  mined.
-                </p>
+                <p>Client-side encryption. Zero tracking.</p>
               </div>
             </div>
           </div>
@@ -1812,16 +1784,16 @@ const AF_STYLES = `
 /* ── Brand Panel (Left Showcase) ────────── */
 .af-brand-panel {
   position: relative;
-  flex: 0 0 52%;
-  min-width: 480px;
-  max-width: 720px;
-  padding: 56px 48px;
+  flex: 0 0 50%;
+  min-width: 440px;
+  max-width: 680px;
+  padding: 32px 40px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   border-right: 1px solid #E2E8F0;
   z-index: 2;
-  background: linear-gradient(170deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 250, 252, 0.98) 100%);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   overflow-y: auto;
@@ -1829,18 +1801,20 @@ const AF_STYLES = `
 
 .af-brand-content {
   position: relative;
-  max-width: 500px;
+  max-width: 480px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
+  height: 100%;
+  justify-content: space-between;
 }
 
 /* Brand Logo */
 .af-brand-logo {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .af-logo-glow-wrap {
@@ -1852,27 +1826,27 @@ const AF_STYLES = `
 
 .af-logo-ring-halo {
   position: absolute;
-  inset: -8px;
+  inset: -6px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.5) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.3) 0%, transparent 70%);
   z-index: -1;
   animation: af-pulse-halo 3s ease-in-out infinite;
 }
 
 .af-brand-name {
   font-family: 'Outfit', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #FFFFFF;
+  color: #0F172A;
   line-height: 1.1;
 }
 
 .af-brand-tagline {
   font-size: 11px;
   font-weight: 600;
-  color: #D4AF37;
-  margin-top: 4px;
+  color: #D97706;
+  margin-top: 3px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1881,49 +1855,49 @@ const AF_STYLES = `
 .af-brand-hero {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .af-hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 4px 11px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 9999px;
   width: fit-content;
   color: #475569;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .af-badge-icon {
-  color: #FCD34D;
+  color: #D97706;
 }
 
 .af-brand-headline {
   font-family: 'Outfit', sans-serif;
-  font-size: 34px;
+  font-size: 26px;
   font-weight: 700;
-  line-height: 1.16;
+  line-height: 1.18;
   letter-spacing: -0.03em;
-  color: #FFFFFF;
+  color: #0F172A;
   margin: 0;
 }
 
 .af-brand-headline-accent {
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 45%, #312E81 100%);
+  background: linear-gradient(135deg, #4F46E5 0%, #312E81 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .af-brand-sub {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: #94A3B8;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #475569;
   margin: 0;
   font-weight: 400;
 }
@@ -1932,10 +1906,10 @@ const AF_STYLES = `
 .af-3d-showcase-box {
   position: relative;
   border: 1px solid #E2E8F0;
-  border-radius: 24px;
-  padding: 20px;
+  border-radius: 18px;
+  padding: 12px 14px 6px;
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1948,7 +1922,7 @@ const AF_STYLES = `
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 
 .af-3d-pill {
@@ -1956,7 +1930,7 @@ const AF_STYLES = `
   align-items: center;
   gap: 7px;
   background: #F8FAFC;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 600;
@@ -1965,11 +1939,11 @@ const AF_STYLES = `
 }
 
 .af-3d-status {
-  font-size: 10.5px;
+  font-size: 10px;
   font-family: 'JetBrains Mono', monospace;
   color: #4F46E5;
   background: #EEF2F6;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   border: 1px solid #E2E8F0;
   font-weight: 600;
@@ -1983,13 +1957,13 @@ const AF_STYLES = `
 }
 
 .af-3d-caption {
-  margin-top: 10px;
-  font-size: 11px;
+  margin-top: 6px;
+  font-size: 10.5px;
   color: #64748B;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-top: 8px;
+  padding-top: 6px;
   border-top: 1px solid #F1F5F9;
   width: 100%;
   justify-content: center;
@@ -2000,18 +1974,10 @@ const AF_STYLES = `
   position: relative;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 20px;
-  padding: 22px 24px;
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
   overflow: hidden;
-}
-
-.af-preview-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(212, 175, 55, 0.5);
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.8),
-    0 0 25px rgba(212, 175, 55, 0.15);
 }
 
 .af-preview-card-shine {
@@ -2020,7 +1986,7 @@ const AF_STYLES = `
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transform: skewX(-25deg);
   animation: af-shine-pass 6s infinite;
   pointer-events: none;
@@ -2046,11 +2012,11 @@ const AF_STYLES = `
 }
 
 .af-live-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #10B981;
-  box-shadow: 0 0 12px #10B981;
+  box-shadow: 0 0 10px #10B981;
   animation: af-pulse 2s infinite;
 }
 
@@ -2059,50 +2025,56 @@ const AF_STYLES = `
   align-items: center;
   gap: 4px;
   color: #047857;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   background: #ECFDF5;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   border: 1px solid #A7F3D0;
+}
+
+.af-preview-amount-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 4px;
+  margin-bottom: 2px;
 }
 
 .af-preview-amount {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  margin-bottom: 4px;
+  gap: 3px;
   color: #0F172A;
 }
 
 .af-preview-currency {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
-  color: #D4AF37;
+  color: #D97706;
 }
 
 .af-preview-val {
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.035em;
-  color: #FFFFFF;
+  color: #0F172A;
   font-family: 'Outfit', sans-serif;
 }
 
 .af-preview-lbl {
-  font-size: 12px;
+  font-size: 11px;
   color: #64748B;
-  margin-bottom: 14px;
 }
 
 .af-asset-bar {
   display: flex;
-  height: 6px;
+  height: 5px;
   border-radius: 9999px;
   overflow: hidden;
   background: #F1F5F9;
   gap: 2px;
-  margin-bottom: 14px;
+  margin: 8px 0;
 }
 
 .af-asset-seg {
@@ -2118,26 +2090,26 @@ const AF_STYLES = `
 .af-preview-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin-top: 2px;
 }
 
 .af-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 5px;
+  font-size: 10.5px;
   font-family: 'JetBrains Mono', monospace;
   color: #334155;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 2px 7px;
+  border-radius: 5px;
 }
 
 .af-tag-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 .af-dot-mf { background: #38BDF8; box-shadow: 0 0 6px #38BDF8; }
@@ -2145,80 +2117,71 @@ const AF_STYLES = `
 .af-dot-epf { background: #10B981; box-shadow: 0 0 6px #10B981; }
 .af-dot-cash { background: #8B5CF6; box-shadow: 0 0 6px #8B5CF6; }
 
-/* Interactive Feature List */
-.af-feature-chips-grid {
-  display: flex;
-  flex-direction: column;
+/* Executive Pillars Strip (Static Trust Badges - No Dropdown) */
+.af-feature-chips-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
-.af-feature-item {
+.af-feature-chip {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 11px;
+  border-radius: 12px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  color: #1E293B;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.af-feature-item:hover, .af-feat-active {
-  background: rgba(212, 175, 55, 0.08);
-  border-color: rgba(212, 175, 55, 0.28);
-  transform: translateX(4px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .af-feat-icon-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: rgba(212, 175, 55, 0.14);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  color: #E6CA85;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(217, 119, 6, 0.1);
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  color: #D97706;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
 .af-feat-text-wrap strong {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0F172A;
   margin-bottom: 2px;
+  line-height: 1.25;
 }
 
 .af-feat-text-wrap p {
   margin: 0;
-  font-size: 11.5px;
-  color: #94A3B8;
-  line-height: 1.4;
+  font-size: 10px;
+  color: #64748B;
+  line-height: 1.35;
 }
 
 .af-brand-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10.5px;
   color: #64748B;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 8px;
+  border-top: 1px solid #E2E8F0;
 }
 
 .af-brand-status-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #34D399;
-  background: rgba(16, 185, 129, 0.1);
-  padding: 3px 8px;
+  gap: 5px;
+  font-size: 10px;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+  padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
@@ -2236,7 +2199,7 @@ const AF_STYLES = `
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 44px 32px;
+  padding: 24px 32px;
   min-height: 100dvh;
   min-height: 100vh;
   overflow-y: auto;
@@ -2264,15 +2227,15 @@ const AF_STYLES = `
 
 .af-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 28px;
-  padding: 40px 36px;
+  border-radius: 24px;
+  padding: 32px 32px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 16px;
   box-shadow: 
-    0 30px 60px -15px rgba(15, 23, 42, 0.07),
+    0 25px 50px -15px rgba(15, 23, 42, 0.08),
     0 4px 16px -2px rgba(15, 23, 42, 0.03),
     inset 0 1px 0 rgba(255, 255, 255, 1);
   backdrop-filter: blur(32px);
@@ -2289,24 +2252,24 @@ const AF_STYLES = `
   display: flex;
   background: #F1F5F9;
   border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  padding: 4px;
-  gap: 4px;
+  border-radius: 12px;
+  padding: 3px;
+  gap: 3px;
 }
 
 .af-segment-btn {
   flex: 1;
   position: relative;
-  padding: 10px 18px;
-  font-size: 13.5px;
+  padding: 9px 16px;
+  font-size: 13px;
   font-weight: 600;
   font-family: inherit;
-  color: #94A3B8;
+  color: #64748B;
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: color 0.25s ease;
+  transition: color 0.2s ease;
   text-align: center;
   display: flex;
   align-items: center;
@@ -2314,11 +2277,12 @@ const AF_STYLES = `
 }
 
 .af-segment-btn:hover:not(.af-segment-active) {
-  color: #FFFFFF;
+  color: #0F172A;
 }
 
 .af-segment-active {
-  color: #FFFFFF;
+  color: #0F172A !important;
+  font-weight: 700;
 }
 
 .af-segment-glow-pill {
@@ -2326,8 +2290,8 @@ const AF_STYLES = `
   inset: 0;
   background: #FFFFFF;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-  z-index: 0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  z-index: 1;
 }
 
 .af-segment-text {
@@ -2853,6 +2817,26 @@ input:focus-visible,
 }
 
 /* ── Responsive Viewports ───────────────── */
+@media (min-width: 1024px) {
+  .af-shell {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+  .af-brand-panel {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    padding: 24px 36px;
+  }
+  .af-form-panel {
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 20px 32px;
+  }
+}
+
 @media (max-width: 1100px) {
   .af-brand-panel {
     display: none;
@@ -2880,21 +2864,10 @@ input:focus-visible,
     color: #B45309;
   }
   .af-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 28px;
-  padding: 40px 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  box-shadow: 
-    0 30px 60px -15px rgba(15, 23, 42, 0.07),
-    0 4px 16px -2px rgba(15, 23, 42, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-}
+    border-radius: 24px;
+    padding: 28px 24px;
+    gap: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2902,47 +2875,17 @@ input:focus-visible,
     padding: 16px 12px;
   }
   .af-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 28px;
-  padding: 40px 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  box-shadow: 
-    0 30px 60px -15px rgba(15, 23, 42, 0.07),
-    0 4px 16px -2px rgba(15, 23, 42, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-}
+    padding: 24px 18px;
+    gap: 14px;
+    border-radius: 20px;
+  }
   .af-card-title {
-    font-size: 22px;
+    font-size: 21px;
   }
   .af-segment-btn {
-    padding: 9px 12px;
-    font-size: 12.5px;
+    padding: 8px 10px;
+    font-size: 12px;
   }
-  .af-demo-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 13px 18px;
-  border-radius: 14px;
-  background: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
-  color: #1E293B;
-  font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
 }
 
 @media (max-width: 380px) {
@@ -2950,65 +2893,24 @@ input:focus-visible,
     padding: 12px 8px;
   }
   .af-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 28px;
-  padding: 40px 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  box-shadow: 
-    0 30px 60px -15px rgba(15, 23, 42, 0.07),
-    0 4px 16px -2px rgba(15, 23, 42, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-}
+    padding: 20px 14px;
+    gap: 12px;
+    border-radius: 18px;
+  }
   .af-card-title {
-    font-size: 20px;
+    font-size: 19px;
   }
   .af-segment-btn {
-    padding: 8px 8px;
-    font-size: 11.5px;
+    padding: 7px 6px;
+    font-size: 11px;
   }
-  .af-demo-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 13px 18px;
-  border-radius: 14px;
-  background: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
-  color: #1E293B;
-  font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
 }
 
 @media (max-width: 340px) {
   .af-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 28px;
-  padding: 40px 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  box-shadow: 
-    0 30px 60px -15px rgba(15, 23, 42, 0.07),
-    0 4px 16px -2px rgba(15, 23, 42, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
+    padding: 16px 10px;
+    gap: 10px;
+  }
 }
   .af-segment-btn {
     padding: 7px 4px;

@@ -143,9 +143,10 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
     resize();
 
     // 3D Rotations & Parallax State
-    let rotX = 0.22;
+    // Floating oscillation limits: medallion ALWAYS faces forward upright (never flips edge-on or into a bar)
+    let rotX = 0.16;
     let rotY = 0;
-    const rotZ = 0.08;
+    const rotZ = 0.04;
     let targetRotX = 0;
     let targetRotY = 0;
     let mouseX = -9999;
@@ -153,7 +154,7 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
     let time = 0;
 
     // Ambient floating stardust particles (warm gold & indigo tones)
-    const particleCount = 36;
+    const particleCount = 28;
     const particles = Array.from({ length: particleCount }, () => ({
       x: (Math.random() - 0.5) * 360,
       y: (Math.random() - 0.5) * 360,
@@ -174,8 +175,9 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
       const normX = (mouseX - width / 2) / (width / 2);
       const normY = (mouseY - height / 2) / (height / 2);
 
-      targetRotY = Math.max(-0.65, Math.min(0.65, normX * 0.75));
-      targetRotX = Math.max(-0.55, Math.min(0.55, -normY * 0.6));
+      // Max responsive tilt constrained to +/- 14 degrees for elegant stability
+      targetRotY = Math.max(-0.25, Math.min(0.25, normX * 0.28));
+      targetRotX = Math.max(-0.18, Math.min(0.18, -normY * 0.2));
     };
 
     const handlePointerLeave = () => {
@@ -210,15 +212,21 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
       return [x3, y3, z2];
     };
 
-    const project = (p: [number, number, number], fov = 440): [number, number, number, number] => {
+    const project = (p: [number, number, number], fov = 460): [number, number, number, number] => {
       const scale = fov / (fov + p[2]);
       return [width / 2 + p[0] * scale, height / 2 + p[1] * scale, p[2], scale];
     };
 
     const render = (timestamp: number) => {
       time = timestamp || 0;
-      rotX += (targetRotX + 0.2 - rotX) * 0.06;
-      rotY += (targetRotY + (prefersReducedMotion ? 0 : time * 0.0004) - rotY) * 0.06;
+
+      // Gentle, majestic breathing tilt (max +/- 12° harmonic oscillation).
+      // The ArthaDrishti logo is ALWAYS facing towards the user and never flips edge-on or into a stick.
+      const floatAngleY = prefersReducedMotion ? 0 : Math.sin(time * 0.001) * 0.18;
+      const floatAngleX = prefersReducedMotion ? 0 : Math.cos(time * 0.0008) * 0.08;
+
+      rotX += (targetRotX + 0.16 + floatAngleX - rotX) * 0.08;
+      rotY += (targetRotY + floatAngleY - rotY) * 0.08;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -311,14 +319,14 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
         const lx = Math.cos(theta) * logoRadius;
         const ly = Math.sin(theta) * logoRadius;
 
-        const pF = rotate3D([lx, ly, logoThickness / 2], rotX * 1.2, rotY * 1.5, rotZ);
-        const pB = rotate3D([lx, ly, -logoThickness / 2], rotX * 1.2, rotY * 1.5, rotZ);
+        const pF = rotate3D([lx, ly, logoThickness / 2], rotX, rotY, rotZ);
+        const pB = rotate3D([lx, ly, -logoThickness / 2], rotX, rotY, rotZ);
 
         frontVerts.push(project(pF));
         backVerts.push(project(pB));
       }
 
-      const centerFront = project(rotate3D([0, 0, logoThickness / 2], rotX * 1.2, rotY * 1.5, rotZ));
+      const centerFront = project(rotate3D([0, 0, logoThickness / 2], rotX, rotY, rotZ));
 
       // Golden Beveled Coin Rim Quads
       for (let i = 0; i < segments; i++) {
@@ -352,8 +360,8 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
       }
 
       // Front Face Disc Base & Emblem Texture (Correct Upright Mapping)
-      const pRight = project(rotate3D([logoRadius, 0, logoThickness / 2], rotX * 1.2, rotY * 1.5, rotZ));
-      const pBottom = project(rotate3D([0, logoRadius, logoThickness / 2], rotX * 1.2, rotY * 1.5, rotZ));
+      const pRight = project(rotate3D([logoRadius, 0, logoThickness / 2], rotX, rotY, rotZ));
+      const pBottom = project(rotate3D([0, logoRadius, logoThickness / 2], rotX, rotY, rotZ));
 
       const dxX = (pRight[0] - centerFront[0]) / logoRadius;
       const dxY = (pRight[1] - centerFront[1]) / logoRadius;
@@ -452,9 +460,12 @@ export const WealthOrbCanvas: React.FC<WealthOrbCanvasProps> = ({
         ctx.lineWidth = 1.5 * scale;
         ctx.stroke();
 
+        const isRightSide = px >= width / 2;
+        const labelX = isRightSide ? px + 10 : px - 10;
+        ctx.textAlign = isRightSide ? "left" : "right";
         ctx.fillStyle = "#0F172A";
         ctx.font = `700 ${Math.round(11 * scale)}px 'Plus Jakarta Sans', sans-serif`;
-        ctx.fillText(node.name, px + 9, py - 4);
+        ctx.fillText(node.name, labelX, py - 3);
       });
 
       if (closestNode) {
