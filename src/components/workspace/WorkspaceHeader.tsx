@@ -16,6 +16,7 @@ import {
   Settings,
   Command,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { THEME } from "../../utils/constants";
 import { formatProfileOption } from "../../utils/masterData";
@@ -764,6 +765,16 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                   title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
                 >
                   {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+                </button>
+
+                {/* 3D Celestial Screensaver manual trigger */}
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("launch-screensaver"))}
+                  className="header-icon-btn"
+                  title="Launch 3D Celestial Screensaver"
+                  aria-label="Launch 3D Celestial Screensaver"
+                >
+                  <Sparkles size={15} style={{ color: "#F59E0B" }} />
                 </button>
 
                 <button

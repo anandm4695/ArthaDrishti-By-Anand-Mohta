@@ -193,9 +193,9 @@ export default function Auth({
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement>(null);
 
-  // 3D Screensaver Idle Detection (60s inactivity)
+  // 3D Screensaver Idle Detection (30s inactivity)
   const { isScreensaverActive, closeScreensaver, launchScreensaver } = useIdleScreensaver({
-    timeoutMs: 60000,
+    timeoutMs: 30000,
     enabled: true,
   });
 

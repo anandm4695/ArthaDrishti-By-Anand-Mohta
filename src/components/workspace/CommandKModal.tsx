@@ -13,6 +13,7 @@ import {
   Calculator,
   FileText,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import { NAV_GROUPS } from "../../utils/appConstants";
 
@@ -186,6 +187,18 @@ export const CommandKModal: React.FC<CommandKModalProps> = ({
         isAction: true,
       });
     }
+
+    items.push({
+      id: "action-screensaver",
+      label: "Launch 3D Celestial Screensaver",
+      group: "Quick Actions",
+      icon: Sparkles,
+      keywords: ["screensaver", "3d", "idle", "animation", "celestial", "wealth", "orrery"],
+      action: () => {
+        window.dispatchEvent(new CustomEvent("launch-screensaver"));
+      },
+      isAction: true,
+    });
 
     if (onShowShortcuts) {
       items.push({

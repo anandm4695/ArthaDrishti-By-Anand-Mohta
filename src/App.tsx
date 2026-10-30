@@ -43,6 +43,8 @@ import { useSearch } from "./hooks/useSearch";
 import { useTheme } from "./hooks/useTheme";
 import { useNotifications } from "./hooks/useNotifications";
 import { useToast } from "./hooks/useToast";
+import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
+import { CelestialScreensaver } from "./components/screensaver/CelestialScreensaver";
 
 // Extracted layout components
 import { LoadingScreen } from "./components/layout/LoadingScreen";
@@ -230,6 +232,12 @@ function FinanceDashboard() {
   const [session, setSession] = useState<any>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [mfaPending, setMfaPending] = useState(false);
+
+  // 3D Screensaver Idle Detection (30s inactivity across entire app)
+  const { isScreensaverActive, closeScreensaver } = useIdleScreensaver({
+    timeoutMs: 30000,
+    enabled: true,
+  });
   // A Supabase password-recovery link establishes a real session before React renders.
   // We must not let that truthy session skip straight into the dashboard — force the
   // "set new password" screen until the reset completes (Auth.tsx clears this via
@@ -6069,6 +6077,10 @@ function FinanceDashboard() {
               </div>
             </div>
           </div>
+        )}
+        {/* ── 3D CELESTIAL SCREENSAVER OVERLAY ── */}
+        {isScreensaverActive && (
+          <CelestialScreensaver onClose={closeScreensaver} />
         )}
       </div>
     </MasterDataContext.Provider>
