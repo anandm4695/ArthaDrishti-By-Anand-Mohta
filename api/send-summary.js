@@ -2222,7 +2222,7 @@ function renderDailyHTML(summary, recipientName, refDate = new Date()) {
 
   <!-- EQUITIES & DEMAT PULSE -->
   ${
-    stockValue > 0
+    enrichedStocks.length > 0 || stockValue > 0
       ? `
   ${renderSectionHeader(
     "Equities & Demat Pulse",
@@ -2637,16 +2637,16 @@ function renderWeeklyHTML(summary, recipientName, refDate = new Date()) {
 
   <!-- EQUITIES & DEMAT PERFORMANCE -->
   ${
-    stockValue > 0 || mfTotal > 0
+    enrichedStocks.length > 0 || stockValue > 0 || mfTotal > 0
       ? `
   ${renderSectionHeader(
     "Equities & Demat Portfolio",
-    stockValue > 0 ? `${enrichedStocks.length} equities · ${fmtINR(stockValue)}` : `${fmtINR(mfTotal)} in MFs`,
+    enrichedStocks.length > 0 || stockValue > 0 ? `${enrichedStocks.length} equities · ${fmtINR(stockValue)}` : `${fmtINR(mfTotal)} in MFs`,
     stockPnL >= 0 ? EMAIL_STYLES.posColor : EMAIL_STYLES.negColor,
     stockPnL >= 0 ? EMAIL_STYLES.posBg : EMAIL_STYLES.negBg
   )}
   ${
-    stockValue > 0
+    enrichedStocks.length > 0 || stockValue > 0
       ? `
   <tr><td style="padding:14px 24px 6px;background:${EMAIL_STYLES.cardBg};">
     <table width="100%" cellpadding="0" cellspacing="0">
@@ -3212,7 +3212,7 @@ function renderMonthlyHTML(summary, recipientName, refDate = new Date()) {
 
   <!-- EQUITIES & DEMAT PORTFOLIO DEEP-DIVE -->
   ${
-    stockValue > 0
+    enrichedStocks.length > 0 || stockValue > 0
       ? `
   ${renderSectionHeader(
     "Equities & Demat Portfolio Deep-Dive",
@@ -3962,6 +3962,9 @@ async function handler(req, res) {
       const summary = computeSummary(await withLiveMFPrices(await withLiveStockPrices(state)), refDate);
       const html = generateHTML(summary, freq, recipientName, refDate);
       res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
       return res.status(200).send(html);
     } catch (err) {
       console.error("[send-summary] Preview error:", err);

@@ -4171,9 +4171,14 @@ function EmailSummarySection({ state, emailSettings, updateEmailSettings }: any)
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      const params = new URLSearchParams({ action: "preview", frequency: chosenFreq });
+      const params = new URLSearchParams({
+        action: "preview",
+        frequency: chosenFreq,
+        _t: Date.now().toString(),
+      });
       const res = await fetch(`/api/send-summary?${params.toString()}`, {
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+        cache: "no-store",
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}) as any);

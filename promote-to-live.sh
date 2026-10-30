@@ -19,6 +19,8 @@ echo "→ Pushing to $LIVE_REMOTE/$BRANCH ..."
 git push "$LIVE_REMOTE" "$BRANCH"
 
 if command -v vercel >/dev/null 2>&1; then
+  echo "→ Deploying directly to Vercel production ..."
+  vercel --prod --yes
   echo "→ Pruning superseded Vercel deployments to keep Deployment Storage clean ..."
   vercel remove --safe --yes "$VERCEL_PROJECT" >/dev/null 2>&1 || true
 fi
