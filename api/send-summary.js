@@ -4032,6 +4032,7 @@ async function handler(req, res) {
       // Strictly enforce verified system sender — reject any client-supplied fromEmail spoofing
       const effectiveFromAddr = FROM_ADDR;
 
+      const supabase = getSupabase();
       const state = await fetchStateFromSupabase(supabase, auth.user.id);
       const { data: profData } = await supabase
         .from("profiles")
