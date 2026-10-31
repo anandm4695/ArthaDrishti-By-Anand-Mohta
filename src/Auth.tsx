@@ -130,9 +130,6 @@ function getStrength(pw: string): { score: number; label: string; color: string;
 /* ─── Mode order for slide animations ───────────────────────────────── */
 const MODE_ORDER = { login: 0, signup: 1, forgot: 2, reset: 3, mfa: 4 } as const;
 
-// Module-level so the login preview plays once per page load, not on every Auth remount.
-let hasPlayedLoginPreview = false;
-
 export default function Auth({
   onLogin,
   onRecoveryComplete,
@@ -201,20 +198,6 @@ export default function Auth({
     timeoutMs: 60000,
     enabled: true,
   });
-
-  // Open the login screen with the screensaver as a preview (once per page load). Pointer
-  // movement is ignored until the warp-in intro finishes so it can actually be seen.
-  const [isIntroPreview, setIsIntroPreview] = useState(false);
-  useEffect(() => {
-    if (hasPlayedLoginPreview || mode !== "login") return;
-    hasPlayedLoginPreview = true;
-    setIsIntroPreview(true);
-    launchScreensaver();
-  }, [launchScreensaver, mode]);
-  const handleCloseScreensaver = useCallback(() => {
-    setIsIntroPreview(false);
-    closeScreensaver();
-  }, [closeScreensaver]);
 
   // Brand-panel parallax: write pointer position to CSS vars (no React re-render per move).
   const brandPanelRef = useRef<HTMLDivElement>(null);
@@ -647,12 +630,7 @@ export default function Auth({
   return (
     <div className="af-shell">
       {/* ── 3D Inactivity Celestial Screensaver Overlay ── */}
-      {isScreensaverActive && (
-        <CelestialScreensaver
-          onClose={handleCloseScreensaver}
-          pointerGraceMs={isIntroPreview ? 2000 : undefined}
-        />
-      )}
+      {isScreensaverActive && <CelestialScreensaver onClose={closeScreensaver} />}
 
       {/* ── Background Aurora Mesh & Starfield ── */}
       <div className="af-cosmic-bg" aria-hidden="true">
@@ -690,6 +668,7 @@ export default function Auth({
               onClick={launchScreensaver}
               className="af-screensaver-btn"
               title="Launch fullscreen 3D screensaver"
+              aria-label="Launch screensaver"
             >
               <Sparkles size={12} />
               <span>Screensaver</span>
@@ -817,18 +796,6 @@ export default function Auth({
         <div className="af-card-outer">
           <div className="af-card-border-glow" />
           <div className="af-card">
-            {/* Mobile/Tablet brand banner */}
-            <div className="af-logo-mobile">
-              <div className="af-logo-glow-wrap">
-                <div className="af-logo-ring-halo" />
-                <BrandMark size={38} />
-              </div>
-              <div>
-                <div className="af-logo-name">ArthaDrishti</div>
-                <div className="af-logo-tagline">Private Wealth OS • by Anand Mohta</div>
-              </div>
-            </div>
-
             {/* Segmented Auth Mode Switcher (only shown for login/signup) */}
             {(isLogin || isSignUp) && (
               <div className="af-segment-switch" role="tablist" aria-label="Authentication Mode">
@@ -1592,21 +1559,20 @@ const AF_STYLES = `
 
 .af-demo-card {
   position: relative;
-  background: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   overflow: hidden;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .af-demo-card:hover {
-  border-color: rgba(212, 175, 55, 0.6);
-  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.1);
 }
 
 .af-demo-card-shine {
@@ -1670,6 +1636,7 @@ const AF_STYLES = `
   background: rgba(16, 185, 129, 0.18);
   color: #34D399;
   border: 1px solid rgba(16, 185, 129, 0.35);
+  white-space: nowrap;
 }
 
 .af-demo-desc {
@@ -1688,21 +1655,20 @@ const AF_STYLES = `
   gap: 10px;
   padding: 13px 18px;
   border-radius: 14px;
-  background: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
-  color: #1E293B;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--af-text-head);
   font-family: 'Outfit', sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.03em;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .af-demo-btn:hover:not(:disabled) {
-  background: rgba(212, 175, 55, 0.25);
-  border-color: rgba(212, 175, 55, 0.75);
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.65);
   color: #FFFFFF;
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25);
@@ -1724,24 +1690,23 @@ const AF_STYLES = `
   transform: translateX(3px);
 }
 
-/* ── Global Container & Luxe Tokens (Senior Designer Light Theme) ─────── */
+/* ── Global Container & Luxe Tokens (Midnight Glass — continuous with the 3D hero) ── */
 .af-shell {
-  --af-gold-primary: #D97706;
-  --af-gold-light: #B45309;
-  --af-gold-glow: rgba(217, 119, 6, 0.2);
-  --af-gold-border: rgba(217, 119, 6, 0.3);
-  --af-gold-btn: linear-gradient(135deg, #0F172A 0%, #1E293B 70%, #312E81 100%);
-  --af-gold-btn-hover: linear-gradient(135deg, #1E293B 0%, #312E81 70%, #4338CA 100%);
-  
-  --af-bg-main: #F8FAFC;
-  --af-card-surface: rgba(255, 255, 255, 0.94);
-  --af-card-border: rgba(226, 232, 240, 0.95);
-  --af-input-surface: #FFFFFF;
-  --af-input-surface-focus: #FFFFFF;
-  
-  --af-text-head: #0F172A;
-  --af-text-body: #1E293B;
-  --af-text-muted: #64748B;
+  --af-gold: #D4AF37;
+  --af-gold-hi: #F3D98B;
+  --af-gold-text: #E8C872;
+  --af-gold-btn: linear-gradient(135deg, #F3D98B 0%, #D4AF37 48%, #B8862B 100%);
+  --af-gold-btn-hover: linear-gradient(135deg, #F8E4A6 0%, #DDB948 48%, #C29235 100%);
+
+  --af-bg-main: #05060F;
+  --af-card-surface: rgba(12, 15, 38, 0.9);
+  --af-card-border: rgba(255, 255, 255, 0.09);
+  --af-input-surface: rgba(255, 255, 255, 0.035);
+  --af-input-border: rgba(255, 255, 255, 0.12);
+
+  --af-text-head: #F8FAFC;
+  --af-text-body: #CBD5E1;
+  --af-text-muted: #94A3B8;
 
   min-height: 100vh;
   min-height: 100dvh;
@@ -1749,6 +1714,7 @@ const AF_STYLES = `
   font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--af-bg-main);
   color: var(--af-text-body);
+  color-scheme: dark;
   overflow-x: hidden;
   position: relative;
 }
@@ -1775,7 +1741,7 @@ const AF_STYLES = `
   right: 15%;
   width: 580px;
   height: 580px;
-  background: radial-gradient(circle, rgba(217, 119, 6, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.16) 0%, transparent 70%);
 }
 
 .af-aurora-indigo {
@@ -1783,7 +1749,7 @@ const AF_STYLES = `
   left: 5%;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.045) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.22) 0%, transparent 70%);
   animation-duration: 20s;
   animation-delay: -4s;
 }
@@ -1793,7 +1759,7 @@ const AF_STYLES = `
   left: 30%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(5, 150, 105, 0.03) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.1) 0%, transparent 70%);
   animation-duration: 24s;
   animation-delay: -8s;
 }
@@ -1802,8 +1768,8 @@ const AF_STYLES = `
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(15, 23, 42, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
   background-size: 44px 44px;
 }
 
@@ -2189,10 +2155,13 @@ const AF_STYLES = `
   align-items: center;
   justify-content: center;
   padding: 24px 32px;
-  min-height: 100dvh;
   min-height: 100vh;
+  min-height: 100dvh; /* after the vh fallback, so iOS Safari's toolbars don't force a scroll */
   overflow-y: auto;
   position: relative;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(30, 36, 102, 0.55) 0%, transparent 70%),
+    linear-gradient(180deg, #080b22 0%, #05060f 100%);
   z-index: 2;
 }
 
@@ -2218,7 +2187,7 @@ const AF_STYLES = `
   position: absolute;
   inset: -1.5px;
   border-radius: 25.5px;
-  background: conic-gradient(from var(--af-angle), rgba(79, 70, 229, 0.15), #6366F1, #F59E0B, #FDE68A, rgba(217, 119, 6, 0.15) 45%, rgba(79, 70, 229, 0.15));
+  background: conic-gradient(from var(--af-angle), rgba(212, 175, 55, 0.06), rgba(212, 175, 55, 0.06) 55%, #8B7CF6 70%, #F3D98B 82%, rgba(212, 175, 55, 0.06) 95%);
   animation: af-spin-angle 7s linear infinite;
   pointer-events: none;
   z-index: 0;
@@ -2230,7 +2199,7 @@ const AF_STYLES = `
   border-radius: inherit;
   background: inherit;
   filter: blur(28px);
-  opacity: 0.35;
+  opacity: 0.22;
   z-index: -1;
 }
 .af-card-outer > .af-card {
@@ -2243,8 +2212,8 @@ const AF_STYLES = `
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 50% 40% at 50% 45%, rgba(99, 102, 241, 0.1) 0%, transparent 70%),
-    radial-gradient(ellipse 35% 30% at 70% 30%, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+    radial-gradient(ellipse 50% 40% at 50% 45%, rgba(99, 102, 241, 0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 30% at 70% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
 }
 .af-form-panel::after {
   content: "";
@@ -2255,8 +2224,8 @@ const AF_STYLES = `
   height: 55%;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(79, 70, 229, 0.14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(79, 70, 229, 0.14) 1px, transparent 1px);
+    linear-gradient(rgba(212, 175, 55, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 175, 55, 0.12) 1px, transparent 1px);
   background-size: 56px 56px;
   transform: perspective(700px) rotateX(62deg);
   transform-origin: 50% 100%;
@@ -2278,31 +2247,29 @@ const AF_STYLES = `
 
 .af-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0) 40%),
+    var(--af-card-surface);
+  border: 1px solid var(--af-card-border);
   border-radius: 24px;
   padding: 32px 32px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 
-    0 25px 50px -15px rgba(15, 23, 42, 0.08),
-    0 4px 16px -2px rgba(15, 23, 42, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-}
-
-.af-logo-mobile {
-  display: none;
+  box-shadow:
+    0 30px 80px -20px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
 }
 
 /* Segmented Mode Switcher */
 .af-segment-switch {
   position: relative;
   display: flex;
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 12px;
   padding: 3px;
   gap: 3px;
@@ -2315,7 +2282,7 @@ const AF_STYLES = `
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
-  color: #64748B;
+  color: var(--af-text-muted);
   background: transparent;
   border: none;
   border-radius: 10px;
@@ -2328,20 +2295,20 @@ const AF_STYLES = `
 }
 
 .af-segment-btn:hover:not(.af-segment-active) {
-  color: #0F172A;
+  color: var(--af-text-head);
 }
 
 .af-segment-active {
-  color: #0F172A !important;
+  color: var(--af-text-head) !important;
   font-weight: 700;
 }
 
 .af-segment-glow-pill {
   position: absolute;
   inset: 0;
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.09);
   border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.35);
   z-index: 1;
 }
 
@@ -2365,7 +2332,7 @@ const AF_STYLES = `
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #B45309;
+  color: var(--af-gold-text);
   margin-bottom: 2px;
 }
 
@@ -2373,8 +2340,8 @@ const AF_STYLES = `
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #D97706;
-  box-shadow: 0 0 8px rgba(217, 119, 6, 0.6);
+  background: var(--af-gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.7);
 }
 
 .af-card-title {
@@ -2382,16 +2349,16 @@ const AF_STYLES = `
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: #0F172A;
+  color: var(--af-text-head);
   margin: 0;
   line-height: 1.2;
 }
 
 .af-card-sub {
   font-size: 13px;
-  color: #64748B;
+  color: var(--af-text-muted);
   line-height: 1.5;
-  margin: 0;
+  margin: 0 0 4px;
 }
 
 /* Alerts */
@@ -2419,15 +2386,15 @@ const AF_STYLES = `
 }
 
 .af-alert-err {
-  background: #FFF1F2;
-  border: 1px solid #FECDD3;
-  color: #BE123C;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #FCA5A5;
 }
 
 .af-alert-ok {
-  background: #ECFDF5;
-  border: 1px solid #A7F3D0;
-  color: #047857;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #6EE7B7;
 }
 
 .af-info-banner {
@@ -2435,20 +2402,20 @@ const AF_STYLES = `
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  background: #EFF6FF;
+  background: rgba(59, 130, 246, 0.1);
   border-radius: 12px;
-  border: 1px solid #BFDBFE;
+  border: 1px solid rgba(96, 165, 250, 0.28);
   font-size: 12.5px;
-  color: #1E40AF;
+  color: #93C5FD;
   font-weight: 500;
   margin-bottom: 8px;
 }
 
 .af-info-banner.af-info-banner-mfa {
-  background: #ECFDF5;
-  border: 1px solid #A7F3D0;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.28);
   border-left: 3.5px solid #10B981;
-  color: #065F46;
+  color: #A7F3D0;
   line-height: 1.45;
 }
 
@@ -2473,14 +2440,14 @@ const AF_STYLES = `
 .af-lbl {
   font-size: 13px;
   font-weight: 600;
-  color: #334155;
+  color: var(--af-text-body);
   letter-spacing: -0.01em;
 }
 
 .af-optional-tag {
   font-size: 11px;
   font-weight: 400;
-  color: #64748B;
+  color: var(--af-text-muted);
 }
 
 /* Inputs */
@@ -2488,24 +2455,22 @@ const AF_STYLES = `
   position: relative;
   display: flex;
   align-items: center;
-  background: #FFFFFF;
-  border: 1.5px solid #CBD5E1;
+  background: var(--af-input-surface);
+  border: 1px solid var(--af-input-border);
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .af-inp-wrap:hover:not(.af-focused):not(.af-inp-err) {
-  border-color: #94A3B8;
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .af-inp-wrap.af-focused,
 .af-inp-wrap:focus-within {
-  border-color: #4F46E5;
-  background: #FFFFFF;
-  box-shadow: 
-    0 0 0 3.5px rgba(79, 70, 229, 0.14),
-    0 2px 8px rgba(15, 23, 42, 0.04);
+  border-color: rgba(212, 175, 55, 0.75);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 0 0 3.5px rgba(212, 175, 55, 0.14);
 }
 
 .af-inp-wrap.af-inp-err {
@@ -2520,7 +2485,7 @@ const AF_STYLES = `
   outline: none;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
-  color: #0F172A;
+  color: var(--af-text-head);
   padding: 12px 14px;
   font-weight: 500;
 }
@@ -2543,7 +2508,17 @@ const AF_STYLES = `
 }
 
 .af-inp::placeholder {
-  color: rgba(148, 163, 184, 0.55);
+  color: rgba(148, 163, 184, 0.5);
+}
+
+/* Browser autofill paints inputs pale yellow/blue — keep them on the glass. */
+.af-inp:-webkit-autofill,
+.af-inp:-webkit-autofill:hover,
+.af-inp:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--af-text-head);
+  caret-color: var(--af-text-head);
+  -webkit-box-shadow: 0 0 0 1000px #12162f inset !important;
+  transition: background-color 9999s ease-out;
 }
 
 .af-inp-padded {
@@ -2554,21 +2529,21 @@ const AF_STYLES = `
   display: flex;
   align-items: center;
   padding-left: 14px;
-  color: #64748B;
+  color: var(--af-text-muted);
   flex-shrink: 0;
   transition: color 0.2s;
 }
 
 .af-focused .af-inp-icon,
 .af-inp-wrap:focus-within .af-inp-icon {
-  color: #4F46E5;
+  color: var(--af-gold-text);
 }
 
 .af-eye-btn {
   background: none;
   border: none;
   padding: 0 14px;
-  color: #64748B;
+  color: var(--af-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2577,7 +2552,7 @@ const AF_STYLES = `
 }
 
 .af-eye-btn:hover {
-  color: #0F172A;
+  color: var(--af-text-head);
 }
 
 .af-err-msg {
@@ -2612,8 +2587,8 @@ const AF_STYLES = `
 
 /* Criteria Checklist */
 .af-criteria-card {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 12px 14px;
   margin-top: 6px;
@@ -2631,7 +2606,7 @@ const AF_STYLES = `
 .af-crit-title {
   font-size: 11.5px;
   font-weight: 600;
-  color: #334155;
+  color: var(--af-text-body);
 }
 
 .af-strength-badge {
@@ -2665,13 +2640,13 @@ const AF_STYLES = `
   align-items: center;
   gap: 5px;
   font-size: 11.5px;
-  color: #64748B;
+  color: var(--af-text-muted);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .af-crit-ok {
-  color: #059669;
+  color: #34D399;
   font-weight: 600;
 }
 
@@ -2688,14 +2663,14 @@ const AF_STYLES = `
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #475569;
+  color: var(--af-text-body);
   cursor: pointer;
   user-select: none;
   font-weight: 500;
 }
 
 .af-remember-text {
-  color: #475569;
+  color: var(--af-text-body);
 }
 
 .af-chk {
@@ -2712,7 +2687,7 @@ const AF_STYLES = `
   border: none;
   font-size: 13px;
   font-weight: 600;
-  color: #4F46E5;
+  color: var(--af-gold-text);
   cursor: pointer;
   padding: 0;
   font-family: inherit;
@@ -2722,7 +2697,7 @@ const AF_STYLES = `
 
 .af-link:hover {
   text-decoration: underline;
-  color: #3730A3;
+  color: var(--af-gold-hi);
 }
 
 .af-back-link {
@@ -2733,7 +2708,7 @@ const AF_STYLES = `
   border: none;
   font-size: 13px;
   font-weight: 600;
-  color: #64748B;
+  color: var(--af-text-muted);
   cursor: pointer;
   padding: 6px 10px;
   border-radius: 8px;
@@ -2742,8 +2717,8 @@ const AF_STYLES = `
 }
 
 .af-back-link:hover {
-  background: #F1F5F9;
-  color: #0F172A;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--af-text-head);
 }
 
 /* CTA Button with Gold Ingot Finish */
@@ -2752,7 +2727,7 @@ const AF_STYLES = `
   width: 100%;
   padding: 14px 20px;
   background: var(--af-gold-btn);
-  color: #FFFFFF;
+  color: #1A1405;
   border: none;
   border-radius: 14px;
   font-size: 15px;
@@ -2763,9 +2738,10 @@ const AF_STYLES = `
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 
-    0 8px 24px -4px rgba(15, 23, 42, 0.28),
-    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 10px 28px -8px rgba(212, 175, 55, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(90, 60, 10, 0.35);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   margin-top: 4px;
   overflow: hidden;
@@ -2788,9 +2764,9 @@ const AF_STYLES = `
 
 .af-cta-btn:hover:not(:disabled) {
   background: var(--af-gold-btn-hover);
-  box-shadow: 
-    0 12px 28px -3px rgba(15, 23, 42, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 14px 34px -8px rgba(212, 175, 55, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transform: translateY(-1.5px);
   filter: brightness(1.05);
 }
@@ -2822,7 +2798,7 @@ input:not(.af-inp):focus-visible,
   justify-content: center;
   gap: 6px;
   font-size: 11px;
-  color: #64748B;
+  color: var(--af-text-muted);
   text-align: center;
   margin-top: 2px;
 }
@@ -2902,7 +2878,7 @@ input:not(.af-inp):focus-visible,
 }
 
 /* ── Responsive Viewports ───────────────── */
-@media (min-width: 1024px) {
+@media (min-width: 1101px) {
   .af-shell {
     height: 100vh;
     max-height: 100vh;
@@ -2921,7 +2897,28 @@ input:not(.af-inp):focus-visible,
 }
 
 @media (max-width: 1100px) {
+  /* Phones & tablets: the 3D city becomes a banner above the card instead of disappearing. */
+  .af-shell {
+    flex-direction: column;
+  }
   .af-brand-panel {
+    flex: none;
+    min-width: 0;
+    height: clamp(200px, 30vh, 320px);
+    box-shadow: none;
+  }
+  .af-brand-vignette {
+    background:
+      linear-gradient(180deg, rgba(7, 10, 31, 0.75) 0%, rgba(7, 10, 31, 0) 34%),
+      linear-gradient(0deg, #080b22 0%, rgba(8, 11, 34, 0.7) 18%, rgba(8, 11, 34, 0) 45%);
+  }
+  .af-brand-content {
+    padding: 16px 18px;
+    justify-content: flex-start;
+  }
+  .af-brand-hero,
+  .af-brand-bottom,
+  .af-float {
     display: none;
   }
   /* iOS Safari zooms into inputs smaller than 16px on focus */
@@ -2929,26 +2926,18 @@ input:not(.af-inp):focus-visible,
     font-size: 16px;
   }
   .af-form-panel {
-    padding: 32px 20px;
-    align-items: center;
+    flex: 1;
+    min-height: 0;
+    padding: 0 20px 32px;
+    margin-top: -44px;
+    align-items: flex-start;
+    background: linear-gradient(180deg, rgba(8, 11, 34, 0) 0px, #080b22 44px, #05060f 100%);
   }
-  .af-logo-mobile {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 4px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #E2E8F0;
+  .af-form-panel::after {
+    display: none;
   }
-  .af-logo-name {
-    font-family: 'Outfit', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: #0F172A;
-  }
-  .af-logo-tagline {
-    font-size: 11.5px;
-    color: #B45309;
+  .af-card-outer {
+    margin: 0 auto;
   }
   .af-card {
     border-radius: 24px;
@@ -2957,7 +2946,24 @@ input:not(.af-inp):focus-visible,
   }
 }
 
+@media (max-width: 1100px) and (max-height: 500px) {
+  /* Landscape phones: keep the banner short so the form stays reachable */
+  .af-brand-panel {
+    height: 150px;
+  }
+}
+
 @media (max-width: 480px) {
+  /* Banner header: name + icon-only screensaver button fit on one line */
+  .af-brand-tagline {
+    display: none;
+  }
+  .af-screensaver-btn span {
+    display: none;
+  }
+  .af-screensaver-btn {
+    padding: 11px;
+  }
   .af-form-panel {
     padding: 16px 12px;
   }

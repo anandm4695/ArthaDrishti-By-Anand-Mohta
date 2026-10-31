@@ -84,67 +84,204 @@
     }
     #root { min-height: 100vh; }
 
-    /* App loading shimmer shown before JS hydrates */
-    #app-loading {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: var(--init-bg, #0B0F1A);
-      z-index: 9999;
-      gap: 24px;
-      transition: opacity 0.4s ease;
-    }
+    /* ── "Artha Mint" loader ─────────────────────────────────────────
+       Shared by the pre-hydration splash below AND the React <LoadingScreen />
+       (src/components/layout/LoadingScreen.tsx) — this <style> stays in <head>
+       for the app's lifetime, so both render from one source. Pure CSS 3D.
+       Every looping animation is offset by --ad-t (= -performance.now()), so
+       the React loader picks up at the exact phase the splash left off. */
+    #app-loading { position: fixed; inset: 0; z-index: 9999; transition: opacity 0.45s ease; }
     #app-loading.hidden { opacity: 0; pointer-events: none; }
-    .loading-logo {
-      width: 120px;
-      height: 120px;
-      object-fit: contain;
-      animation: pulse-logo 2.4s ease-in-out infinite;
-      filter: drop-shadow(0 0 24px rgba(197,161,82,0.4));
+    .ad-loader {
+      --ad-gold: #C5A152; --ad-gold-hi: #F3D98B; --ad-gold-lo: #7A5E22;
+      --ad-bg: var(--init-bg, #0B0F1A); --ad-dim: rgba(197,161,82,0.38); --ad-lit: #F3D98B; --ad-lit-glow: rgba(243,217,139,0.55);
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 26px; padding: 24px 16px; box-sizing: border-box; text-align: center; overflow: hidden;
+      background:
+        radial-gradient(60% 45% at 50% 42%, rgba(197,161,82,0.10), transparent 70%),
+        var(--ad-bg);
     }
-    .loading-tagline {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(197,161,82,0.75);
+    .ad-stage { position: relative; width: 240px; height: 240px; flex: none; }
+    /* Three isolated 3D scenes (orbits-behind, coin, orbits-front) instead of one shared
+       space: planes that intersect inside a single preserve-3d context get split and
+       mis-sorted (notably by Safari/WebKit), slicing wedges through the coin. Front-half
+       orbit copies are clipped to the half-plane nearest the viewer ("Saturn ring" trick). */
+    .ad-scene { position: absolute; inset: 0; perspective: 900px; }
+    .ad-scene--front-1 { clip-path: polygon(-150.0% 50.0%, 250.0% 50.0%, 250.0% 250.0%, -150.0% 250.0%); }
+    .ad-scene--front-2 { clip-path: polygon(-129.8% -37.7%, 229.8% 137.7%, 142.1% 317.4%, -217.4% 142.1%); }
+    .ad-scene--front-3 { clip-path: polygon(-129.8% 137.7%, 229.8% -37.7%, 317.4% 142.1%, -42.1% 317.4%); }
+    .ad-gyro {
+      position: absolute; inset: 0; transform-style: preserve-3d;
+      transform: rotateX(-14deg);
+      animation: ad-sway 9s ease-in-out infinite; animation-delay: var(--ad-t, 0s);
     }
-    .loading-bar {
-      width: 180px;
-      height: 3px;
-      background: rgba(128,128,128,0.15);
-      border-radius: 2px;
-      overflow: hidden;
+    .ad-gyro * { transform-style: preserve-3d; }
+    /* Floor glow + reflection */
+    .ad-floor {
+      position: absolute; left: 50%; top: 82%; width: 210px; height: 46px; margin-left: -105px;
+      border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(197,161,82,0.38), rgba(197,161,82,0.08) 60%, transparent);
+      filter: blur(2px);
+      animation: ad-floor 3.6s cubic-bezier(.65,0,.35,1) infinite; animation-delay: var(--ad-t, 0s);
     }
-    .loading-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #C5A152, #E8C97A, #C5A152);
-      background-size: 200%;
-      border-radius: 2px;
-      animation: shimmer 1.6s linear infinite;
+    /* Orbits: static tilt on .ad-orbit, spin on .ad-ring */
+    .ad-orbit { position: absolute; left: 50%; top: 50%; }
+    .ad-orbit--1 { transform: rotateZ(0deg) rotateX(74deg); }
+    .ad-orbit--2 { transform: rotateZ(26deg) rotateX(70deg); }
+    .ad-orbit--3 { transform: rotateZ(-26deg) rotateX(70deg); }
+    .ad-ring {
+      position: absolute; border-radius: 50%;
+      border: 1px solid rgba(197,161,82,0.38);
+      box-shadow: 0 0 12px rgba(197,161,82,0.12), inset 0 0 12px rgba(197,161,82,0.10);
+      animation: ad-spin linear infinite; animation-delay: var(--ad-t, 0s);
     }
-    @keyframes pulse-logo {
-      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(197,161,82,0.35)); }
-      50% { transform: scale(1.04); filter: drop-shadow(0 0 36px rgba(197,161,82,0.55)); }
+    .ad-orbit--1 .ad-ring { width: 216px; height: 216px; margin: -108px; animation-duration: 7s; }
+    .ad-orbit--2 .ad-ring { width: 188px; height: 188px; margin: -94px;  animation-duration: 9s; animation-direction: reverse; }
+    .ad-orbit--3 .ad-ring { width: 200px; height: 200px; margin: -100px; animation-duration: 11s; }
+    .ad-node {
+      position: absolute; left: 50%; top: -4px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%;
+      background: var(--c); box-shadow: 0 0 6px 1px var(--c), 0 0 18px 4px var(--c);
     }
-    @keyframes shimmer {
-      0% { background-position: 200% center; }
-      100% { background-position: -200% center; }
+    .ad-orbit--1 .ad-node { --c: #38BDF8; }
+    .ad-orbit--2 .ad-node { --c: #FB923C; }
+    .ad-orbit--3 .ad-node { --c: #34D399; }
+    /* The coin: two faces + stacked edge layers give real thickness */
+    .ad-coin {
+      position: absolute; left: 50%; top: 50%; width: 116px; height: 116px; margin: -58px;
+      animation: ad-flip 3.6s cubic-bezier(.65,0,.35,1) infinite; animation-delay: var(--ad-t, 0s);
+    }
+    .ad-coin-edge {
+      position: absolute; inset: 0; border-radius: 50%; box-sizing: border-box;
+      border: 3px solid #A9873E;
+      transform: translateZ(calc((var(--i) - 5.5) * 1px));
+    }
+    .ad-coin-edge:nth-child(odd) { border-color: #D8B866; }
+    .ad-coin-face {
+      position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      display: flex; align-items: center; justify-content: center;
+      border: 4px solid transparent;
+      box-shadow: 0 0 0 1px rgba(243,217,139,0.9), inset 0 0 0 1.5px rgba(243,217,139,0.7), inset 0 0 18px rgba(0,0,0,0.45);
+    }
+    .ad-coin-face--front {
+      transform: translateZ(6px);
+      background: radial-gradient(circle at 35% 30%, #1E2A4A, #0C1028 70%) padding-box,
+        conic-gradient(from 200deg, var(--ad-gold-lo), var(--ad-gold-hi), var(--ad-gold), var(--ad-gold-lo), var(--ad-gold-hi), var(--ad-gold-lo)) border-box;
+    }
+    .ad-coin-face--front img { width: 82%; height: 82%; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+    .ad-coin-face--back {
+      transform: rotateY(180deg) translateZ(6px);
+      animation: ad-face-back 3.6s linear infinite; animation-delay: var(--ad-t, 0s);
+      background: radial-gradient(circle at 35% 30%, var(--ad-gold-hi), var(--ad-gold) 55%, var(--ad-gold-lo)) padding-box,
+        conic-gradient(from 200deg, var(--ad-gold-lo), var(--ad-gold-hi), var(--ad-gold), var(--ad-gold-lo), var(--ad-gold-hi), var(--ad-gold-lo)) border-box;
+      font-family: 'Fraunces', Georgia, serif; font-size: 58px; font-weight: 650; color: #5A4214;
+      text-shadow: 0 1px 0 rgba(255,240,200,0.6), 0 -1px 0 rgba(0,0,0,0.25);
+    }
+    /* WebKit draws an animated child (the glint) as its own layer and ignores the parent's
+       backface-visibility for it — flatten each face and hide every backface explicitly. */
+    .ad-gyro .ad-coin-face { transform-style: flat; }
+    .ad-coin-face *, .ad-coin-face::after { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    /* Specular glint sweeping across each face */
+    .ad-coin-face::after {
+      content: ""; position: absolute; inset: -30%;
+      background: linear-gradient(115deg, transparent 40%, rgba(255,246,214,0.55) 50%, transparent 60%);
+      animation: ad-glint 3.6s ease-in-out infinite; animation-delay: var(--ad-t, 0s);
+    }
+    /* Rising gold motes */
+    .ad-mote {
+      position: absolute; bottom: 22%; left: var(--x); width: 3px; height: 3px; border-radius: 50%;
+      background: var(--ad-gold-hi); box-shadow: 0 0 6px var(--ad-gold); opacity: 0;
+      animation: ad-rise 4.2s ease-out infinite; animation-delay: calc(var(--ad-t, 0s) + var(--d));
+    }
+    /* Tagline: one word lit at a time */
+    .ad-words {
+      display: flex; gap: 10px; align-items: center;
+      font: 600 clamp(10px, 3vw, 12px)/1 'Inter', sans-serif; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--ad-dim);
+    }
+    .ad-words b { font-weight: 400; opacity: 0.6; }
+    .ad-words span { animation: ad-word 4.8s ease-in-out infinite; animation-delay: calc(var(--ad-t, 0s) + var(--d)); }
+    .ad-track { width: 168px; height: 2px; border-radius: 2px; overflow: hidden; background: rgba(128,128,128,0.16); }
+    .ad-track i {
+      display: block; width: 40%; height: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, transparent, var(--ad-gold-hi), transparent);
+      animation: ad-scan 1.6s cubic-bezier(.65,0,.35,1) infinite; animation-delay: var(--ad-t, 0s);
+    }
+    .ad-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    @keyframes ad-flip {
+      0%, 12% { transform: rotateY(-24deg); }
+      45%, 62% { transform: rotateY(156deg); }
+      95%, 100% { transform: rotateY(336deg); }
+    }
+    /* Engine-independent face swap, timed to the edge-on moments of ad-flip, so the coin
+       reads correctly even where backface-visibility / 3D sorting is unavailable. */
+    @keyframes ad-face-back {
+      0%, 30.09% { opacity: 0; }
+      30.10%, 80.09% { opacity: 1; }
+      80.10%, 100% { opacity: 0; }
+    }
+    @keyframes ad-glint { 0%, 30% { transform: translateX(-60%); } 60%, 100% { transform: translateX(60%); } }
+    @keyframes ad-floor {
+      0%, 12%, 45%, 62%, 95%, 100% { transform: scaleX(1); opacity: 1; }
+      28%, 78% { transform: scaleX(0.55); opacity: 0.55; }
+    }
+    @keyframes ad-spin { to { transform: rotateZ(360deg); } }
+    @keyframes ad-sway { 0%, 100% { transform: rotateX(-14deg) rotateY(-10deg); } 50% { transform: rotateX(-8deg) rotateY(10deg); } }
+    @keyframes ad-rise {
+      0% { opacity: 0; transform: translateY(0) scale(0.6); }
+      20% { opacity: 0.9; }
+      100% { opacity: 0; transform: translateY(-150px) scale(1); }
+    }
+    @keyframes ad-word {
+      0%, 30%, 100% { color: var(--ad-dim); text-shadow: none; }
+      8%, 20% { color: var(--ad-lit); text-shadow: 0 0 14px var(--ad-lit-glow); }
+    }
+    @keyframes ad-scan { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+
+    html:not(.dark-theme) .ad-loader { --ad-dim: rgba(122,94,34,0.38); --ad-lit: #7A5E22; --ad-lit-glow: rgba(197,161,82,0.35); }
+    html:not(.dark-theme) .ad-ring { border-color: rgba(122,94,34,0.45); }
+
+    @media (max-width: 380px), (max-height: 520px) {
+      .ad-loader { gap: 18px; }
+      .ad-stage { transform: scale(0.82); margin: -22px 0; }
+      .ad-words { gap: 7px; letter-spacing: 0.16em; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ad-loader *, .ad-loader *::after { animation: none !important; }
+      .ad-coin { transform: rotateY(-24deg); }
+      .ad-coin-face--back { opacity: 0; }
+      .ad-words span:nth-of-type(1) { color: #F3D98B; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Splash screen — hidden once React mounts -->
-  <div id="app-loading">
-    <img src="/logo.png" alt="ArthaDrishti by Anand Mohta" class="loading-logo" />
-    <div class="loading-tagline">Plan &bull; Grow &bull; Secure &bull; Prosper</div>
-    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  <!-- Splash screen — same markup as src/components/layout/LoadingScreen.tsx; hidden once React mounts -->
+  <div id="app-loading" class="ad-loader" role="status" aria-live="polite" aria-busy="true">
+    <div class="ad-stage" aria-hidden="true">
+      <div class="ad-floor"></div>
+      <i class="ad-mote" style="--x:28%;--d:0s"></i><i class="ad-mote" style="--x:44%;--d:-1.3s"></i><i class="ad-mote" style="--x:58%;--d:-2.6s"></i><i class="ad-mote" style="--x:70%;--d:-0.7s"></i><i class="ad-mote" style="--x:36%;--d:-3.4s"></i><i class="ad-mote" style="--x:64%;--d:-2s"></i>
+      <div class="ad-scene"><div class="ad-gyro"><div class="ad-orbit ad-orbit--1"><div class="ad-ring"><i class="ad-node"></i></div></div><div class="ad-orbit ad-orbit--2"><div class="ad-ring"><i class="ad-node"></i></div></div><div class="ad-orbit ad-orbit--3"><div class="ad-ring"><i class="ad-node"></i></div></div></div></div>
+      <div class="ad-scene"><div class="ad-gyro">
+        <div class="ad-coin">
+          <i class="ad-coin-edge" style="--i:0"></i><i class="ad-coin-edge" style="--i:1"></i><i class="ad-coin-edge" style="--i:2"></i><i class="ad-coin-edge" style="--i:3"></i><i class="ad-coin-edge" style="--i:4"></i><i class="ad-coin-edge" style="--i:5"></i><i class="ad-coin-edge" style="--i:6"></i><i class="ad-coin-edge" style="--i:7"></i><i class="ad-coin-edge" style="--i:8"></i><i class="ad-coin-edge" style="--i:9"></i><i class="ad-coin-edge" style="--i:10"></i><i class="ad-coin-edge" style="--i:11"></i>
+          <div class="ad-coin-face ad-coin-face--front"><img src="/logo.png" alt="" /></div>
+          <div class="ad-coin-face ad-coin-face--back">&#8377;</div>
+        </div>
+      </div></div>
+      <div class="ad-scene ad-scene--front-1"><div class="ad-gyro"><div class="ad-orbit ad-orbit--1"><div class="ad-ring"><i class="ad-node"></i></div></div></div></div>
+      <div class="ad-scene ad-scene--front-2"><div class="ad-gyro"><div class="ad-orbit ad-orbit--2"><div class="ad-ring"><i class="ad-node"></i></div></div></div></div>
+      <div class="ad-scene ad-scene--front-3"><div class="ad-gyro"><div class="ad-orbit ad-orbit--3"><div class="ad-ring"><i class="ad-node"></i></div></div></div></div>
+    </div>
+    <div class="ad-words" aria-hidden="true"><span style="--d:0s">Plan</span><b>&bull;</b><span style="--d:1.2s">Grow</span><b>&bull;</b><span style="--d:2.4s">Secure</span><b>&bull;</b><span style="--d:3.6s">Prosper</span></div>
+    <div class="ad-track" aria-hidden="true"><i></i></div>
+    <span class="ad-sr">Loading ArthaDrishti…</span>
   </div>
+  <script>
+    // Phase-lock the splash to the page clock so the React loader can resume seamlessly.
+    document.getElementById('app-loading').style.setProperty('--ad-t', -performance.now() + 'ms');
+  </script>
 
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>

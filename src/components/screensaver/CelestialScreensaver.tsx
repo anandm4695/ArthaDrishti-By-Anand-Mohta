@@ -56,6 +56,12 @@ export const CelestialScreensaver: React.FC<CelestialScreensaverProps> = ({
   const isClosingRef = useRef(false);
   const [isClosing, setIsClosing] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  // Phones/tablets have no mouse or keyboard to "move" or "press" — word the hint for touch.
+  const [isTouch] = useState(
+    () => typeof window !== "undefined" && !!window.matchMedia?.("(hover: none)").matches
+  );
+  const wakeAction = isTouch ? "Tap anywhere" : "Move the mouse or press any key";
+  const wakeHint = isTouch ? `${wakeAction} to return` : wakeAction;
 
   const handleWakeUp = useCallback(() => {
     if (isClosingRef.current) return;
@@ -709,7 +715,7 @@ export const CelestialScreensaver: React.FC<CelestialScreensaverProps> = ({
       tabIndex={-1}
       role="dialog"
       aria-modal="true"
-      aria-label="ArthaDrishti screensaver. Move the mouse or press any key to return."
+      aria-label={`ArthaDrishti screensaver. ${wakeAction} to return.`}
       style={{
         opacity: isClosing ? 0 : 1,
         transform: isClosing ? "scale(1.04)" : "scale(1)",
@@ -771,7 +777,7 @@ export const CelestialScreensaver: React.FC<CelestialScreensaverProps> = ({
         </div>
         <div className="cs-hint">
           <span className="cs-hint-dot" />
-          Move the mouse or press any key
+          {wakeHint}
         </div>
       </div>
     </div>

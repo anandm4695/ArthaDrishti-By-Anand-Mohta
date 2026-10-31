@@ -1,78 +1,83 @@
-import { BrandMark } from "../ui/BrandMark";
+import React, { useState } from "react";
+
+// "Artha Mint" loader. Styles live in the critical inline <style> in index.html (shared with
+// the pre-hydration #app-loading splash, which renders this exact markup), so the splash →
+// React handoff is pixel-identical. --ad-t phase-locks every loop to the page clock, so the
+// animation continues rather than restarting when the splash fades out on top of this.
+
+const EDGES = Array.from({ length: 12 }, (_, i) => i);
+const MOTES = [
+  [28, 0],
+  [44, -1.3],
+  [58, -2.6],
+  [70, -0.7],
+  [36, -3.4],
+  [64, -2],
+];
+const WORDS = ["Plan", "Grow", "Secure", "Prosper"];
+const ORBITS = [1, 2, 3];
+
+// Orbits render twice: once behind the coin, once (clipped to the near half) in front of it.
+const orbit = (n: number) => (
+  <div key={n} className={`ad-orbit ad-orbit--${n}`}>
+    <div className="ad-ring">
+      <i className="ad-node" />
+    </div>
+  </div>
+);
+
+type CSSVars = React.CSSProperties & Record<`--${string}`, string | number>;
 
 export function LoadingScreen() {
+  const [phase] = useState(() => `${-performance.now()}ms`);
+
   return (
     <div
+      className="ad-loader"
       role="status"
       aria-live="polite"
       aria-busy="true"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--t-paper, #0B0F1A)",
-        gap: 20,
-        padding: "24px 16px",
-        boxSizing: "border-box",
-        textAlign: "center",
-      }}
+      style={{ "--ad-t": phase } as CSSVars}
     >
-      <BrandMark
-        size={88}
-        style={{ animation: "mark-enter 0.5s var(--ease-premium, ease-out) both" }}
-      />
-      <div
-        style={{
-          fontSize: "clamp(10px, 3vw, 12px)",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "rgba(197,161,82,0.7)",
-          fontFamily: "var(--t-font, var(--font-sans))",
-        }}
-      >
-        Plan &bull; Grow &bull; Secure &bull; Prosper
+      <div className="ad-stage" aria-hidden="true">
+        <div className="ad-floor" />
+        {MOTES.map(([x, d]) => (
+          <i key={x} className="ad-mote" style={{ "--x": `${x}%`, "--d": `${d}s` } as CSSVars} />
+        ))}
+        <div className="ad-scene">
+          <div className="ad-gyro">{ORBITS.map(orbit)}</div>
+        </div>
+        <div className="ad-scene">
+          <div className="ad-gyro">
+            <div className="ad-coin">
+              {EDGES.map((i) => (
+                <i key={i} className="ad-coin-edge" style={{ "--i": i } as CSSVars} />
+              ))}
+              <div className="ad-coin-face ad-coin-face--front">
+                <img src="/logo.png" alt="" />
+              </div>
+              <div className="ad-coin-face ad-coin-face--back">&#8377;</div>
+            </div>
+          </div>
+        </div>
+        {ORBITS.map((n) => (
+          <div key={n} className={`ad-scene ad-scene--front-${n}`}>
+            <div className="ad-gyro">{orbit(n)}</div>
+          </div>
+        ))}
       </div>
-      <div
-        style={{
-          width: 160,
-          height: 3,
-          background: "rgba(128,128,128,0.15)",
-          borderRadius: 2,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            background: "linear-gradient(90deg, #C5A152, #E8C97A, #C5A152)",
-            backgroundSize: "200%",
-            borderRadius: 2,
-            animation: "shimmer 1.6s linear infinite",
-          }}
-        />
+      <div className="ad-words" aria-hidden="true">
+        {WORDS.map((w, i) => (
+          <React.Fragment key={w}>
+            {i > 0 && <b>&bull;</b>}
+            <span style={{ "--d": `${i * 1.2}s` } as CSSVars}>{w}</span>
+          </React.Fragment>
+        ))}
       </div>
-      <span
-        style={{
-          position: "absolute",
-          width: 1,
-          height: 1,
-          padding: 0,
-          margin: -1,
-          overflow: "hidden",
-          clip: "rect(0, 0, 0, 0)",
-          whiteSpace: "nowrap",
-          border: 0,
-        }}
-      >
-        Loading your dashboard…
-      </span>
-      <style>{`
-        @keyframes mark-enter { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
-        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
-      `}</style>
+      <div className="ad-track" aria-hidden="true">
+        <i />
+      </div>
+      <span className="ad-sr">Loading your dashboard…</span>
     </div>
   );
 }

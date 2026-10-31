@@ -212,9 +212,12 @@ export const WealthSkylineCanvas: React.FC<WealthSkylineCanvasProps> = ({
       yaw = -0.6 + t * 0.00007 + mouse.x * 0.45;
       pitch = 0.52 + mouse.y * 0.12 + Math.sin(t * 0.0003) * 0.03;
       dist = 980 - Math.min(1, t / 2600) * 120;
-      focal = Math.min(width * 0.95, height * 1.05);
-      cxs = width * 0.52;
-      cys = height * 0.68;
+      // Short, wide hosts (the phone/tablet banner) frame tighter and lower so the city
+      // fills the strip instead of floating small in the middle of it.
+      const banner = height < 460 && width > height;
+      focal = banner ? Math.min(width * 0.9, height * 1.75) : Math.min(width * 0.95, height * 1.05);
+      cxs = width * (banner ? 0.5 : 0.52);
+      cys = height * (banner ? 0.74 : 0.68);
       cy = Math.cos(yaw);
       sy = Math.sin(yaw);
       cp = Math.cos(pitch);
