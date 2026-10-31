@@ -75,8 +75,11 @@ describe("Responsive Mobile & Tablet Layout Integrity", () => {
     expect(container.querySelector("#btn-explore-demo")).toBeTruthy();
 
     // Verify style tag contains 16px font-size to prevent iOS Safari auto-zoom
-    const styleTag = container.querySelector("style");
-    expect(styleTag?.textContent).toContain("font-size: 16px;");
+    // (the login screensaver preview may render its own <style> first, so check them all)
+    const css = Array.from(container.querySelectorAll("style"))
+      .map((s) => s.textContent)
+      .join("\n");
+    expect(css).toContain("font-size: 16px;");
   });
 
   it("renders StatCard with stat-card-value class and word break safety", () => {

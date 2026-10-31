@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { supabase, capturedUrlHash } from "./supabaseClient";
 import {
@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { BrandMark } from "./components/ui/BrandMark";
 import { DEMO_USER_SESSION } from "./utils/demoData";
-import { WealthOrbCanvas } from "./components/auth/WealthOrbCanvas";
+import { WealthSkylineCanvas } from "./components/auth/WealthSkylineCanvas";
 import { CelestialScreensaver } from "./components/screensaver/CelestialScreensaver";
 import { useIdleScreensaver } from "./hooks/useIdleScreensaver";
 
@@ -130,6 +130,9 @@ function getStrength(pw: string): { score: number; label: string; color: string;
 /* ─── Mode order for slide animations ───────────────────────────────── */
 const MODE_ORDER = { login: 0, signup: 1, forgot: 2, reset: 3, mfa: 4 } as const;
 
+// Module-level so the login preview plays once per page load, not on every Auth remount.
+let hasPlayedLoginPreview = false;
+
 export default function Auth({
   onLogin,
   onRecoveryComplete,
@@ -193,11 +196,38 @@ export default function Auth({
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement>(null);
 
-  // 3D Screensaver Idle Detection (30s inactivity)
+  // 3D Screensaver Idle Detection (60s inactivity)
   const { isScreensaverActive, closeScreensaver, launchScreensaver } = useIdleScreensaver({
-    timeoutMs: 30000,
+    timeoutMs: 60000,
     enabled: true,
   });
+
+  // Open the login screen with the screensaver as a preview (once per page load). Pointer
+  // movement is ignored until the warp-in intro finishes so it can actually be seen.
+  const [isIntroPreview, setIsIntroPreview] = useState(false);
+  useEffect(() => {
+    if (hasPlayedLoginPreview || mode !== "login") return;
+    hasPlayedLoginPreview = true;
+    setIsIntroPreview(true);
+    launchScreensaver();
+  }, [launchScreensaver, mode]);
+  const handleCloseScreensaver = useCallback(() => {
+    setIsIntroPreview(false);
+    closeScreensaver();
+  }, [closeScreensaver]);
+
+  // Brand-panel parallax: write pointer position to CSS vars (no React re-render per move).
+  const brandPanelRef = useRef<HTMLDivElement>(null);
+  const handleBrandPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--mx", (((e.clientX - rect.left) / rect.width) * 2 - 1).toFixed(3));
+    el.style.setProperty("--my", (((e.clientY - rect.top) / rect.height) * 2 - 1).toFixed(3));
+  }, []);
+  const handleBrandPointerLeave = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.style.setProperty("--mx", "0");
+    e.currentTarget.style.setProperty("--my", "0");
+  }, []);
 
   const [isMobileViewport, setIsMobileViewport] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768
@@ -618,7 +648,10 @@ export default function Auth({
     <div className="af-shell">
       {/* ── 3D Inactivity Celestial Screensaver Overlay ── */}
       {isScreensaverActive && (
-        <CelestialScreensaver onClose={closeScreensaver} />
+        <CelestialScreensaver
+          onClose={handleCloseScreensaver}
+          pointerGraceMs={isIntroPreview ? 2000 : undefined}
+        />
       )}
 
       {/* ── Background Aurora Mesh & Starfield ── */}
@@ -629,177 +662,151 @@ export default function Auth({
         <div className="af-grid-overlay" />
       </div>
 
-      {/* ── Brand & Executive Showcase Panel (Desktop & Tablet) ── */}
-      <div className="af-brand-panel" aria-label="ArthaDrishti Institutional Overview">
+      {/* ── Brand Panel: 3D "allocation city" hero (desktop) ── */}
+      <div
+        ref={brandPanelRef}
+        className="af-brand-panel"
+        aria-label="ArthaDrishti overview"
+        onPointerMove={handleBrandPointerMove}
+        onPointerLeave={handleBrandPointerLeave}
+      >
+        <WealthSkylineCanvas paused={isScreensaverActive} trackRef={brandPanelRef} />
+        <div className="af-brand-vignette" aria-hidden="true" />
+
         <div className="af-brand-content">
-          {/* Brand header */}
-          <div className="af-brand-logo">
-            <div className="af-logo-glow-wrap">
-              <div className="af-logo-ring-halo" />
-              <BrandMark size={46} />
+          <div className="af-brand-top">
+            <div className="af-brand-logo">
+              <div className="af-logo-glow-wrap">
+                <div className="af-logo-ring-halo" />
+                <BrandMark size={42} />
+              </div>
+              <div>
+                <div className="af-brand-name">ArthaDrishti</div>
+                <div className="af-brand-tagline">Private Wealth Operating System</div>
+              </div>
             </div>
-            <div>
-              <div className="af-brand-name">ArthaDrishti</div>
-              <div className="af-brand-tagline">Private Wealth Operating System</div>
-            </div>
+            <button
+              type="button"
+              onClick={launchScreensaver}
+              className="af-screensaver-btn"
+              title="Launch fullscreen 3D screensaver"
+            >
+              <Sparkles size={12} />
+              <span>Screensaver</span>
+            </button>
           </div>
 
-          {/* Headline & Value Proposition */}
           <div className="af-brand-hero">
-            <div className="af-hero-badge">
-              <Sparkles size={12} className="af-badge-icon" />
-              <span>Institutional Wealth Intelligence</span>
+            <div className="af-hero-kicker">
+              <span className="af-kicker-line" />
+              <span className="af-kicker-deva" lang="hi">
+                अर्थदृष्टि
+              </span>
+              <span className="af-kicker-dot" aria-hidden="true" />
+              Wealth, seen whole
             </div>
             <h1 className="af-brand-headline">
-              Unify your wealth.{" "}
-              <span className="af-brand-headline-accent">Master your future.</span>
+              See your wealth
+              <span className="af-brand-headline-accent">in every dimension.</span>
             </h1>
             <p className="af-brand-sub">
-              Consolidate multi-currency bank accounts, mutual funds, direct equities, real estate,
-              PPF/EPF, and family liabilities into an autonomous executive command center.
+              Bank accounts, equities, mutual funds, real estate, gold, PPF/EPF and family
+              liabilities — one living, three-dimensional view of everything you own.
             </p>
           </div>
 
-          {/* 3D Wealth Orrery & Asset Convergence Matrix */}
-          <div
-            className="af-3d-showcase-box"
-            role="region"
-            aria-label="3D Wealth Matrix Visualization"
-          >
-            <div className="af-3d-header">
-              <span className="af-3d-pill">
-                <span className="af-live-dot" aria-hidden="true" />
-                <span>Multi-Asset Equilibrium Matrix</span>
-              </span>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span className="af-3d-status">Euler 3D Projection</span>
-                <button
-                  type="button"
-                  onClick={launchScreensaver}
-                  className="af-screensaver-btn"
-                  title="Launch Fullscreen 3D Screensaver"
-                  aria-label="Launch Fullscreen 3D Screensaver"
-                >
-                  <Sparkles size={10} />
-                  <span>Screensaver</span>
-                </button>
-              </div>
-            </div>
-            <div className="af-3d-canvas-wrap">
-              <WealthOrbCanvas height={220} interactive={true} />
-            </div>
-            <div className="af-3d-caption">
-              <span>Interactive 3D Matrix • Hover or tilt to inspect asset convergence</span>
-            </div>
-          </div>
-
-          {/* Live Holographic Net Worth Mockup Card */}
-          <div className="af-preview-card" role="region" aria-label="Portfolio Snapshot Preview">
-            <div className="af-preview-card-shine" />
-            <div className="af-preview-header">
-              <div className="af-preview-pill">
-                <span className="af-live-dot" aria-hidden="true" />
-                <span>Live Portfolio Summary</span>
-              </div>
-              <div className="af-preview-growth">
-                <TrendingUp size={12} aria-hidden="true" />
-                <span>+18.4% YoY</span>
-              </div>
-            </div>
-
-            <div className="af-preview-amount-row">
-              <div className="af-preview-amount">
-                <span className="af-preview-currency">₹</span>
-                <span className="af-preview-val">1,48,50,000</span>
-              </div>
-              <div className="af-preview-lbl">
-                Consolidated Net Worth across 14 assets &amp; 3 banks
-              </div>
-            </div>
-
-            {/* Asset distribution bar */}
-            <div className="af-asset-bar" title="Asset allocation distribution">
-              <div
-                className="af-asset-seg af-seg-mf"
-                style={{ width: "42%" }}
-                title="Mutual Funds & Stocks (42%)"
-              />
-              <div
-                className="af-asset-seg af-seg-re"
-                style={{ width: "34%" }}
-                title="Real Estate & Gold (34%)"
-              />
-              <div
-                className="af-asset-seg af-seg-epf"
-                style={{ width: "16%" }}
-                title="EPF & PPF (16%)"
-              />
-              <div
-                className="af-asset-seg af-seg-cash"
-                style={{ width: "8%" }}
-                title="Liquid Cash (8%)"
-              />
-            </div>
-
-            <div className="af-preview-tags">
-              <span className="af-tag">
-                <span className="af-tag-dot af-dot-mf" />
-                Equities ₹62.3L
-              </span>
-              <span className="af-tag">
-                <span className="af-tag-dot af-dot-re" />
-                Real Estate ₹50.5L
-              </span>
-              <span className="af-tag">
-                <span className="af-tag-dot af-dot-epf" />
-                EPF/PPF ₹23.7L
-              </span>
-              <span className="af-tag">
-                <span className="af-tag-dot af-dot-cash" />
-                Cash ₹12.0L
-              </span>
-            </div>
-          </div>
-
-          {/* Executive Pillars Strip (Static Trust Badges - No Dropdown) */}
-          <div className="af-feature-chips-strip">
-            <div className="af-feature-chip">
-              <div className="af-feat-icon-box">
-                <Wallet size={14} aria-hidden="true" />
-              </div>
-              <div className="af-feat-text-wrap">
-                <strong>Automated Multi-Account Reconciliation</strong>
-                <p>Track liquid cash, yields, and liabilities.</p>
-              </div>
-            </div>
-
-            <div className="af-feature-chip">
-              <div className="af-feat-icon-box">
-                <Users size={14} aria-hidden="true" />
-              </div>
-              <div className="af-feat-text-wrap">
-                <strong>Family Entities &amp; Nominee Tracking</strong>
-                <p>Organize portfolios across family members.</p>
-              </div>
-            </div>
-
-            <div className="af-feature-chip">
-              <div className="af-feat-icon-box">
-                <ShieldCheck size={14} aria-hidden="true" />
-              </div>
-              <div className="af-feat-text-wrap">
-                <strong>Zero-Telemetry 256-Bit Vault Security</strong>
-                <p>Client-side encryption. Zero tracking.</p>
+          {/* Floating glass chips — each sits at its own parallax depth */}
+          <div className="af-float af-float-a" style={{ "--depth": 22 } as React.CSSProperties}>
+            <div className="af-glass af-glass-networth">
+              <div className="af-glass-label">Net worth trajectory</div>
+              <div className="af-glass-row">
+                <span className="af-glass-growth">
+                  <TrendingUp size={13} aria-hidden="true" />
+                  +18.4% YoY
+                </span>
+                <svg className="af-spark" viewBox="0 0 96 28" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="af-spark-fill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#FACC15" stopOpacity="0.45" />
+                      <stop offset="1" stopColor="#FACC15" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M0 24 L12 21 L22 22 L34 16 L46 17 L58 11 L70 12 L82 6 L96 3 L96 28 L0 28 Z"
+                    fill="url(#af-spark-fill)"
+                  />
+                  <path
+                    className="af-spark-line"
+                    d="M0 24 L12 21 L22 22 L34 16 L46 17 L58 11 L70 12 L82 6 L96 3"
+                    fill="none"
+                    stroke="#FDE68A"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             </div>
           </div>
 
-          {/* Footer signature */}
-          <div className="af-brand-footer">
-            <span>Designed &amp; Engineered by Anand Mohta</span>
-            <div className="af-brand-status-chip">
-              <span className="af-status-dot-emerald" />
-              <span>Institutional Engine 2.5 Active</span>
+          <div className="af-float af-float-b" style={{ "--depth": 14 } as React.CSSProperties}>
+            <div className="af-glass af-glass-legend">
+              <div className="af-glass-label">One city, five asset classes</div>
+              <ul>
+                <li>
+                  <i style={{ background: "#38BDF8" }} />
+                  Equities
+                </li>
+                <li>
+                  <i style={{ background: "#FB923C" }} />
+                  Real Estate
+                </li>
+                <li>
+                  <i style={{ background: "#FACC15" }} />
+                  Gold
+                </li>
+                <li>
+                  <i style={{ background: "#34D399" }} />
+                  EPF &amp; PPF
+                </li>
+                <li>
+                  <i style={{ background: "#C084FC" }} />
+                  Liquid Cash
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="af-float af-float-c" style={{ "--depth": 30 } as React.CSSProperties}>
+            <div className="af-glass af-glass-vault">
+              <span className="af-glass-icon">
+                <ShieldCheck size={15} aria-hidden="true" />
+              </span>
+              <div>
+                <strong>Zero-telemetry vault</strong>
+                <span>Client-side, 256-bit encryption</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="af-brand-bottom">
+            <div className="af-pillars">
+              <span>
+                <Wallet size={13} aria-hidden="true" /> Multi-account reconciliation
+              </span>
+              <span>
+                <Users size={13} aria-hidden="true" /> Family &amp; nominee tracking
+              </span>
+              <span>
+                <ShieldCheck size={13} aria-hidden="true" /> Bank-grade privacy
+              </span>
+            </div>
+            <div className="af-brand-footer">
+              <span>Designed &amp; Engineered by Anand Mohta</span>
+              <div className="af-brand-status-chip">
+                <span className="af-status-dot-emerald" />
+                <span>Institutional Engine 2.5 Active</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1802,38 +1809,63 @@ const AF_STYLES = `
 
 /* ── Brand Panel (Left Showcase) ────────── */
 .af-brand-panel {
+  --mx: 0;
+  --my: 0;
   position: relative;
-  flex: 0 0 50%;
-  min-width: 440px;
-  max-width: 680px;
-  padding: 32px 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-right: 1px solid #E2E8F0;
+  flex: 0 0 56%;
+  min-width: 520px;
+  overflow: hidden;
   z-index: 2;
-  background: linear-gradient(170deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 250, 252, 0.98) 100%);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  overflow-y: auto;
+  color: #E2E8F0;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 72%, #1e2466 0%, rgba(30, 36, 102, 0) 70%),
+    radial-gradient(ellipse 60% 40% at 85% 10%, rgba(217, 119, 6, 0.16) 0%, transparent 70%),
+    linear-gradient(180deg, #070a1f 0%, #0b0f2e 55%, #05060f 100%);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06), 24px 0 60px -30px rgba(5, 6, 15, 0.45);
+}
+
+.af-skyline-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.af-brand-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(7, 10, 31, 0.85) 0%, rgba(7, 10, 31, 0) 38%),
+    linear-gradient(0deg, rgba(5, 6, 15, 0.95) 0%, rgba(5, 6, 15, 0.6) 14%, rgba(5, 6, 15, 0) 32%);
 }
 
 .af-brand-content {
-  position: relative;
-  max-width: 480px;
-  margin: 0 auto;
+  position: absolute;
+  inset: 0;
+  padding: 32px 44px 28px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  height: 100%;
   justify-content: space-between;
+  pointer-events: none;
+}
+.af-brand-content button,
+.af-brand-content a {
+  pointer-events: auto;
 }
 
-/* Brand Logo */
+.af-brand-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: af-rise-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .af-brand-logo {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .af-logo-glow-wrap {
@@ -1854,355 +1886,254 @@ const AF_STYLES = `
 
 .af-brand-name {
   font-family: 'Outfit', sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #0F172A;
+  color: #FFFFFF;
   line-height: 1.1;
 }
 
 .af-brand-tagline {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: #D97706;
-  margin-top: 3px;
-  letter-spacing: 0.06em;
+  color: #FBBF24;
+  margin-top: 4px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-/* Brand Hero */
-.af-brand-hero {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.af-hero-badge {
+.af-screensaver-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 11px;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 9999px;
-  width: fit-content;
-  color: #475569;
+  font-family: inherit;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  letter-spacing: 0.06em;
+  color: #FDE68A;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(253, 230, 138, 0.28);
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.af-screensaver-btn:hover {
+  background: #F59E0B;
+  border-color: #F59E0B;
+  color: #1C1206;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.45);
+}
+.af-screensaver-btn:focus-visible {
+  outline: 2px solid #FDE68A;
+  outline-offset: 2px;
 }
 
-.af-badge-icon {
-  color: #D97706;
+.af-brand-hero {
+  max-width: 540px;
+  margin-top: 4vh;
+  margin-bottom: auto;
+  animation: af-rise-in 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.af-hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #FBBF24;
+  margin-bottom: 14px;
+}
+.af-kicker-deva {
+  font-family: 'Kohinoor Devanagari', 'Noto Sans Devanagari', 'Mukta', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  background: linear-gradient(100deg, #FEF3C7, #FACC15 55%, #F59E0B);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.af-kicker-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(251, 191, 36, 0.6);
+}
+.af-kicker-line {
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #FBBF24);
 }
 
 .af-brand-headline {
   font-family: 'Outfit', sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.18;
-  letter-spacing: -0.03em;
-  color: #0F172A;
+  font-size: clamp(34px, 3.5vw, 54px);
+  font-weight: 300;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: #FFFFFF;
   margin: 0;
 }
 
 .af-brand-headline-accent {
-  background: linear-gradient(135deg, #4F46E5 0%, #312E81 100%);
+  display: block;
+  font-weight: 700;
+  background: linear-gradient(100deg, #FEF3C7 0%, #FACC15 35%, #F59E0B 60%, #FDE68A 100%);
+  background-size: 200% 100%;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  animation: af-gold-shimmer 6s ease-in-out infinite;
 }
 
 .af-brand-sub {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #475569;
-  margin: 0;
-  font-weight: 400;
+  max-width: 440px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(203, 213, 225, 0.78);
+  margin: 16px 0 0;
 }
 
-/* 3D Showcase Box */
-.af-3d-showcase-box {
-  position: relative;
-  border: 1px solid #E2E8F0;
-  border-radius: 18px;
-  padding: 12px 14px 6px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+/* Floating glass chips with per-chip parallax depth */
+.af-float {
+  position: absolute;
+  transform: translate3d(calc(var(--mx) * var(--depth) * -1px), calc(var(--my) * var(--depth) * -1px), 0);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.af-float-a { top: 43%; right: 6%; }
+.af-float-b { top: 60%; left: 5%; }
+.af-float-c { bottom: 19%; right: 8%; }
+
+@media (max-height: 800px) {
+  .af-float-b { display: none; }
+  .af-float-a { top: 46%; }
+  .af-brand-hero { margin-top: 2vh; }
+  .af-brand-sub { font-size: 13px; margin-top: 12px; }
+}
+.af-float > .af-glass {
+  animation: af-rise-in 1s cubic-bezier(0.16, 1, 0.3, 1) both, af-bob 7s ease-in-out infinite;
+}
+.af-float-a > .af-glass { animation-delay: 1.3s, 1.3s; }
+.af-float-b > .af-glass { animation-delay: 1.5s, 2.6s; }
+.af-float-c > .af-glass { animation-delay: 1.7s, 0.4s; }
+
+.af-glass {
+  background: linear-gradient(160deg, rgba(30, 36, 80, 0.55), rgba(10, 12, 32, 0.55));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 12px 14px;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.af-glass-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(203, 213, 225, 0.6);
+}
+.af-glass-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: 6px;
+}
+.af-glass-growth {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #FDE68A;
+  letter-spacing: -0.01em;
+}
+.af-spark {
+  width: 96px;
+  height: 28px;
+  overflow: visible;
+}
+.af-spark-line {
+  stroke-dasharray: 140;
+  stroke-dashoffset: 140;
+  animation: af-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) 1.6s forwards;
+}
+.af-glass-legend ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 5px 16px;
+}
+.af-glass-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #E2E8F0;
+}
+.af-glass-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  box-shadow: 0 0 8px currentColor;
+}
+.af-glass-vault {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.af-glass-vault strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+.af-glass-vault span {
+  font-size: 11px;
+  color: rgba(203, 213, 225, 0.7);
+}
+.af-glass-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #34D399 !important;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.af-brand-bottom {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  gap: 14px;
+  animation: af-rise-in 1s cubic-bezier(0.16, 1, 0.3, 1) 1.9s both;
 }
-
-.af-3d-header {
-  width: 100%;
+.af-pillars {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 2px;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.82);
 }
-
-.af-3d-pill {
+.af-pillars span {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: #F8FAFC;
-  padding: 3px 9px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #1E293B;
-  border: 1px solid #E2E8F0;
 }
-
-.af-3d-status {
-  font-size: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  color: #4F46E5;
-  background: #EEF2F6;
-  padding: 2px 7px;
-  border-radius: 6px;
-  border: 1px solid #E2E8F0;
-  font-weight: 600;
-}
-
-.af-screensaver-btn {
-  font-size: 10px;
-  font-family: inherit;
-  color: #B45309;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-}
-
-.af-screensaver-btn:hover {
-  background: #F59E0B;
-  color: #04060E;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-}
-
-.af-3d-canvas-wrap {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.af-3d-caption {
-  margin-top: 6px;
-  font-size: 10.5px;
-  color: #64748B;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-top: 6px;
-  border-top: 1px solid #F1F5F9;
-  width: 100%;
-  justify-content: center;
-}
-
-/* Live Holographic Mockup Card */
-.af-preview-card {
-  position: relative;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 18px;
-  padding: 14px 18px;
-  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
-  overflow: hidden;
-}
-
-.af-preview-card-shine {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transform: skewX(-25deg);
-  animation: af-shine-pass 6s infinite;
-  pointer-events: none;
-}
-
-.af-preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.af-preview-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #F8FAFC;
-  padding: 3px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  color: #475569;
-  font-weight: 600;
-  border: 1px solid #E2E8F0;
-}
-
-.af-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10B981;
-  box-shadow: 0 0 10px #10B981;
-  animation: af-pulse 2s infinite;
-}
-
-.af-preview-growth {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #047857;
-  font-size: 11px;
-  font-weight: 700;
-  background: #ECFDF5;
-  padding: 2px 7px;
-  border-radius: 6px;
-  border: 1px solid #A7F3D0;
-}
-
-.af-preview-amount-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 4px;
-  margin-bottom: 2px;
-}
-
-.af-preview-amount {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-  color: #0F172A;
-}
-
-.af-preview-currency {
-  font-size: 18px;
-  font-weight: 600;
-  color: #D97706;
-}
-
-.af-preview-val {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  color: #0F172A;
-  font-family: 'Outfit', sans-serif;
-}
-
-.af-preview-lbl {
-  font-size: 11px;
-  color: #64748B;
-}
-
-.af-asset-bar {
-  display: flex;
-  height: 5px;
-  border-radius: 9999px;
-  overflow: hidden;
-  background: #F1F5F9;
-  gap: 2px;
-  margin: 8px 0;
-}
-
-.af-asset-seg {
-  height: 100%;
-  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.af-seg-mf { background: linear-gradient(90deg, #38BDF8, #60A5FA); }
-.af-seg-re { background: linear-gradient(90deg, #D4AF37, #F5E5C9); }
-.af-seg-epf { background: linear-gradient(90deg, #10B981, #34D399); }
-.af-seg-cash { background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
-
-.af-preview-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.af-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  font-family: 'JetBrains Mono', monospace;
-  color: #334155;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  padding: 2px 7px;
-  border-radius: 5px;
-}
-
-.af-tag-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-.af-dot-mf { background: #38BDF8; box-shadow: 0 0 6px #38BDF8; }
-.af-dot-re { background: #D4AF37; box-shadow: 0 0 6px #D4AF37; }
-.af-dot-epf { background: #10B981; box-shadow: 0 0 6px #10B981; }
-.af-dot-cash { background: #8B5CF6; box-shadow: 0 0 6px #8B5CF6; }
-
-/* Executive Pillars Strip (Static Trust Badges - No Dropdown) */
-.af-feature-chips-strip {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.af-feature-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 9px 11px;
-  border-radius: 12px;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-}
-
-.af-feat-icon-box {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: rgba(217, 119, 6, 0.1);
-  border: 1px solid rgba(217, 119, 6, 0.25);
-  color: #D97706;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.af-feat-text-wrap strong {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #0F172A;
-  margin-bottom: 2px;
-  line-height: 1.25;
-}
-
-.af-feat-text-wrap p {
-  margin: 0;
-  font-size: 10px;
-  color: #64748B;
-  line-height: 1.35;
+.af-pillars svg {
+  color: #FBBF24;
 }
 
 .af-brand-footer {
@@ -2210,21 +2141,21 @@ const AF_STYLES = `
   align-items: center;
   justify-content: space-between;
   font-size: 10.5px;
-  color: #64748B;
-  padding-top: 8px;
-  border-top: 1px solid #E2E8F0;
+  color: rgba(148, 163, 184, 0.75);
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .af-brand-status-chip {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 10px;
-  color: #059669;
-  background: rgba(16, 185, 129, 0.08);
-  padding: 2px 7px;
+  color: #6EE7B7;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.28);
 }
 
 .af-status-dot-emerald {
@@ -2232,6 +2163,23 @@ const AF_STYLES = `
   height: 5px;
   border-radius: 50%;
   background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+@keyframes af-rise-in {
+  from { opacity: 0; transform: translateY(16px); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes af-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -7px; }
+}
+@keyframes af-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes af-gold-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* ── Form Panel (Right) ─────────────────── */
@@ -2254,16 +2202,78 @@ const AF_STYLES = `
   max-width: 440px;
 }
 
+@property --af-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.af-card-outer {
+  animation: af-card-rise 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  transform-origin: 50% 100%;
+}
+
+/* Rotating gold/indigo light running around the card edge */
 .af-card-border-glow {
   position: absolute;
-  top: 0;
-  left: 12%;
-  right: 12%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #4F46E5 30%, #D97706 70%, transparent);
-  border-radius: 50%;
-  z-index: 10;
+  inset: -1.5px;
+  border-radius: 25.5px;
+  background: conic-gradient(from var(--af-angle), rgba(79, 70, 229, 0.15), #6366F1, #F59E0B, #FDE68A, rgba(217, 119, 6, 0.15) 45%, rgba(79, 70, 229, 0.15));
+  animation: af-spin-angle 7s linear infinite;
   pointer-events: none;
+  z-index: 0;
+}
+.af-card-border-glow::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: inherit;
+  background: inherit;
+  filter: blur(28px);
+  opacity: 0.35;
+  z-index: -1;
+}
+.af-card-outer > .af-card {
+  z-index: 1;
+}
+
+.af-form-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 45%, rgba(99, 102, 241, 0.1) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 30% at 70% 30%, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+}
+.af-form-panel::after {
+  content: "";
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  bottom: -10%;
+  height: 55%;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(79, 70, 229, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 70, 229, 0.14) 1px, transparent 1px);
+  background-size: 56px 56px;
+  transform: perspective(700px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(0deg, #000 0%, transparent 85%);
+  mask-image: linear-gradient(0deg, #000 0%, transparent 85%);
+  animation: af-floor-scroll 6s linear infinite;
+}
+
+@keyframes af-spin-angle {
+  to { --af-angle: 360deg; }
+}
+@keyframes af-card-rise {
+  from { opacity: 0; transform: perspective(1200px) rotateX(14deg) translateY(36px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes af-floor-scroll {
+  to { background-position: 0 56px; }
 }
 
 .af-card {
@@ -2872,6 +2882,10 @@ input:not(.af-inp):focus-visible,
 
 /* Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
+  .af-card-border-glow,
+  .af-form-panel::after,
+  .af-brand-headline-accent,
+  .af-float > .af-glass,
   .af-aurora,
   .af-logo-ring-halo,
   .af-live-dot,
@@ -2897,8 +2911,6 @@ input:not(.af-inp):focus-visible,
   .af-brand-panel {
     height: 100vh;
     max-height: 100vh;
-    overflow: hidden;
-    padding: 24px 36px;
   }
   .af-form-panel {
     height: 100vh;
@@ -2911,6 +2923,10 @@ input:not(.af-inp):focus-visible,
 @media (max-width: 1100px) {
   .af-brand-panel {
     display: none;
+  }
+  /* iOS Safari zooms into inputs smaller than 16px on focus */
+  .af-inp {
+    font-size: 16px;
   }
   .af-form-panel {
     padding: 32px 20px;
@@ -2982,29 +2998,9 @@ input:not(.af-inp):focus-visible,
     padding: 16px 10px;
     gap: 10px;
   }
-}
   .af-segment-btn {
     padding: 7px 4px;
     font-size: 10.5px;
   }
-  .af-demo-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 13px 18px;
-  border-radius: 14px;
-  background: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
-  color: #1E293B;
-  font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
 }
 `;

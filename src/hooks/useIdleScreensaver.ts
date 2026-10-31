@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 interface UseIdleScreensaverOptions {
-  timeoutMs?: number; // Inactivity timeout in ms (default: 30,000 = 30s)
+  timeoutMs?: number; // Inactivity timeout in ms (default: 60,000 = 60s)
   enabled?: boolean;
 }
 
 export function useIdleScreensaver({
-  timeoutMs = 30000,
+  timeoutMs = 60000,
   enabled = true,
 }: UseIdleScreensaverOptions = {}) {
   const [isScreensaverActive, setIsScreensaverActive] = useState(false);
@@ -37,6 +37,7 @@ export function useIdleScreensaver({
   useEffect(() => {
     if (!enabled) {
       if (timerRef.current) clearTimeout(timerRef.current);
+      setIsScreensaverActive(false);
       return;
     }
 
@@ -58,25 +59,12 @@ export function useIdleScreensaver({
         return;
       }
 
-      if (isScreensaverActive) {
-        // Stop screensaver on mouse move (with small grace period right when triggered)
-        if (Date.now() - activeSinceRef.current > 250) {
-          closeScreensaver();
-        }
-      } else {
-        resetTimer();
-      }
+      // While active, CelestialScreensaver owns dismissal (with its fade-out).
+      if (!isScreensaverActive) resetTimer();
     };
 
     const handleActivity = () => {
-      if (isScreensaverActive) {
-        // Any keypress, click, scroll or touch immediately stops the screensaver
-        if (Date.now() - activeSinceRef.current > 100) {
-          closeScreensaver();
-        }
-      } else {
-        resetTimer();
-      }
+      if (!isScreensaverActive) resetTimer();
     };
 
     const handleCustomLaunch = () => {
@@ -110,6 +98,3 @@ export function useIdleScreensaver({
     launchScreensaver,
   };
 }
-
-
-

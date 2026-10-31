@@ -233,10 +233,11 @@ function FinanceDashboard() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [mfaPending, setMfaPending] = useState(false);
 
-  // 3D Screensaver Idle Detection (30s inactivity across entire app)
+  // 3D Screensaver Idle Detection (60s inactivity across entire app). Auth runs its own
+  // instance on the login screen, so this one only arms once signed in.
   const { isScreensaverActive, closeScreensaver } = useIdleScreensaver({
-    timeoutMs: 30000,
-    enabled: true,
+    timeoutMs: 60000,
+    enabled: !!session,
   });
   // A Supabase password-recovery link establishes a real session before React renders.
   // We must not let that truthy session skip straight into the dashboard — force the

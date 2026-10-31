@@ -11,27 +11,27 @@ describe("Auth Component UI & Rendering", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the redesigned executive layout with brand headline and portfolio preview", () => {
+  it("renders the 3D brand panel with headline, floating insights and trust pillars", () => {
     const onLogin = vi.fn();
 
     const html = renderToString(<Auth onLogin={onLogin} />);
 
-    // Brand Panel & Live Preview
+    // Brand Panel & hero
     expect(html).toContain("ArthaDrishti");
     expect(html).toContain("Private Wealth Operating System");
-    expect(html).toContain("Unify your wealth.");
-    expect(html).toContain("Live Portfolio Summary");
-    expect(html).toContain("1,48,50,000");
-    expect(html).toContain("+18.4% YoY");
-    expect(html).toContain("Equities ₹62.3L");
+    expect(html).toContain("See your wealth");
+    expect(html).toContain("in every dimension.");
 
-    // 3D Matrix Integration
-    expect(html).toContain("Multi-Asset Equilibrium Matrix");
+    // 3D allocation city + floating glass insights
+    expect(html).toContain("af-skyline-canvas");
+    expect(html).toContain("Net worth trajectory");
+    expect(html).toContain("+18.4% YoY");
+    expect(html).toContain("One city, five asset classes");
 
     // Pillars & Security
-    expect(html).toContain("Automated Multi-Account Reconciliation");
-    expect(html).toContain("Family Entities &amp; Nominee Tracking");
-    expect(html).toContain("Zero-Telemetry 256-Bit Vault Security");
+    expect(html).toContain("Multi-account reconciliation");
+    expect(html).toContain("Family &amp; nominee tracking");
+    expect(html).toContain("Zero-telemetry vault");
 
     // Form Panel elements
     expect(html).toContain("Sign In");
